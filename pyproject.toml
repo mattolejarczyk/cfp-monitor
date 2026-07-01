@@ -1,0 +1,24 @@
+[project]
+name = "cfp-monitor"
+version = "0.1.0"
+description = "Agentic Conference/Event CFP (Call for Papers) monitor built on crawl4ai."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "crawl4ai>=0.6.0",
+    "litellm>=1.40.0",
+    "pydantic>=2.6",
+    "beautifulsoup4>=4.12",
+    "python-dotenv>=1.0",
+    "streamlit>=1.36",
+]
+
+[project.scripts]
+cfp-monitor = "run:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cfp_monitor"]

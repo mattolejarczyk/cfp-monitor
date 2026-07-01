@@ -1,0 +1,4 @@
+# One conference URL per line. Lines starting with # are ignored.
+# Replace these with your real fixed list.
+https://pycon.org
+https://www.djangocon.us

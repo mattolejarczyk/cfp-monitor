@@ -1,0 +1,25 @@
+# secrets & local config
+.env
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# crawl4ai / playwright caches
+.crawl4ai/
+.cache/
+
+# outputs
+*.results.json
+cfp_results.json
+results.json
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/
