@@ -5,6 +5,18 @@
 
 ---
 
+## Update 2026-07-03 (post-VOC — supersedes where in conflict)
+After reviewing the 6/17 + 6/24 customer transcripts (`../../voc/VOC-MASTER.md`) and the real customer sheet, these are locked:
+- **Pure-local, confirmed.** Crawl runs from the user's computer. The 6/24 "hybrid cloud+local" idea is **deferred** — VPS/hybrid is archived as the *possible future scale* path (learnings stay in `handoff-from-vps/`), not built now. This *removes* the "always-on VPS vs residential" tension from §4 for the current phase.
+- **Conferences first; awards deferred** until the conference pipeline is solid. Awards is a parallel entity to add later, not now.
+- **Own DB as source of truth.** We maintain our own end-to-end DB (SQLite → Postgres path). Brandable plugs in *later* to read from it. No Brandable DB access today.
+- **New requirement — transform/export layer.** Two formats exist: our internal **54-column** schema (source of truth) and the customer's **15-column** view (`../../voc/Utility Global Conference List 2026.xlsx`). Add a 54→15 transform for customer output. This is the "enrich → present" step; sequence it with storage.
+- **Two-tier product** (verified master DB + per-customer tag-filtered dashboards) confirmed; because Brandable already has auth/billing, the client-portal (M8) likely **shrinks** to "feed data + views."
+
+Full work breakdown + effort: `../../design/wbs-and-loe.md`.
+
+---
+
 ## 1. The reframe (the single most important point)
 
 The headline pain on the VPS — *"sites keep blocking us"* — is **not a crawler-software problem.** It is a *where-the-crawler-runs* problem.

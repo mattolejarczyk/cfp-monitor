@@ -1,0 +1,348 @@
+Matt Olejarczyk: 00:11 
+ Awesome.  How's Nicolia doing?
+
+Nicolia Wiles: 00:16 
+ Doing pretty good.  I had a little run in with some ground bees yesterday when I was mowing the lawn and I got a little.  I guess I'm allergic to him.  Got a little swollen in the face but.
+
+Matt Olejarczyk: 00:31 
+ Oh wow.  Oh no.
+
+Nicolia Wiles: 00:35 
+ Yeah, not painful at all.  Looks bad.  It's not, it's not even all that bad today.  It was way worse yesterday.  But wow, this weekend it should be all gone.
+
+Matt Olejarczyk: 00:44 
+ Yeah.  Now that you say it, I could kind of see it but I can't imagine what it was like.  That must have been fun.  Good deal.  I just have kind of a high level update.  I haven't switched over to the new high speed tool so I'm still using the current model.  I've already blown my tokens for the week in two days, but that's just how it is.  But here's.  I'll just, I'll.  I did a recap.  So in short what I've been working on is continuing to fine tune the quality of the data extraction.  So just putting it through the paces based upon the feedback from our last call.
+
+Nicolia Wiles: 01:37 
+ Yes.
+
+Matt Olejarczyk: 01:39 
+ What I have found is I did confirm I.  So I've done a ton of testing but in short there is going to be, I can get around with a very high success rate using a local crawl versus using what would be called like a cloud hosted crawl.  So like I don't know what, what govee uses for example for crawling.  But anyway there's anti bot detection that's really good.  But I can, I can bypass like I.  With very high percent but the way that I have to do it is it.  So crawling locally from a, like from my computer is a little bit slower but it doesn't matter because it'd be like overnight and it's.  When I say slower, it's way faster than a human could do it.  But, but anyway so I did confirm like I.  On a test that I ran, I wasn't able to get seven URLs crawling them locally.  I was able to get six out of seven and the only one that, excuse me, seven out of seven.  One of them shows showed partial and it really was a success when I manually validated it was because the information on the page was very sparse so I was able to actually access all seven of the pages that was not able to be accessed by you know, the kind of the cloud approach.  So I'm not saying we have 100 in all cases but like it was in this case so very high success rate.  So that was good.  That was the bulk of what was done.  So once I proved it then I built a local app.  So what I can do then is like for you we, it would be a two phased approach and the reason I would say to keep it split is because what I can rip in the cloud, like what I can automate from like a cloud instance is just going to be way faster than the local.  So it's like the 8020 but it's, it's probably 8020 but it more, it might be more like 90 10.  We'll see how it all bakes out.  But anyway do the bulk of the processing in the cloud for sites that allow us to the ones that don't.  It creates a list which then will be able to trigger locally.  This will all be seamless.  I'm just kind of giving you the behind the scenes but so you understand why it's going to work better.  What I can do then is deploy an app to your desktop which then it'll run the cloud stuff for the stuff that doesn't that it can't get.  It'll say hey Nicola, like wasn't I wasn't able to do these.  You want to run them locally?  You'll say yep, run them locally.  It'll just do the app behind the scenes like on your machine and it'll, you'll see the browser opening up, you know and crawling it basically on your computer which bypasses all of the anti cloud, you know anti bot detection in the cloud.  So anyway, long story short, that's how it works.  Process the bulk of them in the cloud.  Whatever doesn't we just will bring to a local desktop app all that's deployed.  I've been testing it on mine this week.  Now what I'm doing is building out the data extraction mechanism from all the pages that we're able to access now.  And so just fine tuning that like I, what I had done was hard code a lot of URLs in you know, in the cloud.  Can you hear me okay?  Yeah, yeah.  So in the cloud like you know I would say like the conference name slash contact and then the conference name/contact us.  Conference name/contact dash us.  You know I just had a bunch of them hard coded and that wasn't super painful in the cloud because I could just rip through but locally you're doing hundreds of Those that is a little bit slow.  I'm changing that for the local processing to be as a human would do it, go to the site, extract all the internal URLs from the page that comes up and then go through all of those one at a time to search for just like a human would.  Now obviously we're going to do it smart.  We're going to look for things like register now, registration, whatever, and you know, a lot of that comes down to the model that we select.  So the other thing that I've been doing, again, just from like a cost mitigation standpoint, running these tests against hundreds of URLs using expensive models, like that adds up.  So what I have been doing is, and I think this is a pretty smart approach is running like the best low cost free model.  So there's ways to benchmark models against each other, right?  So I just go to the benchmarks and I'm constantly monitoring like dollar for dollar, what to use and how to use it.  So long story short, I'm using three to five low cost, indoor free, like the best free models to do the bulk of the work.  And my logic behind it is if I can extract it using a free model, there's some pretty good ones out there now at a very high success rate.  I'm going to get my best free model extraction.  As you know, I'm doing five of them now and then I'm going to run it up against your, you know, your opuses and your premium models to see like what's the value add using the better model.  And then the way I would see doing this again just to keep cost down.  And I know if we're making money right, it's okay to spend the money.  But you know that the, when we're doing thousands of URLs using an expensive engine, it's just going to add up.  So if I can get, you know, run it in the cloud using the free stuff, run it locally, use it free, whatever the gap is.  Like here's the information that I wasn't able to get, then run that through the premium models to extract and then we could always benchmark like, you know, what's the, what do we actually get?  Are we getting any value?  I think, honestly I don't know that the model is the constraint.  I think the constraint is what I've been working in now, which is get the page loaded locally because there's a lot of failure points, right?  Like the cloud approach, you're not getting certain URLs then when you do get it, you know, getting the internal URLs, basically the internal links within a page extracted and then crawling each one of those.  So just the process of going through that and I think the biggest breakthrough I had this week was the being able to do it at a, at scale using the free models.  And then right now I'm working on the, hopefully this isn't too much information but working on the like internal link extraction and then going after those.  So that's what I'm doing right now in benchmarking based upon you know, kind of a static data set.  But anyway that's the update for the week.  Let me see what my official update for the week was because that's my matte version of what I did.  Let me.  But I had it.  Write me.  Okay, here's what we built.  We built a one click crawler.  So that's my, that's the local, that's where I can deploy something locally where you say yeah go ahead and click and crawl for me.  These ones that didn't work right.  Multi page evidence system.  So that, yeah, that's just getting all the internal links and going through all the multi pages model benchmarking.  We test of free models, blah blah.  Yep, I told you that.  And then the smart URL discovery.  What's that?  Oh yeah.  So what I did was I built.  So as we do go to these conferences and we learn where the information is at that site, we don't reinvent the wheel, we track where the success.  Like we got the data from this page and we track that so that next time we go back we just go back and visit the same page.  Right?  Yeah, so that's the current status it says.  Yeah.  So this crawl pipeline now Instead of doing 105 static URLs we're doing 38.  So it's 67% faster evidence collection.  Yeah.  What this means for this, what this means for you.  All right.  Conference monitoring that used to take hours of manual research is now one click CFP deadline speaker opportunities in contact info are all captured systematically.  You know that AI extraction is being tuned for accuracy and customer facing output costs minimize.  Okay, that's it, that's the formal output but that's what we did in the last.  But does.  It may not seem like a lot, but it is.  So.
+
+Nicolia Wiles: 10:57 
+ Yeah, well I mean you can probably have that mindset and thought but for me, that sounds like five people's worth of work in a week, so.
+
+Matt Olejarczyk: 11:09 
+ Well, fair enough.  It is.  I, I, well, it's kind of, that's my approach and I'm gonna, and I will get faster, but in essence, I, I've coding agent developers that I can, I, I only have a developer right now, but my plan is to build out a team that can do that, you know, using a better model that can.  Because that's what I'm doing.  That's what I'm doing at work, you know, building basically looking them into agent armies.  But there, but there's really no way.  I mean, but you could blow through, like we could blow through some money or building things, which is not really a constraint for a $30 billion company, you know, but like somebody I know, not me, but like somebody I know, their budget was 10 grand.  They blew through 10 grand building stuff last month.  No, no.  Granted, what we're able to build is insane, but.  Yeah, it's just, there's an unlimited, I wouldn't say unlimited budget, but the race is on from a speed to delivery.  Right.  So that, there's not, I would say this guy probably built.  I don't even know.  I mean, I would.  The stuff that he built is like you, it would take a consulting company, like a McKinsey level, you know, consulting firm, two to three people that come in for three months and do like analysis and a business assessment.  You know, that level of output with professional slides and everything, those kind of analysis, you know, he'll crank those out in an evening.  So like, I don't even know how to describe the value of, I mean it.  Millions and millions of dollars.  Because that alone would be, you know, three consultants time, three months.  They're probably, you know, that it's a lot.  So, but those whole, I, I know what those architectures and frameworks look like that can output that level of, you know, that level of output.  So that's my, Where I see this going is having an agentic army that can, you know, we can say, hey, like this project I'm doing right now, that's taking me weeks.  It's, it's going to be in an evening kind of.  That's my vision.  Right?  Like building out these kind of capabilities in a night versus over a month.  So.
+
+Nicolia Wiles: 13:52 
+ Hey, I love that.
+
+Matt Olejarczyk: 13:53 
+ Yeah.  All right, so that's the update on my end.  What's new with you?
+
+Nicolia Wiles: 13:58 
+ Well, I just, I, I kind of keep coming up with new Ideas and things that we can add to increase the overall value as it goes or be able to monetize and you know, and keep building things.  I have talked to multiple other PR firms and kind of tossed this idea around and I have been getting a ton of interest and they were like, I mean, I'm talking about a PR firm.  It's got probably 5,000 employees, like all total, around the world.  And some of the top level guys that I've just known for decades.
+
+Matt Olejarczyk: 14:40 
+ Yeah.
+
+Nicolia Wiles: 14:40 
+ Have said, man, like when you get this thing where it's something I can even just look at and review and check out, it doesn't have to be final or ga level.  Like he was like, I'll implement this across the entire organization.
+
+Matt Olejarczyk: 14:59 
+ Oh, new on the new idea.
+
+Nicolia Wiles: 15:02 
+ Yeah.  I mean this whole thing like what we're talking about.
+
+Matt Olejarczyk: 15:05 
+ Oh, what we're talking about.  Gotcha.
+
+Nicolia Wiles: 15:07 
+ Yeah.  What, what we're doing here, you know, with all of this.  Right.  You've got like the pay per publications, you've got the, the conference and award, you've got the AI pitching side of things.  You know, then I was looking at this last thing I emailed you about where more for SEO geo kind of capabilities to take a blog post and turn it into a YouTube video.  Like everybody's just, they just want to have all of this kind of capability because nothing out there exists.  Like I've gone through probably 10 different software platforms that say that they can take a blog post and turn it into a professional looking video for YouTube.  And that is complete BS, man.  Because I've spent probably eight hours going through and not a single one produced something that could even remotely be categorized as a YouTube video.
+
+Matt Olejarczyk: 16:13 
+ Yeah, yeah.  For SEO placement.
+
+Nicolia Wiles: 16:19 
+ Yeah.  Because I just, you know, I go through and I get dinged all the time when I check the SEO on my company's page.  And one of the things we don't have is a YouTube channel.  And there's no connection from my website to the YouTube channel.  So every single SEO audit always dings me real heavily there.  So I thought, well, hell, I got to get a YouTube channel and I just need to put some stuff up there.  My grand idea would just be get one of these AI agents that fakes my video.  Each one of them I had to like do a five or not even five, like two and a half minute right reel that I read.  Right.  And it creates a realistic looking version of me and it does my voice.
+
+Matt Olejarczyk: 17:11 
+ Yeah.  Avatar.
+
+Nicolia Wiles: 17:12 
+ Yeah.  But the videos are terrible.  Nothing that I Could even just put up for SEO purposes.
+
+Matt Olejarczyk: 17:21 
+ Yeah.  Wow.
+
+Nicolia Wiles: 17:22 
+ What.
+
+Matt Olejarczyk: 17:23 
+ Okay, Can you give me the best one that you tried that would be like.  It's almost there.  Do you have anything that was even.
+
+Nicolia Wiles: 17:35 
+ Close so I can shoot you over all the ones that were really, really terrible?
+
+Matt Olejarczyk: 17:43 
+ Nothing close.
+
+Nicolia Wiles: 17:44 
+ Nothing close.  The only one that got like even remotely close was Heygen.
+
+Matt Olejarczyk: 17:53 
+ Yeah.
+
+Nicolia Wiles: 17:53 
+ H E Y G E N that was the one that could do the.  Like it takes me and it just does a talking head.
+
+Matt Olejarczyk: 18:02 
+ Yeah, I'm familiar.
+
+Nicolia Wiles: 18:03 
+ Deal.  There was several other ones in video AI.
+
+Matt Olejarczyk: 18:08 
+ Yeah.
+
+Nicolia Wiles: 18:08 
+ 3.  These attempted to put like B roll and stuff into a video.  And Lord of mercy, it was painful.
+
+Matt Olejarczyk: 18:18 
+ Yeah, yeah.  I've been trying to do that for a long time.  I, I guess the short version of that would.  The question would be, would you be open to.  Well, obviously it's.  The content is key, like what you're saying and how you're saying it.  Right?
+
+Nicolia Wiles: 18:39 
+ Yeah.
+
+Matt Olejarczyk: 18:39 
+ And.  And then I would say based.  Maybe we can categorize the type of content that you're putting out and categorize it on what type of video would be acceptable?  Because one of the things we are doing at work is it's not, it's not B roll.  But you know, remember, maybe it wasn't even that long ago.  Maybe you're still doing this because I'm still doing it, but like used to create PowerPoint presentations, but then we would put in like custom graphics.  You know what I mean?  Like, you could kind of.  There's the, what are they called?  Like the internal graphics that you can put.  But then it got to the point where you can kind of go get external graphics and bring them in.  So I would say it's, it's way above.  So it's kind of like animated graphics, but they're more, they're not like human video, but they're not junk.  So it's a mix between.  I'll see if I can find one that I can show you.  But anyway, they're quality video, but they're not avatars and they turn out quite good.  What, what I found to be the best mix is.  I mean, honestly, what is being said?  You, you published an article.  I think it was after our meeting, maybe it was the next day or the day after.  And you.  I saw it on your blog or whatever and it was really good content.  It was on AI and kind of thought Leadership.  And all I could think of was, wow, if you could take that article and distill it down to a YouTube script that was just on point and then follow it up with a, a video that wasn't necessarily you talking.  I mean you obviously, if we can use a good avatar, if that's what the presence that you wanted to do, that'd be fine.  But if you could do a, either a B roll or animated branded video, right?  Like with your gray and red and you know your colors and had your kind of your intro come in and then have a few.  So it would depend on what you're trying to communicate.  But yeah, I could, I was thinking about that actually after you published that blog I was like, so two things.  One, that was a thought after our last call, after I saw you publish that.  And then I don't even, I don't know what caused me to go see that, but I saw it, I don't know why.  And then the second one, I.  Because you brought up this Levine Law Agency or whatever you have.  That's always been, that's always been top of mind.  I've been, I've been looking out for.  I.  So I don't know if I told you this.  I used to do SEO.  Like that was one of my big revenue generators and the games change a lot and certainly I don't know what you're using for SEO audit, but I'm interested.  One of the top ways that I could get Companies on page one of Google was publish keyword specific videos on YouTube and on their channel which I created for them and I could put them on page one with like within 4:48 hours like that video would pop up on page one.  So that is a, a good way and it would be a great service.  Right?
+
+Nicolia Wiles: 22:12 
+ Yeah.
+
+Matt Olejarczyk: 22:12 
+ So, so I think that is, that could be a getting someone on page one of Google Search using an automated video generator like this that could take an article, drill it down to a really premium script and then generate a quality explainer video that's not far off.  Like, I think that's a service we can pull together.  I'm going to put that down.
+
+Nicolia Wiles: 22:37 
+ That would be huge because there's a lot of people I know that are looking for that.  You know, like obviously I'm trying to do it for my own company and my clients and yeah, I mean if there was a way to do, you know, at the end of the day there's ways to do it, but it has to be able to be done, you know, almost automatically and having AI do it so that people don't get sucked into the world of video editing and all of that.  Right.
+
+Matt Olejarczyk: 23:10 
+ So trust me, I know.  Well, I used to do that manually and it was a lot of, I mean I'd get them on page one, but there's a lot of work.  That's the kind of stuff that'll burn you out.
+
+Nicolia Wiles: 23:21 
+ Absolutely.  Right.  And, and there are people who will pay companies to do that for.  There are a ton more companies who know they need it but can't pay a full firm to do it.  And they know they can't do it themselves, so they're stuck in the field.  But if you have an add on service building here and they say crap, okay, I'm in.  And if the service was more kind of SEO built and it's like, here's what we're going to do.  We're going to create you.  We're going to, we're going to do 30 days of blog content.
+
+Matt Olejarczyk: 24:02 
+ Yep.
+
+Nicolia Wiles: 24:03 
+ And 10 of those will be taken and they'll take the blog and turn it into like animated explainer that we could put on YouTube.  That's great.  That would be awesome.
+
+Matt Olejarczyk: 24:19 
+ Yeah, there'd be animate explainer.  There could be like a company profile like highlight, like hey, this is our company.  And we, you know, they, a lot of companies might have that already but from.  It would, I think it would start from a SEO strategy.  Right.  Like what are they wanting to be found under and then figure out the appropriate videos to support where they, how they want to be seen.  Usually it's pretty same pattern.  Hey, I'm glad you brought up the, do you have an auto blog service yet that you've built also like SEO to auto blog or to blog content?
+
+Nicolia Wiles: 25:01 
+ Yeah, I don't have anything yet because I'm doing a lot of the blog creation myself and I just don't have time for it anymore.  So I'm looking for something that can do that auto blog creation that's going to be as high quality as what I, is what I put out.  But yeah, I'm burn it out.
+
+Matt Olejarczyk: 25:19 
+ Yeah.  Okay, well if you have repositories of articles that you've published where that you could run through.  We could run, we could run them through AI and say, you know, take Nagolia's style on how he does blogs and give me a framework so that when we create it creates them like he does.  Like there's patterns of which you probably lay stuff out.  We could identify Frameworks and there could be multi.  You know, you may have four or five different angles.  You typically go whatever that looks like.  But there's probably patterns to your writing we can train.  And then that way you're getting good quality content are there.  Let me ask you this, because I've seen varying degrees of success related to blog posts turning into actually SEO rankings.  Do you have a pretty good model that when you publish this post, you actually see some kind of SEO benefit?
+
+Nicolia Wiles: 26:18 
+ I have no idea.  So for all the stuff that I post, I just know I need to.
+
+Matt Olejarczyk: 26:24 
+ Yeah.
+
+Nicolia Wiles: 26:25 
+ The only thing that I know is that when I get back or when I get feedback.
+
+Matt Olejarczyk: 26:29 
+ Yeah.
+
+Nicolia Wiles: 26:30 
+ And I get probably one or two deals a week where somebody finds my blog or finds my website and then they fill out the contact form asking for more information.  And they always say, I found you through, you know, through this blog post or.
+
+Matt Olejarczyk: 26:49 
+ Yeah, that's the, that.  Yeah, I mean, that's honestly the best.  You can't get past high quality, relevant content.  But, but that's why I brought up your blog post, because I thought that was, I mean, that's the kind of stuff that's going to draw people in that show, you know what you're talking about?  You're, you know, that's your, that's.  This is your, this is your wheelhouse.  That being said, if you take that quality content and then also optimize the content within, it can increase your visibility from an SEO standpoint.  So there's like the SEO optimize optimization part of the blog post.
+
+Nicolia Wiles: 27:31 
+ I've got Yoast.  It checks everything on my blog and it tells me when I need to add this or do more.
+
+Matt Olejarczyk: 27:39 
+ Okay, so you are doing that.
+
+Nicolia Wiles: 27:41 
+ I'm doing that part.  Yeah.
+
+Matt Olejarczyk: 27:42 
+ But you're doing it manually.  Okay.
+
+Nicolia Wiles: 27:44 
+ So doing it manually.
+
+Matt Olejarczyk: 27:45 
+ Okay.
+
+Nicolia Wiles: 27:47 
+ I don't do manually.  Is the image creation.  I just have AI create that from Toolkit.  Oh, no.  Artlist IO.
+
+Matt Olejarczyk: 28:00 
+ Yeah, that's good art.  This is good.  Okay.  Yeah, I think the.  Yeah, this is another one of the automate.  80% Of the.  The process.  The.  Yeah, the whole content creation piece quality, making sure that it's SEO optimized and relevant for, you know, that's going to dry.  Insist.  Sounds like that's probably the bulk of the value here because I can do auto.  Auto blog creation.  Like that's not a stretch to be able to do that.  I think merging that with whatever style looks like for you, that we'll put that on the radar, I think is, I mean, if it comes to that time where it's, you haven't figured it out or you want help figured out or whatever, I'll add it to the list.
+
+Nicolia Wiles: 28:57 
+ So basically like what I want to be able to do is, you know, you get people to sign up for this we call brandable pr.  Everything we're working on here.  So they sign up and you know, Maybe it's like $49 a month for the basic service and then we just, we get them and they start loving it.  And then all of a sudden there's a new add on service and a new add on service.  Like every month there's a, or every quarter there's a new add on service.  You know, and so then they say okay, well yeah, I absolutely want this automated pitching service.  Okay.  You know, there's another 299amonth.  Well, I want this automated SEO service that does the blog content and videos.  You know, man, there's another 199amonth or whatever it would be.
+
+Matt Olejarczyk: 29:50 
+ Right.
+
+Nicolia Wiles: 29:50 
+ Every quarter we're adding something new.  We're just re monetizing the people that we've already got as happy customers.
+
+Matt Olejarczyk: 30:01 
+ Right.  What's your core, what's your core service for the brandable?  You said like 49amonth.  What would that be for?
+
+Nicolia Wiles: 30:09 
+ So, so that would be for the conference and award the ability to go through and access all the publications for Guaranteed Publishing.
+
+Matt Olejarczyk: 30:28 
+ For Guaranteed Publishing.  Oh, gotcha.  So like they would, their stuff would be published in whatever that.
+
+Nicolia Wiles: 30:37 
+ Yeah.  Let's say you wanted to, you really wanted your client or your company to be entire magazine.
+
+Matt Olejarczyk: 30:44 
+ Right.  Right.
+
+Nicolia Wiles: 30:45 
+ You could go pitch them or you can write your own article and we'll guarantee that it gets published.
+
+Matt Olejarczyk: 30:54 
+ That's pretty cool.  Is that just like.  Well, never mind.
+
+Nicolia Wiles: 31:04 
+ Yeah, we've got, with okay.  Publications that you know, as long as the article is their editorial criteria.
+
+Matt Olejarczyk: 31:17 
+ Right, right.  Yeah.
+
+Nicolia Wiles: 31:19 
+ And, and there's a lot of times that they might have to be edited multiple times.
+
+Matt Olejarczyk: 31:26 
+ Yeah.
+
+Nicolia Wiles: 31:26 
+ And what we really recommend is if you want Time magazine, you want Inc. Magazine or whatever it is, Wall Street Journal, you fill out the form that we give you and then we have the editors at Time or Wall Street Journal write the article from that and that way we're 100% guaranteed and it's not going to go back and forth.
+
+Matt Olejarczyk: 31:48 
+ Very cool.  Very cool.  All right.  Super.  That is good stuff.  All right.  Well that is, that's all I had today, sir.
+
+Nicolia Wiles: 32:05 
+ Awesome.
+
+Matt Olejarczyk: 32:07 
+ Did, did we ever get lined out on the invoice?  Was that confusing?  Or are we squared away on that?
+
+Nicolia Wiles: 32:13 
+ No, I think it's all good.  It's paid.  I can't remember what should have come through.
+
+Matt Olejarczyk: 32:24 
+ I have to.  I haven't looked.  Let me see here.  Because I, I wanted to make.  I. I was worried I screwed it up.  It started out as a paper invoice, and then I was able to switch it to online.
+
+Nicolia Wiles: 32:37 
+ Oh, yeah,.
+
+Matt Olejarczyk: 32:40 
+ Let me.  Let me preview it as a customer.  When.  When did that.  When did you process that?  Let's see.
+
+Nicolia Wiles: 32:52 
+ I think it was.  Well, I think it was yesterday.  I think I sent you an email as well.  Let me see if I can find that.
+
+Matt Olejarczyk: 32:59 
+ Oh, okay.  I haven't been in the email.
+
+Nicolia Wiles: 33:00 
+ Yeah, Token by paid.
+
+Matt Olejarczyk: 33:04 
+ All right, cool.  I just haven't seen.
+
+Nicolia Wiles: 33:06 
+ Oh, I just sent an email saying that it is.  The invoice is paid.  That's when I talked about the YouTube video idea.
+
+Matt Olejarczyk: 33:19 
+ Oh, okay.  I haven't seen that yet.  Did, did it come up.  Did it say, like, how would you like to pay?  And then it says credit or debit card or bank or ach.  And then had the invoice underneath.  Did it look like that?  Do recall.
+
+Nicolia Wiles: 33:35 
+ I did it on my cell phone, so it was really small.  What was the, what was the name of it?  Because I think I remember it being.
+
+Matt Olejarczyk: 33:43 
+ AI Digital Agents llc.  Let me see.  I'll.  I'll show you what.
+
+Nicolia Wiles: 33:53 
+ Oh, yeah, there you go.
+
+Matt Olejarczyk: 33:55 
+ Oh, you found.  You found it.
+
+Nicolia Wiles: 33:57 
+ Yeah, let me just forward it.
+
+Matt Olejarczyk: 33:59 
+ Okay, cool, cool.  I, you know, I probably.  I just hadn't seen yet.  I, I hadn't looked at it today.  Oh, yeah, there you go.  You sent me something.
+
+Nicolia Wiles: 34:09 
+ Okay.
+
+Matt Olejarczyk: 34:10 
+ It looks like Token.  Oh, token by paid.  Yep.  Okay.  That was that.
+
+Nicolia Wiles: 34:16 
+ Yeah, so I got that one.  This.
+
+Matt Olejarczyk: 34:18 
+ That was two days ago.  I didn't see it.  You know, one of the things that I did, which is causing me a problem and I need to figure out how to undo it.  I have my agent reading my mail for me, but then it marks it.  But then it marks it red.  So I, Yeah, I'm not seeing the ones like, I missed that one because I.  They're all showing red, so, you know, versus white, when I, I can scan and see what I need to read.  So apologize for missing that one.  I. I'll get that.  I'm happy I got my agent read my mail because then I could get pre reads on everything.  But I, I haven't finished it yet, so it's in progress.  The.  The one, The.  The.  The goal there would be.  Just read all my stuff, tell me what's important, like for upcoming meetings.  Say, hey, I, you know, like two days in advance, say, pull everything from the color for the week, combine it with the work that I've done and give me a free read.  Because I did I do that anyway.  Like I, I read you the brief that I had.  I said, here's every.  Because I'll go through and I'll say to my code, I'll say, give me everything that we accomplished this week.  Make it executive, high level, non technical and very concise, period.  P.S.  Make it extremely concise, you know, I mean, because it's so verbose.  But non technical.  I have to do that to my, I have to do that to myself.  It's like.  And I'm technical and I still have to.  You have to tell the models to be non technical.
+
+Nicolia Wiles: 35:42 
+ Oh yeah.
+
+Matt Olejarczyk: 35:46 
+ All right, cool.  Well, I'll add these to the list of future capabilities.  And yeah, I think I haven't upgraded the architecture yet.  One, because I was waiting for the payment so I could switch over.  Two, I hate to switch it right now because I'm so close on finishing this one up, but as soon as I get it stable where I can shoot it your way and you.  Can you run it locally there, like once we have that set up and I can send it over, then I'll switch it over.  I just want to make sure I do backups every day to make sure that I can always roll back.  So I'm not overly concerned.  But anyway, we're, I'm super pleased with the, with the quality of extraction because I figured like that everything rests on that, you know, like it has to be able to go out there and do as good of a job as a human.  So that's where I've been sinking my.  That's where I've been sinking my time around the failure points, which is pages loading and then intelligently navigating.  There is an easy.  There's.  There's a, there's potentially a future easy.  There's always easy button, which is pay for the expensive model to do.  But it's just not.  I figure get the framework right, we could always introduce that layer over top at the end once it's built, you know.
+
+Nicolia Wiles: 37:09 
+ Got it.
+
+Matt Olejarczyk: 37:10 
+ Yeah.  Make the foundation as solid as possible.  But because I think if we're.  Once we have it nailed down to, you know, you.  It may identify 65 links on the page to crawl internally and extract from.  Well, that's going to be really Expensive, you know, but once we get it refined, we'll.  We'll learn the patterns of.  Of, like, things to exclude.  Which might take us down to 12, right?
+
+Nicolia Wiles: 37:36 
+ Oh, yeah.
+
+Matt Olejarczyk: 37:37 
+ And then, and then that.  So it's efficiency plus quality.  Because.  Because even so, like, if I'm.  If I'm running a model that I can use for free right now that does 90 out crawl all 65 for free at 90%, and then I'll take the final, you know, the outliers and run the expensive model at that.  But I know that it's going to be important as we scale this across, you know, hundreds of clients and that.  Right.
+
+Nicolia Wiles: 38:08 
+ Amen.
+
+Matt Olejarczyk: 38:09 
+ Yeah.  Okay.  Well, good to connect, sir.  Thanks for the time.  I'll have a better update.  Sorry I didn't have a ton this week, but that's where we're at.
+
+Nicolia Wiles: 38:18 
+ All good.
+
+Matt Olejarczyk: 38:21 
+ I hope your face gets better.  Stay away from bees.  Tip of the day.
+
+Nicolia Wiles: 38:27 
+ Yeah, I. I think the little clinic person I went to yesterday said that I should be totally fine back to normal by.  By the weekend.
+
+Matt Olejarczyk: 38:36 
+ Where did that happen?  In the.  In the yard?
+
+Nicolia Wiles: 38:39 
+ Yeah, I was just mowing.  Mowing the yard yesterday, and I felt something on my leg and looked down and all of a sudden a bunch.  Well, it was a.  About five or six of them headed up.
+
+Matt Olejarczyk: 38:52 
+ Yeah, I had a. I was tilling.  I had a.  This was just a few years ago.  I was tilling a compost pile and I didn't know it, but a yellow jacket ness had gotten into there.  I got lit.  Same deal.  So, you know, slay corporate dragons by day and get stung at home by night.  That's what we do, right?
+
+Nicolia Wiles: 39:15 
+ Yeah.
+
+Matt Olejarczyk: 39:18 
+ All right, Nicolette.  Thanks.  Have a good evening, sir.
+
+Nicolia Wiles: 39:20 
+ All right.  You as well.
+

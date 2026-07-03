@@ -1,0 +1,903 @@
+
+Nicolia Wiles: 02:40 
+ Screen share, though.
+
+Matt Olejarczyk: 02:42 
+ Yeah, let me get this pulled up.  Well, good.  So I think you mentioned these Gobi.
+
+Nicolia Wiles: 02:51 
+ Yeah.
+
+Matt Olejarczyk: 02:52 
+ Goby agents.  Yeah.  Pretty cool.  There's a. I haven't used that specifically, but there's a bunch of stuff like that's coming out.  That's general purpose agents that are gonna.  It's.  I don't think that's going to slow down.  So that's good.
+
+Nicolia Wiles: 03:09 
+ Yeah.  I mean, the one thing I would say about these Gobi agents here, I've been playing around with them for the better part of.  Since.  Since we started talking about this.  Just to kind of see what's out there.
+
+Matt Olejarczyk: 03:27 
+ Yeah.
+
+Nicolia Wiles: 03:28 
+ And more than anything, it's just bang your head against the wall frustrating.  I mean, it's like 250amonth, I think.  And like, this is what I get constantly out of task credits.
+
+Matt Olejarczyk: 03:46 
+ Yeah, yeah.
+
+Nicolia Wiles: 03:47 
+ And then they have to wait till the next day, you know, and then they're doing things the next day.  But they'll go do days worth of work for task credits in 15 minutes.
+
+Matt Olejarczyk: 04:00 
+ Right.
+
+Nicolia Wiles: 04:01 
+ Right out.  And then what they deliver you is totally and completely wrong.
+
+Matt Olejarczyk: 04:06 
+ Oh, that's not good.
+
+Nicolia Wiles: 04:07 
+ And then you tell them it's wrong.  They go, oh, yeah, it is wrong.  I'm out of task credits.  We'll do this first thing.
+
+Matt Olejarczyk: 04:17 
+ That's funny.  That's not funny.  I'm laughing with you because I feel you're.  I feel your pain, which is why.
+
+Nicolia Wiles: 04:24 
+ Yeah.  If anything, it's I feel your pain of all the stuff that you've gone through to get where you're at.  Because I was using the.  One of the reasons why I liked this Gobi thing is because they seem to be the only agents out there that can read and write into a Google Sheet.  Yeah, like Claude Grok, all the other ones I looked at, they can read it, but they can't.  Sometimes they can't even read it.  Well, you got to download the Google Sheet and upload it in the cloud or chat GPT and then it does a pretty good job of reviewing everything but these.  This Gobi was able to go in, read and write.  But I mean honestly, no matter what I did, teaching them and going over things day after day, week after week, they still were never able to seemingly find the call for paper deadlines or any of that kind of stuff.
+
+Matt Olejarczyk: 05:36 
+ Yeah, yeah, that's the.  And I mentioned that in the email that a lot of these agents have the, you know, the AI has.  There we are, I'm on camera.
+
+Nicolia Wiles: 05:47 
+ Good.
+
+Matt Olejarczyk: 05:47 
+ Yeah, A lot of these have run into the same blocks and it's literally, it's technology constraints, you know, of which a.  Well are.  There's that you can't get around the well architected systems that deals with the constraints.  So but all that being said back to.  I don't know if you remember this discussion, it's like what do agents do well now and what they do well now like you know, natively let them rip and then there's the world of what they don't do well right now, but that they're probably going to do well in three to six months.  Yeah, that's what it comes down to.  So like for example, this thing that I've.  I've been working on really constrained to do what a person can do with browsing the web, grabbing information, you know, especially kind of the dynamic aspect, the nature of what we're trying to do here.  But you know, because every page is different, the location is different, the wording's different, automating that, you know, really the.  So there is a hard block like trying to automate this from anything outside of it.  Like a personal desktop web interaction like you and I do, you know, when we go browse like that's the ideal path.  So you know, I can, we can set something up where you have like a dedicated computer that does this and can do it pretty much as well as a human or I would say better than because it's going to be faster, it's going to be more thorough and it's going to work 24.  7.  The issue is that we host it locally.  Let me, let me rephrase.
+
+Nicolia Wiles: 07:36 
+ We.
+
+Matt Olejarczyk: 07:37 
+ Yeah, we, we have a computer set up to do this and it can rip and you can grab and leverage models externally.  It's not like you have to host AI on that computer natively.  Right.  We can leverage the powerful models.  The thing about that is you're going to incur the powerful models is where you really get the intelligence and you eat the token.  You eat the token cost, which is why you're running into that constraint with Gobi, I would assume.  So we can do things like we can create a local computer with local AI and all that.  It's just not going to be anything like the new models.  But the new models are the way that you can get the workaround.  So there's like two paths forwards on this.  Well, there's three.  One, build a custom software like we're doing that incorporates really solid business process and architecture so that you have a solid, like no matter what happens, it's going to execute right.  Like you just.  Well, a well architected software.  The best way to put it.  Right.  And so that's the approach I was taking just based upon too many variables on.  Well, it's variables in cost.  Someday we're going to look back at this and laugh because we'll be able to be like, hey, go do this.  And it'll go do this natively.  Like, I don't know if that's going to be three months, six months, a year, two years, I don't know.  But it's coming.  Right?  So I think our discussions should come down to, you know, appetite for automation and timing urgency.  Because what I have found is I build a lot of softwares that I get them done.  I put a lot of time, I think we had this conversation too.  I get them done and then three months later, Google releases this capability natively where you just say, hey Gemini, do this for me.  And then it, and then just does it.  So what I'm trying to avoid is like I'm trying to really be wise and discern what warrants building something and investing, you know, my time and tokens and all that stuff where we have a Runway where it's not just going to be automated in three to six months.  And I also want to do that to honor any kind of investment that you would want to put into if I was going to you know, custom built something.  So I'm really, really trying to be wise about that.  I do think when it comes to this browser automation thing, what I'm seeing is capabilities are expanding and there is, I would say within the next year, we're probably going to be able to.  You'll probably be able to go do this and not even have to like, pay for Gobi or anything like that.  You're just going to be able to go to like a Gemini or something and say, hey, go do this.  And it's going to be smart enough to do it.  Now you are going to pay probably what you're paying for Gobi first for that kind of capability.  But, but if Goby can't do that for 250amonth, like, that's problem number one.  Because if we.  Yeah, all right, so let me pause there.  Does that, does all that make sense and resonate?
+
+Nicolia Wiles: 10:56 
+ Yeah.
+
+Matt Olejarczyk: 10:57 
+ Yeah.  All right.  And I, so here's kind of how I'm seeing things.  You, you have a lot of stuff you want to build.  I.  My approach has been I'm somewhat constrained because for me to build these things, I am somewhat limited on my horsepower.  Like, I'm dry.  What I'm trying to do is do this on a budget, like on a shoestring budget where I'm developing for free.  And how you don't really have much, I'd say not a lot of cost.  Right.  Where I can just kind of do this.  The problem that I'm seeing is I'm, you know, there's like, there's two paths.  There's a free path where I can do it and build it and it's going to take some Runway and then I can, and I can deliver the capability.  And there's another path that is we do something like, rather than pay govee, we.  I'm just, I'm just gonna shoot this out loud.  Yeah, we just do.  We do something where we cover like a, a fixed rate and rather than have go run into these limitations,.
+
+Nicolia Wiles: 12:09 
+ You,.
+
+Matt Olejarczyk: 12:09 
+ You give me like a. I'm constrained by the tokens.  Let's just put it that way.  So I don't know if we, if it makes it honestly, it makes more sense to give me that money to budget for the tokens where I can just deliver the software quickly versus be constrained by.
+
+Nicolia Wiles: 12:31 
+ I'm 100 for that.
+
+Matt Olejarczyk: 12:32 
+ Let's go that route.  Okay.  Okay.  I think that's probably the best approach because that when you said what you're spending on that and the Results that you're getting.  It's like, man, if I had a $250 a month token budget like we, I probably could have three projects done by now, you know.
+
+Nicolia Wiles: 12:51 
+ So like I said up front, man, I'm happy.
+
+Matt Olejarczyk: 12:55 
+ Yeah.
+
+Nicolia Wiles: 12:57 
+ To pay for development costs.
+
+Matt Olejarczyk: 12:59 
+ Yeah.
+
+Nicolia Wiles: 12:59 
+ You know, if we're able to get a product that's working within the next couple months.  Because that's how long it's going to take for the software to be incorporated into what I've already built in the phase one of what we've got live now brandable pr.  So whatever we build together here has got to be built into the UI UX of the other software.
+
+Matt Olejarczyk: 13:33 
+ Yeah.  And that's the problem.
+
+Nicolia Wiles: 13:35 
+ And you know, and so we've got a couple months.
+
+Matt Olejarczyk: 13:38 
+ Yeah.
+
+Nicolia Wiles: 13:38 
+ But whatever it's going to take to build out because I've got other projects.
+
+Matt Olejarczyk: 13:44 
+ Yeah.  Yeah.
+
+Nicolia Wiles: 13:46 
+ I'm really wanting to get built out that would again be part of like a phase three for this.  That would cover exactly what Pod Pitch and Apollo and Clay and all of them are doing.  But I've figured out a way to do it 100 times better.  And I know all the components that we've got to use.  I just don't know how to bring them all together.
+
+Matt Olejarczyk: 14:10 
+ Okay.  Yeah.  All right, good.  So here's what I, here's really what I wanted to do.  I wanted to do some work so that I can show you what can be done.  So let me show you what I've done.
+
+Nicolia Wiles: 14:23 
+ Yeah.
+
+Matt Olejarczyk: 14:24 
+ And I also, I realize we're building a, like a competence relationship as well.  Like I want you to be comfortable in what I can do, but this is what I do for my job.  So it's more a function of tokens.  So let me share my screen.
+
+Nicolia Wiles: 14:42 
+ The way, the way I look at it, this is like you and I, like I'm an American and you're like Chinese, English as good as you do, but you won't speak Chinese and I don't speak Chinese.  So of course I trust that you can speak Chinese better than I could speak Chinese.  Right.
+
+Matt Olejarczyk: 15:05 
+ Yeah.  I will share this.  I work at a, for my full time job.  I don't know if you research me at all or whatever.  I work for Worldwide technology.  We're a $30 billion a year company.  I work in operations and specifically in supply chain.  I'll just give you just a brief overview.  I've been in the liaison between business and it my entire career.  When I came out of College in 1992.  Computers were pretty new.  Because of that I started at Purina and they put me in charge of all of the.  Basically I was in the business so I had the operations but they made me the liaison for all supply chain improvement projects at a very young age.  So all of Purina systems from automated dock scheduling to carrier selection to just name it order management operations like I sat radio frequency like barcoding systems in the warehouse, fully automated systems that integrate with the others.  Like that's what I did.  And that was in the beginning and since then that's been my world Now I ended up at Worldwide Technology.  My, the guy that I worked with brought me over because what I was really good at doing is not only that component but it but standing up teams.  So like I don't know if you've heard of Lean Six Sigma process.  Okay, so like I had a team of 10.  They weren't black belts at the time, but I got the company to sponsor.  So I had ten Six Sigma black belts running through the operations, doing process improvement and the.  Which was awesome.  But our pinch point was always it because we needed stuff and we could get it so far.  But then we needed that IT component.  So boiling it all down.  Long story short, I have moved to IT now.  I now and I knew AI was coming and I saw the power of it and I knew being on the business side I wasn't going to have the tools.  So I went to IT now that's where I live.  I do have the tools.  Worldwide Technology is a powerhouse.  So I have the best tools.  I know what the best tools are.  I know it's needed.  I can't afford them outside, you know, outside of work.  But on a, but on a reasonable budget we can do very serious damage.  And now my boss, one of the smartest dudes I know very well, especially from like a technical standpoint.  I've been queuing him up for the last two years about this AI thing and I'm always about two years ahead and he knows that.  And so when we have that communication he says matt.  He says Matt, I hear you.  He's like, I know you're right, I don't see it yet, but be patient with me.  Anyway, long story short, he has caught up and now he is a monster developer with the tools.  So he has spent a lot of time like with the CEO of the company and he is probably the leading user of AI in our company.  And so we have a really good Working relationship.  All that, all that to be said.  We went from a non.  We supplied AI to companies and computer systems and all that.  Now we're using it massively internally and our company is going from a completely incompetent.  Well, not incompetent, it's new to everybody but to a very mature organization very quickly.  And my boss and I have been kind of on the forefront of that.  So I can get consumed at work but I mean, you know, saving millions or tens and hundreds of millions honestly of dollars for them.  But yeah, so I'm very careful on my time.  I don't mix my professional time at work.  You'll see if I, we schedule meetings, it launch, it'll be after work.  But I fully intend to leverage AI to because this is the greatest opportunity since the start of the Internet.  I'm sure you're well aware that.  And honestly I can build and I told you before, it's like it's a matter of we can build anything.  And now that I know and have access to all of the best tools and processes, et cetera, like the gloves are off.  I've built so many softwares and things since we've met.  It's amazing.  So here's, Let me switch screens here.  Here we go.  Can you see my screen now?
+
+Nicolia Wiles: 19:38 
+ Yes.
+
+Matt Olejarczyk: 19:39 
+ All right.  So I sent you this and this was really kind of, you know, as I'm building things out, I just, I sent you a way to review.  But if I.  This was a more mature version of it.  Our process as we've covered it is create prompt.  Right.  Like we.  You gave me the prompt and then I was like, how do we optimize a prompt and then get, not only like do it like one, but like how do we get full coverage?  And so you had a list.  So this part of the process is how do we optimize getting the mass amount of results?  And so this incorporates that best practice so we have the best coverage.  Like when we go out and scrape for conferences or what have you, we're going to get, you know, 50% or 100% more.  150% More.  So this is to create the prompt to go get to discover the URLs.  So like as example, we say hydrogen.  I want to say, I want all 50 states.  Let's just do all 50 states and we'll do hydrogen.  And I'll say set up generate prompt.
+
+Nicolia Wiles: 20:45 
+ Pack just to make sure what I'm seeing and looking at it says reporting and alerts.
+
+Matt Olejarczyk: 20:53 
+ My bad.  Let me.  Let me flip screens.  Sorry.  Where is it?  Share.  Here it is.  Okay.  This will look like what you.  Yeah, yeah.  So what I did was I said, okay, so that this is a more mature version.  I put in, like, the steps.  Whoops.  So you could see.  I have it on.  Okay.  Oh, my gosh.  I've never had this happen before.  I'm.  Oh, there it is.  I don't want this.  I don't.  I don't want to annotate this thing.
+
+Nicolia Wiles: 21:47 
+ They're all.
+
+Matt Olejarczyk: 21:50 
+ I want to actually use the screen here, Matt.  I don't want to draw on it.  How do I get this thing off?  There it is.  Stop annotating.  Okay.
+
+Nicolia Wiles: 22:02 
+ Oh, yeah.  You've got to go back to the window that it's actually powered in.  So you may not see these.  Okay.  I don't know why it's green.
+
+Matt Olejarczyk: 22:14 
+ Let me.  Let me try this one more time.
+
+Nicolia Wiles: 22:19 
+ Huh?
+
+Matt Olejarczyk: 22:20 
+ It worked on the other one.  Yeah, well, if I could.  If I could just.  All right.  Oh, this is just painful.  Why is it doing this?  Everyone, I don't want to annotate.  Stop annotating.  I want to use the screen.  I was able to do it when I wasn't sharing it.  All right.
+
+Nicolia Wiles: 22:56 
+ Or sometimes if you do share and then choose entire screen.  Okay.
+
+Matt Olejarczyk: 23:16 
+ Share.  Chrome Tab window.  Okay.  Yeah, let's do that.  Entire screen window.
+
+Nicolia Wiles: 23:26 
+ There we go.
+
+Matt Olejarczyk: 23:27 
+ See if this works.  Yeah, this is just not working.  Let's try this.  This is painful.  Chrome T. PR monitor.  All right, you.  You saw the reports, right?
+
+Nicolia Wiles: 24:02 
+ I did not.  This.  When I got that PR monitor, I got that.  I tried to play with it and I couldn't do anything.  So I sent you that email saying, I don't think I'm understanding it.
+
+Matt Olejarczyk: 24:12 
+ All right, you saw the reporting and alerts.  Let's try.  Try this one.  Okay.  This is better.  GCPR Monitor one with five milestones complete.
+
+Nicolia Wiles: 24:28 
+ So I see your screen.  I have not ever seen this previously, though.  All right, perfect.
+
+Matt Olejarczyk: 24:33 
+ Now if I change screens to go to.  Do you see PR monitor?
+
+Nicolia Wiles: 24:36 
+ Now it just says PR Monitor one.  Because you're sharing just that one screen, not your entire screen.
+
+Matt Olejarczyk: 24:48 
+ All right, all right.  Now you should see.
+
+Nicolia Wiles: 24:51 
+ Now I see it.
+
+Matt Olejarczyk: 24:52 
+ All right, perfect.  All right, so, yeah, there we go.  Now can you see I'm clicking around?
+
+Nicolia Wiles: 24:56 
+ Yes.
+
+Matt Olejarczyk: 24:57 
+ All right.  Wow, that was weird.  All right, so this actually, so the steps are create the prompt, Discover URLs.  If you want to import, like, a list that you already have, we have that here.  So, like, if we're going to crawl other, you know, like the list that already exists.  Right.  We can just import it.  That's kind of a one time deal.  Once they're in the database, we don't need to recrawl.  This is like a setup thing.  Then step three is crawl.  Step four is extract the data.  Step five is enrich the data.  And then step six is giving you a way to mechanism to review.  So this was kind of what I used to build it as an example.  This, this I can say give me all 50 states.  I want to do the hydrogen market.  I want to generate the prompt pack.  So by doing this you'll see the prompts.  I have a conference discovery prompt and award discovery prompt.  And so this gives us, this generates the prompt to go out there and do that mass crawl to bring back the mass, you know, the most robust amount of URLs.  Are we tracking?
+
+Nicolia Wiles: 26:11 
+ Yes.
+
+Matt Olejarczyk: 26:12 
+ So if I hit Discover URLs that's going to kick out now.  Now that when I do this it's going to say you're about to eat tokens.  Because I use three models and I do a very thorough.  What this is a, you know, this builds your conference list.  So that's what this, Step one and two is when I kick this off.  Hopefully.  Let's see.  Yeah, yeah.  See confirmed.  Deep research run.  This may incur.  This may not.  It's not a may.  It will incur API costs.  Anyway, point is that's, that's we want to enter a new market for a client and that'll get your initial list.  If you already have a list like we, like you do, we can choose a file and import it and do that here.  Then you validate the list.  Let's hear, let's just do this.  Let's go.  Okay.  You, you would you could you paste it in here.  Boom.  Then you hit crawl and it'll go out there and it will get all of the information and pull it into the database.  Are we good so far?
+
+Nicolia Wiles: 27:15 
+ Yep.
+
+Matt Olejarczyk: 27:15 
+ All right, step four.  This is the extraction of the data.  So this is where like crawling goes and gets the pages and brings it all in.  And then this actually extracts the information.  Like it gets all the data points.  Right.  Step five, enriching the data.  So this is basically saying I've got all the information I need but like when I go get conference information, it just gives me a blob of like address and everything to be able to filter it by state or by different things.  Sometimes I take these big blobs of information and put it in rows and columns so you can filter by certain states or beverage.  So this is really enriching it and enriching our data source so it's more friendly.  And then this right here is, is where this would be an early version of a UI that like UN team would use.  So all this stuff would kind of be a one click button up here or it'd be a much better user interface.  I'm just showing you the process.  When I run it, I generate a run ID which then gives me the data down below.  This right here picture, this would be your ui.  You'd say kick it off, here's my list.  And then you would just come down to here.  That's all behind the scenes but it was important to build.  Then down here is really your list of results.  This is your cybersecurity thing.  Well, matter of fact, let's see if we can.  All right, so I've got a bunch of filters in here.  We'll make this look a lot better.  But like I would say yeah, all markets so you can do it by hydrogen or cyber security as example and you could, you know, so obviously a bunch of filters has a chance if it.  I want, I only want to see has call for papers or status deadlines that would, that immediately filters this down.  You could load certain markets here.  Cybersecurity, boom.  I just filtered the list below the cybersecurity only so that this is actually running that cybersecurity list that you had running it through and extracting the data.  It shows you the conference dates.  Oh, I have like upcoming only.  So I don't want to see stuff in the past as example.  So these would be.  Here's your cybersecurity ones with conference dates.  Here's call for papers, deadlines, see if we got any.  Here's one629 sessionized right this one here.  So it has extracted the data.  We do have one with coverage.  And then here's your GM stuff broken out.  So like United States, here's Israel.  I do have a way to filter by, you know, US only versus let's see, I have that up here.  Geo.  Yeah.  United States.  Okay, so it's a little ugly but I just wanted to show you a proof of concept of like the process.  I took that cyber list, put it in here and extracted.  Here's Germany, here's Israel and this would be.  So all this is in a database right now and this is an ugly ui.  But I.  This was kind of the proof of concept that.  Well it was I call it an mvp.  Like this thing works.
+
+Nicolia Wiles: 31:00 
+ So app we for.  Because the, the biggest problem that I've had.
+
+Matt Olejarczyk: 31:09 
+ Yep.
+
+Nicolia Wiles: 31:10 
+ Like obviously going and finding them like chat.  GPT does a great job at that.  But the.  This is better having it all together.  The, the biggest issue is even when I had Goby or others looking at it and looking for these call for papers deadlines.
+
+Matt Olejarczyk: 31:35 
+ Yeah.  Like this one here.
+
+Nicolia Wiles: 31:37 
+ Yeah, let's just.  What is that one?  I'll, I'll take a look at.  What is this?
+
+Matt Olejarczyk: 31:42 
+ This one.  This one that's got a CFP deadline of 629 and it's this sessionized one.  You want me to open it up?
+
+Nicolia Wiles: 31:55 
+ Yeah, because I don't.  I've never heard of this one.
+
+Matt Olejarczyk: 31:59 
+ Oh and I also built in here.
+
+Nicolia Wiles: 32:02 
+ Schedule and speaker met.  So Sessionize is not a conference.
+
+Matt Olejarczyk: 32:08 
+ Let's see.
+
+Nicolia Wiles: 32:10 
+ Oh, this looks like it's a website doing exactly what I want to do.  Way to do.  Call for papers, schedule and speaker management.
+
+Matt Olejarczyk: 32:23 
+ Oh, the sessionized thing.
+
+Nicolia Wiles: 32:29 
+ Oh, this is not.  Yeah.  So it's not a conference.
+
+Matt Olejarczyk: 32:34 
+ Oh, it's not.
+
+Nicolia Wiles: 32:34 
+ Okay.  So that one, if I'm, if I go to the right one, like I just went to it Sessionized dot com.  Yep.  It is a, it's not a conference.
+
+Matt Olejarczyk: 32:48 
+ Yep.
+
+Nicolia Wiles: 32:50 
+ So it's hallucinated on this one.
+
+Matt Olejarczyk: 32:52 
+ Yeah, I gotcha.  So it's a website that has information on a conference, but it's not the actual conference.  You have to actually go to the.  There's a link to the conference here.  So I click the link.
+
+Nicolia Wiles: 33:10 
+ Oh, wow.  Okay.  Yeah, that's a big one.  That's happening right around the corner.  Well, OWASP EU is.  Is happening like next week.  But this one, this is OAS global.
+
+Matt Olejarczyk: 33:24 
+ Yeah.
+
+Nicolia Wiles: 33:25 
+ Okay.  November, I believe.
+
+Matt Olejarczyk: 33:28 
+ Yep.
+
+Nicolia Wiles: 33:28 
+ Correct.  So this one is saying.  So then you've got.  Right up top you've got cft.  CFP.  Did it.  Oh, there we go.
+
+Matt Olejarczyk: 33:50 
+ Our call.  Yep.  Submit here.  I'm going to go back to.  I'm going to go back to this call opens.  Okay, so on this one it says call opens April 8 and closes June 29.  Let me go back to.  Okay, so we're back.  I'm going to go back to what I found.  Where are we at?  Okay.  Can you see my screen?
+
+Nicolia Wiles: 34:22 
+ Yes.
+
+Matt Olejarczyk: 34:23 
+ Yeah.  Okay, so the sessionize isn't.  That's not the actual conference and I probably just need to display a different field there.  That's just the URL.  But that is the.  So we did get the 629 date.  It's got the it's got the location, it's, you know, etc.  I do have a Details.  Whoops.  I do have a details tab.  So we can put in.  I'll have to extract the actual conference to make sure that's visible.  Submit it.  So here's the other thing that I did.  So like the goal here would be to give you an interface like a spreadsheet to go ahead and edit.  So like your submission status is not submitted.  You know, this could be changed here and it would update the database if you wanted to do it this way.  I don't know that this would be your mechanism, but I just wanted to show proof of concept.  The goal would be like, can we just interact or do status updates, you know, from here versus necessarily having to pull in a Google sheet.
+
+Nicolia Wiles: 35:35 
+ So, so the.  I like what we're trying to get.  If you could click on in the chat.  I've got a little Google Doc there and this sheet is what I want eventually for Sorry, on the very far right there should be like a little.  Yep.  Guy there.  So the idea is you would go to brandable pr, you would go to the conference tab and within that dashboard it would pull up you would click on conference and it would pull up your conference list.  So you would say you want out of all of the different markets that we would have like every market that you could think of.  Right?  And each one of those markets would have a tag.  One of them.  Let's say Cyber Security is a tag or appsec is a tag.  And that brings up this page within that dashboard.  Gotcha.  So that you can see like all of the conferences that you have coming up, the ones that are passed, the ones that are coming up now, the ones that are passed, after a while they should update.  So like if something was January 2026, well then eventually that needs to be updated to be somewhere around January or February 2027.  So now it's an upcoming one.  But right, you know, in there, it needs to have, you know, all of this information so that whoever is a member of or subscribed to that dashboard can see all the information.  Right?  They can type in any notes that they want in there that's just for them because it's on their dashboard.  Gotcha submission URLs.  But you see, the important thing is here is submission status priority.  Now I've got submission date verified.  I had to put that in there because I needed to be agents to say if it says like if this, then that right if it says needs verified, Gobi agents needed to go in and look at that every week.  And then on latest update that all says 6, 15 or whatever, Gobi would actually write in the date that they last did an Update.  So the 15th.
+
+Matt Olejarczyk: 38:26 
+ Yep.
+
+Nicolia Wiles: 38:28 
+ But you see it all still says needs verification because if they did put a submission deadline date, which those ones that are in there a lot of time, 50% of the time they.  Well, more than that, but 80% of the time they'd be wrong.
+
+Matt Olejarczyk: 38:49 
+ Right.
+
+Nicolia Wiles: 38:50 
+ So if they put something in there, I would have to go in and then verify.  Yeah, if it was correct, I would list it as verified.
+
+Matt Olejarczyk: 38:58 
+ Verified.  So that's your manual verification of their verification, Correct.  Yeah, and that's okay.  You know, a lot of the systems we're building do require a level of training, especially kind of on the front end to make them smarter.  So that's actually, that's pretty common and probably best practice in the short term that manual verification.  And then I think once we're verified, we can have a much higher confidence the next time the agent goes out to get it.  Like, hey, this has been verified.  Like, we verified it manually and it was verified by the agent and we verified that it was correct.  And we can build patterns around, you know, does this, do we recommend manual verification on this or not?  Like, if it's a first time and an agent brings it back, probably in the short term, we want to verify it all real quick manually.  Right.  So having a feedback loop to say the agent brought back this.  Here's the link.  Just double check it.  Yep, it's correct.  There's probably a little bit of that in the short term.  Does that, does that fit your vision or.  Yeah.
+
+Nicolia Wiles: 40:15 
+ Okay, so basically I'm just showing you this to say this is kind of the idea from a UI UX perspective.  Now, this isn't a Google sheet.  It'll be in a dashboard.  Right.  This is kind of the interaction that you would have that you could go to and save them all as the ones that you want to monitor and then would be the back end stuff.  Every time something got verified, you would get a little notification like, we found a new submission date.  And you could go there and every week check to see what should I be doing.  And then it's got everything really easy for you there.
+
+Matt Olejarczyk: 40:55 
+ Yeah.  So you're doing this as like this would be a.  There's a, there's a customer, there's two layers.  There's like the.  I'm Going to go get the data and present the dates.  And then I'm going to have this database representation of reality that is verified probably by someone at prime.  Right.  Like these dates are correct.  And then there's like a user lens or a user UI that then sits over top of that database layer that filters user preferences based upon the data that exists.  Right.  So they can have their own notes and show.  Show there's like your central repository that is the reality.  And then you have your users submitted, which they want to see.  And having that big user layer, right.
+
+Nicolia Wiles: 41:42 
+ 100%.  This would be a dashboard that would be a tool for a lot of people.  So it could be for an internal marketing team or PR team.  It could be for a PR agency, it could be for freelancers, could be for just about anybody.
+
+Matt Olejarczyk: 42:00 
+ Okay.
+
+Nicolia Wiles: 42:01 
+ This tool does not exist out in the marketplace because I've looked everywhere.
+
+Matt Olejarczyk: 42:05 
+ Okay.  So the.  So the two.  So the two.  So the what I.  What I.  So that's good information.  What, what I'm working on here.  What this is down here at the bottom is this down here.  I would look at it as.  This is the source of truth of.  Like we pulled that.  Your sheet as it exists there with.  I think there's a.  There's a verified step.  Like it's going to go out and get all the dates.  And then there's.  There's this part here.  See this?  Reviewed and deferred.  That's the, that's the equivalent of your verified and unverified step.  So I could see.  I clicked review and it.  And I just reviewed it and it changed from needs review.  It.  See, the.  The status was needs review and I clicked reviewed and it.  Oops.  And it.  Yeah, and it changed.  So if I change this here, see this reviewed one and it says needs review.  So this would be like your.  This is your needs verification column.  And once I verify it, I could come here and click review.  So, so real similar, I think in concept, that's what I was trying to show down here.  That.  That verification step, I probably need.  I probably need to undo that review.  Let's see if I. Oh, reopen.  There you go.  Yeah.  So once I review it, I do have the ability like you can verify it and say, yep, reviewed and now the status is verified.  Different, different verbiage.  But the agent would bring back the dates.  You could come in here and say, oh, let's see, this conference is, boom, I reviewed that date.  That date is correct.  Okay, Verified.  So that's what this would be like a UI for your.  Just what you Showed there in the spreadsheet.  Obviously this is much uglier, but I wasn't worried about UI as much at this point.  Just conceptually aligned to the process.
+
+Nicolia Wiles: 44:03 
+ Basically what we need to develop is like the back end, UI ux, whatever, and then the user UI ux, we need just a master.  Yeah, right.  That does two things.  One, it finds conferences just the way that you showed before.  Like, hey, hydrogen market.  Find the conferences, it adds those to the list.  Obviously, if it's de.  Duped, it's already.  If it's right, it doesn't add it.  So that builds that list and then that list has attack based on the market.  So if we do hydrogen or energy or something like that.  Right.  We got all those in there and then we do cyber security and then we can do AI or sas.
+
+Matt Olejarczyk: 44:59 
+ Can you see my screen, Nicole?
+
+Nicolia Wiles: 45:03 
+ Yeah.
+
+Matt Olejarczyk: 45:04 
+ Okay.  Yeah, that's what this is right here.  So there's your.  Here's your market tag.  Cyber security Hydrogen.  I only.  I did hydrogen and I just added cybersecurity security based upon what you sent.  So that would be.  This would.  And that's the goal here, to be able to give you filters to say, just show.  This is the master list, though.  So show me all the cyber security.  Boom.  And then similar to an Excel spreadsheet where you could filter the columns.
+
+Nicolia Wiles: 45:28 
+ Yes.
+
+Matt Olejarczyk: 45:28 
+ We could add whatever to present it to your team in a way that if you wanted.  If you need to do review, like, let's say I want to review what changed only since I also have, like, if it's been reviewed and it's our.  Like, if nothing's changed since the last time that we checked all the, you know, we go and go out and check it weekly or by whatever your thing is, if it doesn't change since the last time we looked at it, you know, have a filter like that.  If the, if the dates are N A, you know, exclude those.  I don't want to see those.  I want to exclude past call for papers, you know, et cetera.  So, like, I just took a swag at what you'd want to see.  But yeah, this is a database view.  It's again, it's ugly, but it's like your spreadsheet.  So I would want to.  I would look to rep.  I would need to know how, you know, how you want to see these filters.  And we could.  And I'll.
+
+Nicolia Wiles: 46:30 
+ Yeah, I'm saying there's two very distinct differences.
+
+Matt Olejarczyk: 46:35 
+ Yep.
+
+Nicolia Wiles: 46:35 
+ So one is the back end.  That's the full master list.  And then if you are a subscriber to this, you would have a different filter.
+
+Matt Olejarczyk: 46:45 
+ Yep.
+
+Nicolia Wiles: 46:45 
+ Because if, if I work for.  I got it Hydrogen company.  I don't want to see cyber security stuff.  So I just.
+
+Matt Olejarczyk: 46:52 
+ Yeah.
+
+Nicolia Wiles: 46:53 
+ On my dashboard, right, you would click the tags that you want.  I want hydrogen, I want decarbonization, I want energy.  And those are the only ones that show up on my dashboard.
+
+Matt Olejarczyk: 47:07 
+ As a customer.
+
+Nicolia Wiles: 47:09 
+ As the customer, yeah.  All of that info and then all they do is they just use that information.  They could put in notes just for them.  Right.  But it's just reading the SQL database or deal and then showing that information.  It may not show at all.  It just shows what they're asking for.
+
+Matt Olejarczyk: 47:32 
+ Yeah, I'm locked.  So 100% aligned this.  I haven't built that yet, but now I have the.  You've identified the need.  So I would need to build a customer layer where they would log in and they would have whatever's appropriate for their.  They could see this information and maintain notes in their, you know, in their data.  On the master.  This right here is only the master data.  Now.  It's not, it's not right now.  Yeah, it's not the master because I, I only did hydrogen and I did cybersecurity.  But it's, you know, I just, I built out as if were going to enter a new market.  That's what this thing would do.  We would say I need to populate.  You know what, we're only head.  But we're going to do basket weaving.  So I'm going to come up here and say, you know what, I need basket weaving and I need to crawl.  I want it in all 50 states or I want Internet or I can say yeah, global.  So this is regions.  I want international.  So that changes that.  Like this is the.  Do I want to do conferences or awards?  I built it for either or.  But let's do conferences.  That's not relevant because we're on international.  I can save this prompt and generate the prompt pack and you can see it says, you know, instead I want to go.  Doesn't do it says both non us and us, blah.  So anyway, that this is.  Would be how to create like a new list and discover the URLs.  If the URLs already exist, we would just come here and load them into the database right here.  Say boom, choose a file.  Or I can come take that list that you already have and I can paste them in here and then validate and then save it and, and load the database and Then based upon that, then I would crawl and I would do the.  What you're doing with Gobi.  Right.  Go get the information, go crawl it, extract the information, look for CFP dates, et cetera.  So we would probably load up this database.  I would just pop in all.  I would import all your files and load it up into here.  And then, and then we would just schedule a job to be able to schedule a job to crawl at whatever frequency you want.
+
+Nicolia Wiles: 50:03 
+ Yeah.  So that's like what I've got the Gobi thing doing.  And of course it's screwing up terribly.
+
+Matt Olejarczyk: 50:10 
+ Yeah.
+
+Nicolia Wiles: 50:10 
+ But like every Monday at 4am Yep.  It goes and searches the, the existing Google sheets that I've got.  Right.  If it needs verified, it goes and searches that week to see if it can find anything.  And if it does, it presents the deadline.  And every time it does a search, it updates the search or the status update date, like the last day updated.  Because the thing is, my clients want to look at this spreadsheet and see if it doesn't have a submission date yet.  Well, when was the last time prime or Nicole went and even looked at this website?  Oh, he just did it yesterday, right?
+
+Matt Olejarczyk: 51:07 
+ Yeah.  Okay, good.  Yeah.  So the change.  Not change like the last crawl date or the last time we checked it date.  Yeah, that'd be a column we'd want to see.  Okay, good.  So.  So, so in short steps one through.  Really steps one through steps one and two are all about loading the database and having a mechanism to have a new customer or a new market we want to enter.  So that's really.  Or preload the database.  Right.  Like let's get it all loaded.  Take your sheets and load them all into the database.  So we're really only talking about setting up a schedule to do these on a regular basis.  But I wanted you to see that we have the mechanism to do that first component, which is like, hey, are there any other conferences that we're missing?  Let's identify those, I think.  And so let me know if this sounds like the right approach.  Sounds like you already have.  You already have all your sheets, your markets, your data.  That's the best starting point.  If we could do anything, it would be load the database with that and then let's pit Gobi agents versus the crawling and extracting thing that we've built here to see if we can identify opportunities better than Gobi.  Does that seem like a good next step?
+
+Nicolia Wiles: 52:35 
+ Oh, yeah.  I mean, I could tell you right Now Gobi is not.
+
+Matt Olejarczyk: 52:39 
+ Yeah.
+
+Nicolia Wiles: 52:40 
+ I'm going to have a better time paying some virtual assistant out of the Philippines.
+
+Matt Olejarczyk: 52:47 
+ Right.  To go do it.
+
+Nicolia Wiles: 52:49 
+ To just do it right now.  Be like three times as expensive as Gobi, but I would get results.
+
+Matt Olejarczyk: 52:58 
+ Yeah.  All right.  Yeah.  So we'll just use your list as a starting point.  We'll load up the database and we'll do some crawling and see what.  What kind of results we get.  If I could let me go to.
+
+Nicolia Wiles: 53:11 
+ Yeah.  I'll send you the four lists that I've got.  OR two conference cybersecurity for both.  Both for cyber security and for clean energy, we'll call it.  I've got the conference and the award list for both of them.  Perfect.  Something else that we need to do here.  I'll see if I can do a quick.  There we go.  So, like, this is like the conference one for Arnica.  So this is the cybersecurity.
+
+Matt Olejarczyk: 53:42 
+ Yep.
+
+Nicolia Wiles: 53:43 
+ So we talked about, like, these verify.  I just verified this with your work on.  On the owasp, but I got to get on this, like, right away.
+
+Matt Olejarczyk: 53:54 
+ Yeah.
+
+Nicolia Wiles: 53:58 
+ So right.  These need to be verified.  So we understand that part.  The other thing that it needs to do on like a weekly basis.  So every week it should go now, I don't have any of these because I know that we're already past any of these having verification.  And since it doesn't say needs verified, it won't crawl.  So it's just starting for ones in September.  I can tell you right now this one is not going to bring anything up because it's probably too late, but.  So it's working on these.  Yep.  And it does that every week.  But what I need built in as well is let's go all the way back, you know, and look at Secure World.  Right.  Let me bring it over.  Like, so we got Secure World Expo.  Well, that was in January.  So what I.  Another crawl that it needs to do every week is if the date has passed.
+
+Matt Olejarczyk: 55:00 
+ Yep.
+
+Nicolia Wiles: 55:01 
+ Did it find a new date?
+
+Matt Olejarczyk: 55:04 
+ Right.
+
+Nicolia Wiles: 55:05 
+ Like, let's just see if Secure world has a 2027.  It should.
+
+Matt Olejarczyk: 55:10 
+ Yeah.  For next year.
+
+Nicolia Wiles: 55:21 
+ Oh, there's become a speaker.  Oh, it's got a whole bunch of them.  Okay.
+
+Matt Olejarczyk: 55:27 
+ St. Louis.  Yeah.  How do you want to handle multiple locations for those things?
+
+Nicolia Wiles: 55:35 
+ Yeah, this one's interesting.  So this would be.  So it doesn't have anything fast.  2026.  Interesting.  So if it's got all of these should all be listed as opportunities.
+
+Matt Olejarczyk: 55:55 
+ All right, I'm going to put this in the transcript.  SecureWorld IO, multiple locations for reference.
+
+Nicolia Wiles: 56:01 
+ Yep.
+
+Matt Olejarczyk: 56:02 
+ All right, I'll look at that one.
+
+Nicolia Wiles: 56:04 
+ So.  And then it's got.  Somewhere down here was.
+
+Matt Olejarczyk: 56:07 
+ Yeah, See, that's a perfect example of where a good.  So getting the information is one thing, and then having a good AI know that.  Well, there's multiple conferences I need to.  That would be a great example of where I think if you want to spend money on tokens, that's where you want to spend it on the smart extraction.  Right.  Like, use a good model.  That's going to understand that and get that information.  That's, that's what I've learned from this whole process is that at least right now, don't pinch pennies on the good information extraction.  But it's not.  I mean, you're talking the difference between like a couple bucks and 10 bucks to use a good model.  You know what I mean?  It's like jump.  It's nothing.
+
+Nicolia Wiles: 57:01 
+ Yeah.  See this one, January 25th, start date 2027.  So the system should have.  Oh, it did.  So it's got.  Yep.  So it did it on the 16th and it found that there was a new start date.
+
+Matt Olejarczyk: 57:20 
+ Excellent.
+
+Nicolia Wiles: 57:23 
+ Or maybe I did that.
+
+Matt Olejarczyk: 57:29 
+ Understood.
+
+Nicolia Wiles: 57:32 
+ Yeah.  Okay.  So, yeah, here's 2012, and it is February 16th conference.  February 17th, 2027 through the.
+
+Matt Olejarczyk: 57:45 
+ Yep.  17 Through the 19th.
+
+Nicolia Wiles: 57:47 
+ So then I would look at this and go, okay, so that's.  What was it?
+
+Matt Olejarczyk: 57:57 
+ February 16th, 17th through the 19th.
+
+Nicolia Wiles: 58:01 
+ This would be six.  Yeah, so I probably did that myself, but perfect.
+
+Matt Olejarczyk: 58:07 
+ No, that's really good.
+
+Nicolia Wiles: 58:09 
+ I.
+
+Matt Olejarczyk: 58:10 
+ And you'll send me the links to these sheets, right?  Well, okay.
+
+Nicolia Wiles: 58:22 
+ Yeah, These four of them up here.  So, like.  And this is the one that is just the awards.
+
+Matt Olejarczyk: 58:30 
+ This looks like this has.  This looks like the sheets changed or matured a little bit.  Is that accurate?
+
+Nicolia Wiles: 58:36 
+ Yes.
+
+Matt Olejarczyk: 58:37 
+ Okay.  That's quite a bit different.  It's very streamlined.
+
+Nicolia Wiles: 58:43 
+ Yeah.  So we've put a little more into it.  Like this one, I need to verify these and see if these are.  Well, that's fast.  But this one, that one's fast.  But.  So that's the deal.  Like, I, I need to have something to where I'm not doing this all myself.
+
+Matt Olejarczyk: 59:12 
+ Right.
+
+Nicolia Wiles: 59:13 
+ Like this.  If it was just this, with what we're looking at, this is not so difficult that I literally couldn't spend two or three hours and go and get it done myself.
+
+Matt Olejarczyk: 59:24 
+ Right, right.
+
+Nicolia Wiles: 59:24 
+ The issue is, like, if I want to.  To really bring this to something that I can truly monetize on a much larger Level with a whole lot of industries, then it's going to take a lot more time.  And that's where I've got to have AI Either AI can.  Can do it, or I hire somebody out of Philippines to get it.  Hopefully AI can just get it and run with it, because there's other things that I want to get done.
+
+Matt Olejarczyk: 59:54 
+ Yeah.
+
+Nicolia Wiles: 59:55 
+ That needs AI to do.
+
+Matt Olejarczyk: 59:58 
+ Yeah, No, it's good.  I think this is.  This is much cleaner.  Excuse me.  A clean path forward on what we need to get done here.  Let me share.  Can I share?  Let me share again here.  I wanted to show you because I.  Okay.  See if this comes up.
+
+Nicolia Wiles: 01:00:32 
+ Perfect.
+
+Matt Olejarczyk: 01:00:36 
+ Now we're back to that silliness.
+
+Nicolia Wiles: 01:00:42 
+ Window.
+
+Matt Olejarczyk: 01:00:42 
+ Maybe.  All right, let's try this.  Oh, why?  Why?  You know, I didn't really do anything different, Nicole.  I'm just.  I. I just hit the button and it should.  And it goes to the.  It goes to that silly.  All right.  Are you able to see the Central Intelligence Dashboard?
+
+Nicolia Wiles: 01:01:24 
+ Yes.
+
+Matt Olejarczyk: 01:01:25 
+ All right, well, I'm not gonna be able to click here, but that's fine.  The idea here is to be able to surface.  Kind of critical actions for the.  From the database perspective on activity.  So, like, I don't know if you could see the status over here, but this world, Hydrogen Summit, action required, like, things that we like.  So the database goes and it gets all this new information, right?  And you go into the sheet and there's going to be a bunch of stuff updated, having a way to say, hey, look at me, I'm new.  And by the way, it's.  It's urgent.  It's like I need.  Either need to take action or it's urgent, you know, etc.  So this was just a swag at.
+
+Nicolia Wiles: 01:02:25 
+ Oh, yes.
+
+Matt Olejarczyk: 01:02:27 
+ Yeah.  How do we want to see that?  On the left is the.  Is the process, like, overview.  So this is, you know, the prompts and all that stuff.  This is more of the process that the engine behind the scenes would follow and it would be.  But then at the end of the day, how do we want to.  How do we want to present the information here?  And then the second thing I wanted to show was.  But let's see.  Try this one.  I want.  I want to share.  I want to share the.  I really wanted to share the project status.  Here we go.  Be nice to me.  Okay.  I may have to go back and forth to.  To show you, but from.  From a project perspective.  Yeah.  So really just the designer, the core extraction stuff.  Got it.  That.  That's not what I want to show back to you.  Let me scroll down.  And then Share just to kind of show you where we're at and what's left.  Okay.  So the ability to identify conferences that may supplement your.  Your master list.  Right now those are kind of like the first two steps.  And then the third step was, well, there's M2 because we started M0, but that was like the core extraction, like the capability to crawl and extract.  This is how I keep track of what I'm working on the milestones.  But the dashboard.  Yeah.  So this was complete.  This is like the MVP what I showed you with, which had the six steps.  And then the hardening is really the making sure everything works and works well.  So I ran a bunch of QA tests.  Like, is it getting the information?  One of the things that happens a lot and I don't know what Gobi's capabilities is, but when you're doing crawling, when you're going out to websites and stuff, a lot of times that gets blocked.  And there's three or four different mechanisms that websites use to stop from agents from going to crawl.  So I did take my ability, like my results, my crawling results up from like 70 to 90 plus percent.  So if the information is available, it's going to get it.  9 Out of 10.  Now it's not 100 because there's a few sites that are quite excellent at bot blocking, but that's where I spend the bulk of my time is around the quality.  Right.  So like I said, it's above 90% right now based upon, you know, hundreds of crawls.  So that's really what this POC hardening is and like making it actually work.  So.  And also the earlier steps, like the architecture, because the mechanisms by which to go do the crawling and all that.  And like I said, these things are limited by tech.  So I'm using like four different bot detection workaround protocols to actually get those numbers really high.  So a lot of the work I've been done has been like, just to make it work.  Things like the customer presentation layer, which is like having it not only.  So I was only looking at this as like customer presentation being you and your team going and verifying the master database.  But I realize now there's the second one, which is your customers and a presentation layer for them.  So that would go in here, obviously it's going to take a little bit longer.  And then I wanted to show you this.  So this is the automated scheduling and alerts.  So that thing I showed you was just kind of a rough view of what that might look like.  But really the conversation is when we find new things, if there's a new.  When we do these crawling, we can trigger alerts to say, hey, I found these new CFPs and we could send reporting out like by market.  Like we could develop that, you know, however you want.  Where you get, you could either get immediate notification or you get like an end of day, you know, crawl report that shows these are the new opportunities.  Opportunities that we surface by market, whatever.  We can build that out pretty easily from the database.  That's what this M6 is.  Yeah.  And then the weekly executive report, which is really a little bit more than just the alerting to the CFPs and opportunities, but it's more of like, you see, I got like failures and metrics.  That's really a measurement of how the system is working as a whole in addition to the opportunities.  Right.  Like, are we doing a good job extracting and like, what.  How good are we at finding things and you know, etc.  So.  Oh, and then the last one, you scroll down.  I do.  I did take into consideration, I did.
+
+Nicolia Wiles: 01:08:06 
+ Take into consideration is the client portal.
+
+Matt Olejarczyk: 01:08:09 
+ Yeah, yeah, the client portal, that's M8.  So I didn't know exactly what that looked like, but you definitely gave some clarity around them, adding notes and those kind of things.  So that's cool.  And then production hardening, obviously this is a lot of unknown because we hadn't had that conversation, so I just swagged it.  But these time frames are definitely shrinkable.  But that, this is, that's kind of what I was looking at as far as requirements.  Now, all that being said.  Oh, I think I scrolled and you can see it now.
+
+Nicolia Wiles: 01:08:43 
+ Yeah.
+
+Matt Olejarczyk: 01:08:43 
+ Oh, cool.  All right, Perfect.  Yeah.  So yeah, this is just kind of showing requirements and what I have built versus what I need to.  These are the gaps and strengths.  But again, like a lot of this stuff, the automated scheduling and the email alerts, weekly reports, like, this is easy stuff, that's not hard.  So this is really the value, the extraction path, which is solid.  Now we obviously I built, when I built this out, there's a layer that you look at on your spreadsheet, right.  And then there's like all of the tracking of the automated activity that's going on.  Like, did we find it?  What date did we crawl?  What did we find on those dates?  So kind of like the transactional historical activity of the crawling that I think we want to maintain from a.  How good is this engine working so we can continue to improve it.  So that's more of this schema that has More columns.  Obviously it's going to be data you don't really ever want to see when you're actually working it.  Crawl path memory.  Yeah, this is the multimodal discovery is steps one and two.  And then kind of taking the information that we get and baking it out into filterable data, all of it would be.  And then CSV export.  I have that built in as well.  All right, here's what I wanted to get to super quick.  So what I'd like to do, if possible, I'd like to set up like shorter cycles, like weekly calls to say, here's where we're at, here's what we built.  Because I think that on the front end of this, getting the architecture right was really the hard part.  But I have really good confidence around that.  But from here, I think like weekly or once or twice a week kind of thing, so we can just blast through this more quickly.  And here's the other thing.  I wanted to share more in our discussion about how we're working together.  This, this part is, this part here, the six weeks to mvp, this is the part that really bothers me.  And it's okay that it took a while, but this is a really, as you're finding out, it's like a really hard problem to solve because of bot blocking and you know, web brow.  Like, this is a difficult problem.  It's, it's not turnkey right now, but that's why it's valuable to build.  However, I, this also, when I saw this, it brought me to the conversation of like, how do we do this?  How do we do this quicker?  So I'm really, I'm open to that.  I think having.  Sorry, I stopped sharing.  Yeah, I think having a stronger tool set.  So what I probably just do is what's the mechanism if I need to like build tokens or what have you?  I'm okay continuing to do this, like to build something together.  And I'm not like charging rates or anything like that.  But I do want to have a business conversation about kind of a little more formal of like how you see this playing out so that I have an idea.  I'm honestly going to defer you to you on this because I've done business, I've had businesses on my own and I typically, it's like build a software and then charge for the software or whatever.  But this is a little bit different.  So I'm going to trust your lead on, on how you want to do this really just being fully transparent.  I don't know.  So, so what do you think?  And if you need to take some time.  But like.
+
+Nicolia Wiles: 01:12:32 
+ Well, I would.  So I, you know, I would put it out there with the two different ways that I've looked at it.
+
+Matt Olejarczyk: 01:12:38 
+ Yeah.
+
+Nicolia Wiles: 01:12:40 
+ Like with the software designer and everything that did brandable pr, there was no AI or anything in that.  That was just a brandable deal that I think you can even check out brandable-pr.com and that's where you could go and say, okay, these are the different publications I want to be.
+
+Matt Olejarczyk: 01:13:01 
+ Yep.
+
+Nicolia Wiles: 01:13:02 
+ Featured in.  And it's got prices.  Right.  And then you just pay.  Yep, that's all it is right now.  So everything I'm looking at doing now is going on putting more value onto that brand.  Like I just paid them straight out to build that.  Not the website, but the software that.  As an app on the website.  So that's it.
+
+Matt Olejarczyk: 01:13:31 
+ What is it?  What does that mean, a software that's an app on the website?  Help me.
+
+Nicolia Wiles: 01:13:35 
+ So you've got like here, let me see if I can.
+
+Matt Olejarczyk: 01:13:39 
+ I've seen it.
+
+Nicolia Wiles: 01:13:40 
+ So you go to like brandable-pr.com and that's just a WIX page.  Right.  And then you click in to go to the publications and it goes to app.brandable-pr.com and that's the webs or the software that these designers built in Figma that runs on cloud, Cloudflare or something like that.  Yeah, so that's the software that they built.  So that's just my background.  I'm not super technical.  Right.  Especially when it comes to this kind of stuff, like an engineer would be.  So I built the website and then they built the software that runs as an app on that same domain.
+
+Matt Olejarczyk: 01:14:27 
+ Okay, got it, got it.  Yeah, you've got the domain that.  There's the app that basically has the database behind it that allows people to sign up for services and purchase.  It's like a store almost where they can purchase things.  And then you have.
+
+Nicolia Wiles: 01:14:43 
+ And we've got a back end that we can go and make edits and change all that stuff, blah, blah.
+
+Matt Olejarczyk: 01:14:50 
+ Okay.  And then you, then you have the piece which is.  And then right now for those services you're, you've got your stuff that you're doing manually, for example, your spreadsheets and all that of which they can go in and do that now do they have as part of brandable ui they have a customer login?  I would assume so.  They can go filter.  They can when they sign up and they get, let's say they do this conference thing, right?  I just need to understand how that connects.  So they do they have a UI experience for like what does their conference experience look like right now?
+
+Nicolia Wiles: 01:15:28 
+ So we don't have any of that yet.
+
+Matt Olejarczyk: 01:15:30 
+ Gotcha, gotcha.  Okay.
+
+Nicolia Wiles: 01:15:31 
+ So that's what we're working on building.
+
+Matt Olejarczyk: 01:15:34 
+ But that lives, that really lives on the brandable ui.  I would say we just need the data behind it.  Because they already have a user login on the brandable.  Right?
+
+Nicolia Wiles: 01:15:47 
+ They have, there's a whole deal.
+
+Matt Olejarczyk: 01:15:50 
+ Right.  All right, good.  No, that helps because then all we need to do is we have the main database and all of that and that just needs to feed that app in a way that they can then filter it and add their preferences and what have you.  I, I think that's the right, that'd be the right approach because that's where that lives now that, I mean it's already got the role based access where they've got the password and all that and they log in and now it knows who they are.  So we just need to feed the, we need to feed the master data.  I would say the work that's required on that end would be like here's the master data, guys.  And then they would just connect to that and then they could filter based upon.  So I don't need to build role based access and logins and all that.  That, that would make sense.
+
+Nicolia Wiles: 01:16:44 
+ So that's a great question and honestly I'm not 100% sure because there are a couple different ways that we can do this.  Okay, there's the brandable page right now and it is set up only as like you're a user.  You, you sign in because you have to have like a credit card associated with it, right?  You've got to have that kind of sign up.  So once you're signed up, you're in, you're now a member of the site.  You can go pick whatever publications you want.  Right now there's a little deal at the top that says conferences, but you click on.  It's not active because it doesn't go anywhere.  We don't have anything.
+
+Matt Olejarczyk: 01:17:23 
+ Right.
+
+Nicolia Wiles: 01:17:24 
+ now as we started building brandable, the idea was hey, we're just going to sell publications or articles in the publications.  Then I started thinking, well hey man, we can really make this a lot bigger of a website.  We make this to where you've got like a one stop shop for all your Like PR in a box.  Right.  And so then I started thinking, oh crap.  Well, now we need like pro.brandable-pr.com.  Because the idea was if you've got a little pizza joint in Miami and you want to be covered in Miami Weekly, you could go to Brandable, you could get a feature in Miami Weekly.  You pay your 800 bucks, you're done.  Well, if you're a little, if you own a little.  Your Joe Schmo that owns a pizza joint in Miami, you're not going to be trying to sign up for all the stuff that we're doing here with conferences and awards and stuff.  This is agency level stuff.
+
+Matt Olejarczyk: 01:18:23 
+ Right.
+
+Nicolia Wiles: 01:18:23 
+ So then I was thinking, oh, well, now we need to have like a pro version.  So maybe we have it to where you click on the pro version and instead of app brandable, it takes you pro brandable.  And that requires an whole new access.
+
+Matt Olejarczyk: 01:18:43 
+ Yeah.  Are your other features that you want to add.  So conferences is obviously a big one, like high level do.  Are they gonna.  Because the architecture behind this I see is.  Yeah, there's like a, there's this whole big database now that's connected to.  Yeah, I'm with you.  I don't know because I don't know the, I don't know that end.  What it looks like.  And I don't know your developers and.
+
+Nicolia Wiles: 01:19:06 
+ The, and yeah, and my developers, I mean they were just some guys I met on Fiber.
+
+Matt Olejarczyk: 01:19:12 
+ Okay.
+
+Nicolia Wiles: 01:19:14 
+ I mean they're co guys named Sharif.  He works all in Figma.  He's done a pretty good job for a couple thousand bucks.  I mean, I can't be.
+
+Matt Olejarczyk: 01:19:23 
+ Yes.
+
+Nicolia Wiles: 01:19:24 
+ Right now we might get to a point where we get all of this kind of working and then it's like, oh, okay, now we got to spend 10 grand, 20 grand to like really build this the way it's supposed to have been built.
+
+Matt Olejarczyk: 01:19:37 
+ But yeah, if you, when we get to, you know, if you need me to talk to him about like what's set up and how it's set up and what he's capable of, I can have that conversation.  Because Sigma is really just a design that's really just the design that's.  That's not like the data infrastructure and all that behind it.  Figma's just a. I don't know what to call it, but it's more of like a UI designer software thing.  I don't know.  Software, right?  Yeah, it's what we use to design what everybody sees.  But, but that's not like the Database architecture and all of the code and all that stuff behind it.  So I'm familiar.  I wear.  Use Figma all the time.  But the.  So I still have the question of like, what's behind the scenes, what he can do.  Because, because I don't know if he's going to be the guy or if.  But I could have that conversation, like super easy.  But that's, you know, however you, yeah, however you want to do that.  That's, that's a easy conversation.
+
+Nicolia Wiles: 01:20:41 
+ Yeah, that'd be huge.  So, so then to answer your question, right, there's two different ways that I was looking at this is.  It's, it's.  It's either option A or option B.  Option A is take a look at everything and say, okay, this is how much you would charge to develop the software.  Right.  Hand the software over.  Thank you.  Here's the check done.  Or which I think would be a better deal is you become partner and you get equity right, in the company and a percentage of all the sales in perpetuity of the company.
+
+Matt Olejarczyk: 01:21:24 
+ Yeah, that's the most appealing for sure.
+
+Nicolia Wiles: 01:21:26 
+ And then it's obviously it's not just, hey, build this and we're done.  It's like, oh, yeah, we're.
+
+Matt Olejarczyk: 01:21:32 
+ Yeah, I'm.  Well, I'm an.
+
+Nicolia Wiles: 01:21:34 
+ It's in the game and anything that we need to update or do, it's like you're a member of the company.  Right.
+
+Matt Olejarczyk: 01:21:40 
+ Right.  Yeah, yeah, that sounds.  I'm, I'm really good with that.  I'm really good with that approach.  I, I just, I feel like that's the cleanest and it's also the, you know, Matt delivers great.  If Matt doesn't deliver, he doesn't.  And I'm always good with that because that always works.  It always works out better.  And I also think there's, I think there's value in AI is changing so fast and I think there's value in.  I don't know if there, if you see the value in these interactions, but like having an AI person that you can talk to, that you can trust to, that is on the front end of things and how things are changing is going to serve us both well.  It's going to serve you well for sure.  Because I'll just be transparent.  Like, I'm not gonna like, we're building this thing and if Google comes out with a thing that does this like super easy, you know, maybe they will in six months, maybe they will in a year and a half, but at that point, like, if it can do it for free, we just, we say, okay, well, rather than eat all these token costs, we're going to switch to this model.  We're going to, we're going to change this out and now it's going to be cost free to run it.  But, but I'll tell you about it.  You know what I mean?  Like, this is going to save everybody money because this improves the margins for the whole deal.  And I'd rather do that because I don't feel good about, like, the reality is, like, what costs money, like, what costs $5,000 today is going to be free next year.  And so like, always want to be planning for updating the technology to make it because we have to be, we have to be fast.  We have to be, we have to be adaptable.  And, and everything that I build in a modular, componentized way so that we can, you know, connect, disconnect.  I think it's really important.  A lot of these things people build and they're so, they're these big globs of code and you can't adjust.  And then you got to hire a developer to pay them $20,000 to change everything.  And it's just like, that's no way to go.  So.
+
+Nicolia Wiles: 01:23:45 
+ Yep.
+
+Matt Olejarczyk: 01:23:46 
+ Yeah.  All right, so how do we, So I guess I'll just.  So transparency costs, like, I need at least say 250 to 500amonth to just in token usage.  So.  Okay, if that's a, if.
+
+Nicolia Wiles: 01:24:05 
+ That's easy, I'll send you like, what's the.  I'll send you 500 bucks a month so that you can develop and just go.
+
+Matt Olejarczyk: 01:24:15 
+ Yeah.  Not be constrained.  Yeah.  Because even, like now some of the plans that I'm on, like, I, I burn them out in three days and I'm like, I have to subscribe to the greater plan to even do work, like in two, three days.  And it's a weekly reset.  So like I, I have to have that bandwidth to even be able to opt, like, to build fast enough.
+
+Nicolia Wiles: 01:24:38 
+ Yeah, speed is a big thing, right?  So let's, you know, make it 500 instead of 250.  Give you plenty things to, so that you can go and do all the things that you need instead of saying, oh crap, I'll wait till next week to do this because I don't have credit.  Like, no, do it all right now.  All right.
+
+Matt Olejarczyk: 01:24:58 
+ That would, that would help a lot.
+
+Nicolia Wiles: 01:25:00 
+ Get that to you.  Is that like sell or cash app or.
+
+Matt Olejarczyk: 01:25:05 
+ Let me think about that.  I've always done that with like a subscription service and it just kind of like we.  Like with Search Sniper, you just have a thing and it does.  But.
+
+Nicolia Wiles: 01:25:18 
+ Yeah, you figure out whatever you'd like.  I'll.  I'm easy.  What.  Whatever it is that, that gets you the money.
+
+Matt Olejarczyk: 01:25:24 
+ Okay.  Yeah.  The company's AI Digital Agents is the llc, which is what I.  Which everything goes to.  So whether it be invoice and check or however it works, it doesn't matter.  I can deposit it into that business account as long as it's made out to AI Digital Agents llc.  Do you need an invoice for that or.
+
+Nicolia Wiles: 01:25:52 
+ Yeah, if you want to send me over that.  I mean, I can have like, I could do a Zell or I could have Chase, you know, sends out checks.  Okay.  Monthly.  Right.  It'll just, I can send it out tomorrow morning and it'll show up every 18th.
+
+Matt Olejarczyk: 01:26:12 
+ Okay.  All right.
+
+Nicolia Wiles: 01:26:15 
+ And I'll give you a quick rundown of some of the things that I'm looking at as like, phase three, phase four, phase five.  So out of the whole deal, like this PR in a box, what we're talking about right now is phase two, Phase three would be AI assisted pitching.  So I've got like I was looking at instantly.  Right.  But it could be any of these, you know, cold email programs.  And luckily we don't have to even worry about the major issue with cold email because all of these editors are opted in.  Like you could send 10,000 emails and it's not going to affect your domain.  Right.  You can send it all from one email address.
+
+Matt Olejarczyk: 01:27:08 
+ How many emails are you estimating?  Are you talking about 10,000?  Are you talking about 250?  It does matter.  What do you think?  Are you thinking it's going to be big numbers like that?
+
+Nicolia Wiles: 01:27:18 
+ Like 10,000 out of this one for the PR side that I would call like warm emailing.  Most people, like, if you sign up for this system.
+
+Matt Olejarczyk: 01:27:31 
+ Yeah, yeah.
+
+Nicolia Wiles: 01:27:32 
+ You are not going to be sending any more than say 30 to 40 emails a day, right?
+
+Matt Olejarczyk: 01:27:38 
+ Yeah.
+
+Nicolia Wiles: 01:27:39 
+ Maybe 60 at max.  Right.
+
+Matt Olejarczyk: 01:27:41 
+ Yeah.  I mean, and if they want alerts, you know, email alerts for new conferences as they.  Yeah, it could be, but it's not going to be a bunch higher.
+
+Nicolia Wiles: 01:27:49 
+ Okay.  Yeah.  So that'd be a separate deal.  But like this one would be the reason why it's got such great value is, you know, let's say my client Arnica.  Right.  They're the cybersecurity company There.  Well, I want to get Arnica coverage.  So what I do right now is I develop pitches and I go on and I know my cybersecurity and appsec editors and I send them emails or I call them.  Can I get them coverage?  Well, if you're going to use our system for this PR in a box, you probably don't have all these relationships and you don't have all of these people.  So first you would go into this UI UX and you would say, okay, find me, create a media list of all of my guys that cover Cyber Security and AppSec.  It would go find that list, create that list for you.  You could download it if you wanted, or it just stays in the system and then it would give you a prompt and say, what do you want to like, what angle do you want to pitch?  Is it trend or is it hard news?  That's a big difference because if it's trend, it handles all of that for you.  It will go through the system.  It will look at the editor's last article specific to what you requested, like cybersecurity, AppSec, and it will create a pitch, a three or four or a three sequence email campaign, all specific to what that editor had just written about.  So it'll go through.  And I've had this working with like Chat, GPT, Claude, whatever, and say create out of this list, take a look at column I that has the URL of the latest article, review it and then create a intro statement for the email.  So it's a. Hi Matt, just reading your last article title, blah, blah.  I read what you said about points X, Y and Z. Yep.  Because of that, I thought you would be interested in speaking with Arnica.  They have a unique perspective on this.  Right.  If it's just trend, it would write that entire pitch and send it out for you.  Yeah, send say 30 a day.  So if you've got a list of, you're covered all month now, I don't want it to just be a trend, I want it.  We've got a new product announcement coming out next week.  Week.
+
+Matt Olejarczyk: 01:30:29 
+ Yep.
+
+Nicolia Wiles: 01:30:30 
+ So say, okay, so then it would give a, a prompt of what is your press release or what is your pitch.
+
+Matt Olejarczyk: 01:30:40 
+ Yep.
+
+Nicolia Wiles: 01:30:41 
+ So you as the person would now have to upload that.
+
+Matt Olejarczyk: 01:30:44 
+ Right.
+
+Nicolia Wiles: 01:30:45 
+ The prompt or the dialog box.  The system will then take that, create a intro statement from the last article that they wrote and then segue it into the pitch about your hard news and then that would go out.  So now the editor gets that and it's like, oh look, this guy actually read my last piece.  He actually follows what I do.  Awesome.  Let's give him a response.  Where all the other guys that are just sending me mass emails switch.  Screw them.
+
+Matt Olejarczyk: 01:31:20 
+ Right.
+
+Nicolia Wiles: 01:31:21 
+ So that's what this system would do.  Right.
+
+Matt Olejarczyk: 01:31:24 
+ And you said you had this working.  Does that mean that you're, you're doing that now with GPT or you're like, it's.  You, you have the process, like you just clearly articulated what the process is.  Do you have that automated or that would be.
+
+Nicolia Wiles: 01:31:38 
+ It is not automated.
+
+Matt Olejarczyk: 01:31:40 
+ Okay, so just taking that and automating it.  Perfect.
+
+Nicolia Wiles: 01:31:43 
+ Semi automated to where I upload a list and because it's only like 200 chat or Claude can handle it.  But when you get to the list of like five grand, 5,000 of them chat and Claude are like, no, I can't do it.  It's too much.  I hallucinate.  It's crazy.  Yeah.  Okay, so in this one I, I can do it, but it's not automated.  I've got to go do a bunch of stuff and then I could build out my sequences instantly and then I can do it.  So I spend two hours and now it's pitching for me all month.  Right, that's great.  But if I want this to work as a system, right.  It's got to be fully automated.  So it's got what I'm doing there and do itself.
+
+Matt Olejarczyk: 01:32:34 
+ No, perfect.  You speak of my life speaking my language.
+
+Nicolia Wiles: 01:32:38 
+ That's phase three.  And phase four is something I think is really cool.  Where now it's true cold email, now it's marketing.  It's not PR at all now.  Now it's sending cold email to companies to, for like PR service or something like that.  Right?  So it's not even in the PR world anymore.  It's all, it's all marketing.  What I said is, okay, now I got seamless AI.  Let me get a list of 10,000 contacts of people who are CMOs and VPs of marketing in the tech world that I can email through instantly with the pitch about why they should be working with prime pr.  But now if I want to give it that same level of hyper personalization, that means I've got to go.  And instantly it gives me their LinkedIn profile.  Yeah, but as you probably know, I can't upload a list of 10,000 people into Claude and have it generate a truly personalized email, opening sentence or opening paragraph to that person.  One because it's 10,000.  It's too many.  It won't do it.  But it also can't go into LinkedIn and review their profile.  So I let me pull this other one up.  I went and found.  This deal called apify and for a price I can get it to go scrape every one of the 10,000 and pull the about section, add that to the 10,000 spreadsheet.  Out of the 10,000, I'll probably get 9,000.  Some of them aren't worthy.  And then I run that through this Google collab and it can then do what I needed and it creates out of that spreadsheet, say 9,000 out of the 10,000.  It gets me a spreadsheet with a personalized intro statement.  Now I go into instantly and I write out my sequences and I just have, you know, hello, first name, there's a personalization and then I just enter intro sentence for the first sequence and it grabs it from that spreadsheet and populates it.  And now I have a truly hyper personalized intro statement that Apollo can't do, Clay can't do instantly can't do.  Because nobody can go through and truly get that info for from LinkedIn unless they go through that whole system that I just did.  Now I want to take all that system and make it fully automated.
+
+Matt Olejarczyk: 01:35:56 
+ I just have to say, I know I told you this before, I'm massively impressed.  I know this is your world tech and all this stuff, but I'm impressed you even know what apify, you're the first person I've ever talked to that knows what that is.  That's not in the middle of this stuff.  Super impressive.  Yeah.  That's actually one of the, probably some of the best ways to do LinkedIn automation, so.  Oh, perfect.
+
+Nicolia Wiles: 01:36:25 
+ Yeah.
+
+Matt Olejarczyk: 01:36:25 
+ That's all.  And you even mentioned Google collab.  Like where did you even hear about that?  That's awesome.
+
+Nicolia Wiles: 01:36:34 
+ Tons of research, tons of talking to people and just let my brain open up.
+
+Matt Olejarczyk: 01:36:39 
+ Yeah.
+
+Nicolia Wiles: 01:36:40 
+ When I have an end goal, I will get there.  You're like, pretty, but I'll cobble together a bunch of stuff to make it work.  But then it's like, okay, who do I know that can take what I cobbled and yep.
+
+Matt Olejarczyk: 01:36:54 
+ Automate that.  Well, especially, I mean you've already identified the path.  We just have to automate that and.  And you're satisfied with the outcome as well.  So that's awesome.
+
+Nicolia Wiles: 01:37:04 
+ And I've already, I've been using it for prime PR and I've already gotten a bunch of positive response.  I haven't had anybody want to sign up yet, but I've had people send me emails saying, my man, I wish I needed a new PR agency because you just impressed the hell out of me.  You did all this research.  You looked me up, you mentioned some things that like, my colleagues don't even know about.  And I'm like, sure, I did.  Yes, I did.
+
+Matt Olejarczyk: 01:37:35 
+ See, what's really interesting is I, I built a system just like the one you described.  But what I found is I don't want to work with that many business because I would implement that for my.  Myself.  But I literally, I, like, I, I don't have the appetite for working with multiple business owners.  It's just I, I had an agency for a while, and I typically don't have a really good engagement with the customer, like, with you.  Like you, like you know what you want.  You can describe processes.  A lot of times it's like, I just need help with marketing.  Can you help me?  It's like, yeah, you know, but, well, like what?  Well, I just want more visibility.  This is not helping.  Okay, so that's phase four.  What do you got for phase five?
+
+Nicolia Wiles: 01:38:25 
+ So phase five, there's not a whole lot that I'm looking at, phase five right now, but I know that I want to incorporate somehow some of the stuff that you were working on with the voice agents.
+
+Matt Olejarczyk: 01:38:39 
+ Yeah.  Okay, cool.
+
+Nicolia Wiles: 01:38:40 
+ Right.  Being able to both AI voice that can handle incoming, but also outbound sales calls.
+
+Matt Olejarczyk: 01:38:51 
+ Yeah, yeah.  And that's tricky pending, like regulatory stuff.
+
+Nicolia Wiles: 01:39:01 
+ Right.  And I don't know how to get there.
+
+Matt Olejarczyk: 01:39:07 
+ Yeah.
+
+Nicolia Wiles: 01:39:08 
+ But like, I, I know that.  So phase four is where we go outside of the PR in a box thing.  But like, you, like, I want to be able to develop something where I don't have to work with 10, 15, 20 different companies.
+
+Matt Olejarczyk: 01:39:23 
+ Yeah.
+
+Nicolia Wiles: 01:39:24 
+ I want to be able to present them everything they need.  DIY it.  You guys go work it.  Right.  And now all you got to do is deal with my support, customer support people and billing, and they do all the work, you know, and I should be able to make a lot more money with a lot less stress.
+
+Matt Olejarczyk: 01:39:42 
+ Yeah, you've got, that, you've got the PR expertise and now you just.  How do you just automate the workforce to do unlimited scale?
+
+Nicolia Wiles: 01:39:52 
+ Yes.
+
+Matt Olejarczyk: 01:39:53 
+ Okay.  No, I love it.  So that all that is nothing surprising, or I should say intimidating.  So that's all.  That's all good.  Yeah.  We need bandwidth.  We need to rip.  Interestingly enough, the of all those things you described, the hardest problem is the first one, the one we're working on right now.  Like from a technology standpoint that the greatest limitation is the scraping.  Now the way that I do see it going is I do see a time where we'll be able to just set up a computer and just run it.  The extraction piece.  There's always going to be a token cost.  There's no way around that because like if you think about when you go to a web page and you're looking and you're assessing and you're making all kinds of judgments, is this relevant?  Is this not relevant?  Like that's what a model does.  Now the visual aspect of that, like not only not getting blocked but then being able to like make logical assessment of what you see, like that's getting exponentially better.  So we're not far off.  Again, I don't know if we're three months, I don't know if we're a year or two, but we're going to be super close on that.  So we're attacking the hardest problem first, but that's fine.  Well you know, if we can get it 90% and there's that feedback loop in place and you already have a mature database that we're just having to verify and it.  And if you have to hire a person in the Philippines to do the manual verification versus you know, super happy.
+
+Nicolia Wiles: 01:41:24 
+ If I'm having to pay 10,000amonth to verify everything because we have so many damn customers.
+
+Matt Olejarczyk: 01:41:31 
+ There you go.
+
+Nicolia Wiles: 01:41:33 
+ I'm not afraid to spend money if money's coming in.
+
+Matt Olejarczyk: 01:41:36 
+ Right, right.
+
+Nicolia Wiles: 01:41:37 
+ Hey, not a problem.
+
+Matt Olejarczyk: 01:41:38 
+ Yeah, the quick verification versus the paint like versus like the way you're doing it now with the link and going but see what you did there is we'll be able to automate that in the short term again I think confidence on like because we're automating package receipt where I work and so like we're visually scanning labels, running it against multiple databases and do like.  But went from like a 50% match rate and now by introducing AI we're up at like 97% package recognition.  Do you know what that does from a receiving efficiency standpoint?  Like our, like our SLAs through the receiving doc now and the amount of product that does not hit our non conformance that then has to be researched, looked up and logged into and you know it's.  Yeah, it's the companies that embrace this stuff are going to be the winners and the one that don't.  I mean you can't compete against that.  Like we just 50% reduction in labor, you know, on receipt.  And we're doubling every five years.  So like that's the kind of stuff we have to do.  When I started with this company, were 6.7 billion.  That was 10 years ago.  We're 30.  And it's not slowing down.  Like with all the.  We provide computer services and integrations and all that to customers.  Like, it's only getting worse.  Like we have to be able to scale.  So.  Yeah, I'm.  Anyway, digress.  What do you do for fun?  I do my job.  And then what do you do after for fun?  I do this stuff.
+
+Nicolia Wiles: 01:43:18 
+ Yeah, same.
+
+Matt Olejarczyk: 01:43:22 
+ All right.  We took a lot of time.  I. Oh, this was fun.  Yeah, it's good.  So I'll take the transcript.  Are we, did we run out or do you.  Are we still rolling?
+
+Nicolia Wiles: 01:43:34 
+ Yeah, it's still rolling.
+
+Matt Olejarczyk: 01:43:36 
+ Okay, good.  All right, well, I'll do exhaustive notes on this and then I, I think I'll be able to put together more targeted dashboards for.  Not only for the work, for this particular project, but I'll put one together for the five phases so we can have a nice quick project check on like milestones and how things are progressing.
+
+Nicolia Wiles: 01:44:02 
+ Awesome.  Yeah.  And you, you had mentioned like doing a weekly or something.
+
+Matt Olejarczyk: 01:44:06 
+ Yeah, yeah.
+
+Nicolia Wiles: 01:44:08 
+ If, like this time or this time, 4 o' clock central for me on Wednesdays works like, I could make that.  I don't have to say yes now, but if you want to think about it, like what time on a weekly basis would be.  Would be good for you.  It doesn't matter.  I'm always free at the 4 or 5 o'.  Clock.  Okay, time for it.
+
+Matt Olejarczyk: 01:44:36 
+ Let's just set up a recurring for now and then we'll see how it goes.  The.  If, if I need a quick touch point, just like, hey, here's where I'm at and I need a quick feedback loop.  We could set up a, a 30 minute show and tell to show you where we're at and you could help me pivot to like.  I like this.  Let me see this, this.  You know, can you add these filters?  Can you do, you know, whatever.  And we'll just.  Yeah, we'll go from there.
+
+Nicolia Wiles: 01:45:01 
+ Beautiful.
+
+Matt Olejarczyk: 01:45:02 
+ All right, sir, Appreciate the time.
+
+Nicolia Wiles: 01:45:04 
+ Indeed.
+
+Matt Olejarczyk: 01:45:06 
+ All right, we'll talk to you next Wednesday, if not before.
+
+Nicolia Wiles: 01:45:09 
+ Perfect.
+
+Matt Olejarczyk: 01:45:10 
+ All right, thank you, Nicole.
+
+Nicolia Wiles: 01:45:12 
+ Bye.

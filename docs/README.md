@@ -8,6 +8,10 @@ This folder separates **inherited reference material** from **documentation we a
 docs/
 ├── handoff-from-vps/     # FROZEN reference imported from the old VPS "PR Monitor 1" build
 │   └── 00-INDEX.md        # ← read first: tiers every carried-over doc + the exclude list
+├── voc/                  # Voice of Customer: raw call transcripts + authored VOC-MASTER.md
+│   ├── VOC-MASTER.md      #   living customer-voice synthesis + locked decisions (§0)
+│   ├── transcripts/       #   raw, unedited call recordings (source of truth)
+│   └── Utility Global Conference List 2026.xlsx   # real customer sheet (15-col output format)
 └── (design/)             # AUTHORED docs for THIS build — add as decisions get made
 ```
 
