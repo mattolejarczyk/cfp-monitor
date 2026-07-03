@@ -80,43 +80,69 @@ def _looks_blocked(r) -> bool:
     return len(str(getattr(r, "markdown", "") or "").strip()) < _MIN_MARKDOWN
 
 
-async def _render_with_consent(url: str, settings, tracer):
-    """Render `url` in our own Playwright, dismiss consent, return (html, anchors, status)."""
-    from playwright.async_api import async_playwright
+# --- Shared fallback browser: launched ONCE per run and reused across pages (perf).
+# A fresh context per page keeps sites isolated. Headless browsers get 403'd by some
+# platforms (Reuters Events), so the fallback runs headed by default (settings). ---
+_FALLBACK = None  # tuple[playwright, browser] | None
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=settings.playwright_headless)
+
+async def _get_fallback_browser(headless: bool):
+    global _FALLBACK
+    if _FALLBACK is None:
+        from playwright.async_api import async_playwright
+        pw = await async_playwright().start()
+        browser = await pw.chromium.launch(headless=headless)
+        _FALLBACK = (pw, browser)
+    return _FALLBACK[1]
+
+
+async def close_fallback_browser() -> None:
+    """Close the shared fallback browser at the end of a run (call from run_urls finally)."""
+    global _FALLBACK
+    if _FALLBACK is not None:
+        pw, browser = _FALLBACK
         try:
-            page = await (await browser.new_context()).new_page()
-            resp = await page.goto(url, wait_until="domcontentloaded",
-                                   timeout=int(settings.per_site_timeout_s * 1000))
-            status = resp.status if resp else None
-            # Dismiss cookie-consent: known selectors first, then a generic text click.
-            for sel in _CONSENT_SELECTORS:
-                try:
-                    await page.wait_for_selector(sel, state="visible", timeout=2500)
-                    await page.click(sel, timeout=3000)
-                    tracer.log("consent", url, f"clicked {sel}")
-                    break
-                except Exception:
-                    continue
-            try:
-                await page.evaluate(_ACCEPT_JS)
-            except Exception:
-                pass
-            # Let content settle after consent (the render lag that fools crawl4ai).
-            await page.wait_for_timeout(int(settings.fallback_wait_s * 1000))
-            try:
-                await page.wait_for_load_state("networkidle", timeout=8000)
-            except Exception:
-                pass
-            html = await page.content()
-            anchors = await page.evaluate(
-                "() => [...document.querySelectorAll('a[href]')]"
-                ".map(a => ({href: a.href, text: (a.textContent||'').trim()}))")
-            return html, anchors, status
-        finally:
             await browser.close()
+        finally:
+            await pw.stop()
+        _FALLBACK = None
+
+
+async def _render_with_consent(url: str, settings, tracer):
+    """Render `url` in the shared fallback browser, dismiss consent, return (html, anchors, status)."""
+    browser = await _get_fallback_browser(settings.fallback_headless)
+    ctx = await browser.new_context()
+    try:
+        page = await ctx.new_page()
+        resp = await page.goto(url, wait_until="domcontentloaded",
+                               timeout=int(settings.per_site_timeout_s * 1000))
+        status = resp.status if resp else None
+        # Dismiss cookie-consent: known selectors first, then a generic text click.
+        for sel in _CONSENT_SELECTORS:
+            try:
+                await page.wait_for_selector(sel, state="visible", timeout=2500)
+                await page.click(sel, timeout=3000)
+                tracer.log("consent", url, f"clicked {sel}")
+                break
+            except Exception:
+                continue
+        try:
+            await page.evaluate(_ACCEPT_JS)
+        except Exception:
+            pass
+        # Let content settle after consent (the render lag that fools crawl4ai).
+        await page.wait_for_timeout(int(settings.fallback_wait_s * 1000))
+        try:
+            await page.wait_for_load_state("networkidle", timeout=8000)
+        except Exception:
+            pass
+        html = await page.content()
+        anchors = await page.evaluate(
+            "() => [...document.querySelectorAll('a[href]')]"
+            ".map(a => ({href: a.href, text: (a.textContent||'').trim()}))")
+        return html, anchors, status
+    finally:
+        await ctx.close()
 
 
 async def fetch_page(crawler, url: str, cfg, settings, tracer) -> PageFetch:

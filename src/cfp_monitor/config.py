@@ -54,7 +54,9 @@ class Settings:
     # dismiss the cookie-consent banner (the real blocker), wait for content, then feed
     # the rendered HTML to crawl4ai (raw://) for markdown.
     playwright_fallback: bool = os.getenv("CFP_PW_FALLBACK", "true").lower() != "false"
-    playwright_headless: bool = os.getenv("CFP_PW_HEADLESS", "true").lower() != "false"
+    # Fallback runs HEADED by default: headless browsers get 403'd by some platforms
+    # (verified: Reuters Events / OneTrust). Headed also fits the "you'll see the browser" model.
+    fallback_headless: bool = os.getenv("CFP_FALLBACK_HEADLESS", "false").lower() == "true"
     fallback_wait_s: float = float(os.getenv("CFP_FALLBACK_WAIT_S", "8"))
 
     def require_llm_key(self) -> None:

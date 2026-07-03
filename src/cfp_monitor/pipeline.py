@@ -17,6 +17,7 @@ from .config import Settings, DEFAULT
 from .consolidate import consolidate
 from .crawler import explore
 from .extraction import extract_from_markdown
+from .fetch import close_fallback_browser
 from .models import ConferenceResult
 from .scoring import normalize_url, score_link
 from .trace import Tracer
@@ -85,4 +86,5 @@ async def run_urls(urls: list[str], settings: Settings | None = None) -> list[Co
                 res = ConferenceResult(start_url=url, error=f"{type(e).__name__}: {e}")
                 res.trace = tracer.dump()
             results.append(res)
+    await close_fallback_browser()
     return results
