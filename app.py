@@ -68,6 +68,9 @@ if st.button("Run", type="primary"):
         with st.expander(f"{icon} {title} — CFP: {r.cfp_status.value}", expanded=True):
             if r.error:
                 st.error(f"Error: {r.error}")
+            # Trust summary — one plain sentence (details still below in Evidence/trace).
+            if r.reason:
+                st.info(f"**Why:** {r.reason}")
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown(_fact_line("Conference", r.name))
@@ -75,12 +78,22 @@ if st.button("Run", type="primary"):
                 st.markdown(_fact_line("Location", r.location))
                 st.markdown(_fact_line("Audience / topics", r.audience_topics))
             with c2:
-                st.markdown(f"**Has CFP:** {r.has_cfp}  ·  **Status:** {icon} {r.cfp_status.value}")
+                basis = f"  ·  _{r.status_basis}_" if r.status_basis else ""
+                st.markdown(f"**Has CFP:** {r.has_cfp}  ·  **Status:** {icon} {r.cfp_status.value}{basis}")
                 st.markdown(_fact_line("CFP opens", r.cfp_open_date))
                 st.markdown(_fact_line("CFP deadline", r.cfp_close_date))
                 st.markdown(_fact_line("Submit at", r.submission_url))
                 if r.submission_platform:
                     st.markdown(f"**Platform:** {r.submission_platform}")
+                if r.opportunity_types:
+                    st.markdown(f"**Opportunity types:** {', '.join(r.opportunity_types)}")
+                st.markdown(f"**Submission form found:** {r.submission_form_found}")
+            if r.possible_multi_edition_site:
+                st.warning("Possible multi-edition site — facts may span editions: " + "; ".join(r.competing_event_mentions))
+            if r.submission_forms:
+                with st.expander(f"Forms discovered ({len(r.submission_forms)})"):
+                    for f in r.submission_forms:
+                        st.markdown(f"- **{f.get('platform','form')}** — [{f['url']}]({f['url']})  ·  {f.get('context','')}")
             st.caption(f"Pages crawled: {r.pages_crawled} · skipped: {r.pages_skipped} · start: {r.start_url}")
 
             if r.evidence:

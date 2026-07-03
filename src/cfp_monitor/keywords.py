@@ -42,6 +42,17 @@ CFP_KEYWORDS: list[str] = [
     "how to enter",
     "entry deadline",
     "entry kit",
+    # broader speaking/visibility opportunities
+    "panel proposal",
+    "workshop proposal",
+    "poster submission",
+    "present",
+    "presentation submission",
+    "showcase",
+    "demo application",
+    "best of show",
+    "apply to speak",
+    "speaking opportunities",
 ]
 
 # Secondary context pages worth crawling (dates/status/where-to-submit live here).
@@ -109,6 +120,36 @@ SUBMISSION_PLATFORMS: dict[str, str] = {
     "conftool.net": "ConfTool",
     "google.com/forms": "Google Forms",
     "docs.google.com/forms": "Google Forms",
+    "forms.gle": "Google Forms",
     "airtable.com": "Airtable",
     "typeform.com": "Typeform",
+    "jotform.com": "Jotform",
+    "hsforms.com": "HubSpot Form",
+    "share.hsforms.com": "HubSpot Form",
+    "hubspot.com": "HubSpot Form",
+    "wufoo.com": "Wufoo",
+    "surveymonkey.com": "SurveyMonkey",
+    "cvent.com": "Cvent",
+    "smapply.io": "SurveyMonkey Apply",
+    "awardforce.com": "Award Force",
+    "zealousplatform.com": "Zealous",
+    "getopenwater.com": "OpenWater",
 }
+
+# Language that indicates an opportunity is CLOSED / past — used to AVOID inferring
+# "open" from a live-looking form (feat 9 / status labeling).
+CLOSED_LANGUAGE: list[str] = [
+    "submissions closed",
+    "submission closed",
+    "cfp closed",
+    "call for papers closed",
+    "now closed",
+    "deadline has passed",
+    "deadline passed",
+    "entries closed",
+    "nominations closed",
+    "closed for submissions",
+    "no longer accepting",
+    "applications closed",
+    "closed for entries",
+]

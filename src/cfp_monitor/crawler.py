@@ -1,15 +1,23 @@
-"""Relevance-prioritized internal crawling (feat 2, 5, 11).
+"""Score-driven site exploration (feat 2, 3, 4, 5, 6, 7, 11).
 
-Uses crawl4ai's native BestFirstCrawlingStrategy — it explores the site, scores
-each discovered URL with our CFP keyword scorer, stays on-site, and honours the
-page/depth budget. We just collect the pages it returns (with depth + score) for
-extraction.
+The start URL is only the entry point. We run our OWN best-first crawl: a priority
+frontier ordered by the custom CFP/opportunity scorer (scoring.score_link), fetching
+each page with crawl4ai. This guarantees high-value pages (Speakers, Call for
+Papers, Best of Show, Submit…) are crawled FIRST within budget — regardless of
+crawl4ai's generic link score, which we found rates conference pages ~0.
+
+On every page we harvest links, buttons/CTAs, and forms; internal high-value links
+go back on the frontier, and links to known external submission platforms are
+recorded (not deep-crawled) as opportunity evidence.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+import heapq
+import itertools
+from dataclasses import dataclass, field
 
-from .scoring import build_scorer, build_filter_chain, normalize_url
+from .discovery import extract_clickables, detect_forms
+from .scoring import normalize_url, same_site, score_link, detect_submission_platform
 from .trace import Tracer
 
 
@@ -21,46 +29,88 @@ class CrawledPage:
     score: float
 
 
-async def deep_crawl(crawler, start_url: str, settings, tracer: Tracer) -> list[CrawledPage]:
+@dataclass
+class ExploreResult:
+    pages: list[CrawledPage] = field(default_factory=list)
+    forms: list[dict] = field(default_factory=list)              # {url, platform, context}
+    external_submissions: list[dict] = field(default_factory=list)  # {url, platform, text}
+    start_ok: bool = False
+
+
+async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreResult:
     from crawl4ai import CrawlerRunConfig, CacheMode
-    from crawl4ai.deep_crawling import BestFirstCrawlingStrategy
 
-    strategy = BestFirstCrawlingStrategy(
-        max_depth=settings.max_depth,
-        max_pages=settings.max_pages,
-        include_external=settings.include_external,
-        url_scorer=build_scorer(),
-        filter_chain=build_filter_chain(start_url),
-    )
-    cfg = CrawlerRunConfig(
-        deep_crawl_strategy=strategy,
-        stream=True,
-        cache_mode=CacheMode.BYPASS,
-        verbose=settings.verbose,
-    )
+    cfg = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, verbose=settings.verbose)
+    start_norm = normalize_url(start_url)
 
-    pages: list[CrawledPage] = []
-    seen: set[str] = set()
-    try:
-        async for r in await crawler.arun(start_url, config=cfg):
-            if not r:
+    counter = itertools.count()
+    # Min-heap on negative score → highest opportunity-score first. Start page wins.
+    frontier: list[tuple] = [(-1e9, next(counter), start_url, 0)]
+    visited: set[str] = set()
+    out = ExploreResult()
+    ext_seen: set[str] = set()
+
+    while frontier and len(out.pages) < settings.max_pages:
+        neg, _, url, depth = heapq.heappop(frontier)
+        nu = normalize_url(url)
+        if nu in visited:
+            continue
+        visited.add(nu)
+
+        try:
+            r = await crawler.arun(url, config=cfg)
+        except Exception as e:
+            tracer.log("skipped", url, f"fetch raised: {e}")
+            continue
+        if not r or not getattr(r, "success", False):
+            tracer.log("skipped", url, f"status={getattr(r, 'status_code', '?')} depth={depth}")
+            continue
+
+        if nu == start_norm:
+            out.start_ok = True
+        md = str(getattr(r, "markdown", "") or "")
+        html = getattr(r, "html", "") or ""
+        page_score = 0.0 if depth == 0 else round(-neg, 3)
+        out.pages.append(CrawledPage(nu, md, depth, page_score))
+        tracer.log("crawled", url, f"depth={depth} score={page_score:.2f}", chars=len(md))
+
+        # Forms on this page are opportunity evidence.
+        for fo in detect_forms(html, url):
+            if fo["url"] not in ext_seen:
+                out.forms.append(fo)
+                tracer.log("found", fo["url"], f"form: {fo['platform']}", context=fo["context"])
+
+        if depth >= settings.max_depth:
+            continue
+
+        links = getattr(r, "links", {}) or {}
+        internal_links = links.get("internal", []) or []
+        external_links = links.get("external", []) or []
+        clickables = extract_clickables(html, url)
+
+        # Internal high-value targets → prioritized frontier.
+        for l in internal_links + clickables:
+            href = (l.get("href") or "").strip()
+            text = (l.get("text") or "").strip()
+            if not href or not href.lower().startswith("http"):
                 continue
-            meta = getattr(r, "metadata", {}) or {}
-            depth = int(meta.get("depth", 0) or 0)
-            score = float(meta.get("score", 0.0) or 0.0)
-            if getattr(r, "success", False):
-                nu = normalize_url(r.url)
-                if nu in seen:
-                    continue
-                seen.add(nu)
-                pages.append(CrawledPage(nu, str(getattr(r, "markdown", "") or ""), depth, score))
-                tracer.log("crawled", r.url, f"depth={depth} score={score:.2f}")
-            else:
-                tracer.log(
-                    "skipped",
-                    getattr(r, "url", ""),
-                    f"status={getattr(r, 'status_code', '?')} depth={depth}",
+            cu = normalize_url(href)
+            if cu in visited or not same_site(cu, start_url):
+                continue
+            s = score_link(cu, text)
+            heapq.heappush(frontier, (-s, next(counter), cu, depth + 1))
+            if s > 0:
+                tracer.log("found", cu, f"score={s}", text=text[:60])
+
+        # External links to known submission platforms → record (feat 4), don't crawl the site.
+        for l in external_links + clickables:
+            href = (l.get("href") or "").strip()
+            plat = detect_submission_platform(href)
+            if plat and href not in ext_seen:
+                ext_seen.add(href)
+                out.external_submissions.append(
+                    {"url": href, "platform": plat, "text": (l.get("text") or "")[:80]}
                 )
-    except Exception as e:
-        tracer.log("error", start_url, f"deep_crawl raised: {e}")
-    return pages
+                tracer.log("found", href, f"external submission platform: {plat}")
+
+    return out

@@ -17,13 +17,18 @@ from .trace import Tracer
 _INSTRUCTION = (
     "You extract speaking / submission opportunity facts from ONE conference or "
     "industry-event web page. An 'opportunity' includes a Call for Papers/Speakers/"
-    "Proposals, propose-a-talk, abstract submission, AND awards-style calls for "
-    "ENTRIES or NOMINATIONS (submit an entry, nominate, enter the awards). Treat "
-    "'submission deadline', 'entry deadline', and 'nomination deadline' as the "
-    "cfp_close_date. Return ONLY a JSON object matching the given schema. Rules: use "
-    "null for anything the page does not clearly state; NEVER invent or infer dates, "
-    "deadlines, or status; quote text verbatim where asked; cfp_status must be one of "
-    "open, closed, upcoming, unclear (or null)."
+    "Proposals, propose-a-talk, abstract/poster/panel/workshop submission, AND "
+    "awards-style calls for ENTRIES or NOMINATIONS (submit an entry, nominate, enter "
+    "the awards, best of show). Treat 'submission deadline', 'entry deadline', and "
+    "'nomination deadline' as the cfp_close_date. "
+    "Set has_submission_form=true if a live submission/entry/proposal form (or a clear "
+    "link/button to one) is present. Set closed_or_passed=true ONLY if the page "
+    "explicitly says the opportunity is closed or the deadline has passed. Set "
+    "other_editions if the page references a different event year/city than the main one. "
+    "Return ONLY a JSON object matching the given schema. Rules: use null for anything "
+    "the page does not clearly state; NEVER invent or infer dates, deadlines, or status; "
+    "quote text verbatim where asked; cfp_status must be one of open, closed, upcoming, "
+    "unclear (or null) and set it to a value ONLY when the page states it explicitly."
 )
 
 _ALLOWED = set(PageExtraction.model_fields.keys())

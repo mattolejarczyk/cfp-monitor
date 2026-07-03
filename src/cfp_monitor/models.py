@@ -47,8 +47,9 @@ class PageExtraction(BaseModel):
     """Fields the LLM extracts from a single page. Use null when the page does not
     state something — never guess."""
     is_opportunity_page: bool = Field(
+        default=False,
         description="True only if this page is about submitting or speaking "
-        "(call for papers/speakers, propose a talk, abstract/proposal submission)."
+        "(call for papers/speakers, propose a talk, abstract/proposal submission).",
     )
     conference_name: Optional[str] = None
     conference_dates: Optional[str] = Field(
@@ -72,7 +73,24 @@ class PageExtraction(BaseModel):
         default=None, description="The actual page/URL where one submits, if named or linked here. null if absent."
     )
     submission_platform: Optional[str] = Field(
-        default=None, description="External platform if used (e.g. Sessionize, PaperCall, EasyChair). null if absent."
+        default=None, description="External platform if used (e.g. Sessionize, PaperCall, EasyChair, HubSpot). null if absent."
+    )
+    opportunity_type: Optional[str] = Field(
+        default=None,
+        description="Kind of opportunity if any: one of cfp, call_for_speakers, speaker_proposal, "
+        "abstract, poster, panel, workshop, awards_entry, nomination, presentation, showcase. null if none.",
+    )
+    has_submission_form: Optional[bool] = Field(
+        default=None, description="True if a live submission/entry/proposal FORM (or a link to one) is present on this page."
+    )
+    closed_or_passed: Optional[bool] = Field(
+        default=None,
+        description="True ONLY if the page explicitly says the opportunity is closed or the deadline has passed. "
+        "null if it doesn't say.",
+    )
+    other_editions: Optional[str] = Field(
+        default=None,
+        description="If the page references OTHER event editions (different year/city) than the main one, list them briefly. null otherwise.",
     )
     key_snippet: Optional[str] = Field(
         default=None, description="Short verbatim quote (<200 chars) that best evidences the CFP or dates."
@@ -91,10 +109,26 @@ class ConferenceResult(BaseModel):
 
     has_cfp: Optional[bool] = None
     cfp_status: CFPStatus = CFPStatus.unclear
+    # WHY the status was assigned, e.g. "explicit_open", "inferred_from_live_submission_form",
+    # "explicit_closed", "no_opportunity_found" — so inferred is never mistaken for confirmed.
+    status_basis: Optional[str] = None
+    # Plain-English one-liner synthesizing status_basis + key evidence, so a reviewer
+    # can trust the verdict at a glance without assembling the detail layers themselves.
+    # This is a human-readable SUMMARY of the other trust layers, not a replacement for them.
+    reason: Optional[str] = None
     cfp_open_date: Fact = Field(default_factory=Fact)
     cfp_close_date: Fact = Field(default_factory=Fact)
     submission_url: Fact = Field(default_factory=Fact)
     submission_platform: Optional[str] = None
+
+    # Opportunity detail
+    opportunity_types: list[str] = Field(default_factory=list)   # e.g. ["awards_entry", "call_for_speakers"]
+    submission_form_found: bool = False
+    submission_forms: list[dict] = Field(default_factory=list)   # [{url, platform, context}]
+
+    # Multi-edition caution (feat 10)
+    possible_multi_edition_site: bool = False
+    competing_event_mentions: list[str] = Field(default_factory=list)
 
     evidence: list[Evidence] = Field(default_factory=list)
     pages_crawled: int = 0
