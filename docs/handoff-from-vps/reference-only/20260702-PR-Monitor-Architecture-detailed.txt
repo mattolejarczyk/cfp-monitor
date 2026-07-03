@@ -1,0 +1,350 @@
+PR Monitor architecture: where things live
+
+    1. Public app / hosted surface
+
+    Lives on VPS:
+    /home/ubuntu/.openclaw/workspace/dashboard/
+
+    Live process verified:
+    /home/ubuntu/.openclaw/workspace/dashboard/venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8080
+
+    Public URL:
+    https://channeled.org/pr-monitor-1
+
+    Meaning:
+    The public site routes to a FastAPI app running locally on the VPS at 127.0.0.1:8080.
+
+    2. Main dashboard UI
+
+    Lives on VPS:
+    /home/ubuntu/.openclaw/workspace/dashboard/static/pr_monitor_1.html
+
+    Purpose:
+    The working PR Monitor 1 browser interface:
+    - Step 1 Create Prompt
+    - Step 2 Discover URLs
+    - Step 3 Crawl
+    - Step 3.5 Local Browser Recovery
+    - Step 4 Extract
+    - Step 5/6 Review
+
+    Related presentation/status pages:
+    /home/ubuntu/.openclaw/workspace/dashboard/static/pr_monitor_dashboard.html
+    - Customer-facing presentation/demo dashboard.
+
+    /home/ubuntu/.openclaw/workspace/dashboard/static/pr_monitor_project.html
+    - Project status dashboard.
+
+    /home/ubuntu/.openclaw/workspace/dashboard/static/pr_monitor_review.html
+    - Review UI variant.
+
+    3. Backend API / orchestration layer
+
+    Lives on VPS:
+    /home/ubuntu/.openclaw/workspace/dashboard/main.py
+
+    Purpose:
+    FastAPI backend for:
+    - /pr-monitor-1
+    - /api/pr-monitor-1/prompt-pack
+    - /api/pr-monitor-1/multi-model-discovery
+    - /api/pr-monitor-1/crawl
+    - /api/pr-monitor-1/extract
+    - /api/pr-monitor-1/job/{job_id}
+    - /api/pr-monitor-1/latest
+    - /api/pr-monitor-1/runs
+    - /api/pr-monitor-1/run/{run_id}/rows
+    - artifact list/open endpoints
+    - review/portfolio endpoints
+    - local-browser upload/recovery endpoints
+
+    Supporting settings file:
+    /home/ubuntu/.openclaw/workspace/dashboard/pr_monitor_settings.py
+
+    This defines default paths:
+    - project root
+    - dashboard root
+    - runtime root
+    - DB path
+    - crawl/extract/discovery folders
+    - metrics/alerts/source registry paths
+
+    4. Main project root / canonical PR Monitor project
+
+    Lives on VPS:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/
+
+    Purpose:
+    This is the core project folder: docs, extraction engine, DB, runtime artifacts, quality tools, benchmark tools.
+
+    Key docs:
+    PR_FIRM_TX_PROJECT_ARCHITECTURE_HANDOFF_2026-06-05.md
+    PR_MONITOR_1_RUNBOOK.md
+    REQUIREMENTS_COMPARISON.md
+    DEVELOPMENT_MILESTONES.md
+    PR_MONITOR_QUALITY_SYSTEM_PLAN.md
+    PR_MONITOR_CRAWL_QUALITY_GATE_SPEC.md
+    VOICE_OF_CUSTOMER_REQUIREMENTS.md
+
+    5. Canonical extraction engine
+
+    Lives on VPS:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/batch_processor.py
+
+    Purpose:
+    This is the extractor of record. Docs explicitly say not to bypass it with one-off production extractors.
+
+    It creates:
+    - 54-column CSV
+    - results JSON
+    - trace JSON
+    - executive report TXT
+
+    Standard command:
+    cd /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas
+    python3 batch_processor.py --input <CSV_FILE> --output <PREFIX>
+
+    6. Main PR Monitor runtime storage
+
+    Lives on VPS:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/
+
+    Purpose:
+    Runtime artifacts for the active PR Monitor 1 app.
+
+    Important subfolders/files:
+
+    prompt_pack_<timestamp>.json
+    - Step 1 prompt pack outputs.
+
+    discovery_jobs/
+    - Step 2 multi-model discovery job outputs.
+
+    provider_lists/
+    - Per-provider discovery results.
+
+    master_lists/
+    - Merged/current master URL lists.
+    - Important file: master_lists/master_list_latest.txt
+
+    crawl_runs/
+    - Step 3 crawl manifests, URL lists, and crawl outputs.
+
+    crawl_runs/artifacts/<crawl_id>/
+    - Captured crawl artifacts by run.
+
+    extract_runs/
+    - Step 4 extraction outputs:
+      - extract_<id>_CONFERENCES_54COLUMNS.csv
+      - extract_<id>_results.json
+      - extract_<id>_EXECUTIVE_REPORT.txt
+      - extract_<id>_trace.json
+
+    preferences.json
+    - PR Monitor 1 settings.
+
+    crawl_engine_metrics.json
+    - Crawl engine/fallback counters.
+
+    crawl_engine_alerts.jsonl
+    - Alert audit log for fallback incidents.
+
+    source_registry.json
+    - Source/path memory, unless overridden by env var.
+
+    7. Database
+
+    Primary DB path from settings:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/conference_pipeline.db
+
+    Also present:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/conference_pipeline_pr_monitor_1.db
+    /home/ubuntu/.openclaw/workspace/dashboard/pr_monitor.db
+
+    Important risk:
+    The live dashboard must point to the correct DB. Prior geo-display issue happened because the service was reading a fallback/empty DB path.
+
+    Expected env var:
+    PR_MONITOR_DB_PATH=/home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/conference_pipeline.db
+
+    I verified the current uvicorn process is running, but /proc/<pid>/environ was permission-blocked from this user, so I could not directly confirm the active env var in this pass.
+
+    8. Source sets / master list mirror
+
+    Configured default:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/source_sets_pr_monitor_1/
+
+    Purpose:
+    Stores source-set/master-list copies used by the dashboard flow.
+
+    Runbook specifically references:
+    source_sets_pr_monitor_1/master_list_latest.txt
+
+    9. Local browser fallback / Windows runner
+
+    VPS source/package location:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/local_browser_fallback/
+
+    Current runner source:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/local_browser_fallback/windows_runner_v0_1/
+
+    Key files:
+    local_browser_runner.py
+    run_recovery_one_click.bat
+    run_windows.bat
+    jobs/
+    uploads/
+    upload_tokens/
+
+    Packaged runner ZIPs:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/dist/
+    Example:
+    pr_monitor_runner_v1_0_oneclick.zip
+
+    Public/static downloadable copies:
+    /home/ubuntu/.openclaw/workspace/dashboard/static/
+    Examples:
+    pr_monitor_runner_latest.zip
+    pr_monitor_runner_v1.0_fDql1n33L1XK5CNN.zip
+    pr_monitor_local_browser_runner_one_click_v0_9_3.zip
+
+    Windows-side concept:
+    The runner is downloaded/unzipped on Matt’s Windows machine, then double-clicked. It should:
+    - find newest recovery_job_*.json in Downloads
+    - launch local Chrome/Playwright
+    - crawl blocked/partial URLs
+    - create a light result ZIP
+    - upload results back to the VPS
+
+    10. Local-browser uploaded recovery results
+
+    Lives on VPS:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/local_browser_fallback/uploads/
+
+    Example observed:
+    uploads/crawl_quality_scheduled_20260622_141102/
+    uploads/multi_page_step4_v2_crawl_quality_scheduled_20260622_141102/
+
+    Purpose:
+    Stores uploaded summary ZIPs/metadata from Matt’s local Windows runner.
+
+    11. Extraction benchmarking / model evaluation
+
+    Lives on VPS:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/extraction_benchmarks/
+
+    Important files:
+    run_free_model_benchmark.py
+    run_top5_multi_page_benchmark.py
+    multi_page_evidence.py
+    internal_link_discovery.py
+    score_against_gold_set.py
+    prefill_gold_set_from_evidence.py
+
+    Benchmark runs:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/extraction_benchmarks/runs/
+
+    Evidence packages:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/extraction_benchmarks/evidence_packages/
+
+    Purpose:
+    Tests extraction quality/model performance before promoting a default extractor/model.
+
+    12. Quality system / crawl quality gate
+
+    Lives on VPS:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/quality_monitor.py
+
+    Docs:
+    PR_MONITOR_QUALITY_SYSTEM_PLAN.md
+    PR_MONITOR_CRAWL_QUALITY_GATE_SPEC.md
+
+    Runtime inputs/reports:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/quality_inputs/
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/quality_reports/
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas/pr_monitor_1/source_snapshots/
+
+    Hermes cron watchdog script:
+    /home/hermes/.hermes/scripts/pr_monitor_crawl_quality_watchdog.sh
+
+    Purpose:
+    Runs crawl quality checks against local snapshots/manifests without modifying Nicolia’s Google Sheets.
+
+    13. Smoke / health checks
+
+    Dashboard smoke test:
+    /home/ubuntu/.openclaw/workspace/dashboard/scripts/pr_monitor_1_smoke.py
+
+    Run from:
+    /home/ubuntu/.openclaw/workspace/dashboard
+
+    Command:
+    ./venv/bin/python scripts/pr_monitor_1_smoke.py
+
+    Project health check:
+    /home/ubuntu/.openclaw/workspace/projects/PR1Firm_Texas/script1m
+
+    Run from:
+    /home/ubuntu/.openclaw/workspace/projects/PR_Firm_Texas
+
+    Command:
+    /home/ubuntu/.openclaw/workspace/dashboard/venv/bin/python scripts/pr_monitor_healthcheck.py
+
+    14. Agent-facing docs / memory / wiki
+
+    Lives under Hermes user:
+    /home/hermes/
+
+    Important files:
+    /home/hermes/PROJECT_PORTFOLIO.md
+    /home/hermes/wiki/entities/pr-monitor-1.md
+    /home/hermes/PR_OPPORTUNITY_INTELLIGENCE_ENGINEERING_ROADMAP.md
+    /home/hermes/PR_OPPORTUNITY_INTELLIGENCE_TRIAGE_BRIEF.md
+
+    Hermes skill/reference package:
+    /home/hermes/.hermes/skills/projects/pr-monitor-dashboard/
+
+    Purpose:
+    This is not the runtime app. It is agent-facing operating knowledge: restart procedures, pitfalls, local-browser runner guidance, milestone docs, quality references, etc.             5
+
+    15. Simplified flow
+
+    User browser:                                                  1
+    https://channeled.org/pr-monitor-1                            20
+                                                                   9
+    loads UI:
+    dashboard/static/pr_monitor_1.html
+
+    calls backend:
+    dashboard/main.py
+
+    backend uses settings:
+    dashboard/pr_monitor_settings.py
+
+    backend writes runtime artifacts:
+    projects/PR_Firm_Texas/pr_monitor_1/
+
+    backend uses extractor:
+    projects/PR_Firm_Texas/batch_processor.py
+
+    backend reads/writes DB:
+    projects/PR_Firm_Texas/conference_pipeline.db
+
+    blocked URLs can go to local recovery:
+    VPS job file → Matt’s Windows runner → upload ZIP back to VPS → dashboard Step 3.5 reads recovery data.
+
+    16. Biggest architecture caution
+
+    There are older docs/files that describe the original March MVP and Google Sheets flow. The current active architecture is:
+
+    dashboard/static/pr_monitor_1.html
+    +
+    dashboard/main.py                                             33
+    +
+    projects/PR_Firm_Texas/pr_monitor_1/
+    +
+    batch_processor.py                                             6
+    +
+    conference_pipeline.db
+
+    That is the active PR Monitor 1 stack.

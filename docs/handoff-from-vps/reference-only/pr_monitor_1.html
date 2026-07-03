@@ -1,0 +1,1936 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PR Monitor</title>
+  <style>
+    body{font-family:Inter,Arial,sans-serif;background:#0b1220;color:#eaf1ff;margin:0;padding:24px}
+    .wrap{max-width:1000px;margin:0 auto}
+    .card{background:#121b2f;border:1px solid #263454;border-radius:12px;padding:18px;margin-bottom:16px}
+    h1,h2{margin:0 0 10px}
+    .muted{color:#9fb0d1}
+    textarea,input,select,button{width:100%;padding:10px;border-radius:8px;border:1px solid #314263;background:#0d1729;color:#eaf1ff}
+    button{cursor:pointer;background:#1a3a5c;font-weight:600}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .geo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .error{color:#ff8f8f}
+    @media (max-width: 860px){
+      .geo-grid{grid-template-columns:1fr}
+      .row{grid-template-columns:1fr}
+      [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+    }
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{border-bottom:1px solid #24314b;padding:8px;text-align:left;font-size:14px}
+    .pill{display:inline-block;padding:2px 6px;border-radius:999px;background:#22365a;white-space:nowrap;font-size:11px;line-height:1.2}
+  .state-select-multi{-webkit-appearance:none;appearance:none;background:#121b2f!important;color:#eaf1ff!important;border:1px solid #314263!important;border-radius:8px;padding:10px;font-size:14px}
+  .state-select-multi option{background-color:#121b2f!important;color:#eaf1ff!important;padding:4px 8px}
+  .state-select-multi option:checked{background-color:#1a3a5c!important;color:#ffffff!important}
+  .state-select-multi option:hover{background-color:#1a3a5c!important}
+  .state-select-multi:focus{outline:none;border-color:#3b82f6!important}
+  #screen4{font-size:12px}
+  #screen4 h2{font-size:24px}
+  #screen4 table{table-layout:fixed}
+  #screen4 table th,#screen4 table td{font-size:12px;padding:4px;vertical-align:top;white-space:normal;word-break:break-word;overflow-wrap:anywhere}
+  #screen4 table th{position:sticky;top:0;z-index:2;background:#121b2f}
+  #screen4 table th:nth-child(1),#screen4 table td:nth-child(1){width:70px;max-width:70px}
+  #screen4 table th:nth-child(2),#screen4 table td:nth-child(2){width:110px;max-width:110px}
+  #screen4 table th:nth-child(3),#screen4 table td:nth-child(3){width:200px;max-width:200px}
+  #screen4 table th:nth-child(4),#screen4 table td:nth-child(4){width:20px;max-width:20px}
+  #screen4 table th:nth-child(5),#screen4 table td:nth-child(5){width:50px;max-width:50px}
+  #screen4 table th:nth-child(6),#screen4 table td:nth-child(6){width:60px;max-width:60px}
+  #screen4 table th:nth-child(7),#screen4 table td:nth-child(7){width:20px;max-width:20px}
+  #screen4 table th:nth-child(8),#screen4 table td:nth-child(8){width:60px;max-width:60px}
+  #screen4 table th:nth-child(9),#screen4 table td:nth-child(9){width:70px;max-width:70px}
+  #screen4 table th:nth-child(10),#screen4 table td:nth-child(10){width:70px;max-width:70px}
+  #screen4 table th:nth-child(11),#screen4 table td:nth-child(11){width:60px;max-width:60px}
+  #screen4 table th:nth-child(12),#screen4 table td:nth-child(12){width:50px;max-width:50px}
+  #screen4 table th:nth-child(13),#screen4 table td:nth-child(13){width:60px;max-width:60px}
+  #screen4 table th:nth-child(14),#screen4 table td:nth-child(14){width:50px;max-width:50px}
+  #screen4 table th:nth-child(15),#screen4 table td:nth-child(15){width:40px;max-width:40px}
+  #screen4 table th:nth-child(16),#screen4 table td:nth-child(16){width:30px;max-width:30px}
+  #screen4 table td:nth-child(2) a{display:inline-block;max-width:100%;white-space:normal;word-break:break-word;overflow-wrap:anywhere;vertical-align:bottom}
+  #screen4 table td:nth-child(3),#screen4 table td:nth-child(4){word-break:normal;overflow-wrap:break-word}
+  #setupStatus{font-size:10px;line-height:1.2;white-space:normal;overflow-wrap:anywhere;max-width:100%}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PR Monitor</h1>
+  <p class="muted">2-screen MVP: upload sources, then run + view results.</p>
+  <div id="crawlEngineAlertBanner" style="display:none;margin:10px 0 14px 0;padding:10px 12px;border:1px solid #7f1d1d;background:#3f1111;color:#fecaca;border-radius:8px;font-size:13px;">
+    Crawl engine alert.
+  </div>
+
+  <div class="card" id="screen0">
+    <h2>Step 1 — Create Prompt</h2>
+    <p class="muted">Define market + geo preferences, then generate/save the prompt pack for discovery.</p>
+    <div class="row">
+      <div>
+        <label>Market</label>
+        <input id="marketInput" placeholder="Hydrogen, Healthcare, Legal Tech..." />
+      </div>
+      <div>
+        <label>Record Type</label>
+        <select id="recordTypeInput">
+          <option value="both" selected>both</option>
+          <option value="conference">conference</option>
+          <option value="award">award</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>Conference Region Scope</label>
+        <div class="geo-grid" style="grid-template-columns:1fr">
+          <select id="confRegionScope">
+            <option value="US" selected>US</option>
+            <option value="INTERNATIONAL">International</option>
+            <option value="SPECIFIC_COUNTRIES">Specific Countries</option>
+          </select>
+        </div>
+        <div id="confRegionHint" class="muted" style="margin-top:4px;font-size:12px"></div>
+        <div id="confStatesWrap" style="margin-top:8px">
+          <label>US Coverage Preset</label>
+          <select id="confUSCoveragePreset">
+            <option value="ALL_US" selected>All US states</option>
+            <option value="CONTIGUOUS_US">Contiguous US (Lower 48)</option>
+            <option value="CUSTOM_US">Custom states</option>
+          </select>
+          <label>US States (optional, multi-select)</label>
+          <select id="confStatesMulti" multiple size="8" class="state-select-multi"></select>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button id="confStatesSelectAllBtn" type="button" style="width:auto;padding:6px 10px">Select All</button>
+            <button id="confStatesClearBtn" type="button" style="width:auto;padding:6px 10px">Clear (ALL States)</button>
+          </div>
+          <div class="muted" style="margin-top:4px;font-size:12px">If none selected, all U.S. states are included.</div>
+        </div>
+        <div id="confCountriesWrap" style="margin-top:8px;display:none">
+          <label>Countries (multi-select, US excluded)</label>
+          <select id="confCountriesMulti" multiple size="8"></select>
+          <div class="muted" style="margin-top:4px;font-size:12px">Choose one or more non-US countries.</div>
+        </div>
+      </div>
+      <div>
+        <label>Award Geo Preference</label>
+        <select id="awardCoveragePreset">
+          <option value="ALL_US_AWARD" selected>US (default)</option>
+          <option value="CONTIGUOUS_US_AWARD">Contiguous US (Lower 48)</option>
+          <option value="CUSTOM_AWARD">Custom</option>
+        </select>
+        <div class="geo-grid">
+          <select id="awardCountry"></select>
+          <select id="awardState"></select>
+          <select id="awardCity"></select>
+        </div>
+        <div id="awardCityHint" class="muted" style="margin-top:4px;font-size:12px"></div>
+        <div id="awardStateScopeHint" class="muted" style="margin-top:2px;font-size:12px"></div>
+      </div>
+    </div>
+    <input id="confGeoPrefInput" type="hidden" />
+    <input id="confRegionScopeInput" type="hidden" />
+    <input id="confStatesInput" type="hidden" />
+    <input id="confCountriesInput" type="hidden" />
+    <input id="awardGeoPrefInput" type="hidden" />
+    <div id="geoValidationStatus" class="muted" style="margin-top:8px"></div>
+    <div style="margin-top:10px" class="row">
+      <button id="saveSetupBtn">Save Prompt Setup</button>
+      <button id="generatePromptPackBtn">Generate Prompt Pack</button>
+    </div>
+    <h2 style="margin-top:14px">Step 2 — Discover URLs</h2>
+    <div style="margin-top:10px">
+      <button id="executeMultiModelBtn">Discover URLs (3 Models)</button>
+    </div>
+    <div id="setupStatus" class="muted" style="margin-top:8px">Setup not loaded.</div>
+    <div id="promptPackPreview" style="margin-top:10px"></div>
+    <div id="multiModelPreview" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card" id="screen1">
+    <h2>Optional Source Import</h2>
+    <p class="muted">Optional manual source import (CSV/TXT/paste) for supplemental URLs.</p>
+    <div class="row">
+      <div>
+        <label>Upload CSV</label>
+        <input id="csvFile" type="file" accept=".csv" />
+      </div>
+      <div>
+        <label>Source Set Name</label>
+        <input id="sourceSetName" placeholder="Hydrogen Batch A" />
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label>Paste URLs</label>
+      <textarea id="urlPaste" rows="6" placeholder="https://example.com/event"></textarea>
+    </div>
+    <div style="margin-top:10px" class="row">
+      <button id="validateBtn">Validate & Preview</button>
+      <button id="saveBtn">Save Source Set</button>
+    </div>
+    <div id="preview" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card" id="screen2" style="margin-top: 24px;">
+    <h2>Step 3 — Crawl URLs</h2>
+    <div style="margin-top:10px">
+      <label>Custom URLs (one-time test override)</label>
+      <textarea id="customUrlsForCrawl" rows="5" placeholder="https://example.com/page-1&#10;https://example.com/page-2"></textarea>
+      <div class="muted" style="margin-top:4px;font-size:12px">If this box has URLs, Step 3 uses these first and bypasses master-list fallback.</div>
+    </div>
+    <div style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:8px">
+        <input id="useMasterListForCrawl" type="checkbox" checked style="width:auto" />
+        <span>Use latest master list if URL box is empty</span>
+      </label>
+    </div>
+    <div style="margin-top:10px">
+      <button id="crawlBtn">Step 3: Crawl URLs</button>
+    </div>
+    <p class="muted" style="margin-top:8px">Crawl is separated from extraction. Crawl creates reusable URL artifacts for Step 4.</p>
+    <div id="crawlStatus" style="margin-top:10px" class="muted">No crawl started.</div>
+    <div id="crawlLinkageStatus" style="margin-top:6px" class="muted">No crawl linkage yet.</div>
+    <div id="crawlEngineMetricsStatus" style="margin-top:6px" class="muted">Crawl engine metrics pending.</div>
+    <div id="crawlLinks" class="muted" style="margin-top:4px;font-size:12px;opacity:.9"></div>
+  </div>
+
+  <div class="card" id="screen3b" style="margin-top: 24px;">
+    <h2>Step 3.5 — Crawl Recovery</h2>
+    <p class="muted">Recover blocked URLs using your local browser. Download the job file, double-click the one-click runner, then view results here.</p>
+    <div class="muted" style="margin-top:6px;font-size:12px;line-height:1.45">
+      <div><strong>One-time set-up:</strong> <a href="/static/pr_monitor_local_browser_runner_one_click_v0_9_2.zip" style="color:#a855f7;text-decoration:underline">Download One-Click Windows Runner</a>, unzip it, and open the extracted <code>windows_runner_v0_1</code> folder.</div>
+      <div style="margin-top:6px"><strong>Recurring for each recovery:</strong></div>
+      <ol style="margin:4px 0 0 18px;padding:0">
+        <li>Paste the Quality Run ID from Step 3's "Crawl completed: ..." line.</li>
+        <li>Click Step 1 below.</li>
+        <li>In the extracted <code>windows_runner_v0_1</code> folder, double-click <code>run_recovery_one_click.bat</code>.</li>
+        <li>Wait for DONE.</li>
+        <li>Click Step 2 below.</li>
+      </ol>
+      <div style="margin-top:6px"><strong>Note:</strong> If you clicked the Step 3.5 recovery link after a crawl, the Quality Run ID should auto-fill. Normal Chrome windows can stay open.</div>
+    </div>
+    <div id="recoveryStatus" class="muted">Enter a quality run ID to get started.</div>
+    <div id="recoverySummary" style="margin-top:8px"></div>
+    <div style="margin-top:10px" class="row">
+      <div>
+        <label>Quality Run ID</label>
+        <input id="recoveryRunId" placeholder="crawl_quality_scheduled_20260622_141102" />
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="downloadJobBtn">Step 1: Download Recovery Job</button>
+        <button id="loadRecoveryBtn" style="margin-top:6px">Step 2: Load Recovery Data</button>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:6px;font-size:12px"><strong>Step 1:</strong> Requires the Quality Run ID above; it comes from Step 3's <code>Crawl completed: crawl_quality...</code> line. Downloads the job to your Downloads folder; do not move or rename it.<br><strong>Step 2:</strong> After <code>run_recovery_one_click.bat</code> says DONE, click here to view recovery results.</p>
+    <div id="recoveryTableWrap" style="overflow:auto; margin-top:12px; max-height:300px; display:none">
+      <table>
+        <thead><tr><th>Conference</th><th>VPS Status</th><th>Local Status</th><th>Recovered</th><th>Method</th></tr></thead>
+        <tbody id="recoveryTable"><tr><td colspan="5">-</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" id="screen3" style="margin-top: 24px;">
+    <h2>Step 4 — Extract Data</h2>
+    <div class="row">
+      <div>
+        <label>Extraction Mode</label>
+        <select id="mode">
+          <option value="full_ai">full_ai</option>
+          <option value="smart_hybrid" selected>smart_hybrid</option>
+        </select>
+      </div>
+      <div>
+        <label>Min Confidence</label>
+        <input id="minConfidence" type="number" step="0.01" value="0.85" />
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:8px">
+        <input id="skipSameDay" type="checkbox" checked style="width:auto" />
+        <span>Skip same-day reprocess</span>
+      </label>
+    </div>
+    <div style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:8px">
+        <input id="useLatestCrawlForExtract" type="checkbox" checked style="width:auto" />
+        <span>Use latest crawl artifacts if URL box is empty</span>
+      </label>
+    </div>
+    <div style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:8px">
+        <input id="useDiscoveryForExtract" type="checkbox" style="width:auto" />
+        <span>Try v2 internal-link discovery before extraction</span>
+      </label>
+      <div class="muted" style="margin-top:4px;font-size:12px">Safe test mode: v1 remains default; if v2 discovery cannot run, extraction falls back to the original URL list.</div>
+    </div>
+    <div style="margin-top:10px">
+      <button id="extractBtn">Step 4: Extract Data</button>
+    </div>
+    <div id="runStatus" style="margin-top:10px" class="muted">No extraction run started.</div>
+    <div id="extractLinkageStatus" style="margin-top:6px" class="muted">No extract linkage yet.</div>
+    <div id="extractLinks" class="muted" style="margin-top:4px;font-size:12px;opacity:.9"></div>
+
+    <h3 style="margin-top:14px">Latest Results</h3>
+    <table>
+      <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+      <tbody id="resultsTable">
+        <tr><td>Rows scanned</td><td>-</td></tr>
+        <tr><td>Rows updated</td><td>-</td></tr>
+        <tr><td>Rows flagged</td><td>-</td></tr>
+        <tr><td>Rows skipped (same-day)</td><td>-</td></tr>
+        <tr><td>AI calls</td><td>-</td></tr>
+        <tr><td>Total AI cost</td><td>-</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:8px">Live mode: crawl uses `/api/pr-monitor-1/crawl`; extraction uses `/api/pr-monitor-1/extract`.</p>
+  </div>
+
+  <div class="card" id="screen3a" style="margin-top: 24px;">
+    <h2>Step 5 — Enrich Data</h2>
+    <p class="muted">Enrich extracted data with additional context (geo, market classification, etc.).</p>
+    <div class="row">
+      <div>
+        <label>Run to Enrich</label>
+        <input id="enrichRunId" placeholder="run_... (leave empty for latest)" />
+      </div>
+      <div>
+        <label>Enrichment Types</label>
+        <select id="enrichTypes" multiple size="3" style="width:100%;padding:10px;border-radius:8px;border:1px solid #314263;background:#0d1729;color:#eaf1ff">
+          <option value="geo" selected>geo (city/state/country from location)</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <button id="enrichBtn">Step 5: Enrich Data</button>
+    </div>
+    <div id="enrichStatus" style="margin-top:10px" class="muted">No enrichment run started.</div>
+    <div id="enrichResult" style="margin-top:6px" class="muted"></div>
+  </div>
+
+  <div class="card" id="screen4" style="margin-top: 24px;">
+    <h2>Step 6 — Extracted Data Review</h2>
+    <p class="muted">Select a run (run_id + datetime), then filter rows for action.</p>
+    <div class="row" style="margin-top:8px">
+      <div>
+        <label>Paste run_id</label>
+        <input id="runIdInput" placeholder="run_20260527T215551792595Z" />
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="useRunIdBtn">Use This Run ID</button>
+      </div>
+    </div>
+    <div id="runHistory" class="muted">Loading run history...</div>
+    <div id="runHistoryToggle" class="muted" style="margin-top:6px"></div>
+    <div style="margin-top:10px" class="row">
+      <div><label>QA Status</label><select id="fQa"><option value="">All</option><option value="needs_review">needs_review</option><option value="ready">ready</option><option value="skipped">skipped</option></select></div>
+      <div><label>AI Called</label><select id="fAi"><option value="">All</option><option value="1">Yes</option><option value="0">No</option></select></div>
+    </div>
+    <div style="margin-top:10px" class="row">
+      <div><label>Review Status</label><select id="fReviewStatus"><option value="">All</option><option value="needs_review">needs_review</option><option value="reviewed">reviewed</option><option value="follow_up">follow_up</option></select></div>
+      <div></div>
+    </div>
+    <div style="margin-top:10px" class="row">
+      <div><label>Geo City contains</label><input id="fGeoCity" placeholder="austin" /></div>
+      <div><label>Geo State contains</label><input id="fGeoState" placeholder="texas" /></div>
+    </div>
+    <div style="margin-top:10px" class="row">
+      <div><label>Geo Country contains</label><input id="fGeoCountry" placeholder="united states" /></div>
+      <div><label>Geo Confid</label><select id="fGeoConfidence"><option value="">All</option><option value="GEO_CONFIRMED">GEO_CONFIRMED</option><option value="GEO_PARTIAL">GEO_PARTIAL</option><option value="GEO_UNKNOWN">GEO_UNKNOWN</option></select></div>
+    </div>
+    <div style="margin-top:10px" class="row">
+      <div><label>Domain contains</label><input id="fDomain" placeholder="reuters" /></div>
+      <div><label>Market</label><select id="fMarket" class="state-select-multi"><option value="">All Markets</option></select></div>
+    </div>
+    <div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px">
+      <label style="margin:0"><input id="fChanged" type="checkbox" style="width:auto;margin-right:4px" /> Changed only</label>
+      <label style="margin:0"><input id="fHasData" type="checkbox" style="width:auto;margin-right:4px" /> Has CFP Status/Deadline</label>
+      <label style="margin:0"><input id="fUpcomingOnly" type="checkbox" style="width:auto;margin-right:4px" /> Upcoming only</label>
+      <label style="margin:0"><input id="fExcludePastCfp" type="checkbox" style="width:auto;margin-right:4px" /> Exclude past CFP</label>
+      <label style="margin:0"><input id="fExcludeNaCfpDeadline" type="checkbox" style="width:auto;margin-right:4px" /> Exclude N/A CFP Deadline</label>
+      <label style="margin:0"><input id="fExcludeNaConfDates" type="checkbox" style="width:auto;margin-right:4px" /> Exclude N/A Conf Dates</label>
+    </div>
+    <div style="margin-top:6px">
+      <label>CFP Status</label>
+      <select id="fCfpStatus">
+        <option value="">All</option>
+        <option value="Unknown">Unknown</option>
+        <option value="Open">Open</option>
+        <option value="Closed">Closed</option>
+        <option value="__empty__">(Empty)</option>
+      </select>
+    </div>
+    <div style="margin-top:10px" class="row"><button id="loadRowsBtn">Load Selected Run Rows</button><button id="loadPortfolioBtn">Load Market/Customer Latest</button></div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <button id="presetNeedsReview" style="width:auto;padding:8px 10px">Needs Review</button>
+      <button id="presetFollowUp" style="width:auto;padding:8px 10px">Follow Up</button>
+      <button id="presetReviewed" style="width:auto;padding:8px 10px">Reviewed</button>
+      <button id="presetReset" style="width:auto;padding:8px 10px">Reset Filters</button>
+    </div>
+    <div style="margin-top:8px" class="row"><div><label>Customer</label><input id="fCustomer" value="default_customer" /></div><div><label>Reviewed By</label><input id="fReviewedBy" value="web_user" placeholder="your name or initials" /></div></div>
+    <div style="margin-top:8px"><button id="exportPortfolioCsvBtn">Export Market CSV (with headers)</button></div>
+    <div id="rowsStatus" class="muted" style="margin-top:8px">No run selected.</div>
+    <div id="reviewSummary" class="muted" style="margin-top:8px"></div>
+    <div style="overflow:auto; margin-top:8px; max-height:420px" id="runRowsWrap">
+      <table>
+        <thead><tr><th>Market</th><th>Domain</th><th>URL</th><th>QA</th><th>Review</th><th>Action</th><th>AI</th><th>CFP Status</th><th id="thCfpDeadline" style="cursor:pointer;text-align:center">CFP Deadline</th><th id="thConfDates" style="cursor:pointer;text-align:center">Conf Dates</th><th>Geo City</th><th>Geo State</th><th>Geo Country</th><th>Geo Confid</th><th>Flags</th><th>Details</th></tr></thead>
+        <tbody id="runRowsTable"><tr><td colspan="16">-</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const preview = document.getElementById('preview');
+  const runStatus = document.getElementById('runStatus');
+  const crawlStatus = document.getElementById('crawlStatus');
+  const crawlLinkageStatus = document.getElementById('crawlLinkageStatus');
+  const crawlEngineMetricsStatus = document.getElementById('crawlEngineMetricsStatus');
+  const crawlEngineAlertBanner = document.getElementById('crawlEngineAlertBanner');
+  const crawlLinks = document.getElementById('crawlLinks');
+  const extractLinkageStatus = document.getElementById('extractLinkageStatus');
+  const extractLinks = document.getElementById('extractLinks');
+  const setupStatus = document.getElementById('setupStatus');
+  const geoValidationStatus = document.getElementById('geoValidationStatus');
+  const promptPackPreview = document.getElementById('promptPackPreview');
+  const multiModelPreview = document.getElementById('multiModelPreview');
+  let selectedRunId = null;
+  let currentRows = [];
+  let currentViewMode = 'run';
+  let showAllRuns = false;
+  let lastCrawlId = null;
+  let sortField = 'conf_dates';
+  let sortDir = 'asc';
+  function updateCrawlEngineAlert(metrics){
+    const m = metrics || {};
+    const failures = Number(m.crawl_engine_failure_count || 0);
+    if (failures > 0){
+      const when = m.last_crawl_engine_failure_at || 'unknown';
+      const reason = m.last_crawl_engine_failure_reason || 'no reason captured';
+      crawlEngineAlertBanner.style.display = 'block';
+      crawlEngineAlertBanner.textContent = `CRAWL ENGINE FAILURE ALERT: count=${failures} | last=${when} | reason=${reason}`;
+    } else {
+      crawlEngineAlertBanner.style.display = 'none';
+      crawlEngineAlertBanner.textContent = '';
+    }
+  }
+
+  async function refreshCrawlEngineMetricsBanner(){
+    try {
+      const res = await fetch('/api/pr-monitor-1/crawl-engine-metrics');
+      const data = await res.json();
+      if (!res.ok || !data.ok) return;
+      updateCrawlEngineAlert(data.metrics || {});
+    } catch (_) {}
+  }
+
+  let GEO = { countries: {}, statesByCountry: {}, cityCache: {} };
+  const FALLBACK_COUNTRIES = [
+    { code: 'US', name: 'United States' }, { code: 'CA', name: 'Canada' }, { code: 'AU', name: 'Australia' },
+    { code: 'GB', name: 'United Kingdom' }, { code: 'DE', name: 'Germany' }, { code: 'FR', name: 'France' },
+    { code: 'ES', name: 'Spain' }, { code: 'IT', name: 'Italy' }, { code: 'NL', name: 'Netherlands' },
+    { code: 'SE', name: 'Sweden' }, { code: 'NO', name: 'Norway' }, { code: 'DK', name: 'Denmark' },
+    { code: 'FI', name: 'Finland' }, { code: 'CH', name: 'Switzerland' }, { code: 'AT', name: 'Austria' },
+    { code: 'IE', name: 'Ireland' }, { code: 'PT', name: 'Portugal' }, { code: 'BE', name: 'Belgium' },
+    { code: 'PL', name: 'Poland' }, { code: 'CZ', name: 'Czechia' }, { code: 'GR', name: 'Greece' },
+    { code: 'TR', name: 'Turkey' }, { code: 'AE', name: 'United Arab Emirates' }, { code: 'SA', name: 'Saudi Arabia' },
+    { code: 'IL', name: 'Israel' }, { code: 'ZA', name: 'South Africa' }, { code: 'EG', name: 'Egypt' },
+    { code: 'NG', name: 'Nigeria' }, { code: 'KE', name: 'Kenya' }, { code: 'IN', name: 'India' },
+    { code: 'PK', name: 'Pakistan' }, { code: 'BD', name: 'Bangladesh' }, { code: 'CN', name: 'China' },
+    { code: 'JP', name: 'Japan' }, { code: 'KR', name: 'South Korea' }, { code: 'SG', name: 'Singapore' },
+    { code: 'MY', name: 'Malaysia' }, { code: 'TH', name: 'Thailand' }, { code: 'VN', name: 'Vietnam' },
+    { code: 'ID', name: 'Indonesia' }, { code: 'PH', name: 'Philippines' }, { code: 'NZ', name: 'New Zealand' },
+    { code: 'MX', name: 'Mexico' }, { code: 'BR', name: 'Brazil' }, { code: 'AR', name: 'Argentina' },
+    { code: 'CL', name: 'Chile' }, { code: 'CO', name: 'Colombia' }, { code: 'PE', name: 'Peru' }
+  ];
+  const FALLBACK_US_STATES = [
+    {code:'AL',name:'Alabama'},{code:'AK',name:'Alaska'},{code:'AZ',name:'Arizona'},{code:'AR',name:'Arkansas'},{code:'CA',name:'California'},{code:'CO',name:'Colorado'},
+    {code:'CT',name:'Connecticut'},{code:'DE',name:'Delaware'},{code:'FL',name:'Florida'},{code:'GA',name:'Georgia'},{code:'HI',name:'Hawaii'},{code:'ID',name:'Idaho'},
+    {code:'IL',name:'Illinois'},{code:'IN',name:'Indiana'},{code:'IA',name:'Iowa'},{code:'KS',name:'Kansas'},{code:'KY',name:'Kentucky'},{code:'LA',name:'Louisiana'},
+    {code:'ME',name:'Maine'},{code:'MD',name:'Maryland'},{code:'MA',name:'Massachusetts'},{code:'MI',name:'Michigan'},{code:'MN',name:'Minnesota'},{code:'MS',name:'Mississippi'},
+    {code:'MO',name:'Missouri'},{code:'MT',name:'Montana'},{code:'NE',name:'Nebraska'},{code:'NV',name:'Nevada'},{code:'NH',name:'New Hampshire'},{code:'NJ',name:'New Jersey'},
+    {code:'NM',name:'New Mexico'},{code:'NY',name:'New York'},{code:'NC',name:'North Carolina'},{code:'ND',name:'North Dakota'},{code:'OH',name:'Ohio'},{code:'OK',name:'Oklahoma'},
+    {code:'OR',name:'Oregon'},{code:'PA',name:'Pennsylvania'},{code:'RI',name:'Rhode Island'},{code:'SC',name:'South Carolina'},{code:'SD',name:'South Dakota'},{code:'TN',name:'Tennessee'},
+    {code:'TX',name:'Texas'},{code:'UT',name:'Utah'},{code:'VT',name:'Vermont'},{code:'VA',name:'Virginia'},{code:'WA',name:'Washington'},{code:'WV',name:'West Virginia'},
+    {code:'WI',name:'Wisconsin'},{code:'WY',name:'Wyoming'}
+  ];
+  const CONTIGUOUS_EXCLUDED_STATES = new Set(['AK', 'HI']);
+
+  const FALLBACK_US_CITIES_BY_STATE = {
+    AL: ['Huntsville', 'Mobile', 'Montgomery', 'Birmingham', 'Tuscaloosa', 'Hoover', 'Auburn', 'Dothan', 'Decatur', 'Madison'],
+    AK: ['Anchorage', 'Fairbanks', 'Juneau'],
+    AZ: ['Phoenix', 'Tucson', 'Mesa', 'Chandler', 'Gilbert', 'Glendale', 'Scottsdale', 'Peoria', 'Tempe', 'Surprise', 'Yuma', 'Goodyear', 'Buckeye', 'Avondale', 'Flagstaff', 'Queen Creek', 'Maricopa', 'Lake Havasu City', 'Casa Grande', 'Marana'],
+    AR: ['Little Rock', 'Fayetteville', 'Fort Smith', 'Springdale', 'Jonesboro', 'Rogers', 'North Little Rock', 'Conway', 'Bentonville'],
+    CA: ['Los Angeles', 'San Diego', 'San Jose', 'San Francisco', 'Fresno', 'Sacramento', 'Long Beach', 'Oakland', 'Bakersfield', 'Anaheim', 'Stockton', 'Riverside', 'Santa Ana', 'Irvine', 'Chula Vista', 'Santa Clarita', 'Fremont', 'San Bernardino', 'Modesto', 'Moreno Valley', 'Fontana', 'Oxnard', 'Huntington Beach', 'Glendale', 'Santa Rosa', 'Elk Grove', 'Ontario', 'Rancho Cucamonga', 'Oceanside', 'Lancaster', 'Garden Grove', 'Palmdale', 'Salinas', 'Hayward', 'Corona', 'Sunnyvale', 'Pomona', 'Escondido', 'Roseville', 'Torrance', 'Fullerton', 'Visalia', 'Orange', 'Pasadena', 'Victorville', 'Santa Clara', 'Thousand Oaks', 'Simi Valley', 'Vallejo', 'Concord', 'Berkeley', 'Clovis', 'Fairfield', 'Richmond', 'Antioch', 'Carlsbad', 'Downey', 'Costa Mesa', 'Murrieta', 'San Buenaventura (Ventura)', 'Temecula', 'Santa Maria', 'West Covina', 'El Monte', 'Inglewood', 'Burbank', 'El Cajon', 'San Mateo', 'Jurupa Valley', 'Daly City', 'Rialto', 'Chico', 'Norwalk', 'Menifee', 'Vacaville', 'Hesperia', 'Vista', 'Compton', 'Carson', 'San Marcos', 'Redding', 'Mission Viejo', 'Tracy', 'Santa Monica', 'South Gate', 'Chino', 'San Leandro', 'Westminster', 'Hemet', 'Indio', 'Santa Barbara', 'Hawthorne', 'Livermore', 'Whittier', 'Citrus Heights', 'Merced', 'San Ramon', 'Lake Forest', 'Newport Beach', 'Redwood City', 'Buena Park', 'Manteca', 'Alhambra', 'Mountain View', 'Lakewood', 'Folsom', 'Milpitas', 'Tustin', 'Pleasanton', 'Rancho Cordova', 'Napa', 'Bellflower', 'Upland', 'Perris', 'Chino Hills', 'Alameda', 'Pittsburg', 'Apple Valley', 'Redlands', 'Turlock', 'Dublin', 'Baldwin Park', 'Rocklin', 'Redondo Beach', 'Camarillo', 'Lake Elsinore', 'Yuba City', 'Union City', 'Walnut Creek', 'Eastvale', 'Tulare', 'Palo Alto', 'Yorba Linda', 'Lynwood', 'Davis', 'Lodi', 'Madera', 'South San Francisco', 'Laguna Niguel', 'Brentwood', 'San Clemente', 'Santa Cruz', 'La Habra', 'Porterville', 'Montebello', 'Pico Rivera', 'Encinitas', 'San Rafael', 'La Mesa', 'Monterey Park', 'Woodland', 'Gardena', 'Cupertino', 'Santee', 'Petaluma', 'Gilroy', 'Hanford', 'National City', 'Fountain Valley', 'Highland', 'Arcadia', 'Diamond Bar', 'Huntington Park', 'Yucaipa', 'West Sacramento', 'San Jacinto', 'Colton', 'Paramount', 'Novato', 'Beaumont', 'Placentia', 'Watsonville', 'Glendora', 'Aliso Viejo', 'Cathedral City', 'Delano', 'Covina', 'Rosemead', 'Palm Desert', 'Azusa', 'Cypress', 'Lincoln', 'Ceres', 'Cerritos', 'Poway', 'La Mirada'],
+    CO: ['Denver', 'Colorado Springs', 'Aurora', 'Fort Collins', 'Lakewood', 'Thornton', 'Arvada', 'Westminster', 'Pueblo', 'Greeley', 'Boulder', 'Centennial', 'Longmont', 'Loveland', 'Broomfield', 'Castle Rock', 'Grand Junction', 'Commerce City', 'Parker'],
+    CT: ['Bridgeport', 'Stamford', 'New Haven', 'Hartford', 'Waterbury', 'Norwalk', 'Danbury', 'New Britain', 'Bristol', 'Meriden', 'West Haven', 'Milford city'],
+    DE: ['Wilmington', 'Dover', 'Newark'],
+    FL: ['Jacksonville', 'Miami', 'Tampa', 'Orlando', 'St. Petersburg', 'Hialeah', 'Port St. Lucie', 'Tallahassee', 'Cape Coral', 'Fort Lauderdale', 'Pembroke Pines', 'Hollywood', 'Gainesville', 'Miramar', 'Coral Springs', 'Palm Bay', 'Clearwater', 'West Palm Beach', 'Lakeland', 'Pompano Beach', 'Miami Gardens', 'Davie', 'Boca Raton', 'Sunrise', 'Deltona', 'Plantation', 'Palm Coast', 'Deerfield Beach', 'Fort Myers', 'Melbourne', 'Miami Beach', 'Largo', 'Homestead', 'Boynton Beach', 'Kissimmee', 'Doral', 'North Port', 'Lauderhill', 'Tamarac', 'Daytona Beach', 'Weston', 'Delray Beach', 'Ocala', 'Port Orange', 'Wellington', 'Jupiter', 'Sanford', 'North Miami', 'Palm Beach Gardens', 'St. Cloud', 'Margate', 'Coconut Creek', 'Bradenton', 'Apopka', 'Sarasota', 'Pensacola', 'Bonita Springs', 'Pinellas Park', 'Winter Haven', 'Coral Gables', 'Titusville'],
+    GA: ['Atlanta', 'Columbus', 'Augusta-Richmond County consolidated government', 'Macon-Bibb County', 'Savannah', 'Athens-Clarke County unified government', 'Sandy Springs', 'South Fulton', 'Roswell', 'Johns Creek', 'Warner Robins', 'Mableton', 'Albany', 'Alpharetta', 'Marietta', 'Stonecrest', 'Brookhaven', 'Smyrna', 'Valdosta', 'Dunwoody'],
+    HI: ['Honolulu', 'East Honolulu', 'Pearl City'],
+    ID: ['Boise City', 'Meridian', 'Nampa', 'Idaho Falls', 'Caldwell', 'Pocatello', 'Coeur d\'Alene', 'Twin Falls'],
+    IL: ['Chicago', 'Aurora', 'Joliet', 'Naperville', 'Rockford', 'Elgin', 'Springfield', 'Peoria', 'Waukegan', 'Champaign', 'Cicero', 'Schaumburg', 'Bloomington', 'Evanston', 'Arlington Heights', 'Bolingbrook', 'Decatur', 'Palatine', 'Skokie', 'Des Plaines', 'Orland Park', 'Oak Lawn', 'Berwyn', 'Mount Prospect', 'Tinley Park', 'Oak Park', 'Wheaton', 'Normal', 'Hoffman Estates', 'Downers Grove', 'Glenview'],
+    IN: ['Indianapolis city', 'Fort Wayne', 'Evansville', 'South Bend', 'Carmel', 'Fishers', 'Bloomington', 'Hammond', 'Lafayette', 'Noblesville', 'Gary', 'Muncie', 'Greenwood', 'Kokomo', 'Terre Haute', 'Anderson', 'Elkhart', 'Mishawaka', 'Columbus', 'Jeffersonville', 'Lawrence'],
+    IA: ['Des Moines', 'Cedar Rapids', 'Davenport', 'Sioux City', 'Iowa City', 'West Des Moines', 'Ankeny', 'Waterloo', 'Ames', 'Council Bluffs', 'Dubuque'],
+    KS: ['Wichita', 'Overland Park', 'Kansas City', 'Olathe', 'Topeka', 'Lawrence', 'Shawnee', 'Lenexa', 'Manhattan'],
+    KY: ['Louisville/Jefferson County metro government', 'Lexington-Fayette urban county', 'Bowling Green', 'Owensboro'],
+    LA: ['New Orleans', 'Baton Rouge', 'Shreveport', 'Lafayette', 'Lake Charles', 'Kenner', 'Bossier City'],
+    ME: ['Portland', 'Lewiston', 'Bangor'],
+    MD: ['Baltimore', 'Frederick', 'Gaithersburg', 'Rockville', 'Bowie'],
+    MA: ['Boston', 'Worcester', 'Springfield', 'Cambridge', 'Lowell', 'Brockton', 'Quincy', 'Lynn', 'New Bedford', 'Fall River', 'Lawrence', 'Newton', 'Somerville', 'Framingham', 'Haverhill', 'Malden', 'Waltham', 'Revere', 'Medford', 'Taunton', 'Weymouth Town', 'Chicopee', 'Peabody', 'Methuen', 'Everett', 'Barnstable Town'],
+    MI: ['Detroit', 'Grand Rapids', 'Warren', 'Sterling Heights', 'Ann Arbor', 'Lansing', 'Dearborn', 'Livonia', 'Troy', 'Westland', 'Farmington Hills', 'Flint', 'Southfield', 'Wyoming', 'Rochester Hills', 'Kalamazoo', 'Novi', 'Taylor', 'Dearborn Heights', 'Pontiac', 'St. Clair Shores', 'Royal Oak', 'Kentwood', 'Battle Creek', 'Portage', 'East Lansing'],
+    MN: ['Minneapolis', 'St. Paul', 'Rochester', 'Bloomington', 'Duluth', 'Brooklyn Park', 'Plymouth', 'Woodbury', 'Maple Grove', 'Blaine', 'St. Cloud', 'Lakeville', 'Eagan', 'Burnsville', 'Eden Prairie', 'Coon Rapids', 'Apple Valley', 'Minnetonka', 'Edina', 'St. Louis Park'],
+    MS: ['Jackson', 'Gulfport', 'Southaven', 'Biloxi', 'Hattiesburg'],
+    MO: ['Kansas City', 'St. Louis', 'Springfield', 'Columbia', 'Independence', 'Lee\'s Summit', 'O\'Fallon', 'St. Joseph', 'St. Charles', 'Blue Springs', 'St. Peters', 'Florissant', 'Joplin', 'Chesterfield'],
+    MT: ['Billings', 'Missoula', 'Great Falls', 'Bozeman'],
+    NE: ['Omaha', 'Lincoln', 'Bellevue', 'Grand Island'],
+    NV: ['Las Vegas', 'Henderson', 'Reno', 'North Las Vegas', 'Sparks', 'Carson'],
+    NH: ['Manchester', 'Nashua', 'Concord'],
+    NJ: ['Newark', 'Jersey City', 'Paterson', 'Elizabeth', 'Trenton', 'Clifton', 'Camden', 'Bayonne', 'Passaic', 'East Orange', 'Union City', 'Vineland', 'Hoboken', 'Perth Amboy', 'New Brunswick', 'Plainfield', 'West New York'],
+    NM: ['Albuquerque', 'Las Cruces', 'Rio Rancho', 'Santa Fe', 'Roswell'],
+    NY: ['New York', 'Buffalo', 'Yonkers', 'Rochester', 'Syracuse', 'Albany', 'New Rochelle', 'Mount Vernon', 'Schenectady', 'Utica', 'White Plains', 'Hempstead', 'Troy', 'Niagara Falls'],
+    NC: ['Charlotte', 'Raleigh', 'Greensboro', 'Durham', 'Winston-Salem', 'Fayetteville', 'Cary', 'Wilmington', 'High Point', 'Concord', 'Asheville', 'Greenville', 'Gastonia', 'Jacksonville', 'Apex', 'Chapel Hill', 'Huntersville', 'Burlington', 'Rocky Mount', 'Kannapolis', 'Mooresville', 'Wilson', 'Wake Forest'],
+    ND: ['Fargo', 'Bismarck', 'Grand Forks', 'Minot'],
+    OH: ['Columbus', 'Cleveland', 'Cincinnati', 'Toledo', 'Akron', 'Dayton', 'Parma', 'Canton', 'Lorain', 'Hamilton', 'Youngstown', 'Springfield', 'Kettering', 'Elyria', 'Cuyahoga Falls', 'Middletown', 'Lakewood', 'Newark', 'Euclid', 'Dublin'],
+    OK: ['Oklahoma City', 'Tulsa', 'Norman', 'Broken Arrow', 'Edmond', 'Lawton', 'Moore', 'Midwest City', 'Enid', 'Stillwater'],
+    OR: ['Portland', 'Eugene', 'Salem', 'Gresham', 'Hillsboro', 'Bend', 'Beaverton', 'Medford', 'Springfield', 'Corvallis', 'Albany', 'Tigard'],
+    PA: ['Erie', 'Scranton', 'Reading', 'Levittown', 'Lancaster', 'Bethlehem', 'Harrisburg', 'Pittsburgh', 'Philadelphia', 'Allentown'],
+    RI: ['Providence', 'Cranston', 'Warwick', 'Pawtucket'],
+    SC: ['Charleston', 'Columbia', 'North Charleston', 'Mount Pleasant', 'Rock Hill', 'Greenville', 'Summerville'],
+    SD: ['Sioux Falls', 'Rapid City', 'Aberdeen'],
+    TN: ['Nashville-Davidson metropolitan government', 'Memphis', 'Knoxville', 'Chattanooga', 'Clarksville', 'Murfreesboro', 'Franklin', 'Johnson City', 'Jackson', 'Hendersonville', 'Bartlett', 'Kingsport', 'Smyrna', 'Collierville', 'Spring Hill'],
+    TX: ['Houston', 'San Antonio', 'Dallas', 'Austin', 'Fort Worth', 'El Paso', 'Arlington', 'Corpus Christi', 'Plano', 'Lubbock', 'Irving', 'Laredo', 'Garland', 'Frisco', 'Amarillo', 'Grand Prairie', 'McKinney', 'Brownsville', 'Killeen', 'Pasadena', 'Mesquite', 'McAllen', 'Waco', 'Denton', 'Carrollton', 'Midland', 'Pearland', 'Lewisville', 'Abilene', 'College Station', 'Round Rock', 'Richardson', 'Beaumont', 'Odessa', 'League City', 'Sugar Land', 'Tyler', 'Allen', 'Wichita Falls', 'Edinburg', 'San Angelo', 'New Braunfels', 'Conroe', 'Mission', 'Baytown', 'Bryan', 'Temple', 'Longview', 'Pharr', 'Cedar Park', 'Flower Mound', 'Missouri City', 'Mansfield', 'Harlingen', 'North Richland Hills', 'San Marcos', 'Georgetown', 'Victoria', 'Pflugerville', 'Rowlett', 'Euless', 'Leander', 'Wylie', 'DeSoto', 'Port Arthur', 'Galveston', 'Texas City', 'Grapevine', 'Bedford', 'Cedar Hill'],
+    UT: ['Salt Lake City', 'West Valley City', 'West Jordan', 'Provo', 'Orem', 'Sandy', 'St. George', 'Ogden', 'Layton', 'South Jordan', 'Lehi', 'Millcreek', 'Taylorsville', 'Herriman', 'Logan', 'Draper', 'Murray'],
+    VT: ['Burlington', 'South Burlington', 'Rutland'],
+    VA: ['Virginia Beach', 'Chesapeake', 'Norfolk', 'Richmond', 'Newport News', 'Alexandria', 'Hampton', 'Roanoke', 'Portsmouth', 'Suffolk', 'Lynchburg', 'Harrisonburg', 'Leesburg'],
+    WA: ['Seattle', 'Spokane', 'Tacoma', 'Vancouver', 'Bellevue', 'Kent', 'Everett', 'Renton', 'Spokane Valley', 'Federal Way', 'Yakima', 'Kirkland', 'Bellingham', 'Auburn', 'Kennewick', 'Pasco', 'Redmond', 'Marysville', 'Sammamish', 'Lakewood', 'Richland', 'Shoreline', 'Lacey', 'Olympia', 'Burien', 'Bothell'],
+    WV: ['Charleston', 'Huntington', 'Morgantown'],
+    WI: ['Milwaukee', 'Madison', 'Green Bay', 'Kenosha', 'Racine', 'Appleton', 'Waukesha', 'Eau Claire', 'Oshkosh', 'Janesville', 'West Allis', 'La Crosse', 'Sheboygan', 'Wauwatosa'],
+    WY: ['Cheyenne', 'Casper', 'Laramie'],
+  };
+
+  function buildGeoPreference(countryCode, stateCode, city){
+    const country = GEO.countries[countryCode];
+    const countryName = country ? country.name : '';
+    const stateList = GEO.statesByCountry[countryCode] || [];
+    const stateObj = stateList.find(s => s.code === stateCode);
+    const stateName = stateObj ? stateObj.name : '';
+    const cityName = (city || '').trim();
+    const parts = [];
+    if (cityName) parts.push(`city: ${cityName}`);
+    if (stateName) parts.push(`state: ${stateName}`);
+    if (countryName) parts.push(`country: ${countryName}`);
+    return parts.join(' | ');
+  }
+
+  function buildAwardGeoPreference(countryCode, stateCode, city){
+    const preset = (document.getElementById('awardCoveragePreset')?.value || 'ALL_US_AWARD').toUpperCase();
+    if (preset === 'CONTIGUOUS_US_AWARD'){
+      return 'country: United States | coverage: Contiguous US (exclude AK, HI)';
+    }
+    return buildGeoPreference(countryCode, stateCode, city);
+  }
+
+  function parseGeoPreference(pref){
+    const value = String(pref || '');
+    const cityMatch = value.match(/city:\s*([^|]+)/i);
+    const stateMatch = value.match(/state:\s*([^|]+)/i);
+    const countryMatch = value.match(/country:\s*([^|]+)/i);
+    const city = cityMatch ? cityMatch[1].trim() : '';
+    const stateName = stateMatch ? stateMatch[1].trim().toLowerCase() : '';
+    const countryName = countryMatch ? countryMatch[1].trim().toLowerCase() : '';
+    let countryCode = '';
+    let stateCode = '';
+    for (const [cc, cObj] of Object.entries(GEO.countries)){
+      if (String(cObj.name || '').toLowerCase() === countryName) {
+        countryCode = cc;
+      }
+    }
+    if (countryCode){
+      const states = GEO.statesByCountry[countryCode] || [];
+      for (const sObj of states){
+        if (String(sObj.name || '').toLowerCase() === stateName) stateCode = sObj.code;
+      }
+    }
+    return { countryCode, stateCode, city };
+  }
+
+  function setGeoStatus(msg, isError=false){
+    geoValidationStatus.textContent = msg || '';
+    geoValidationStatus.className = isError ? 'error' : 'muted';
+  }
+
+  function updateStateScopeHint(prefix){
+    const countryCode = document.getElementById(`${prefix}Country`)?.value || '';
+    const stateCode = document.getElementById(`${prefix}State`)?.value || '';
+    const hintEl = document.getElementById(`${prefix}StateScopeHint`);
+    if (!hintEl) return;
+    if (countryCode === 'US' && !stateCode){
+      hintEl.textContent = 'No state selected: defaults to ALL U.S. states.';
+      return;
+    }
+    if (stateCode){
+      hintEl.textContent = 'State selected: scoped to that state.';
+      return;
+    }
+    hintEl.textContent = '';
+  }
+
+  async function populateCountries(prefix){
+    const countryEl = document.getElementById(`${prefix}Country`);
+    if (!Object.keys(GEO.countries).length){
+      try {
+        const res = await fetch('/api/pr-monitor-1/geo/countries');
+        const data = await res.json();
+        if (data.ok){
+          (data.countries || []).forEach(c => {
+            if (c && c.code && c.name) GEO.countries[c.code] = { name: c.name };
+          });
+        }
+      } catch(e) {}
+      if (!Object.keys(GEO.countries).length){
+        FALLBACK_COUNTRIES.forEach(c => { GEO.countries[c.code] = { name: c.name }; });
+      }
+    }
+    const entries = Object.entries(GEO.countries).sort((a,b) => a[1].name.localeCompare(b[1].name));
+    countryEl.innerHTML = `<option value="">Country</option>` + entries.map(([code, meta]) => `<option value="${code}">${meta.name}</option>`).join('');
+    if (!countryEl.value) countryEl.value = 'US';
+  }
+
+  async function populateStates(prefix){
+    const countryCode = document.getElementById(`${prefix}Country`).value;
+    const stateEl = document.getElementById(`${prefix}State`);
+    let states = [];
+    if (countryCode){
+      if (!GEO.statesByCountry[countryCode]){
+        try {
+          const res = await fetch(`/api/pr-monitor-1/geo/states?country=${encodeURIComponent(countryCode)}`);
+          const data = await res.json();
+          GEO.statesByCountry[countryCode] = (data.ok && Array.isArray(data.states)) ? data.states : [];
+        } catch(e) {
+          GEO.statesByCountry[countryCode] = [];
+        }
+        if (countryCode === 'US' && !GEO.statesByCountry[countryCode].length){
+          GEO.statesByCountry[countryCode] = FALLBACK_US_STATES;
+        }
+      }
+      states = GEO.statesByCountry[countryCode] || [];
+    }
+    const hasStates = states.length > 0;
+    stateEl.innerHTML = `<option value="">${hasStates ? 'All states/provinces (default)' : 'State/Province (optional)'}</option>` +
+      states.map((s) => `<option value="${s.code}">${s.name}</option>`).join('');
+    await populateCities(prefix);
+    updateStateScopeHint(prefix);
+  }
+
+  async function populateCities(prefix){
+    const countryCode = document.getElementById(`${prefix}Country`).value;
+    const stateCode = document.getElementById(`${prefix}State`).value;
+    const cityEl = document.getElementById(`${prefix}City`);
+    if (!cityEl) return;
+
+    // For U.S. award geo, use the hardcoded 50-state city lists directly for stable, deterministic LOV behavior.
+    if (prefix === 'award' && countryCode === 'US'){
+      if (!stateCode){
+        cityEl.innerHTML = '<option value="">City (select a state first)</option>';
+        cityEl.disabled = true;
+        const hint = document.getElementById(`${prefix}CityHint`);
+        if (hint) hint.textContent = 'Select a U.S. state first, then choose a city from the curated list.';
+        return;
+      }
+      const usCities = FALLBACK_US_CITIES_BY_STATE[stateCode] || [];
+      cityEl.innerHTML = `<option value="">${usCities.length ? 'Select city (optional)' : 'City (optional)'}</option>` +
+        usCities.map((c) => `<option value="${c}">${c}</option>`).join('');
+      cityEl.disabled = false;
+      const hint = document.getElementById(`${prefix}CityHint`);
+      if (hint) hint.textContent = usCities.length
+        ? 'Using hardcoded U.S. state city lists (200K+ population standard).'
+        : 'No cities meet the 200K+ threshold for this state.';
+      return;
+    }
+
+    let cities = [];
+    const cacheKey = `${countryCode}|${stateCode || 'ALL'}|major_200k`;
+    if (countryCode && (stateCode || countryCode !== 'US')){
+      if (!GEO.cityCache[cacheKey]){
+        try {
+          const res = await fetch(`/api/pr-monitor-1/geo/cities?country=${encodeURIComponent(countryCode)}&state=${encodeURIComponent(stateCode)}&limit=300&min_population=200000`);
+          const data = await res.json();
+          if (data.ok){
+            const rows = Array.isArray(data.cities) ? data.cities : [];
+            const filtered = rows.filter((c) => {
+              if (!stateCode) return true;
+              const s = String((c && c.state) || '').toUpperCase();
+              return s === String(stateCode).toUpperCase();
+            });
+            GEO.cityCache[cacheKey] = filtered.map(c => c.name).filter(Boolean);
+          } else {
+            GEO.cityCache[cacheKey] = [];
+          }
+        } catch (e) {
+          GEO.cityCache[cacheKey] = [];
+        }
+      }
+      cities = GEO.cityCache[cacheKey] || [];
+    }
+    if (!cities.length && countryCode === 'US' && stateCode && FALLBACK_US_CITIES_BY_STATE[stateCode]){
+      cities = FALLBACK_US_CITIES_BY_STATE[stateCode];
+    }
+    cityEl.innerHTML = `<option value="">${cities.length ? 'Select city (optional)' : 'City (optional)'}</option>` +
+      cities.map((c) => `<option value="${c}">${c}</option>`).join('');
+    if (countryCode === 'US' && !stateCode){
+      cityEl.disabled = true;
+      cityEl.value = '';
+      const hint = document.getElementById(`${prefix}CityHint`);
+      if (hint) hint.textContent = 'Select a U.S. state first, then choose a city.';
+      return;
+    }
+    cityEl.disabled = false;
+    const hint = document.getElementById(`${prefix}CityHint`);
+    if (hint) hint.textContent = countryCode === 'US'
+      ? 'Major metro areas (200k+ population) for the selected U.S. state.'
+      : 'Major metro areas (200k+ population) for the selected country/state when available.';
+  }
+
+  async function validateGeo(prefix, label){
+    const countryCode = document.getElementById(`${prefix}Country`).value;
+    const stateCode = document.getElementById(`${prefix}State`).value;
+    const cityEl = document.getElementById(`${prefix}City`);
+    const city = cityEl ? (cityEl.value || '').trim() : '';
+    if (!countryCode) return `${label}: country is required`;
+    const states = GEO.statesByCountry[countryCode] || [];
+    if (stateCode && !states.find(s => s.code === stateCode)) return `${label}: invalid state/province`;
+    if (prefix === 'award' && city){
+      const qs = new URLSearchParams({
+        country: countryCode,
+        state: stateCode || '',
+        city
+      });
+      const res = await fetch(`/api/pr-monitor-1/geo/validate-city?${qs.toString()}`);
+      const data = await res.json();
+      if (!data.ok) {
+        setGeoStatus(`${label}: city validation service unavailable, continuing with dropdown/manual selection fallback.`);
+        return '';
+      }
+      if (!data.valid) {
+        return `${label}: city not found for selected country/state`;
+      }
+    }
+    return '';
+  }
+
+  function syncGeoHiddenFields(){
+    const confScope = (document.getElementById('confRegionScope').value || 'US').toUpperCase();
+    const selectedStates = Array.from(document.getElementById('confStatesMulti').selectedOptions || []).map(o => o.value);
+    const selectedCountries = Array.from(document.getElementById('confCountriesMulti').selectedOptions || []).map(o => o.value);
+    const confStates = confScope === 'US' ? selectedStates : [];
+    const confCountries = confScope === 'SPECIFIC_COUNTRIES' ? selectedCountries : [];
+    const awardCountry = document.getElementById('awardCountry').value;
+    const awardState = document.getElementById('awardState').value;
+    const awardCity = document.getElementById('awardCity').value;
+    document.getElementById('confRegionScopeInput').value = confScope;
+    document.getElementById('confStatesInput').value = JSON.stringify(confStates);
+    document.getElementById('confCountriesInput').value = JSON.stringify(confCountries);
+    document.getElementById('confGeoPrefInput').value = confScope === 'US'
+      ? `region_scope: US | states: ${confStates.length ? confStates.join(', ') : 'ALL'}`
+      : (confScope === 'SPECIFIC_COUNTRIES'
+          ? `region_scope: SPECIFIC_COUNTRIES | countries: ${confCountries.length ? confCountries.join(', ') : ''}`
+          : 'region_scope: INTERNATIONAL');
+    document.getElementById('awardGeoPrefInput').value = buildAwardGeoPreference(awardCountry, awardState, awardCity);
+  }
+
+  function detectAwardCoveragePresetFromPreference(pref){
+    const value = String(pref || '').toLowerCase();
+    if (value.includes('contiguous us') || value.includes('contiguous_us')) return 'CONTIGUOUS_US_AWARD';
+    return 'ALL_US_AWARD';
+  }
+
+  function getUSStateCodes(){
+    return FALLBACK_US_STATES.map((s) => String(s.code).toUpperCase());
+  }
+
+  function getContiguousUSStateCodes(){
+    return getUSStateCodes().filter((c) => !CONTIGUOUS_EXCLUDED_STATES.has(c));
+  }
+
+  function detectUSCoveragePresetFromSelection(selectedStates){
+    const selected = new Set((selectedStates || []).map((s) => String(s).toUpperCase()));
+    const all = new Set(getUSStateCodes());
+    const contiguous = new Set(getContiguousUSStateCodes());
+    if (selected.size === all.size && Array.from(all).every((c) => selected.has(c))) return 'ALL_US';
+    if (selected.size === contiguous.size && Array.from(contiguous).every((c) => selected.has(c))) return 'CONTIGUOUS_US';
+    return 'CUSTOM_US';
+  }
+
+  function applyUSCoveragePreset(preset){
+    const stateEl = document.getElementById('confStatesMulti');
+    const all = new Set(getUSStateCodes());
+    const contiguous = new Set(getContiguousUSStateCodes());
+    Array.from(stateEl.options || []).forEach((opt) => {
+      const code = String(opt.value || '').toUpperCase();
+      if (preset === 'ALL_US') opt.selected = all.has(code);
+      else if (preset === 'CONTIGUOUS_US') opt.selected = contiguous.has(code);
+    });
+  }
+
+  function updateConferenceScopeUI(){
+    const scope = (document.getElementById('confRegionScope').value || 'US').toUpperCase();
+    const wrap = document.getElementById('confStatesWrap');
+    const countriesWrap = document.getElementById('confCountriesWrap');
+    const hint = document.getElementById('confRegionHint');
+    if (scope === 'US'){
+      wrap.style.display = '';
+      countriesWrap.style.display = 'none';
+      hint.textContent = 'Conference search scoped to U.S. (defaults to all states selected).';
+    } else if (scope === 'SPECIFIC_COUNTRIES') {
+      wrap.style.display = 'none';
+      countriesWrap.style.display = '';
+      hint.textContent = 'Conference search scoped to selected non-US countries only.';
+    } else {
+      wrap.style.display = 'none';
+      countriesWrap.style.display = 'none';
+      hint.textContent = 'Conference search scoped globally (International + U.S.).';
+    }
+  }
+
+  function ensureUSStatesDefaultSelected(){
+    const scope = (document.getElementById('confRegionScope').value || 'US').toUpperCase();
+    if (scope !== 'US') return;
+    const stateEl = document.getElementById('confStatesMulti');
+    const anySelected = Array.from(stateEl.options || []).some((opt) => opt.selected);
+    if (!anySelected){
+      Array.from(stateEl.options || []).forEach((opt) => { opt.selected = true; });
+      const presetEl = document.getElementById('confUSCoveragePreset');
+      if (presetEl) presetEl.value = 'ALL_US';
+    }
+  }
+
+  function populateConferenceStateMulti(){
+    const el = document.getElementById('confStatesMulti');
+    el.innerHTML = FALLBACK_US_STATES.map((s) => `<option value="${s.code}">${s.name} (${s.code})</option>`).join('');
+  }
+
+  async function populateConferenceCountryMulti(){
+    const el = document.getElementById('confCountriesMulti');
+    if (!Object.keys(GEO.countries).length){
+      await populateCountries('award');
+    }
+    const entries = Object.entries(GEO.countries)
+      .filter(([code]) => String(code).toUpperCase() !== 'US')
+      .sort((a,b) => a[1].name.localeCompare(b[1].name));
+    el.innerHTML = entries.map(([code, meta]) => `<option value="${code}">${meta.name}</option>`).join('');
+  }
+
+  async function initGeoControls(){
+    // Conference simplified controls.
+    populateConferenceStateMulti();
+    await populateConferenceCountryMulti();
+    document.getElementById('confRegionScope').addEventListener('change', () => {
+      updateConferenceScopeUI();
+      ensureUSStatesDefaultSelected();
+      syncGeoHiddenFields();
+      setGeoStatus('');
+    });
+    document.getElementById('confUSCoveragePreset').addEventListener('change', (e) => {
+      const preset = (e.target.value || 'ALL_US').toUpperCase();
+      if (preset === 'CUSTOM_US') return;
+      applyUSCoveragePreset(preset);
+      syncGeoHiddenFields();
+      setGeoStatus(preset === 'CONTIGUOUS_US' ? 'Preset applied: Contiguous US (AK/HI excluded).' : 'Preset applied: All US states.');
+    });
+    document.getElementById('confStatesMulti').addEventListener('change', () => {
+      const selectedStates = Array.from(document.getElementById('confStatesMulti').selectedOptions || []).map((o) => o.value);
+      document.getElementById('confUSCoveragePreset').value = detectUSCoveragePresetFromSelection(selectedStates);
+      syncGeoHiddenFields();
+      setGeoStatus('');
+    });
+    document.getElementById('confStatesSelectAllBtn').addEventListener('click', () => {
+      Array.from(document.getElementById('confStatesMulti').options || []).forEach((opt) => { opt.selected = true; });
+      document.getElementById('confUSCoveragePreset').value = 'ALL_US';
+      syncGeoHiddenFields();
+      setGeoStatus('All U.S. states selected.');
+    });
+    document.getElementById('confStatesClearBtn').addEventListener('click', () => {
+      Array.from(document.getElementById('confStatesMulti').options || []).forEach((opt) => { opt.selected = false; });
+      document.getElementById('confUSCoveragePreset').value = 'CUSTOM_US';
+      syncGeoHiddenFields();
+      setGeoStatus('State filter cleared (ALL U.S. states).');
+    });
+    document.getElementById('confCountriesMulti').addEventListener('change', () => {
+      syncGeoHiddenFields();
+      setGeoStatus('');
+    });
+    updateConferenceScopeUI();
+    ensureUSStatesDefaultSelected();
+
+    // Award controls with preset support (city stays optional and empty by default).
+    document.getElementById('awardCoveragePreset').addEventListener('change', async (e) => {
+      const preset = (e.target.value || 'ALL_US_AWARD').toUpperCase();
+      if (preset !== 'CUSTOM_AWARD'){
+        document.getElementById('awardCountry').value = 'US';
+        await populateStates('award');
+        document.getElementById('awardState').value = '';
+        await populateCities('award');
+        document.getElementById('awardCity').value = '';
+      }
+      syncGeoHiddenFields();
+      setGeoStatus('');
+    });
+
+    ['award'].forEach((prefix) => {
+      document.getElementById(`${prefix}Country`).addEventListener('change', async () => {
+        const country = (document.getElementById('awardCountry').value || '').toUpperCase();
+        if (country !== 'US') document.getElementById('awardCoveragePreset').value = 'CUSTOM_AWARD';
+        await populateStates(prefix);
+        syncGeoHiddenFields();
+        setGeoStatus('');
+        updateStateScopeHint(prefix);
+      });
+      document.getElementById(`${prefix}State`).addEventListener('change', async () => {
+        if ((document.getElementById('awardState').value || '').trim()) {
+          document.getElementById('awardCoveragePreset').value = 'CUSTOM_AWARD';
+        }
+        await populateCities(prefix);
+        syncGeoHiddenFields();
+        setGeoStatus('');
+        updateStateScopeHint(prefix);
+      });
+      const cityEl = document.getElementById(`${prefix}City`);
+      if (cityEl){
+        cityEl.addEventListener('change', async () => {
+          if ((document.getElementById('awardCity').value || '').trim()) {
+            document.getElementById('awardCoveragePreset').value = 'CUSTOM_AWARD';
+          }
+          syncGeoHiddenFields();
+          setGeoStatus('');
+        });
+      }
+    });
+
+    await populateCountries('award');
+    document.getElementById('awardCoveragePreset').value = 'ALL_US_AWARD';
+    document.getElementById('awardCountry').value = 'US';
+    await populateStates('award');
+    document.getElementById('awardState').value = '';
+    await populateCities('award');
+    document.getElementById('awardCity').value = '';
+    updateStateScopeHint('award');
+    syncGeoHiddenFields();
+  }
+
+  async function validateAndSyncGeo(){
+    syncGeoHiddenFields();
+    const confScope = (document.getElementById('confRegionScope').value || '').toUpperCase();
+    const confStates = JSON.parse(document.getElementById('confStatesInput').value || '[]');
+    const confCountries = JSON.parse(document.getElementById('confCountriesInput').value || '[]');
+    if (!['US', 'INTERNATIONAL', 'SPECIFIC_COUNTRIES'].includes(confScope)) {
+      setGeoStatus('Conference geo: scope must be US, International, or Specific Countries', true);
+      return false;
+    }
+    if (confScope !== 'US' && confStates.length){
+      setGeoStatus('Conference geo: states are allowed only when scope is US', true);
+      return false;
+    }
+    if (confScope === 'INTERNATIONAL' && confCountries.length){
+      setGeoStatus('Conference geo: explicit countries are not allowed in International scope', true);
+      return false;
+    }
+    if (confScope === 'US' && confCountries.length){
+      setGeoStatus('Conference geo: explicit countries are not allowed in US scope', true);
+      return false;
+    }
+    if (confScope === 'SPECIFIC_COUNTRIES' && !confCountries.length){
+      setGeoStatus('Conference geo: pick at least one country for Specific Countries scope', true);
+      return false;
+    }
+    if (confScope === 'SPECIFIC_COUNTRIES' && confCountries.includes('US')){
+      setGeoStatus('Conference geo: US is not allowed in Specific Countries scope', true);
+      return false;
+    }
+    const awardErr = await validateGeo('award', 'Award geo');
+    if (awardErr) { setGeoStatus(awardErr, true); return false; }
+    setGeoStatus('Geo preferences verified.');
+    return true;
+  }
+
+  async function loadSetup(){
+    try {
+      const res = await fetch('/api/pr-monitor-1/preferences');
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setupStatus.textContent = 'Setup load failed.';
+        return;
+      }
+      const prefs = data.preferences || {};
+      document.getElementById('marketInput').value = prefs.market || '';
+      document.getElementById('recordTypeInput').value = prefs.record_type || 'both';
+      const awardParsed = parseGeoPreference(prefs.award_geo_preference || '');
+      document.getElementById('awardCoveragePreset').value = detectAwardCoveragePresetFromPreference(prefs.award_geo_preference || '');
+      const confScope = (prefs.conference_country_scope || prefs.conference_region_scope || 'US').toUpperCase();
+      document.getElementById('confRegionScope').value = ['US','INTERNATIONAL','SPECIFIC_COUNTRIES'].includes(confScope) ? confScope : 'US';
+      updateConferenceScopeUI();
+      const selectedStates = Array.isArray(prefs.conference_us_states) ? prefs.conference_us_states : [];
+      const stateSet = new Set(selectedStates.map(s => String(s).toUpperCase()));
+      const shouldDefaultAllUSStates = (document.getElementById('confRegionScope').value || 'US').toUpperCase() === 'US' && !selectedStates.length;
+      Array.from(document.getElementById('confStatesMulti').options).forEach((opt) => {
+        opt.selected = shouldDefaultAllUSStates || stateSet.has(String(opt.value).toUpperCase());
+      });
+      const effectiveStates = Array.from(document.getElementById('confStatesMulti').selectedOptions || []).map((o) => o.value);
+      document.getElementById('confUSCoveragePreset').value = detectUSCoveragePresetFromSelection(effectiveStates);
+      const selectedCountries = Array.isArray(prefs.conference_countries) ? prefs.conference_countries : [];
+      const countrySet = new Set(selectedCountries.map(s => String(s).toUpperCase()));
+      Array.from(document.getElementById('confCountriesMulti').options).forEach((opt) => {
+        opt.selected = countrySet.has(String(opt.value).toUpperCase());
+      });
+      if (document.getElementById('awardCoveragePreset').value === 'CONTIGUOUS_US_AWARD'){
+        document.getElementById('awardCountry').value = 'US';
+        await populateStates('award');
+        document.getElementById('awardState').value = '';
+        await populateCities('award');
+        document.getElementById('awardCity').value = '';
+      } else {
+        document.getElementById('awardCountry').value = awardParsed.countryCode || 'US';
+        await populateStates('award');
+        if (awardParsed.stateCode) document.getElementById('awardState').value = awardParsed.stateCode;
+        await populateCities('award');
+        document.getElementById('awardCity').value = awardParsed.city || '';
+        if (awardParsed.city && !document.getElementById('awardCity').value){
+          const opt = document.createElement('option');
+          opt.value = awardParsed.city;
+          opt.textContent = awardParsed.city;
+          document.getElementById('awardCity').appendChild(opt);
+          document.getElementById('awardCity').value = awardParsed.city;
+        }
+      }
+      syncGeoHiddenFields();
+      setupStatus.textContent = `Setup loaded (${new Date().toISOString()})`;
+    } catch (e) {
+      setupStatus.textContent = `Setup load failed: ${e.message}`;
+    }
+  }
+
+  document.getElementById('saveSetupBtn').onclick = async () => {
+    if (!(await validateAndSyncGeo())) return;
+    const payload = {
+      market: (document.getElementById('marketInput').value || '').trim(),
+      record_type: (document.getElementById('recordTypeInput').value || 'both').trim(),
+      conference_region_scope: (document.getElementById('confRegionScopeInput').value || '').trim(),
+      conference_country_scope: (document.getElementById('confRegionScopeInput').value || '').trim(),
+      conference_us_states: JSON.parse(document.getElementById('confStatesInput').value || '[]'),
+      conference_countries: JSON.parse(document.getElementById('confCountriesInput').value || '[]'),
+      conference_geo_preference: (document.getElementById('confGeoPrefInput').value || '').trim(),
+      award_geo_preference: (document.getElementById('awardGeoPrefInput').value || '').trim()
+    };
+    try {
+      const res = await fetch('/api/pr-monitor-1/preferences', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setupStatus.textContent = `Setup save failed: ${data.detail || data.error || 'unknown error'}`;
+        return;
+      }
+      const confScope = document.getElementById('confRegionScope').value || '-';
+      const confStates = JSON.parse(document.getElementById('confStatesInput').value || '[]');
+      const confCountries = JSON.parse(document.getElementById('confCountriesInput').value || '[]');
+      const awardCountry = document.getElementById('awardCountry').value || '-';
+      const awardState = document.getElementById('awardState').value || '-';
+      const awardCity = document.getElementById('awardCity').value || '-';
+      const confSummary = confScope === 'US'
+        ? `US [${confStates.length ? confStates.join(',') : 'ALL'}]`
+        : (confScope === 'SPECIFIC_COUNTRIES'
+            ? `Specific Countries [${confCountries.join(',')}]`
+            : 'International');
+      setupStatus.textContent = `Setup saved | mkt:${payload.market || '(empty)'} | type:${payload.record_type} | conf:${confSummary} | award:${awardCountry}/${awardState}/${awardCity}`;
+    } catch (e) {
+      setupStatus.textContent = `Setup save failed: ${e.message}`;
+    }
+  };
+
+  document.getElementById('generatePromptPackBtn').onclick = async () => {
+    if (!(await validateAndSyncGeo())) return;
+    const payload = {
+      market: (document.getElementById('marketInput').value || '').trim(),
+      record_type: (document.getElementById('recordTypeInput').value || 'both').trim(),
+      conference_region_scope: (document.getElementById('confRegionScopeInput').value || '').trim(),
+      conference_country_scope: (document.getElementById('confRegionScopeInput').value || '').trim(),
+      conference_us_states: JSON.parse(document.getElementById('confStatesInput').value || '[]'),
+      conference_countries: JSON.parse(document.getElementById('confCountriesInput').value || '[]'),
+      conference_geo_preference: (document.getElementById('confGeoPrefInput').value || '').trim(),
+      award_geo_preference: (document.getElementById('awardGeoPrefInput').value || '').trim()
+    };
+    try {
+      const res = await fetch('/api/pr-monitor-1/prompt-pack', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setupStatus.textContent = `Prompt-pack generation failed: ${data.detail || data.error || 'unknown error'}`;
+        return;
+      }
+      const p = data.prompt_pack || {};
+      const prompts = p.prompts || data.prompts || {};
+      const marketLabel = p.market_focus || p.market || '';
+      promptPackPreview.innerHTML = `
+        <div><span class="pill">Prompt Pack Generated</span> <span class="pill">Market: ${marketLabel}</span> <span class="pill">Type: ${p.record_type || ''}</span> <span class="pill">Schema: ${p.schema_version || data.schema_version || ''}</span></div>
+        <div style="margin-top:8px"><strong>Conference Discovery Prompt</strong><pre style="white-space:pre-wrap;background:#0d1729;border:1px solid #314263;padding:10px;border-radius:8px">${(prompts.conference_discovery || p.conference_discovery_prompt || '').replace(/</g,'&lt;')}</pre></div>
+        <div style="margin-top:8px"><strong>Award Discovery Prompt</strong><pre style="white-space:pre-wrap;background:#0d1729;border:1px solid #314263;padding:10px;border-radius:8px">${(prompts.award_discovery || p.award_discovery_prompt || '').replace(/</g,'&lt;')}</pre></div>
+      `;
+      setupStatus.textContent = `Prompt pack generated and saved to ${data.path || 'project folder'}`;
+    } catch (e) {
+      setupStatus.textContent = `Prompt-pack generation failed: ${e.message}`;
+    }
+  };
+
+  document.getElementById('executeMultiModelBtn').onclick = async () => {
+    const proceed = window.confirm('Confirm deep research run? This may incur API costs.');
+    if (!proceed) {
+      setupStatus.textContent = 'Execution canceled.';
+      return;
+    }
+    if (!(await validateAndSyncGeo())) return;
+    const payload = {
+      market: (document.getElementById('marketInput').value || '').trim(),
+      record_type: (document.getElementById('recordTypeInput').value || 'both').trim(),
+      conference_region_scope: (document.getElementById('confRegionScopeInput').value || '').trim(),
+      conference_country_scope: (document.getElementById('confRegionScopeInput').value || '').trim(),
+      conference_us_states: JSON.parse(document.getElementById('confStatesInput').value || '[]'),
+      conference_countries: JSON.parse(document.getElementById('confCountriesInput').value || '[]'),
+      conference_geo_preference: (document.getElementById('confGeoPrefInput').value || '').trim(),
+      award_geo_preference: (document.getElementById('awardGeoPrefInput').value || '').trim(),
+      providers: ['perplexity', 'chatgpt', 'gemini'],
+      dry_run: false
+    };
+
+    setupStatus.textContent = 'Running multi-model live discovery...';
+    multiModelPreview.innerHTML = '';
+
+    try {
+      const res = await fetch('/api/pr-monitor-1/multi-model-discovery', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setupStatus.textContent = `Multi-model discovery failed: ${data.detail || data.error || 'unknown error'}`;
+        return;
+      }
+
+      const providerRows = (data.provider_results || []).map((r) => {
+        return `<tr><td>${r.provider}</td><td>${r.conference_results.length}</td><td>${r.award_results.length}</td><td>${r.result_count}</td></tr>`;
+      }).join('');
+
+      const overlapRows = Object.entries((data.comparison || {}).pairwise_overlap_counts || {}).map(([k, v]) => {
+        return `<tr><td>${k}</td><td>${v}</td></tr>`;
+      }).join('');
+
+      const masterRows = (data.master_list || []).slice(0, 25).map((r) => {
+        const found = (r.found_by_models || []).join(', ');
+        return `<tr><td><a href="${r.url}" target="_blank" style="color:#9ecbff">${r.url}</a></td><td>${r.type}</td><td>${found}</td><td>${r.confidence_score}</td><td>${r.dedupe_status}</td></tr>`;
+      }).join('');
+
+      multiModelPreview.innerHTML = `
+        <div><span class="pill">${data.dry_run ? 'Multi-Model Dry Run Complete' : 'Multi-Model Live Run Complete'}</span> <span class="pill">Job: ${data.job_id || ''}</span> <span class="pill">Master URLs: ${(data.master_list || []).length}</span></div>
+        <div style="margin-top:8px"><strong>Provider Results</strong>
+          <table><thead><tr><th>Provider</th><th>Conference</th><th>Award</th><th>Total</th></tr></thead><tbody>${providerRows || '<tr><td colspan="4">-</td></tr>'}</tbody></table>
+        </div>
+        <div style="margin-top:8px"><strong>Pairwise Overlap</strong>
+          <table><thead><tr><th>Pair</th><th>Shared URLs</th></tr></thead><tbody>${overlapRows || '<tr><td colspan="2">-</td></tr>'}</tbody></table>
+        </div>
+        <div style="margin-top:8px"><strong>Master URL List (first 25)</strong>
+          <table><thead><tr><th>URL</th><th>Type</th><th>Found By</th><th>Confidence</th><th>Dedupe</th></tr></thead><tbody>${masterRows || '<tr><td colspan="5">-</td></tr>'}</tbody></table>
+        </div>
+      `;
+      setupStatus.textContent = `${data.dry_run ? 'Multi-model dry-run saved' : 'Multi-model live run saved'}: ${data.path || data.job_id || 'job created'}`;
+    } catch (e) {
+      setupStatus.textContent = `Multi-model discovery failed: ${e.message}`;
+    }
+  };
+
+  function parseUrlsFromText(txt){
+    return txt.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+  }
+
+  document.getElementById('validateBtn').onclick = async () => {
+    const urls = parseUrlsFromText(document.getElementById('urlPaste').value);
+    const unique = [...new Set(urls)];
+    const bad = unique.filter(u => !/^https?:\/\//i.test(u));
+    const good = unique.filter(u => /^https?:\/\//i.test(u));
+    preview.innerHTML = `<span class="pill">Valid: ${good.length}</span> <span class="pill">Invalid: ${bad.length}</span>` +
+      (bad.length ? `<div class='muted' style='margin-top:8px'>Invalid URLs:<br>${bad.join('<br>')}</div>` : '');
+  };
+
+  document.getElementById('saveBtn').onclick = async () => {
+    const name = document.getElementById('sourceSetName').value || 'Unnamed source set';
+    const urlsText = document.getElementById('urlPaste').value || '';
+    const form = new FormData();
+    form.append('source_set_name', name);
+    form.append('urls_text', urlsText);
+    try {
+      const res = await fetch('/api/pr-monitor-1/sources/save', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        runStatus.textContent = `Save failed: ${data.detail || data.error || 'unknown error'}`;
+        return;
+      }
+      runStatus.textContent = `Saved source set: ${data.source_set_name} (${data.saved_urls} URLs)`;
+    } catch (e) {
+      runStatus.textContent = `Save failed: ${e.message}`;
+    }
+  };
+
+  document.getElementById('csvFile').onchange = async (ev) => {
+    const f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    const form = new FormData();
+    form.append('file', f);
+    try {
+      const res = await fetch('/api/pr-monitor-1/sources/upload-csv', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        runStatus.textContent = `CSV upload failed: ${data.detail || data.error || 'unknown error'}`;
+        return;
+      }
+      document.getElementById('urlPaste').value = (data.urls || []).join('\n');
+      runStatus.textContent = `CSV loaded: ${data.url_count} valid URLs imported into paste box.`;
+    } catch (e) {
+      runStatus.textContent = `CSV upload failed: ${e.message}`;
+    }
+  };
+
+  document.getElementById('crawlBtn').onclick = async () => {
+    crawlStatus.textContent = 'Queueing crawl...';
+    crawlLinkageStatus.textContent = 'Crawl linkage pending...';
+    crawlEngineMetricsStatus.textContent = 'Crawl engine metrics pending...';
+    crawlLinks.innerHTML = '';
+    const customUrlsText = document.getElementById('customUrlsForCrawl').value || '';
+    const form = new FormData();
+    form.append('urls_text', document.getElementById('urlPaste').value || '');
+    form.append('custom_urls', customUrlsText);
+    form.append('use_master_list', document.getElementById('useMasterListForCrawl').checked ? 'true' : 'false');
+    form.append('async_mode', 'true');
+    const res = await fetch('/api/pr-monitor-1/crawl', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      crawlStatus.textContent = `Crawl failed: ${data.detail || data.error || 'unknown error'}`;
+      crawlLinkageStatus.textContent = 'Crawl linkage unavailable.';
+      crawlEngineMetricsStatus.textContent = 'Crawl engine metrics unavailable.';
+      await refreshCrawlEngineMetricsBanner();
+      return;
+    }
+    if (data.async && data.job_id){
+      await pollPrJob(
+        data.job_id,
+        (job) => { crawlStatus.textContent = `Crawl job ${job.status}: ${job.message || ''} (${job.progress ?? 0}%)`; },
+        async (job) => {
+          const jr = job.result || {};
+          lastCrawlId = jr.crawl_id || null;
+          if (lastCrawlId && document.getElementById('recoveryRunId')) {
+            document.getElementById('recoveryRunId').value = lastCrawlId;
+          }
+          const blockedCount = jr.blocked_count || 0;
+          const partialCount = jr.partial_count || 0;
+          const needsRecovery = blockedCount + partialCount;
+          crawlStatus.textContent = `Crawl completed: ${jr.crawl_id} | urls:${jr.url_count} | reachable:${jr.reachable_count} | blocked:${blockedCount} | partial:${partialCount}`;
+          if (needsRecovery > 0) {
+            crawlStatus.innerHTML += ` &mdash; <a href="#screen3b" style="color:#a855f7;text-decoration:underline">Step 3.5: Recover ${needsRecovery} URL${needsRecovery > 1 ? 's' : ''} via local browser</a>`;
+          }
+          const crawlMode = jr.crawl4ai_enabled ? 'crawl engine' : 'fallback';
+          crawlLinkageStatus.textContent = `Step 3 status: ${crawlMode} | artifacts: ${jr.artifacts_dir || 'n/a'}`;
+          if (!jr.crawl4ai_enabled) crawlLinkageStatus.textContent += ' | ALERT: crawl engine failed';
+          const m = jr.engine_metrics || {};
+          crawlEngineMetricsStatus.textContent =
+            `Crawl engine metrics: total=${m.total_runs ?? '-'} | engine=${m.crawl_engine_runs ?? '-'} | fallback=${m.fallback_runs ?? '-'} | failures=${m.crawl_engine_failure_count ?? '-'}`;
+          updateCrawlEngineAlert(m);
+          const dirPath = jr.artifacts_dir || '';
+          const listHref = dirPath ? `/api/pr-monitor-1/artifact/list?path=${encodeURIComponent(dirPath)}` : '#';
+          const manifestHref = jr.paths && jr.paths.manifest_json ? `/api/pr-monitor-1/artifact/open?path=${encodeURIComponent(jr.paths.manifest_json)}` : '#';
+          crawlLinks.innerHTML = `links: <a href="${listHref}" target="_blank">artifact folder</a> | <a href="${manifestHref}" target="_blank">crawl manifest</a>`;
+        },
+        async (job) => {
+          crawlStatus.textContent = `Crawl failed: ${job.error || job.message || 'unknown error'}`;
+          await refreshCrawlEngineMetricsBanner();
+        }
+      );
+      return;
+    }
+    lastCrawlId = data.crawl_id || null;
+    if (lastCrawlId && document.getElementById('recoveryRunId')) {
+      document.getElementById('recoveryRunId').value = lastCrawlId;
+    }
+    const blockedCount = data.blocked_count || 0;
+    const partialCount = data.partial_count || 0;
+    const needsRecovery = blockedCount + partialCount;
+    crawlStatus.textContent = `Crawl completed: ${data.crawl_id} | urls:${data.url_count} | reachable:${data.reachable_count} | blocked:${blockedCount} | partial:${partialCount}`;
+    if (needsRecovery > 0) {
+      crawlStatus.innerHTML += ` &mdash; <a href="#screen3b" style="color:#a855f7;text-decoration:underline">Step 3.5: Recover ${needsRecovery} URL${needsRecovery > 1 ? 's' : ''} via local browser</a>`;
+    }
+    const crawlMode = data.crawl4ai_enabled ? 'crawl engine' : 'fallback';
+    crawlLinkageStatus.textContent = `Step 3 status: ${crawlMode} | artifacts: ${data.artifacts_dir || 'n/a'}`;
+    if (!data.crawl4ai_enabled) {
+      crawlLinkageStatus.textContent += ' | ALERT: crawl engine failed';
+    }
+    const m = data.engine_metrics || {};
+    crawlEngineMetricsStatus.textContent =
+      `Crawl engine metrics: total=${m.total_runs ?? '-'} | engine=${m.crawl_engine_runs ?? '-'} | fallback=${m.fallback_runs ?? '-'} | failures=${m.crawl_engine_failure_count ?? '-'}`;
+    updateCrawlEngineAlert(m);
+    const dirPath = data.artifacts_dir || '';
+    const listHref = dirPath ? `/api/pr-monitor-1/artifact/list?path=${encodeURIComponent(dirPath)}` : '#';
+    const manifestHref = data.paths && data.paths.manifest_json ? `/api/pr-monitor-1/artifact/open?path=${encodeURIComponent(data.paths.manifest_json)}` : '#';
+    crawlLinks.innerHTML = `links: <a href="${listHref}" target="_blank">artifact folder</a> | <a href="${manifestHref}" target="_blank">crawl manifest</a>`;
+  };
+
+  document.getElementById('extractBtn').onclick = async () => {
+    const mode = document.getElementById('mode').value;
+    const conf = document.getElementById('minConfidence').value;
+    const useDiscovery = document.getElementById('useDiscoveryForExtract').checked;
+    runStatus.textContent = `Running extraction... mode=${mode}, min_confidence=${conf}, discovery=${useDiscovery ? 'v2 requested' : 'v1 default'}`;
+    const form = new FormData();
+    form.append('mode', mode);
+    form.append('min_confidence', conf);
+    form.append('urls_text', document.getElementById('urlPaste').value || '');
+    form.append('skip_same_day', document.getElementById('skipSameDay').checked ? 'true' : 'false');
+    form.append('use_latest_crawl', document.getElementById('useLatestCrawlForExtract').checked ? 'true' : 'false');
+    form.append('use_discovery', useDiscovery ? 'true' : 'false');
+    form.append('async_mode', 'true');
+    const res = await fetch('/api/pr-monitor-1/extract', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      runStatus.textContent = `Extraction failed: ${data.detail || data.error || 'unknown error'}`;
+      return;
+    }
+    if (data.async && data.job_id){
+      await pollPrJob(
+        data.job_id,
+        (job) => { runStatus.textContent = `Extraction job ${job.status}: ${job.message || ''} (${job.progress ?? 0}%)`; },
+        async (job) => {
+          const jr = job.result || {};
+          const srcCrawl = jr.source_crawl_id || lastCrawlId || 'n/a';
+          const discovery = jr.discovery || {};
+          const discoveryStatus = jr.use_discovery
+            ? (discovery.ok ? ` | discovery:v2 ok (${discovery.expanded_url_count || jr.url_count || '-'} URLs)` : ` | discovery:v2 fallback (${discovery.error || 'unavailable'})`)
+            : ' | discovery:v1 default';
+          runStatus.textContent = `Extraction completed: ${jr.extract_id || 'n/a'} (source crawl: ${srcCrawl})${discoveryStatus}. Refreshing latest metrics...`;
+          extractLinkageStatus.textContent = `Linkage: ${srcCrawl} -> ${jr.extract_id || 'n/a'}${discoveryStatus}`;
+          const p = jr.paths || {};
+          const mk = (x, label) => x ? `<a href="/api/pr-monitor-1/artifact/open?path=${encodeURIComponent(x)}" target="_blank">${label}</a>` : label;
+          extractLinks.innerHTML = `links: ${mk(p.trace_json, 'trace JSON')} | ${mk(p.output_csv, 'output CSV')} | ${mk(p.output_report, 'output report')}`;
+          await loadLatest();
+          await loadRuns();
+          await loadRunRows();
+        },
+        async (job) => { runStatus.textContent = `Extraction failed: ${job.error || job.message || 'unknown error'}`; }
+      );
+      return;
+    }
+    const srcCrawl = data.source_crawl_id || lastCrawlId || 'n/a';
+    const discovery = data.discovery || {};
+    const discoveryStatus = data.use_discovery
+      ? (discovery.ok ? ` | discovery:v2 ok (${discovery.expanded_url_count || data.url_count || '-'} URLs)` : ` | discovery:v2 fallback (${discovery.error || 'unavailable'})`)
+      : ' | discovery:v1 default';
+    runStatus.textContent = `Extraction completed: ${data.extract_id || 'n/a'} (source crawl: ${srcCrawl})${discoveryStatus}. Refreshing latest metrics...`;
+    extractLinkageStatus.textContent = `Linkage: ${srcCrawl} -> ${data.extract_id || 'n/a'}${discoveryStatus}`;
+    const p = data.paths || {};
+    const mk = (x, label) => x ? `<a href="/api/pr-monitor-1/artifact/open?path=${encodeURIComponent(x)}" target="_blank">${label}</a>` : label;
+    extractLinks.innerHTML = `links: ${mk(p.trace_json, 'trace JSON')} | ${mk(p.output_csv, 'output CSV')} | ${mk(p.output_report, 'output report')}`;
+    await loadLatest();
+    await loadRuns();
+    await loadRunRows();
+  };
+
+  document.getElementById('enrichBtn').onclick = async () => {
+    const runId = document.getElementById('enrichRunId').value.trim();
+    const enrichSelect = document.getElementById('enrichTypes');
+    const selected = Array.from(enrichSelect.selectedOptions).map(o => o.value);
+    const enrichTypes = selected.join(',') || 'geo';
+
+    enrichStatus.textContent = `Running enrichment... types=${enrichTypes}`;
+    enrichResult.textContent = '';
+
+    const form = new FormData();
+    if (runId) form.append('run_id', runId);
+    form.append('enrich_types', enrichTypes);
+    form.append('async_mode', 'false');
+
+    const res = await fetch('/api/pr-monitor-1/enrich', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      enrichStatus.textContent = `Enrichment failed: ${data.detail || data.error || 'unknown error'}`;
+      return;
+    }
+    const r = data.result || {};
+    enrichStatus.textContent = `Enrichment completed: enriched ${r.enriched || 0} rows, ${r.total_with_geo || 0} total with geo`;
+    enrichResult.textContent = `Types: ${r.enrich_types || enrichTypes}`;
+    await loadLatest();
+    await loadRuns();
+    await loadRunRows();
+  };
+
+  async function pollPrJob(jobId, onTick, onDone, onError){
+    const startedAt = Date.now();
+    const timeoutMs = 1000 * 60 * 45; // 45 minutes
+    while (true){
+      const res = await fetch(`/api/pr-monitor-1/job/${encodeURIComponent(jobId)}`);
+      const data = await res.json();
+      if (!res.ok || !data.ok || !data.job){
+        if (onError) await onError({ error: data.detail || data.error || 'job status unavailable' });
+        return;
+      }
+      const job = data.job;
+      if (onTick) await onTick(job);
+      if (job.status === 'completed'){
+        if (onDone) await onDone(job);
+        return;
+      }
+      if (job.status === 'failed'){
+        if (onError) await onError(job);
+        return;
+      }
+      if ((Date.now() - startedAt) > timeoutMs){
+        if (onError) await onError({ error: 'job polling timeout' });
+        return;
+      }
+      await new Promise(r => setTimeout(r, 1200));
+    }
+  }
+
+  async function loadRuns(){
+    const res = await fetch('/api/pr-monitor-1/runs?limit=20');
+    const data = await res.json();
+    const host = document.getElementById('runHistory');
+    const toggleHost = document.getElementById('runHistoryToggle');
+    if (!data.ok || !(data.runs||[]).length){ host.textContent = 'No runs found.'; if (toggleHost) toggleHost.innerHTML=''; return; }
+    const runs = data.runs;
+    if (!selectedRunId) selectedRunId = runs[0].run_id;
+
+    const visibleRuns = showAllRuns ? runs : runs.slice(0,1);
+    host.innerHTML = visibleRuns.map(r => {
+      const active = r.run_id === selectedRunId ? ' style="font-weight:700"' : '';
+      return `<div${active}><label><input type="radio" name="runPick" value="${r.run_id}" ${r.run_id===selectedRunId?'checked':''}/> ${r.run_id} — ${r.started_at} — scanned:${r.rows_scanned} flagged:${r.rows_flagged} skipped:${r.rows_skipped_same_day||0} results:${r.rows_with_results||0} null:${r.rows_null_results||0} ai:${r.ai_calls} cost:${Number(r.total_ai_cost||0).toFixed(4)}</label></div>`;
+    }).join('');
+
+    if (toggleHost){
+      if (runs.length > 1){
+        toggleHost.innerHTML = `<a href="#" id="toggleRunsLink" style="color:#9ecbff">${showAllRuns ? 'Show latest only' : `Show all (${runs.length})`}</a>`;
+        const link = document.getElementById('toggleRunsLink');
+        if (link) link.onclick = (e) => { e.preventDefault(); showAllRuns = !showAllRuns; loadRuns(); };
+      } else {
+        toggleHost.innerHTML = '';
+      }
+    }
+
+    document.querySelectorAll('input[name="runPick"]').forEach(el=>el.onchange=(e)=>{selectedRunId=e.target.value; document.getElementById('runIdInput').value = selectedRunId;});
+  }
+
+  function extractConferenceDateMs(confDatesRaw){
+    const s = String(confDatesRaw || '').trim();
+    if (!s) return null;
+
+    const iso = s.match(/(20\d{2})-(\d{1,2})-(\d{1,2})/);
+    if (iso){
+      const y = Number(iso[1]), m = Number(iso[2]), d = Number(iso[3]);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      return Number.isNaN(dt.getTime()) ? null : dt.getTime();
+    }
+
+    const us = s.match(/(\d{1,2})\/(\d{1,2})\/(20\d{2})/);
+    if (us){
+      const m = Number(us[1]), d = Number(us[2]), y = Number(us[3]);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      return Number.isNaN(dt.getTime()) ? null : dt.getTime();
+    }
+
+    const months = {
+      january:1, jan:1, february:2, feb:2, march:3, mar:3, april:4, apr:4, may:5,
+      june:6, jun:6, july:7, jul:7, august:8, aug:8, september:9, sept:9, sep:9,
+      october:10, oct:10, november:11, nov:11, december:12, dec:12
+    };
+
+    // Examples:
+    // "August 10-13, 2026"
+    // "Aug 10–13, 2026"
+    // "August 10, 2026"
+    const monthName = s.match(/\b([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:\s*[-–]\s*\d{1,2})?(?:,)?\s*(20\d{2})\b/i);
+    if (monthName){
+      const monKey = monthName[1].toLowerCase();
+      const m = months[monKey];
+      const d = Number(monthName[2]);
+      const y = Number(monthName[3]);
+      if (m && d >= 1 && d <= 31){
+        const dt = new Date(Date.UTC(y, m - 1, d));
+        return Number.isNaN(dt.getTime()) ? null : dt.getTime();
+      }
+    }
+
+    // Day-first month-name formats:
+    // "27-29 April 2026", "27 April 2026", "27–29 Apr 2026"
+    const dayFirstMonth = s.match(/\b(\d{1,2})(?:\s*[-–]\s*\d{1,2})?\s+([A-Za-z]{3,9})\.?\s*,?\s*(20\d{2})\b/i);
+    if (dayFirstMonth){
+      const d = Number(dayFirstMonth[1]);
+      const monKey = dayFirstMonth[2].toLowerCase();
+      const m = months[monKey];
+      const y = Number(dayFirstMonth[3]);
+      if (m && d >= 1 && d <= 31){
+        const dt = new Date(Date.UTC(y, m - 1, d));
+        return Number.isNaN(dt.getTime()) ? null : dt.getTime();
+      }
+    }
+
+    // Fallback: try native parsing (handles some human formats)
+    const native = new Date(s);
+    if (!Number.isNaN(native.getTime())){
+      return Date.UTC(native.getUTCFullYear(), native.getUTCMonth(), native.getUTCDate());
+    }
+
+    return null;
+  }
+
+  function applyFilters(rows){
+    const qa = document.getElementById('fQa').value;
+    const ai = document.getElementById('fAi').value;
+    const changedOnly = document.getElementById('fChanged').checked;
+    const hasData = document.getElementById('fHasData').checked;
+    const reviewStatusFilter = document.getElementById('fReviewStatus')?.value || '';
+    const domainContains = (document.getElementById('fDomain').value || '').trim().toLowerCase();
+    const marketSelect = document.getElementById('fMarket');
+    const selectedMarkets = marketSelect?.value ? [marketSelect.value] : [];
+    const upcomingOnly = document.getElementById('fUpcomingOnly')?.checked;
+    const excludePastCfp = document.getElementById('fExcludePastCfp')?.checked;
+    const excludeNaCfpDeadline = document.getElementById('fExcludeNaCfpDeadline')?.checked;
+    const excludeNaConfDates = document.getElementById('fExcludeNaConfDates')?.checked;
+    const cfpStatusFilter = document.getElementById('fCfpStatus')?.value || '';
+    const geoCityContains = (document.getElementById('fGeoCity')?.value || '').trim().toLowerCase();
+    const geoStateContains = (document.getElementById('fGeoState')?.value || '').trim().toLowerCase();
+    const geoCountryContains = (document.getElementById('fGeoCountry')?.value || '').trim().toLowerCase();
+    const geoConfidenceFilter = (document.getElementById('fGeoConfidence')?.value || '').trim();
+
+    const now = new Date();
+    const todayUtcMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+
+    return (rows || []).filter(r => {
+      const cfpStatus = String(r.cfp_status || '').trim();
+      const cfpDeadline = String(r.cfp_deadline || '').trim();
+      const confDates = String(r.conf_dates || '').trim();
+      const geoCity = String(r.geo_city || '').trim();
+      const geoState = String(r.geo_state || '').trim();
+      const geoCountry = String(r.geo_country || '').trim();
+      const geoConfidence = String(r.geo_confidence_status || '').trim();
+
+      if (qa && (r.qa_status || '') !== qa) return false;
+      if (ai !== '' && String(r.ai_called ?? '') !== ai) return false;
+      if (reviewStatusFilter && String(r.review_status || 'needs_review') !== reviewStatusFilter) return false;
+      if (changedOnly && !String(r.changed_fields || '').trim()) return false;
+      if (hasData && !(cfpStatus || cfpDeadline || confDates)) return false;
+      if (domainContains && !String(r.domain || '').toLowerCase().includes(domainContains)) return false;
+      if (selectedMarkets.length > 0 && !selectedMarkets.some(m => m.toLowerCase() === String(r.market || '').trim().toLowerCase())) return false;
+      if (geoCityContains && !geoCity.toLowerCase().includes(geoCityContains)) return false;
+      if (geoStateContains && !geoState.toLowerCase().includes(geoStateContains)) return false;
+      if (geoCountryContains && !geoCountry.toLowerCase().includes(geoCountryContains)) return false;
+      if (geoConfidenceFilter && geoConfidence !== geoConfidenceFilter) return false;
+
+      if (excludeNaCfpDeadline && cfpDeadline.toUpperCase() === 'N/A') return false;
+      if (excludeNaConfDates && confDates.toUpperCase() === 'N/A') return false;
+
+      if (cfpStatusFilter === '__empty__') {
+        if (cfpStatus !== '') return false;
+      } else if (cfpStatusFilter) {
+        if (cfpStatus.toLowerCase() !== cfpStatusFilter.toLowerCase()) return false;
+      }
+
+      if (upcomingOnly){
+        const ms = extractConferenceDateMs(confDates);
+        if (ms === null || ms < todayUtcMs) return false;
+      }
+
+      if (excludePastCfp){
+        const cfpMs = extractConferenceDateMs(cfpDeadline);
+        if (cfpMs !== null && cfpMs < todayUtcMs) return false;
+      }
+
+      return true;
+    });
+  }
+
+  function getReviewedBy(){
+    const v = (document.getElementById('fReviewedBy')?.value || '').trim();
+    return v || 'web_user';
+  }
+
+  async function setReviewStatus(eventKey, market, customer, status){
+    const payload = {
+      event_key: eventKey,
+      market: market || '',
+      customer: customer || '',
+      review_status: status,
+      reviewed_by: getReviewedBy()
+    };
+    const res = await fetch('/api/pr-monitor-1-review/review/upsert', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok){
+      alert(`Failed to set status: ${status}`);
+      return;
+    }
+    const row = (currentRows || []).find(x => x.event_key === eventKey && (x.market||'') === (market||'') && (x.customer||'') === (customer||''));
+    if (row) row.review_status = status;
+    renderCurrentRows();
+  }
+
+  async function saveOverrides(eventKey, market, customer, idx){
+    const statusEl = document.getElementById(`ovStatus_${idx}`);
+    const deadlineEl = document.getElementById(`ovDeadline_${idx}`);
+    const confDatesEl = document.getElementById(`ovConfDates_${idx}`);
+    const notesEl = document.getElementById(`ovNotes_${idx}`);
+    const subEl = document.getElementById(`ovSubmission_${idx}`);
+    const payload = {
+      event_key: eventKey,
+      market: market || '',
+      customer: customer || '',
+      review_status: 'needs_review',
+      override_cfp_status: statusEl ? statusEl.value : '',
+      override_cfp_deadline: deadlineEl ? deadlineEl.value : '',
+      override_conf_dates: confDatesEl ? confDatesEl.value : '',
+      review_notes: notesEl ? notesEl.value : '',
+      submission_status: subEl ? subEl.value : 'not_submitted',
+      reviewed_by: getReviewedBy()
+    };
+    const res = await fetch('/api/pr-monitor-1-review/review/upsert', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok){
+      alert('Failed to save overrides');
+      return;
+    }
+    const row = (currentRows || []).find(x => x.event_key === eventKey && (x.market||'') === (market||'') && (x.customer||'') === (customer||''));
+    if (row){
+      row.override_cfp_status = payload.override_cfp_status;
+      row.override_cfp_deadline = payload.override_cfp_deadline;
+      row.override_conf_dates = payload.override_conf_dates;
+      row.review_notes = payload.review_notes;
+      row.submission_status = payload.submission_status;
+      row.has_override_cfp_status = payload.override_cfp_status ? 1 : 0;
+      row.has_override_cfp_deadline = payload.override_cfp_deadline ? 1 : 0;
+      row.has_override_conf_dates = payload.override_conf_dates ? 1 : 0;
+    }
+    renderCurrentRows();
+  }
+
+  function renderCurrentRows(){
+    const tb = document.getElementById('runRowsTable');
+    let filteredRows = applyFilters(currentRows || []);
+
+    // Populate Market dropdown from all current rows
+    const marketSelect = document.getElementById('fMarket');
+    if (marketSelect && currentRows && currentRows.length){
+      const markets = [...new Set(currentRows.map(r => String(r.market || '').trim()).filter(v => v))].sort();
+      const currentVal = marketSelect.value;
+      marketSelect.innerHTML = '<option value="">All Markets</option>' +
+        markets.map(m => `<option value="${m}" ${m === currentVal ? 'selected' : ''}>${m}</option>`).join('');
+    }
+
+    if (sortField === 'cfp_deadline' || sortField === 'conf_dates'){
+      filteredRows = [...filteredRows].sort((a,b) => {
+        const aMs = extractConferenceDateMs(a[sortField]);
+        const bMs = extractConferenceDateMs(b[sortField]);
+        const aVal = (aMs === null ? Number.POSITIVE_INFINITY : aMs);
+        const bVal = (bMs === null ? Number.POSITIVE_INFINITY : bMs);
+        return sortDir === 'asc' ? (aVal - bVal) : (bVal - aVal);
+      });
+    }
+    const prefix = currentViewMode === 'portfolio' ? 'Portfolio latest' : `Run ${selectedRunId}`;
+    document.getElementById('rowsStatus').textContent = `${prefix} — ${filteredRows.length} rows`;
+
+    const total = filteredRows.length;
+    const needsReview = filteredRows.filter(r => String(r.review_status || 'needs_review') === 'needs_review').length;
+    const reviewed = filteredRows.filter(r => String(r.review_status || '') === 'reviewed').length;
+    const followUp = filteredRows.filter(r => String(r.review_status || '') === 'follow_up').length;
+    const overridden = filteredRows.filter(r => (r.has_override_cfp_status || r.has_override_cfp_deadline || r.has_override_conf_dates)).length;
+    const submitted = filteredRows.filter(r => String(r.submission_status || 'not_submitted') === 'submitted').length;
+    const inProgress = filteredRows.filter(r => String(r.submission_status || 'not_submitted') === 'in_progress').length;
+    const summaryEl = document.getElementById('reviewSummary');
+    if (summaryEl){
+      summaryEl.innerHTML = `<span class="pill">Total: ${total}</span> <span class="pill">Needs Review: ${needsReview}</span> <span class="pill">Reviewed: ${reviewed}</span> <span class="pill">Follow Up: ${followUp}</span> <span class="pill">Submitted: ${submitted}</span> <span class="pill">In Progress: ${inProgress}</span> <span class="pill">Overrides: ${overridden}</span>`;
+    }
+
+    tb.innerHTML = filteredRows.map((r, idx) => {
+      const dispStatus = (r.has_override_cfp_status ? r.override_cfp_status : r.cfp_status) || '';
+      const dispDeadline = (r.has_override_cfp_deadline ? r.override_cfp_deadline : r.cfp_deadline) || '';
+      const dispConfDates = (r.has_override_conf_dates ? r.override_conf_dates : r.conf_dates) || '';
+      const hasOverride = (r.has_override_cfp_status || r.has_override_cfp_deadline || r.has_override_conf_dates);
+      const badge = hasOverride ? '<span class="pill" style="background:#2f5b3a">override</span>' : '<span class="pill">scraped</span>';
+      const auditLine = `Reviewed by: ${r.reviewed_by||'-'}<br/>Reviewed at: ${r.reviewed_at||'-'}<br/>Notes: ${r.review_notes||'-'}`;
+      const compareBlock = hasOverride ? `<div style="margin-top:6px;color:#9fb0d1;line-height:1.35"><div><strong>Scraped status:</strong> ${r.cfp_status||'-'}</div><div><strong>Override status:</strong> ${r.override_cfp_status||'-'}</div><div><strong>Scraped deadline:</strong> ${r.cfp_deadline||'-'}</div><div><strong>Override deadline:</strong> ${r.override_cfp_deadline||'-'}</div><div><strong>Scraped conf dates:</strong> ${r.conf_dates||'-'}</div><div><strong>Override conf dates:</strong> ${r.override_conf_dates||'-'}</div></div>` : '';
+      const qaStatus = String(r.qa_status||'');
+      const qaWrap = qaStatus === 'needs_review' ? '!' : qaStatus === 'pending' ? '-' : '';
+      const reviewWrap = String(r.review_status||'needs_review').replace(/_/g, '_<wbr>');
+      const subStatus = r.submission_status || 'not_submitted';
+      const ovStatus = r.override_cfp_status || '';
+      const flags = [];
+      if (hasOverride) flags.push('OVR');
+      if (!dispStatus || !dispDeadline || !dispConfDates) flags.push('Missing');
+      return `<tr><td>${r.market||''}</td><td>${r.domain||''}</td><td><a href="${r.conf_page_url||'#'}" target="_blank" style="color:#9ecbff">${r.conf_page_url||''}</a></td><td>${qaWrap}</td><td>${reviewWrap}</td><td><div style="display:flex;flex-direction:column;gap:4px;align-items:stretch"><button type="button" data-set-status="reviewed:${idx}" style="padding:3px 6px;font-size:11px;white-space:nowrap">Reviewed</button><button type="button" data-set-status="follow_up:${idx}" style="padding:3px 6px;font-size:11px;white-space:nowrap">Defer</button>${String(r.review_status || 'needs_review') === 'needs_review' ? '' : `<button type="button" data-set-status="needs_review:${idx}" style="padding:3px 6px;font-size:11px;white-space:nowrap">Re-open</button>`}</div></td><td>${r.ai_called||0}</td><td>${dispStatus}</td><td>${dispDeadline}</td><td>${dispConfDates}</td><td>${r.geo_city || ''}</td><td>${r.geo_state || ''}</td><td>${r.geo_country || ''}</td><td>${r.geo_confidence_status || ''}</td><td style="white-space:nowrap">${flags.join(' ') || 'OK'}</td><td><button type="button" data-toggle-details="${idx}" style="padding:3px 6px;font-size:11px;white-space:nowrap">Details</button></td></tr>
+      <tr id="detailRow_${idx}" style="display:none"><td colspan="16"><div style="padding:8px;border:1px solid #2a3a59;border-radius:8px;background:#0f1a2e">${badge}<div style="margin-top:6px;color:#9fb0d1;line-height:1.35">${auditLine}</div>${compareBlock}<div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label style="font-size:11px">Submission Status</label><select id="ovSubmission_${idx}" style="margin-bottom:4px;font-size:11px;padding:4px"><option value="not_submitted" ${subStatus==='not_submitted'?'selected':''}>not_submitted</option><option value="in_progress" ${subStatus==='in_progress'?'selected':''}>in_progress</option><option value="submitted" ${subStatus==='submitted'?'selected':''}>submitted</option></select></div><div><label style="font-size:11px">Override CFP Status</label><select id="ovStatus_${idx}" style="margin-bottom:4px;font-size:11px;padding:4px"><option value="" ${ovStatus===''?'selected':''}>(none)</option><option value="Open" ${ovStatus==='Open'?'selected':''}>Open</option><option value="Closed" ${ovStatus==='Closed'?'selected':''}>Closed</option><option value="Not Yet" ${ovStatus==='Not Yet'?'selected':''}>Not Yet</option><option value="Unknown" ${ovStatus==='Unknown'?'selected':''}>Unknown</option></select></div><div><label style="font-size:11px">Override CFP Deadline</label><input id="ovDeadline_${idx}" type="date" value="${/^\d{4}-\d{2}-\d{2}$/.test(r.override_cfp_deadline||'') ? (r.override_cfp_deadline||'') : ''}" style="margin-bottom:4px;font-size:11px;padding:4px" /></div><div><label style="font-size:11px">Override Conf Dates</label><input id="ovConfDates_${idx}" placeholder="e.g. August 10-13, 2026" value="${r.override_conf_dates||''}" style="margin-bottom:4px;font-size:11px;padding:4px" /></div></div><textarea id="ovNotes_${idx}" placeholder="Review notes" style="margin-top:6px;margin-bottom:4px;font-size:11px;padding:4px;min-height:52px">${r.review_notes||''}</textarea><button type="button" data-save-ov="${idx}" style="padding:4px 8px;font-size:11px">Save Override</button></div></td></tr>`;
+    }).join('') || '<tr><td colspan="16">No rows matched filters.</td></tr>';
+
+    tb.querySelectorAll('button[data-set-status]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const raw = btn.getAttribute('data-set-status') || '';
+        const [status, iStr] = raw.split(':');
+        const r = filteredRows[Number(iStr)];
+        if (!r || !status) return;
+        setReviewStatus(r.event_key, r.market, r.customer, status);
+      });
+    });
+    tb.querySelectorAll('button[data-toggle-details]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = Number(btn.getAttribute('data-toggle-details'));
+        const row = document.getElementById(`detailRow_${i}`);
+        if (!row) return;
+        row.style.display = row.style.display === 'none' ? '' : 'none';
+      });
+    });
+    tb.querySelectorAll('button[data-save-ov]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = Number(btn.getAttribute('data-save-ov'));
+        const r = filteredRows[i];
+        if (!r) return;
+        saveOverrides(r.event_key, r.market, r.customer, i);
+      });
+    });
+  }
+
+  async function loadRunRows(){
+    if (!selectedRunId){ document.getElementById('rowsStatus').textContent='No run selected.'; return; }
+    const res = await fetch(`/api/pr-monitor-1/run/${selectedRunId}/rows?limit=2000`);
+    const data = await res.json();
+    if (!data.ok){ document.getElementById('rowsStatus').textContent='Failed to load rows.'; return; }
+    currentViewMode = 'run';
+    currentRows = data.rows || [];
+    renderCurrentRows();
+  }
+
+  async function loadLatest(){
+    const res = await fetch('/api/pr-monitor-1/latest');
+    const data = await res.json();
+    if (!data.ok || !data.run) {
+      runStatus.textContent = 'No completed run found yet.';
+      return;
+    }
+    const r = data.run;
+    selectedRunId = r.run_id;
+    const runIdInput = document.getElementById('runIdInput');
+    if (runIdInput) runIdInput.value = r.run_id;
+    runStatus.textContent = `Latest run ${r.run_id} completed (${r.mode})`;
+    document.getElementById('resultsTable').innerHTML = `
+      <tr><td>Rows scanned</td><td>${r.rows_scanned}</td></tr>
+      <tr><td>Rows updated</td><td>${r.rows_updated}</td></tr>
+      <tr><td>Rows flagged</td><td>${r.rows_flagged}</td></tr>
+      <tr><td>Rows skipped (same-day)</td><td>${r.rows_skipped_same_day ?? 0}</td></tr>
+      <tr><td>AI calls</td><td>${r.ai_calls}</td></tr>
+      <tr><td>Total AI cost</td><td>${Number(r.total_ai_cost || 0).toFixed(4)}</td></tr>
+    `;
+  }
+
+  async function loadPortfolio(){
+    const qs = new URLSearchParams();
+    const marketSelect = document.getElementById('fMarket');
+    if (marketSelect?.value) qs.set('market', marketSelect.value);
+    qs.set('customer', (document.getElementById('fCustomer').value||'').trim());
+    qs.set('has_cfp_or_dates', document.getElementById('fHasData').checked ? 'true' : 'false');
+    const res = await fetch('/api/pr-monitor-1-review/portfolio/latest?' + qs.toString());
+    const data = await res.json();
+    if (!data.ok){ document.getElementById('rowsStatus').textContent='Failed to load portfolio view.'; return; }
+    currentViewMode = 'portfolio';
+    currentRows = data.rows || [];
+    renderCurrentRows();
+  }
+
+  document.getElementById('loadRowsBtn').onclick = loadRunRows;
+  document.getElementById('loadPortfolioBtn').onclick = loadPortfolio;
+
+  function applyPreset(status){
+    document.getElementById('fQa').value = '';
+    document.getElementById('fAi').value = '';
+    document.getElementById('fChanged').checked = false;
+    document.getElementById('fHasData').checked = false;
+    document.getElementById('fDomain').value = '';
+    document.getElementById('fGeoCity').value = '';
+    document.getElementById('fGeoState').value = '';
+    document.getElementById('fGeoCountry').value = '';
+    document.getElementById('fGeoConfidence').value = '';
+    document.getElementById('fUpcomingOnly').checked = false;
+    document.getElementById('fExcludePastCfp').checked = false;
+    document.getElementById('fExcludeNaCfpDeadline').checked = false;
+    document.getElementById('fExcludeNaConfDates').checked = false;
+    document.getElementById('fCfpStatus').value = '';
+    document.getElementById('fMarket').selectedIndex = 0;
+    // Clear all Market selections
+    Array.from(document.getElementById('fMarket').options).forEach(o => o.selected = false);
+    document.getElementById('fReviewStatus').value = status || '';
+    renderCurrentRows();
+  }
+
+  document.getElementById('presetNeedsReview').onclick = () => applyPreset('needs_review');
+  document.getElementById('presetFollowUp').onclick = () => applyPreset('follow_up');
+  document.getElementById('presetReviewed').onclick = () => applyPreset('reviewed');
+  document.getElementById('presetReset').onclick = () => applyPreset('');
+
+  function toggleSort(field){
+    if (sortField === field){
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortField = field;
+      sortDir = 'asc';
+    }
+    renderCurrentRows();
+  }
+  const thDeadline = document.getElementById('thCfpDeadline');
+  const thConf = document.getElementById('thConfDates');
+  if (thDeadline) thDeadline.onclick = () => toggleSort('cfp_deadline');
+  if (thConf) thConf.onclick = () => toggleSort('conf_dates');
+
+  ['fQa','fAi','fReviewStatus','fChanged','fHasData','fDomain','fGeoCity','fGeoState','fGeoCountry','fGeoConfidence','fUpcomingOnly','fExcludePastCfp','fExcludeNaCfpDeadline','fExcludeNaConfDates','fCfpStatus'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const rerender = () => renderCurrentRows();
+    el.addEventListener('change', rerender);
+    el.addEventListener('input', rerender);
+  });
+  // Market filter
+  const fMarketEl = document.getElementById('fMarket');
+  if (fMarketEl){
+    fMarketEl.addEventListener('change', () => renderCurrentRows());
+  }
+  document.getElementById('exportPortfolioCsvBtn').onclick = () => {
+    const qs = new URLSearchParams();
+    const marketSelect = document.getElementById('fMarket');
+    if (marketSelect?.value) qs.set('market', marketSelect.value);
+    qs.set('customer', (document.getElementById('fCustomer').value||'').trim());
+    if (document.getElementById('fHasData').checked) qs.set('has_cfp_or_dates','true');
+    if (document.getElementById('fUpcomingOnly').checked) qs.set('upcoming_only','true');
+    window.open('/api/pr-monitor-1-review/portfolio/export-csv?' + qs.toString(), '_blank');
+  };
+  document.getElementById('useRunIdBtn').onclick = async () => {
+    const v = (document.getElementById('runIdInput').value || '').trim();
+    if (!v) return;
+    selectedRunId = v;
+    await loadRuns();
+    await loadRunRows();
+  };
+  initGeoControls();
+  // Populate market dropdown from API
+  (async () => {
+    try {
+      const res = await fetch('/api/pr-monitor-1-review/markets');
+      const data = await res.json();
+      const sel = document.getElementById('fMarket');
+      // Keep the "All Markets" option, add each market
+      if (data.ok && data.markets) {
+        for (const m of data.markets) {
+          const opt = document.createElement('option');
+          opt.value = m.market;
+          opt.textContent = m.market + ' (' + m.count + ')';
+          sel.appendChild(opt);
+        }
+      }
+      // Pre-select "hydrogen" if it exists, else first market
+      const curMarket = (new URLSearchParams(window.location.search).get('market') || '').trim();
+      if (curMarket) {
+        sel.value = curMarket;
+      }
+    } catch(e) { /* ignore */ }
+  })();
+  refreshCrawlEngineMetricsBanner();
+  loadSetup();
+  loadLatest();
+  loadRuns();
+
+  // --- Step 3.5: Crawl Recovery ---
+  const recoveryStatus = document.getElementById('recoveryStatus');
+  const recoverySummary = document.getElementById('recoverySummary');
+  const recoveryTableWrap = document.getElementById('recoveryTableWrap');
+  const recoveryTable = document.getElementById('recoveryTable');
+  const recoveryRunIdInput = document.getElementById('recoveryRunId');
+  const loadRecoveryBtn = document.getElementById('loadRecoveryBtn');
+
+  async function loadRecoveryData(runId) {
+    if (!runId) {
+      recoveryStatus.textContent = 'Enter a quality run ID above and click Load.';
+      recoveryStatus.className = 'muted';
+      return;
+    }
+    recoveryStatus.textContent = 'Loading...';
+    recoveryStatus.className = 'muted';
+    try {
+      const res = await fetch('/api/pr-monitor/local-browser/recovery/' + encodeURIComponent(runId));
+      const data = await res.json();
+      if (!data.available) {
+        recoveryStatus.textContent = data.message || 'No recovery data available.';
+        recoveryStatus.className = 'muted';
+        recoverySummary.innerHTML = '';
+        recoveryTableWrap.style.display = 'none';
+        return;
+      }
+      // Show summary
+      const s = data.recovery_summary || {};
+      recoverySummary.innerHTML = '<strong>Recovered: ' + (s.recovered_by_local || 0) + '/' + (s.total_urls || 0) + '</strong> &mdash; Still blocked: ' + (s.still_blocked || 0);
+      recoveryStatus.textContent = '';
+      // Build table
+      const rows = (data.recovery_map || []).map(r => {
+        const icon = r.recovered ? '✅' : '❌';
+        return '<tr>'
+          + '<td>' + (r.name || r.url || '').substring(0, 50) + '</td>'
+          + '<td>' + (r.original_vps_status || '') + '</td>'
+          + '<td>' + (r.local_browser_status || '') + '</td>'
+          + '<td style="text-align:center">' + icon + '</td>'
+          + '<td>' + (r.fallback_method || '') + '</td>'
+          + '</tr>';
+      }).join('');
+      recoveryTable.innerHTML = rows || '<tr><td colspan="5">No data</td></tr>';
+      recoveryTableWrap.style.display = 'block';
+    } catch (e) {
+      recoveryStatus.textContent = 'Error loading recovery data: ' + e.message;
+      recoveryStatus.className = 'error';
+    }
+  }
+
+  loadRecoveryBtn.onclick = () => {
+    loadRecoveryData((recoveryRunIdInput.value || '').trim());
+  };
+
+  // Download Recovery Job button
+  document.getElementById('downloadJobBtn').onclick = () => {
+    const runId = (recoveryRunIdInput.value || '').trim();
+    if (!runId) {
+      recoveryStatus.textContent = 'Enter a quality run ID above first.';
+      recoveryStatus.className = 'error';
+      return;
+    }
+    recoveryStatus.textContent = 'Generating job file...';
+    recoveryStatus.className = 'muted';
+    window.location.href = '/api/pr-monitor/local-browser/job/' + encodeURIComponent(runId);
+    recoveryStatus.textContent = 'Job file downloaded. Place it in your local runner folder to start recovery.';
+  };
+
+  // Auto-load if run_id is in URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoRunId = urlParams.get('recovery_run_id') || '';
+  if (autoRunId) {
+    recoveryRunIdInput.value = autoRunId;
+    loadRecoveryData(autoRunId);
+  }
+</script>
+</body>
+</html>
