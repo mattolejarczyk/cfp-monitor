@@ -98,16 +98,20 @@ increasing order of reach — try in this order:
    already-running Chrome via CDP. Most reliable for hard anti-bot because it IS a real
    browser; matches the "local desktop app / you'll see the browser" model.
 
-**Verified gotcha (hard anti-bot):** some sites (e.g. ALJ Group / `ushydrogenforum.com`)
-return HTTP 200 with a **bodyless ~24KB anti-bot challenge shell**; crawl4ai reports
-`success=False, error="Blocked by anti-bot protection: Structural: no <body> tag"`.
-Tested 2026-07-03: `remove_*_popups` + `magic` + `enable_stealth` (headless AND headed) +
-accept-click JS with a 63s networkidle wait + **`UndetectedAdapter`** (headed, 91s) —
-ALL fail identically. Automated Playwright (even undetected) cannot pass this class.
-**The only reliable fix is `browser_mode="cdp"` driving the user's REAL Chrome** (a genuine
-browser/profile already solves the challenge). This is also the product's "local desktop
-app / you'll see the browser" model. Don't burn time on stealth/undetected for this class —
-go straight to CDP-to-real-Chrome.
+**Verified gotcha (crawl4ai FALSE-POSITIVE, not real anti-bot):** some slow-rendering
+sites (e.g. `ushydrogenforum.com`, a Complianz/WordPress site) make crawl4ai report
+`success=False, error="Blocked by anti-bot protection: Structural: no <body> tag (~24KB)"`.
+Tested 2026-07-03: crawl4ai fails even with `remove_*_popups`+`magic`+`enable_stealth`+
+`UndetectedAdapter` (headed, 90s). **BUT this is NOT a real block** — raw Playwright
+(`chromium.launch(headless=False)` → `goto` → `wait_for_selector('.cmplz-accept')`) loads
+the FULL 548KB page in ~9s and the consent button clicks fine (`.cmplz-accept`, banner
+dismisses). crawl4ai captured the early loading shell and its anti-bot detector aborted
+before the JS render.
+**Fix:** for such sites, fetch with our own Playwright — `goto`, `wait_for_selector` the
+consent Accept (Complianz `.cmplz-accept`; generic: buttons matching /accept|agree|allow/),
+`click`, wait for content, grab `page.content()` — then feed that HTML to extraction. Do
+NOT trust crawl4ai's "no <body>" as a real block; verify with raw Playwright first.
+CDP-to-real-Chrome also works but isn't required here.
 
 **Windows gotcha:** crawl4ai's logger prints non-ASCII (e.g. `→`); on Windows this raises
 `UnicodeEncodeError: 'charmap' codec can't encode`. Run with `PYTHONUTF8=1` (or
