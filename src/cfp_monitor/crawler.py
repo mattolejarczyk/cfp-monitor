@@ -49,6 +49,7 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
         remove_consent_popups=settings.remove_consent_popups,
         remove_overlay_elements=settings.remove_overlay_elements,
         magic=settings.crawl_magic,
+        page_timeout=settings.primary_page_timeout_s * 1000,   # fail fast -> leave budget for fallback
     )
     start_norm = normalize_url(start_url)
 
@@ -58,6 +59,7 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
     visited: set[str] = set()
     out = ExploreResult()
     ext_seen: set[str] = set()
+    site_fallback = False   # once the start page needs the Playwright fallback, use it for all pages
 
     while frontier and len(out.pages) < settings.max_pages:
         neg, _, url, depth = heapq.heappop(frontier)
@@ -66,10 +68,12 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
             continue
         visited.add(nu)
 
-        pf = await fetch_page(crawler, url, cfg, settings, tracer)
+        pf = await fetch_page(crawler, url, cfg, settings, tracer, force_fallback=site_fallback)
         if not pf.success:
             tracer.log("skipped", url, f"status={pf.status_code} depth={depth}")
             continue
+        if pf.via == "playwright-fallback":
+            site_fallback = True
 
         if nu == start_norm:
             out.start_ok = True

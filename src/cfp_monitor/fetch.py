@@ -137,34 +137,39 @@ async def _render_with_consent(url: str, settings, tracer):
         except Exception:
             pass
         html = await page.content()
+        body_text = await page.evaluate("() => document.body ? document.body.innerText : ''")
         anchors = await page.evaluate(
             "() => [...document.querySelectorAll('a[href]')]"
             ".map(a => ({href: a.href, text: (a.textContent||'').trim()}))")
-        return html, anchors, status
+        return html, anchors, status, body_text
     finally:
         await ctx.close()
 
 
-async def fetch_page(crawler, url: str, cfg, settings, tracer) -> PageFetch:
-    """crawl4ai first; Playwright fallback when it looks blocked/false-positived."""
-    r = None
-    try:
-        r = await crawler.arun(url, config=cfg)
-    except Exception as e:
-        tracer.log("skipped", url, f"crawl4ai raised: {e}")
+async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: bool = False) -> PageFetch:
+    """crawl4ai first; Playwright fallback when it looks blocked/false-positived.
 
-    if not _looks_blocked(r):
-        links = getattr(r, "links", None) or {"internal": [], "external": []}
-        return PageFetch(url, True, getattr(r, "status_code", None),
-                         str(getattr(r, "html", "") or ""), str(getattr(r, "markdown", "") or ""),
-                         links, via="crawl4ai")
+    `force_fallback=True` skips the crawl4ai attempt entirely — used for later pages of a
+    site whose start page already needed the fallback, so we don't waste 20-60s per page
+    letting crawl4ai fail again."""
+    r = None
+    if not force_fallback:
+        try:
+            r = await crawler.arun(url, config=cfg)
+        except Exception as e:
+            tracer.log("skipped", url, f"crawl4ai raised: {e}")
+        if not _looks_blocked(r):
+            links = getattr(r, "links", None) or {"internal": [], "external": []}
+            return PageFetch(url, True, getattr(r, "status_code", None),
+                             str(getattr(r, "html", "") or ""), str(getattr(r, "markdown", "") or ""),
+                             links, via="crawl4ai")
 
     if not settings.playwright_fallback:
         return PageFetch(url, False, getattr(r, "status_code", None))
 
-    tracer.log("fallback", url, f"crawl4ai weak (status={getattr(r,'status_code','?')}) -> playwright render")
+    tracer.log("fallback", url, "playwright render" + (" (forced)" if force_fallback else ""))
     try:
-        html, anchors, status = await _render_with_consent(url, settings, tracer)
+        html, anchors, status, body_text = await _render_with_consent(url, settings, tracer)
     except Exception as e:
         tracer.log("skipped", url, f"playwright fallback failed: {e}")
         return PageFetch(url, False, None, via="playwright-fallback")
@@ -178,6 +183,9 @@ async def fetch_page(crawler, url: str, cfg, settings, tracer) -> PageFetch:
         md = str(getattr(r2, "markdown", "") or "")
     except Exception as e:
         tracer.log("skipped", url, f"raw markdown gen failed: {e}")
+    # SPA safety net: if markdown came back thin, use the rendered visible text.
+    if len(md.strip()) < _MIN_MARKDOWN and body_text and len(body_text.strip()) >= _MIN_MARKDOWN:
+        md = body_text
 
     links = classify_links(anchors, url)
     ok = len(md.strip()) >= _MIN_MARKDOWN or bool(links["internal"])

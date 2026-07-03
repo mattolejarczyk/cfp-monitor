@@ -31,6 +31,9 @@ class Settings:
     max_pages: int = int(os.getenv("CFP_MAX_PAGES", "12"))
     include_external: bool = os.getenv("CFP_INCLUDE_EXTERNAL", "false").lower() == "true"
     per_site_timeout_s: int = int(os.getenv("CFP_SITE_TIMEOUT_S", "180"))
+    # Cap the crawl4ai PRIMARY attempt so a slow/blocked page fails fast, leaving budget
+    # for the Playwright fallback (a doomed crawl4ai attempt can otherwise eat 60-90s).
+    primary_page_timeout_s: int = int(os.getenv("CFP_PRIMARY_TIMEOUT_S", "35"))
     # How many of the top-scored discovered pages to run LLM extraction on.
     max_extract_pages: int = int(os.getenv("CFP_MAX_EXTRACT_PAGES", "8"))
 
