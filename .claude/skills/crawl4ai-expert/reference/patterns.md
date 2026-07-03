@@ -98,9 +98,17 @@ increasing order of reach — try in this order:
    already-running Chrome via CDP. Most reliable for hard anti-bot because it IS a real
    browser; matches the "local desktop app / you'll see the browser" model.
 
-**Verified gotcha:** some sites (e.g. ALJ Group / `ushydrogenforum.com`) return HTTP 200
-with a **bodyless ~24KB anti-bot shell**; crawl4ai reports `success=False,
-error="Blocked by anti-bot protection: Structural: no <body> tag"`. `remove_*_popups` +
-`magic` + `enable_stealth` (headless AND headed) ALL still fail on it. For that hard
-class, escalate to `UndetectedAdapter` or CDP-to-real-Chrome — do not burn time on
-stealth flags.
+**Verified gotcha (hard anti-bot):** some sites (e.g. ALJ Group / `ushydrogenforum.com`)
+return HTTP 200 with a **bodyless ~24KB anti-bot challenge shell**; crawl4ai reports
+`success=False, error="Blocked by anti-bot protection: Structural: no <body> tag"`.
+Tested 2026-07-03: `remove_*_popups` + `magic` + `enable_stealth` (headless AND headed) +
+accept-click JS with a 63s networkidle wait + **`UndetectedAdapter`** (headed, 91s) —
+ALL fail identically. Automated Playwright (even undetected) cannot pass this class.
+**The only reliable fix is `browser_mode="cdp"` driving the user's REAL Chrome** (a genuine
+browser/profile already solves the challenge). This is also the product's "local desktop
+app / you'll see the browser" model. Don't burn time on stealth/undetected for this class —
+go straight to CDP-to-real-Chrome.
+
+**Windows gotcha:** crawl4ai's logger prints non-ASCII (e.g. `→`); on Windows this raises
+`UnicodeEncodeError: 'charmap' codec can't encode`. Run with `PYTHONUTF8=1` (or
+`PYTHONIOENCODING=utf-8`).
