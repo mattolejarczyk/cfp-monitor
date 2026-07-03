@@ -80,3 +80,27 @@ LLMExtractionStrategy(
 - Cap everything: `max_pages`, `max_depth`, a wall-clock timeout per site.
 - Log every decision (found / scored / crawled / skipped + why) for debuggability.
 - Treat missing data as **unknown**, not false. Don't let the LLM guess.
+
+## Popups, consent walls & anti-bot (crawl4ai 0.9.0 — verified 2026-07-03)
+Conference sites routinely block crawls with a GDPR "Manage Consent" (IAB TCF/CMP)
+modal + promo overlays; some serve hard anti-bot challenges. Native levers, in
+increasing order of reach — try in this order:
+
+1. `CrawlerRunConfig(remove_consent_popups=True, remove_overlay_elements=True)` —
+   removes CMP consent modals + generic overlays BEFORE extraction. Cheap, safe,
+   enable by default. (There is a dedicated `remove_consent_popups(page)` routine.)
+2. `CrawlerRunConfig(magic=True)` — broader auto-overlay handling; heavier / less predictable.
+3. `BrowserConfig(enable_stealth=True)` — playwright-stealth patches (navigator.webdriver
+   etc.). Beats *basic* bot detection. Needs the `playwright_stealth` package.
+4. `UndetectedAdapter` (exported from `crawl4ai`) — stronger undetected-browser mode.
+   NOTE: cannot be combined with `enable_stealth`.
+5. `BrowserConfig(browser_mode="cdp", cdp_url="ws://localhost:9222/...")` — drive a REAL,
+   already-running Chrome via CDP. Most reliable for hard anti-bot because it IS a real
+   browser; matches the "local desktop app / you'll see the browser" model.
+
+**Verified gotcha:** some sites (e.g. ALJ Group / `ushydrogenforum.com`) return HTTP 200
+with a **bodyless ~24KB anti-bot shell**; crawl4ai reports `success=False,
+error="Blocked by anti-bot protection: Structural: no <body> tag"`. `remove_*_popups` +
+`magic` + `enable_stealth` (headless AND headed) ALL still fail on it. For that hard
+class, escalate to `UndetectedAdapter` or CDP-to-real-Chrome — do not burn time on
+stealth flags.

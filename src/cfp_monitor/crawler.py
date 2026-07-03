@@ -40,7 +40,15 @@ class ExploreResult:
 async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreResult:
     from crawl4ai import CrawlerRunConfig, CacheMode
 
-    cfg = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, verbose=settings.verbose)
+    # Native popup/consent handling: strip the GDPR "Manage Consent" (CMP) modal and
+    # any promo overlay BEFORE extracting, so blocking popups don't stall the crawl.
+    cfg = CrawlerRunConfig(
+        cache_mode=CacheMode.BYPASS,
+        verbose=settings.verbose,
+        remove_consent_popups=settings.remove_consent_popups,
+        remove_overlay_elements=settings.remove_overlay_elements,
+        magic=settings.crawl_magic,
+    )
     start_norm = normalize_url(start_url)
 
     counter = itertools.count()

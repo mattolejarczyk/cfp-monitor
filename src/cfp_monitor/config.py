@@ -38,6 +38,15 @@ class Settings:
     headless: bool = os.getenv("CFP_HEADLESS", "true").lower() != "false"
     verbose: bool = os.getenv("CFP_VERBOSE", "false").lower() == "true"
 
+    # --- Popup / consent handling (crawl4ai NATIVE; on by default) ---
+    # Conference sites routinely sit behind a GDPR "Manage Consent" (IAB TCF/CMP)
+    # modal + a promo overlay that block the page. crawl4ai removes both natively
+    # before extracting HTML — no custom click-Accept automation required.
+    remove_consent_popups: bool = os.getenv("CFP_REMOVE_CONSENT", "true").lower() != "false"
+    remove_overlay_elements: bool = os.getenv("CFP_REMOVE_OVERLAYS", "true").lower() != "false"
+    # `magic` is a broader auto-handler — heavier/less predictable, so opt-in.
+    crawl_magic: bool = os.getenv("CFP_CRAWL_MAGIC", "false").lower() == "true"
+
     def require_llm_key(self) -> None:
         if self.llm_provider.startswith(("openrouter/", "openai/", "anthropic/")) and not self.openrouter_api_key:
             raise RuntimeError(
