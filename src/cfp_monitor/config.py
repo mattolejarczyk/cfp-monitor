@@ -47,6 +47,16 @@ class Settings:
     # `magic` is a broader auto-handler — heavier/less predictable, so opt-in.
     crawl_magic: bool = os.getenv("CFP_CRAWL_MAGIC", "false").lower() == "true"
 
+    # --- Playwright fallback fetch ---
+    # crawl4ai's browser sometimes captures a slow JS site's early loading shell and
+    # its anti-bot detector false-flags "no <body>" (verified: Complianz/WordPress conf
+    # sites like ushydrogenforum.com). For those we render with our OWN Playwright,
+    # dismiss the cookie-consent banner (the real blocker), wait for content, then feed
+    # the rendered HTML to crawl4ai (raw://) for markdown.
+    playwright_fallback: bool = os.getenv("CFP_PW_FALLBACK", "true").lower() != "false"
+    playwright_headless: bool = os.getenv("CFP_PW_HEADLESS", "true").lower() != "false"
+    fallback_wait_s: float = float(os.getenv("CFP_FALLBACK_WAIT_S", "8"))
+
     def require_llm_key(self) -> None:
         if self.llm_provider.startswith(("openrouter/", "openai/", "anthropic/")) and not self.openrouter_api_key:
             raise RuntimeError(

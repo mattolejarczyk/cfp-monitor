@@ -17,6 +17,7 @@ import itertools
 from dataclasses import dataclass, field
 
 from .discovery import extract_clickables, detect_forms
+from .fetch import fetch_page
 from .scoring import normalize_url, same_site, score_link, detect_submission_platform
 from .trace import Tracer
 
@@ -65,19 +66,15 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
             continue
         visited.add(nu)
 
-        try:
-            r = await crawler.arun(url, config=cfg)
-        except Exception as e:
-            tracer.log("skipped", url, f"fetch raised: {e}")
-            continue
-        if not r or not getattr(r, "success", False):
-            tracer.log("skipped", url, f"status={getattr(r, 'status_code', '?')} depth={depth}")
+        pf = await fetch_page(crawler, url, cfg, settings, tracer)
+        if not pf.success:
+            tracer.log("skipped", url, f"status={pf.status_code} depth={depth}")
             continue
 
         if nu == start_norm:
             out.start_ok = True
-        md = str(getattr(r, "markdown", "") or "")
-        html = getattr(r, "html", "") or ""
+        md = pf.markdown
+        html = pf.html
         page_score = 0.0 if depth == 0 else round(-neg, 3)
         out.pages.append(CrawledPage(nu, md, depth, page_score))
         tracer.log("crawled", url, f"depth={depth} score={page_score:.2f}", chars=len(md))
@@ -91,7 +88,7 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
         if depth >= settings.max_depth:
             continue
 
-        links = getattr(r, "links", {}) or {}
+        links = pf.links or {}
         internal_links = links.get("internal", []) or []
         external_links = links.get("external", []) or []
         clickables = extract_clickables(html, url)
