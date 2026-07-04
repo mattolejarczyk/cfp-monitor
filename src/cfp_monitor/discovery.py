@@ -6,6 +6,7 @@ start URL is only the entry point.
 """
 from __future__ import annotations
 
+import re
 from urllib.parse import urljoin
 
 from .keywords import SUBMISSION_PLATFORMS
@@ -38,18 +39,57 @@ def _soup(html: str):
         return None
 
 
+# URL hidden inside an onclick handler, e.g. onclick="location.href='/cfp'".
+_ONCLICK_URL = re.compile(
+    r"""(?:location\.href|window\.location(?:\.href)?|location\.assign|window\.open)\s*[=(]\s*['"]([^'"]+)['"]""",
+    re.I,
+)
+# data-* attributes commonly used to carry a navigation target on a button.
+_DATA_URL_ATTRS = ("data-href", "data-url", "data-link", "data-target-url", "data-goto", "data-navigate")
+
+
+def _button_url(el) -> str | None:
+    """Best-effort real URL behind a clickable, including URLs MASKED by buttons —
+    onclick JS navigation, formaction, data-* attrs, or a wrapping <a>."""
+    for attr in ("href",) + _DATA_URL_ATTRS:
+        v = el.get(attr)
+        if v:
+            return v
+    if el.get("formaction"):
+        return el.get("formaction")
+    m = _ONCLICK_URL.search(el.get("onclick") or "")
+    if m:
+        return m.group(1)
+    a = el.find_parent("a", href=True)
+    if a:
+        return a.get("href")
+    return None
+
+
 def extract_clickables(html: str, base_url: str) -> list[dict]:
-    """Anchors + nav items + role=button / <button> elements, as {href, text}.
-    Buttons/CTAs are first-class here — many lead straight to the opportunity."""
+    """Anchors + buttons/CTAs as {href, text}. Buttons are first-class and often MASK
+    the real URL in onclick / formaction / data-* attributes — we dig those out so
+    JS-masked opportunity links aren't lost. (Only pure SPA-router buttons with no URL
+    anywhere escape us — those would need an actual click in the browser.)"""
     soup = _soup(html)
     if soup is None:
         return []
     out: list[dict] = []
-    for el in soup.select("a[href], [role=button], button"):
-        text = el.get_text(" ", strip=True)
-        href = el.get("href") or el.get("data-href") or el.get("data-url")
-        if href:
-            out.append({"href": urljoin(base_url, href), "text": text})
+    seen: set[str] = set()
+    for el in soup.select("a[href], [role=button], button, [onclick], input[type=submit], input[type=button]"):
+        raw = _button_url(el)
+        if not raw:
+            continue
+        raw = raw.strip()
+        low = raw.lower()
+        if not raw or low.startswith(("javascript:", "#", "mailto:", "tel:", "data:")):
+            continue
+        full = urljoin(base_url, raw)
+        if full in seen:
+            continue
+        seen.add(full)
+        text = el.get_text(" ", strip=True) or el.get("value") or el.get("aria-label") or ""
+        out.append({"href": full, "text": text})
     return out
 
 

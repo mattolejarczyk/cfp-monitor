@@ -62,6 +62,14 @@ def to_customer_row(rec: dict) -> dict:
     """Map one internal export dict (Store.export_dicts item) to the 15 columns."""
     status = _STATUS_MAP.get((rec.get("status") or "").lower(), rec.get("status") or "")
     verified = "Yes" if rec.get("verified") else "Needs Verification"
+    # Honest deadline handling: if an opportunity exists but no public deadline was found,
+    # say so explicitly (feeds the human-verification workflow) rather than leaving a blank
+    # cell that implies there is none. Many expos simply don't publish a submission deadline.
+    details = rec.get("status_details") or ""
+    has_opp = (rec.get("status") or "").lower() in ("open", "upcoming", "unclear") or bool(rec.get("submission_url"))
+    if has_opp and not (rec.get("submission_deadline") or "").strip():
+        note = "No public deadline found - needs verification"
+        details = f"{details} - {note}" if details else note
     return {
         "CONFERENCE": rec.get("name") or "",
         "CONFERENCE URL": rec.get("url") or "",
@@ -72,7 +80,7 @@ def to_customer_row(rec: dict) -> dict:
         "SUBMISSION DATE VERIFIED": verified,
         "PRIORITY": rec.get("priority") or "",
         "STATUS": status,
-        "STATUS DETAILS": rec.get("status_details") or "",
+        "STATUS DETAILS": details,
         "SUBMISSION URL": rec.get("submission_url") or "",
         "COORDINATOR EMAIL": rec.get("coordinator_email") or "",
         "OVERVIEW": rec.get("overview") or "",

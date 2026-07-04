@@ -53,6 +53,14 @@ CFP_KEYWORDS: list[str] = [
     "best of show",
     "apply to speak",
     "speaking opportunities",
+    "present at",
+    "get involved",
+    "speaker enquiry",
+    "speaker inquiry",
+    "call for content",
+    "share your story",
+    "speaker portal",
+    "speaker registration",
 ]
 
 # Secondary context pages worth crawling (dates/status/where-to-submit live here).
@@ -103,6 +111,9 @@ CFP_URL_HINTS: list[str] = [
     "nomination",
     "awards",
     "categories",
+    "get-involved",
+    "become-a-speaker",
+    "speaking",
 ]
 
 # Known third-party submission platforms — a link to one of these is a strong

@@ -58,6 +58,17 @@ def test_excel_serial_known_value():
     assert excel_serial("not a date") is None
 
 
+def test_no_public_deadline_note():
+    row = to_customer_row(_rec(submission_deadline="", status="open",
+                               submission_url="https://alpha.test/cfp", status_details="Open"))
+    assert "No public deadline found" in row["STATUS DETAILS"]
+
+
+def test_deadline_present_no_note():
+    row = to_customer_row(_rec(submission_deadline="2026-06-29", status="open"))
+    assert "No public deadline" not in row["STATUS DETAILS"]
+
+
 def _run():
     import sys
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
