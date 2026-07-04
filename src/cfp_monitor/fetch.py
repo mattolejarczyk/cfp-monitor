@@ -94,37 +94,62 @@ def _looks_blocked(r) -> bool:
 # --- Shared fallback browser: launched ONCE per run and reused across pages (perf).
 # A fresh context per page keeps sites isolated. Headless browsers get 403'd by some
 # platforms (Reuters Events), so the fallback runs headed by default (settings). ---
-_FALLBACK = None  # tuple[playwright, browser] | None
+_FALLBACK = None  # tuple[playwright, browser, is_cdp] | None
 
 
-async def _get_fallback_browser(headless: bool):
+def _resolve_cdp_ws(cdp_url: str) -> str:
+    """Accept a ws:// endpoint directly, or resolve an http://host:port to Chrome's
+    browser WebSocket URL via /json/version (avoids Playwright's trailing-slash 404)."""
+    if cdp_url.startswith(("ws://", "wss://")):
+        return cdp_url
+    import json as _json, urllib.request
+    data = _json.loads(urllib.request.urlopen(cdp_url.rstrip("/") + "/json/version", timeout=5).read())
+    return data["webSocketDebuggerUrl"]
+
+
+async def _get_fallback_browser(settings):
+    """Shared fallback browser. If settings.cdp_url is set, ATTACH to a real running
+    Chrome via CDP (no automation fingerprint — beats IP-reputation anti-bot); otherwise
+    launch our own."""
     global _FALLBACK
     if _FALLBACK is None:
         from playwright.async_api import async_playwright
         pw = await async_playwright().start()
-        browser = await pw.chromium.launch(headless=headless)
-        _FALLBACK = (pw, browser)
+        cdp = getattr(settings, "cdp_url", None)
+        if cdp:
+            browser = await pw.chromium.connect_over_cdp(_resolve_cdp_ws(cdp))
+            _FALLBACK = (pw, browser, True)
+        else:
+            browser = await pw.chromium.launch(headless=settings.fallback_headless)
+            _FALLBACK = (pw, browser, False)
     return _FALLBACK[1]
 
 
 async def close_fallback_browser() -> None:
-    """Close the shared fallback browser at the end of a run (call from run_urls finally)."""
+    """Disconnect/close the shared fallback browser at run end. For CDP we only
+    disconnect — never close the user's real Chrome."""
     global _FALLBACK
     if _FALLBACK is not None:
-        pw, browser = _FALLBACK
+        pw, browser, is_cdp = _FALLBACK
         try:
-            await browser.close()
+            if not is_cdp:
+                await browser.close()
         finally:
             await pw.stop()
         _FALLBACK = None
 
 
 async def _render_with_consent(url: str, settings, tracer):
-    """Render `url` in the shared fallback browser, dismiss consent, return (html, anchors, status)."""
-    browser = await _get_fallback_browser(settings.fallback_headless)
-    ctx = await browser.new_context()
+    """Render `url` in the shared fallback browser, dismiss consent, return
+    (html, anchors, status, body_text). Under CDP, reuse the real signed-in context."""
+    browser = await _get_fallback_browser(settings)
+    is_cdp = bool(_FALLBACK and _FALLBACK[2])
+    if is_cdp and browser.contexts:
+        ctx, own_ctx = browser.contexts[0], False   # reuse the real (signed-in) context + cookies
+    else:
+        ctx, own_ctx = await browser.new_context(), True
+    page = await ctx.new_page()
     try:
-        page = await ctx.new_page()
         resp = await page.goto(url, wait_until="domcontentloaded",
                                timeout=int(settings.per_site_timeout_s * 1000))
         status = resp.status if resp else None
@@ -154,7 +179,9 @@ async def _render_with_consent(url: str, settings, tracer):
             ".map(a => ({href: a.href, text: (a.textContent||'').trim()}))")
         return html, anchors, status, body_text
     finally:
-        await ctx.close()
+        await page.close()
+        if own_ctx:
+            await ctx.close()
 
 
 async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: bool = False) -> PageFetch:

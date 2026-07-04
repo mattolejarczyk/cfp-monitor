@@ -61,6 +61,11 @@ class Settings:
     # (verified: Reuters Events / OneTrust). Headed also fits the "you'll see the browser" model.
     fallback_headless: bool = os.getenv("CFP_FALLBACK_HEADLESS", "false").lower() == "true"
     fallback_wait_s: float = float(os.getenv("CFP_FALLBACK_WAIT_S", "8"))
+    # CDP: drive a REAL Chrome via its debug port (beats IP-reputation anti-bot like
+    # Reuters — verified). Launch Chrome with scripts/launch_chrome_cdp.bat, then set
+    # CFP_CDP_URL=http://localhost:9222 (or a ws:// url). When set, the fallback ATTACHES
+    # to that real (ideally signed-in) browser instead of launching its own headless/headed one.
+    cdp_url: str | None = os.getenv("CFP_CDP_URL")
 
     def require_llm_key(self) -> None:
         if self.llm_provider.startswith(("openrouter/", "openai/", "anthropic/")) and not self.openrouter_api_key:
