@@ -1,12 +1,13 @@
-"""Orchestration — the core crawl loop (feat, all).
+"""Orchestration — the core crawl loop (all features).
 
 For each conference URL:
-  1. Fetch the start page + discover links/buttons/CTAs and submission platforms.
-  2. Deep-crawl the highest-value internal pages within budget.
-  3. Run LLM extraction on the top pages (start page + best opportunity/context pages).
-  4. Consolidate into one evidence-backed ConferenceResult.
-Each conference is isolated behind a wall-clock timeout and try/except so one bad
-site never breaks the batch. One browser is reused across all conferences.
+  1. Score-driven exploration from the start page (crawler.explore): follows the
+     highest-value internal links + buttons/CTAs, records forms and external
+     submission platforms, within budget.
+  2. LLM extraction on the start page + the top opportunity/context pages.
+  3. Evidence-backed consolidation into one ConferenceResult (labeled status,
+     field-specific evidence, multi-edition flags).
+Each conference is isolated behind a timeout + try/except; one browser is reused.
 """
 from __future__ import annotations
 
@@ -14,30 +15,28 @@ import asyncio
 
 from .config import Settings, DEFAULT
 from .consolidate import consolidate
-from .crawler import deep_crawl, CrawledPage
-from .discovery import discover
+from .crawler import explore
 from .extraction import extract_from_markdown
+from .fetch import close_fallback_browser
 from .models import ConferenceResult
 from .scoring import normalize_url, score_link
 from .trace import Tracer
 
 
 async def analyze_conference(crawler, start_url: str, settings: Settings, tracer: Tracer) -> ConferenceResult:
-    disc = await discover(crawler, start_url, settings, tracer)
-    if not disc.ok:
+    ex = await explore(crawler, start_url, settings, tracer)
+    if not ex.start_ok:
         r = ConferenceResult(start_url=start_url, error="start page could not be fetched")
         r.trace = tracer.dump()
         return r
 
-    pages = await deep_crawl(crawler, start_url, settings, tracer)
-
-    # Ensure the start page's content is available for extraction.
-    have = {p.url for p in pages}
-    if normalize_url(start_url) not in have and disc.start_markdown:
-        pages.insert(0, CrawledPage(normalize_url(start_url), disc.start_markdown, 0, 99.0))
-
-    # Rank pages for extraction: our CFP link score first, then crawl score.
-    ranked = sorted(pages, key=lambda p: (score_link(p.url), p.score), reverse=True)
+    # Rank crawled pages for extraction: start page always, then our CFP score, then depth score.
+    start_norm = normalize_url(start_url)
+    ranked = sorted(
+        ex.pages,
+        key=lambda p: (p.url == start_norm, score_link(p.url), p.score),
+        reverse=True,
+    )
     to_extract = ranked[: settings.max_extract_pages]
     for p in to_extract:
         tracer.log("scored", p.url, f"selected for extraction (score={p.score:.2f})")
@@ -51,12 +50,13 @@ async def analyze_conference(crawler, start_url: str, settings: Settings, tracer
     result = consolidate(
         start_url,
         pairs,
-        disc.submission_links,
+        ex.forms,
+        ex.external_submissions,
         tracer,
-        pages_crawled=len(pages),
+        pages_crawled=len(ex.pages),
         pages_skipped=tracer.counts().get("skipped", 0),
     )
-    result.canonical_url = normalize_url(start_url)
+    result.canonical_url = start_norm
     result.trace = tracer.dump()
     return result
 
@@ -82,8 +82,9 @@ async def run_urls(urls: list[str], settings: Settings | None = None) -> list[Co
             except asyncio.TimeoutError:
                 res = ConferenceResult(start_url=url, error="per-site timeout reached")
                 res.trace = tracer.dump()
-            except Exception as e:  # never let one site kill the batch
+            except Exception as e:
                 res = ConferenceResult(start_url=url, error=f"{type(e).__name__}: {e}")
                 res.trace = tracer.dump()
             results.append(res)
+    await close_fallback_browser()
     return results

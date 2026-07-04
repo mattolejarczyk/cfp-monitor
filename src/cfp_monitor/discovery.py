@@ -1,102 +1,138 @@
-"""Main-page fetch + link/button/CTA discovery (feat 3, 4, 9).
+"""Per-page target discovery: links, buttons/CTAs, and forms (feat 3, 4, 9).
 
-Fetches the starting page once (full crawl → we get markdown for main-page
-extraction AND the links), then harvests every clickable target — anchors, nav
-items, and button/CTA elements — scores them for CFP relevance, and flags links to
-known external submission platforms.
+These helpers turn a crawled page's HTML into candidate crawl targets. They're used
+by the score-driven explorer (crawler.py) on EVERY page, not just the homepage — the
+start URL is only the entry point.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import re
 from urllib.parse import urljoin
 
-from .scoring import normalize_url, same_site, score_link, detect_submission_platform
-from .trace import Tracer
+from .keywords import SUBMISSION_PLATFORMS
+from .scoring import detect_submission_platform, score_link, normalize_url
 
 
-@dataclass
-class Candidate:
-    url: str
-    text: str
-    score: float
+# Strong submission signals for classifying a <form> (deliberately excludes bare
+# "enter"/"apply" so newsletter/search forms don't get mistaken for submissions).
+_SUBMISSION_TOKENS = (
+    "submit", "submission", "proposal", "propose", "abstract", "cfp", "call for",
+    "call-for", "speaker", "nominat", "best-of-show", "best of show", "awards entry",
+    "award entry", "call for entries", "enter the awards", "submit an entry",
+    "paper", "poster", "speaking",
+)
 
 
-@dataclass
-class Discovery:
-    start_url: str
-    start_markdown: str = ""
-    start_html: str = ""
-    ok: bool = False
-    candidates: list[Candidate] = field(default_factory=list)      # ranked, on-site
-    submission_links: list[dict] = field(default_factory=list)     # [{url, platform, text}]
+def _is_submission_form(action_url: str, context: str) -> bool:
+    low = f"{action_url} {context}".lower()
+    return any(t in low for t in _SUBMISSION_TOKENS)
 
 
-def _extract_clickables(html: str, base_url: str) -> list[dict]:
-    """Anchors + nav items + role=button / <button> elements, as {href, text}."""
+def _soup(html: str):
     try:
         from bs4 import BeautifulSoup
     except Exception:
-        return []
+        return None
     try:
-        soup = BeautifulSoup(html or "", "html.parser")
+        return BeautifulSoup(html or "", "html.parser")
     except Exception:
+        return None
+
+
+# URL hidden inside an onclick handler, e.g. onclick="location.href='/cfp'".
+_ONCLICK_URL = re.compile(
+    r"""(?:location\.href|window\.location(?:\.href)?|location\.assign|window\.open)\s*[=(]\s*['"]([^'"]+)['"]""",
+    re.I,
+)
+# data-* attributes commonly used to carry a navigation target on a button.
+_DATA_URL_ATTRS = ("data-href", "data-url", "data-link", "data-target-url", "data-goto", "data-navigate")
+
+
+def _button_url(el) -> str | None:
+    """Best-effort real URL behind a clickable, including URLs MASKED by buttons —
+    onclick JS navigation, formaction, data-* attrs, or a wrapping <a>."""
+    for attr in ("href",) + _DATA_URL_ATTRS:
+        v = el.get(attr)
+        if v:
+            return v
+    if el.get("formaction"):
+        return el.get("formaction")
+    m = _ONCLICK_URL.search(el.get("onclick") or "")
+    if m:
+        return m.group(1)
+    a = el.find_parent("a", href=True)
+    if a:
+        return a.get("href")
+    return None
+
+
+def extract_clickables(html: str, base_url: str) -> list[dict]:
+    """Anchors + buttons/CTAs as {href, text}. Buttons are first-class and often MASK
+    the real URL in onclick / formaction / data-* attributes — we dig those out so
+    JS-masked opportunity links aren't lost. (Only pure SPA-router buttons with no URL
+    anywhere escape us — those would need an actual click in the browser.)"""
+    soup = _soup(html)
+    if soup is None:
         return []
     out: list[dict] = []
-    for el in soup.select("a[href], [role=button], button"):
-        text = el.get_text(" ", strip=True)
-        href = el.get("href") or el.get("data-href") or el.get("data-url")
-        if href:
-            out.append({"href": urljoin(base_url, href), "text": text})
+    seen: set[str] = set()
+    for el in soup.select("a[href], [role=button], button, [onclick], input[type=submit], input[type=button]"):
+        raw = _button_url(el)
+        if not raw:
+            continue
+        raw = raw.strip()
+        low = raw.lower()
+        if not raw or low.startswith(("javascript:", "#", "mailto:", "tel:", "data:")):
+            continue
+        full = urljoin(base_url, raw)
+        if full in seen:
+            continue
+        seen.add(full)
+        text = el.get_text(" ", strip=True) or el.get("value") or el.get("aria-label") or ""
+        out.append({"href": full, "text": text})
     return out
 
 
-async def discover(crawler, start_url: str, settings, tracer: Tracer) -> Discovery:
-    from crawl4ai import CrawlerRunConfig, CacheMode
+def detect_forms(html: str, base_url: str) -> list[dict]:
+    """Find live submission/entry forms on the page — <form action=...>, embedded
+    platform <iframe>s, and links to known submission platforms. Returns
+    [{url, platform, context}]. A form is strong opportunity evidence (feat 3)."""
+    soup = _soup(html)
+    if soup is None:
+        return []
+    forms: list[dict] = []
+    seen: set[str] = set()   # dedupe by normalized URL (http/https + trailing slash)
 
-    cfg = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, verbose=settings.verbose)
-    try:
-        r = await crawler.arun(start_url, config=cfg)
-    except Exception as e:
-        tracer.log("error", start_url, f"start fetch raised: {e}")
-        return Discovery(start_url)
+    def add(url: str, context: str):
+        if not url:
+            return
+        full = urljoin(base_url, url)
+        key = normalize_url(full)
+        if key in seen:
+            return
+        seen.add(key)
+        forms.append(
+            {"url": full, "platform": detect_submission_platform(full) or "on-page form", "context": (context or "")[:160]}
+        )
 
-    if not r or not getattr(r, "success", False):
-        tracer.log("error", start_url, f"start page failed: {getattr(r, 'error_message', '')}")
-        return Discovery(start_url)
-
-    md = str(getattr(r, "markdown", "") or "")
-    html = getattr(r, "html", "") or ""
-    links = getattr(r, "links", {}) or {}
-    internal = links.get("internal", []) or []
-    external = links.get("external", []) or []
-    clickables = _extract_clickables(html, start_url)
-
-    seen = {normalize_url(start_url)}
-    candidates: list[Candidate] = []
-    for l in internal + clickables:
-        href = (l.get("href") or "").strip()
-        text = (l.get("text") or "").strip()
-        if not href or not href.lower().startswith("http"):
+    # 1. <form> elements — keep only submission-relevant ones (token match on the
+    #    action path + surrounding text) so search/newsletter/brochure forms don't pollute.
+    for f in soup.select("form"):
+        action = (f.get("action") or "").strip()
+        if not action:
             continue
-        nu = normalize_url(href)
-        if nu in seen or not same_site(nu, start_url):
-            continue
-        seen.add(nu)
-        sc = score_link(nu, text)
-        candidates.append(Candidate(nu, text[:120], sc))
-        tracer.log("found", nu, f"score={sc}", text=text[:60])
-
-    candidates.sort(key=lambda c: c.score, reverse=True)
-
-    submission_links: list[dict] = []
-    seen_sub = set()
-    for l in internal + external:
-        href = (l.get("href") or "").strip()
-        plat = detect_submission_platform(href)
-        if plat and href not in seen_sub:
-            seen_sub.add(href)
-            submission_links.append({"url": href, "platform": plat, "text": (l.get("text") or "")[:80]})
-            tracer.log("found", href, f"submission platform: {plat}")
-
-    tracer.log("crawled", start_url, "start page", chars=len(md), links=len(internal))
-    return Discovery(start_url, md, html, True, candidates, submission_links)
+        full = urljoin(base_url, action)
+        context = f.get_text(" ", strip=True)[:160]
+        if detect_submission_platform(full) or _is_submission_form(full, context):
+            add(full, context)
+    # 2. embedded platform iframes (HubSpot, Jotform, Typeform, Google Forms, Sessionize…)
+    for fr in soup.select("iframe[src]"):
+        src = fr.get("src") or ""
+        if detect_submission_platform(src):
+            add(src, "embedded form")
+    # 3. links pointing at a known submission platform
+    for a in soup.select("a[href]"):
+        href = a.get("href") or ""
+        if detect_submission_platform(href):
+            add(href, a.get_text(" ", strip=True))
+    return forms[:12]

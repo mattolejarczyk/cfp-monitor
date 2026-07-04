@@ -80,3 +80,39 @@ LLMExtractionStrategy(
 - Cap everything: `max_pages`, `max_depth`, a wall-clock timeout per site.
 - Log every decision (found / scored / crawled / skipped + why) for debuggability.
 - Treat missing data as **unknown**, not false. Don't let the LLM guess.
+
+## Popups, consent walls & anti-bot (crawl4ai 0.9.0 — verified 2026-07-03)
+Conference sites routinely block crawls with a GDPR "Manage Consent" (IAB TCF/CMP)
+modal + promo overlays; some serve hard anti-bot challenges. Native levers, in
+increasing order of reach — try in this order:
+
+1. `CrawlerRunConfig(remove_consent_popups=True, remove_overlay_elements=True)` —
+   removes CMP consent modals + generic overlays BEFORE extraction. Cheap, safe,
+   enable by default. (There is a dedicated `remove_consent_popups(page)` routine.)
+2. `CrawlerRunConfig(magic=True)` — broader auto-overlay handling; heavier / less predictable.
+3. `BrowserConfig(enable_stealth=True)` — playwright-stealth patches (navigator.webdriver
+   etc.). Beats *basic* bot detection. Needs the `playwright_stealth` package.
+4. `UndetectedAdapter` (exported from `crawl4ai`) — stronger undetected-browser mode.
+   NOTE: cannot be combined with `enable_stealth`.
+5. `BrowserConfig(browser_mode="cdp", cdp_url="ws://localhost:9222/...")` — drive a REAL,
+   already-running Chrome via CDP. Most reliable for hard anti-bot because it IS a real
+   browser; matches the "local desktop app / you'll see the browser" model.
+
+**Verified gotcha (crawl4ai FALSE-POSITIVE, not real anti-bot):** some slow-rendering
+sites (e.g. `ushydrogenforum.com`, a Complianz/WordPress site) make crawl4ai report
+`success=False, error="Blocked by anti-bot protection: Structural: no <body> tag (~24KB)"`.
+Tested 2026-07-03: crawl4ai fails even with `remove_*_popups`+`magic`+`enable_stealth`+
+`UndetectedAdapter` (headed, 90s). **BUT this is NOT a real block** — raw Playwright
+(`chromium.launch(headless=False)` → `goto` → `wait_for_selector('.cmplz-accept')`) loads
+the FULL 548KB page in ~9s and the consent button clicks fine (`.cmplz-accept`, banner
+dismisses). crawl4ai captured the early loading shell and its anti-bot detector aborted
+before the JS render.
+**Fix:** for such sites, fetch with our own Playwright — `goto`, `wait_for_selector` the
+consent Accept (Complianz `.cmplz-accept`; generic: buttons matching /accept|agree|allow/),
+`click`, wait for content, grab `page.content()` — then feed that HTML to extraction. Do
+NOT trust crawl4ai's "no <body>" as a real block; verify with raw Playwright first.
+CDP-to-real-Chrome also works but isn't required here.
+
+**Windows gotcha:** crawl4ai's logger prints non-ASCII (e.g. `→`); on Windows this raises
+`UnicodeEncodeError: 'charmap' codec can't encode`. Run with `PYTHONUTF8=1` (or
+`PYTHONIOENCODING=utf-8`).
