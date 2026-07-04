@@ -35,12 +35,23 @@ _ACCEPT_JS = r"""
 """
 
 
+# Domains that HARD-BLOCK automated requests: crawl4ai's headless hit gets a 403 that
+# also poisons a subsequent render from the same IP (verified: Reuters Events). For these,
+# skip crawl4ai and render (headed) FIRST so OUR request is the first contact. Extend as found.
+_FALLBACK_FIRST_DOMAINS = ("reutersevents.com",)
+
+
 def _host(u: str) -> str:
     try:
         h = (urlparse(u).hostname or "").lower()
     except Exception:
         return ""
     return h[4:] if h.startswith("www.") else h
+
+
+def _force_fallback_domain(url: str) -> bool:
+    h = _host(url)
+    return any(h == d or h.endswith("." + d) for d in _FALLBACK_FIRST_DOMAINS)
 
 
 def classify_links(anchors, page_url: str) -> dict:
@@ -152,6 +163,8 @@ async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: b
     `force_fallback=True` skips the crawl4ai attempt entirely — used for later pages of a
     site whose start page already needed the fallback, so we don't waste 20-60s per page
     letting crawl4ai fail again."""
+    if _force_fallback_domain(url):
+        force_fallback = True   # known hard-block platform: don't let crawl4ai poison the IP
     r = None
     if not force_fallback:
         try:
