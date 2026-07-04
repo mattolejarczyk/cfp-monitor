@@ -94,7 +94,8 @@ def _looks_blocked(r) -> bool:
 # --- Shared fallback browser: launched ONCE per run and reused across pages (perf).
 # A fresh context per page keeps sites isolated. Headless browsers get 403'd by some
 # platforms (Reuters Events), so the fallback runs headed by default (settings). ---
-_FALLBACK = None  # tuple[playwright, browser, is_cdp] | None
+_LAUNCHED = None  # (playwright, browser) — our own headed/headless Chromium
+_CDP = None       # (playwright, browser) — attached real Chrome via CDP
 
 
 def _resolve_cdp_ws(cdp_url: str) -> str:
@@ -107,46 +108,113 @@ def _resolve_cdp_ws(cdp_url: str) -> str:
     return data["webSocketDebuggerUrl"]
 
 
-async def _get_fallback_browser(settings):
-    """Shared fallback browser. If settings.cdp_url is set, ATTACH to a real running
-    Chrome via CDP (no automation fingerprint — beats IP-reputation anti-bot); otherwise
-    launch our own."""
-    global _FALLBACK
-    if _FALLBACK is None:
+async def _get_launched_browser(headless: bool):
+    global _LAUNCHED
+    if _LAUNCHED is None:
         from playwright.async_api import async_playwright
         pw = await async_playwright().start()
-        cdp = getattr(settings, "cdp_url", None)
-        if cdp:
-            browser = await pw.chromium.connect_over_cdp(_resolve_cdp_ws(cdp))
-            _FALLBACK = (pw, browser, True)
-        else:
-            browser = await pw.chromium.launch(headless=settings.fallback_headless)
-            _FALLBACK = (pw, browser, False)
-    return _FALLBACK[1]
+        _LAUNCHED = (pw, await pw.chromium.launch(headless=headless))
+    return _LAUNCHED[1]
+
+
+async def _get_cdp_browser(cdp_url: str):
+    global _CDP
+    if _CDP is None:
+        from playwright.async_api import async_playwright
+        pw = await async_playwright().start()
+        _CDP = (pw, await pw.chromium.connect_over_cdp(_resolve_cdp_ws(cdp_url)))
+    return _CDP[1]
 
 
 async def close_fallback_browser() -> None:
-    """Disconnect/close the shared fallback browser at run end. For CDP we only
-    disconnect — never close the user's real Chrome."""
-    global _FALLBACK
-    if _FALLBACK is not None:
-        pw, browser, is_cdp = _FALLBACK
+    """Disconnect/close fallback browsers at run end. For CDP we only DISCONNECT —
+    never close the user's real Chrome."""
+    global _LAUNCHED, _CDP
+    if _LAUNCHED is not None:
+        pw, browser = _LAUNCHED
         try:
-            if not is_cdp:
-                await browser.close()
+            await browser.close()
         finally:
             await pw.stop()
-        _FALLBACK = None
+        _LAUNCHED = None
+    if _CDP is not None:
+        pw, _ = _CDP
+        await pw.stop()   # disconnect only; leave the real Chrome running
+        _CDP = None
+
+
+# CFP-relevant button text worth clicking through; skip anything transactional/destructive.
+_CLICK_YES = "call for|speak|abstract|submit|proposal|present|nominat|award|entry|paper|poster|session|get involved|apply"
+_CLICK_NO = "buy|register|pay|checkout|cart|login|log in|sign in|delete|logout|download|book now|ticket"
+
+
+async def _click_through_buttons(page, base_url: str, tracer, limit: int = 3) -> list:
+    """SPA / JS-only buttons reveal their target only on click. Click a few CFP-relevant
+    buttons that have NO discoverable URL and capture where they go (new tab or same-page
+    nav). Returns extra [{href,text}]. Bounded + guarded so it never runs away or submits."""
+    from urllib.parse import urlparse
+    try:
+        cands = await page.evaluate(
+            "() => {"
+            f"  const yes=/({_CLICK_YES})/i, no=/({_CLICK_NO})/i;"
+            "   const out=[]; let n=0;"
+            "   for (const e of document.querySelectorAll('button,[role=button],input[type=button]')) {"
+            "     const t=(e.textContent||e.value||'').trim();"
+            "     const url=e.getAttribute('href')||e.getAttribute('data-href')||e.getAttribute('data-url')||e.getAttribute('formaction')||'';"
+            "     const oc=e.getAttribute('onclick')||'';"
+            "     if (yes.test(t) && !no.test(t) && !url && !/https?:|location|window\\.open/i.test(oc)) {"
+            "       e.setAttribute('data-cfpx', n); out.push({i:n, t:t.slice(0,50)}); n++; }"
+            "   } return out.slice(0,6); }")
+    except Exception:
+        return []
+    found, base_host = [], (urlparse(base_url).hostname or "")
+    for c in cands[:limit]:
+        sel = f"[data-cfpx='{c['i']}']"
+        try:
+            popup = None
+            try:
+                async with page.context.expect_event("page", timeout=3500) as pinfo:
+                    await page.click(sel, timeout=2500)
+                popup = await pinfo.value
+            except Exception:
+                popup = None
+            if popup:
+                try:
+                    await popup.wait_for_load_state("domcontentloaded", timeout=6000)
+                    u = popup.url
+                finally:
+                    await popup.close()
+                if u and u.startswith("http"):
+                    found.append({"href": u, "text": c["t"]})
+                continue
+            await page.wait_for_timeout(1200)
+            if page.url != base_url and (urlparse(page.url).hostname or "") == base_host:
+                found.append({"href": page.url, "text": c["t"]})
+                tracer.log("button", base_url, f"click-through -> {page.url[:60]}")
+                try:
+                    await page.go_back(timeout=6000)
+                    await page.wait_for_timeout(600)
+                except Exception:
+                    break  # couldn't return; stop clicking on this page
+        except Exception:
+            continue
+    return found
 
 
 async def _render_with_consent(url: str, settings, tracer):
     """Render `url` in the shared fallback browser, dismiss consent, return
     (html, anchors, status, body_text). Under CDP, reuse the real signed-in context."""
-    browser = await _get_fallback_browser(settings)
-    is_cdp = bool(_FALLBACK and _FALLBACK[2])
-    if is_cdp and browser.contexts:
-        ctx, own_ctx = browser.contexts[0], False   # reuse the real (signed-in) context + cookies
+    # CDP (real signed-in Chrome) ONLY for known hard-block domains (e.g. Reuters);
+    # everything else uses our own launched browser (faster, proven).
+    use_cdp = bool(getattr(settings, "cdp_url", None)) and _force_fallback_domain(url)
+    if use_cdp:
+        browser = await _get_cdp_browser(settings.cdp_url)
+        if browser.contexts:
+            ctx, own_ctx = browser.contexts[0], False   # reuse real signed-in context + cookies
+        else:
+            ctx, own_ctx = await browser.new_context(), True
     else:
+        browser = await _get_launched_browser(settings.fallback_headless)
         ctx, own_ctx = await browser.new_context(), True
     page = await ctx.new_page()
     try:
@@ -177,6 +245,11 @@ async def _render_with_consent(url: str, settings, tracer):
         anchors = await page.evaluate(
             "() => [...document.querySelectorAll('a[href]')]"
             ".map(a => ({href: a.href, text: (a.textContent||'').trim()}))")
+        # SPA / JS-only buttons: click a few CFP-relevant ones with no URL to reveal targets.
+        try:
+            anchors = anchors + await _click_through_buttons(page, url, tracer)
+        except Exception:
+            pass
         return html, anchors, status, body_text
     finally:
         await page.close()
