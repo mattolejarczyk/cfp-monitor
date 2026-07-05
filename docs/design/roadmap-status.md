@@ -34,6 +34,25 @@ The local build is a **coherent end-to-end system**: discover → resilient craw
 3. **Multi-model discovery** of new conferences (bucket Pre) — expand beyond a fixed list.
 4. **Model/gold-set eval** (bucket D) — formalize which cheap model to trust per field.
 5. **Client-fit scoring**, then **Brandable live integration** when their side is ready.
+6. **Customer-deployable desktop package + revocable license** (see below) — a standalone install for Nicolia's customers, gated by a key you can revoke at any time.
+
+## Distribution & licensing (roadmap — added 2026-07-04)
+**Goal:** ship this to Nicolia's customers as a **standalone desktop package** they run on their own machine (residential IP + their own Chrome = keeps the anti-bot advantage), gated by a **license key Matt can revoke at any time.**
+
+**Standalone package (no dev tools on the customer's machine):**
+- Bundle app + Python runtime + deps into a one-click install (PyInstaller/Nuitka, or an embedded-Python folder + launcher; an Inno Setup installer for a clean desktop/Start-menu entry — reusing the `launch_ui.bat` pattern we already have).
+- Run the crawl4ai/Playwright browser install as a post-install step; include the CDP-Chrome launcher for hard sites.
+- Optional (v2): auto-update channel so customers pull new versions.
+
+**Licensing + remote revocation:**
+- A lightweight **license server** (Matt-controlled) that issues per-customer keys and can **revoke** them.
+- The app validates the key on launch and re-checks periodically online; **works offline within a grace window**, then locks if it can't confirm an active key.
+- Ties to the subscription model (Brandable tiers): revoke = access ends immediately.
+
+**Open decisions (flag before building):**
+- **LLM token-cost model:** embed Matt's key (Matt pays tokens, simplest) vs. each customer supplies their own OpenRouter key (customer pays). Directly affects margins.
+- **Telemetry** back to Matt (runs, volumes) for billing/support/abuse detection.
+- **Non-technical UX:** smooth over the CDP-Chrome + one-time sign-in step so customers don't need hand-holding for hard sites.
 
 ## Known bounded limits (honest)
 - **Deadlines** are only ~2/12 extractable because most expos don't publish one — surfaced as "needs verification" (feeds the human loop), not a bug.
