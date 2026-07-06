@@ -1,31 +1,38 @@
-# PR Conference Monitor — Quality Results & Why It Works
-*Plain-English summary for Nicolia / PRIME|PR*
+# PR Conference Monitor: What It Is, How It Works, Where It Adds Value
+*Internal tool for PRIME|PR*
 
-## The test we ran
-We took a real list of **44 conference & event websites** (energy, hydrogen, carbon-capture markets) and ran them through the system end-to-end — the same kind of sites your clients care about.
+## What it is
+An internal tool that automates the labor-intensive parts of tracking conference and event speaking / submission opportunities. Today it runs human-in-the-loop (a person works alongside it and verifies flagged items). The design goal is fast, verifiable automation that can become mostly, then eventually fully, hands-off as trust builds.
 
-## The results
-- ✅ **43 of 44 sites fully worked** — the system pulled the conference details successfully (name, dates, location, speaking opportunity, where to submit).
-- ✅ **0 sites failed silently. 0 were left blocked.**
-- **~98% success — and when it can't get something, it tells you.** It is never quietly wrong.
+## How it works
+1. You give it a list of conference websites (paste them in, or upload a file).
+2. It visits each site the way a person would, using a real browser, and reads the key facts: conference name, dates, location, whether there is a speaking or submission opportunity, and where to submit.
+3. It saves everything in one place, flags what needs a human check, and produces an updated, reviewable list.
 
-## Why this is genuinely hard (and where other tools fail)
+## What the test showed
+- Ran 44 real conference websites through it, end to end.
+- 43 of 44 fully worked. 0 failed silently. 0 were left blocked.
+- About 98% success, and when it cannot get something it says so, rather than being quietly wrong.
 
-| The problem | What usually happens | What our solution does |
+## Where it adds value
+The genuinely hard parts of this problem, and how the tool handles each:
+
+| Challenge | Why it is a problem | How the tool handles it |
 |---|---|---|
-| **Websites block bots** | Cloud tools (e.g. Gobi) run from data-center computers websites distrust → blocked, empty, or wrong results | Runs from a **real browser on your own computer**, so sites treat it like a real person — we get in where they get blocked |
-| **The hardest sites actively stop automation** (e.g. Reuters events) | Defeats essentially every automated tool | Drives a **genuine Chrome browser** under the hood — gets the page every time. *We proved it on the exact sites that block everything else.* |
-| **Cookie-consent pop-ups block the page** | Tools get stuck behind the "Accept cookies" wall | **Clicks through automatically** |
-| **Key info is hidden behind buttons, not links** | Simple scrapers only follow links and miss it | **Digs the real destination out of buttons** and clicks through to find it |
-| **Submission deadlines often aren't published** | Other agents **guess — and are wrong ~80% of the time** (you saw this with Gobi) | **Never guesses.** Says "opportunity found — needs verification" + gives the submission link, so your team confirms. Honest, not misleading |
-| **Human corrections get wiped** | Tools overwrite your verified data on the next run | **Locks anything your team marks "verified"** — a later run can never overwrite it |
-| **You can't tell what worked** | Silent failures — you don't know what to trust | **Every site is labeled** got-it / partial / blocked — no silent failures |
+| Websites block automated access | Cloud / data-center tools get blocked or return empty or wrong data | Runs from a real browser on a normal computer, so sites treat it like a person and it gets in |
+| Strong anti-bot sites (e.g. Reuters events) | Stop most automated tools entirely | Drives a genuine Chrome browser and gets the page where automation fails |
+| Cookie-consent pop-ups block the page | Automation gets stuck at the "Accept" wall | Dismisses them automatically |
+| Key info hidden behind buttons, not plain links | Simple scrapers miss it | Extracts the real destination from buttons and clicks through |
+| Submission deadlines are often not published | Guessing produces wrong dates | Never guesses: marks "opportunity found, needs verification" and gives the submission link for a human to confirm |
+| Human corrections must persist | Re-runs can overwrite verified data | Locks verified values so later runs cannot overwrite them |
+| Knowing what actually worked | Silent failures make results untrustworthy | Labels every site: got it / partial / blocked |
 
-## What this means for your business
-- **Hours of manual research per market → minutes,** hands-off.
-- **Data you can trust** — verified once, never silently changed.
-- **Scales across many markets and clients** (energy, cyber, AI, awards…) without adding people.
-- **Runs on a normal desktop with one click.**
+## Human-in-the-loop now, automation over time
+- **Now:** the tool does the heavy lifting; a person verifies the small set it flags. This removes most of the manual research time while keeping accuracy high.
+- **Next:** as verified data accumulates and site patterns are learned, more results become trusted automatically, moving toward mostly hands-off with spot checks.
+- **Goal:** fast, trustworthy automation.
 
-## Bottom line
-Most tools fail at the two hardest parts: **getting past website blocking**, and **being honest about what they don't know.** This solution solves both — it reliably gets the data a real person could, and it's transparent about the rest. That's the difference between "another tool that needs babysitting" and a **dependable service.**
+## Value produced today
+- Replaces hours of manual, site-by-site research with a run that takes minutes.
+- Maintains one reliable list that is not silently changed.
+- Scales across markets and volumes without adding manual effort.
