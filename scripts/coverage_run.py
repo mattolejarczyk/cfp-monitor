@@ -39,7 +39,11 @@ async def main() -> int:
     settings = Settings()
     settings.require_llm_key()
 
-    rollup = ["# Coverage rollup — all lists", ""]
+    banner = (f"_Batch settings: max_pages={settings.max_pages}, "
+              f"max_extract_pages={settings.max_extract_pages}, "
+              f"per_site_timeout={settings.per_site_timeout_s}s, "
+              f"CDP={'on' if settings.cdp_url else 'off'}._")
+    rollup = ["# Coverage rollup — all lists", "", banner, ""]
     for name, path in lists:
         if not os.path.isfile(path):
             print(f"SKIP (not found): {path}", file=sys.stderr)
@@ -49,7 +53,9 @@ async def main() -> int:
         results = await run_urls(urls, settings, contexts=contexts)
         rows = summarize(results)
         title = f"{name} ({len(urls)} URLs)"
-        md = coverage_markdown(title, rows)
+        body = coverage_markdown(title, rows)
+        head, _, rest = body.partition("\n")      # insert settings banner just under the H1
+        md = f"{head}\n\n{banner}\n{rest}"
 
         stem = "".join(ch if ch.isalnum() else "_" for ch in name).strip("_")
         with open(f"{OUT}/{stem}.md", "w", encoding="utf-8") as fh:
@@ -57,9 +63,9 @@ async def main() -> int:
         with open(f"{OUT}/{stem}.csv", "w", encoding="utf-8", newline="") as fh:
             csv.writer(fh).writerows(coverage_csv_rows(rows))
 
-        # rollup: just the headline line
-        head = md.splitlines()[2] if len(md.splitlines()) > 2 else ""
-        rollup.append(f"- **{name}** — {head}")
+        # rollup: the one headline line (worked/failed counts)
+        headline = next((ln for ln in md.splitlines() if ln.startswith("**") and "URLs" in ln), "")
+        rollup.append(f"- **{name}** — {headline}")
         print("\n" + md + "\n", flush=True)
 
     with open(f"{OUT}/ROLLUP.md", "w", encoding="utf-8") as fh:
