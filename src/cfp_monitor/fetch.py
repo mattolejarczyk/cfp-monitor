@@ -219,17 +219,23 @@ async def _render_with_consent(url: str, settings, tracer):
     page = await ctx.new_page()
     try:
         resp = await page.goto(url, wait_until="domcontentloaded",
-                               timeout=int(settings.per_site_timeout_s * 1000))
+                               timeout=int(settings.fallback_render_timeout_s * 1000))
         status = resp.status if resp else None
-        # Dismiss cookie-consent: known selectors first, then a generic text click.
-        for sel in _CONSENT_SELECTORS:
-            try:
-                await page.wait_for_selector(sel, state="visible", timeout=2500)
-                await page.click(sel, timeout=3000)
-                tracer.log("consent", url, f"clicked {sel}")
-                break
-            except Exception:
-                continue
+        # Dismiss cookie-consent FAST: one JS check for which known selectors are present,
+        # then click only those. Avoids 8 x 2.5s sequential waits on sites with no popup
+        # (that waste was ~20s/render and could blow the per-site budget on multi-page sites).
+        try:
+            present = await page.evaluate("(sels) => sels.filter(s => document.querySelector(s))",
+                                          list(_CONSENT_SELECTORS))
+            for sel in present:
+                try:
+                    await page.click(sel, timeout=2000)
+                    tracer.log("consent", url, f"clicked {sel}")
+                    break
+                except Exception:
+                    continue
+        except Exception:
+            pass
         try:
             await page.evaluate(_ACCEPT_JS)
         except Exception:
@@ -255,6 +261,19 @@ async def _render_with_consent(url: str, settings, tracer):
         await page.close()
         if own_ctx:
             await ctx.close()
+
+
+# Few internal links means exploration will stall - a JS-shell signal that a high char count
+# can MASK (a shell can carry boilerplate text but ~0 navigable links). "Rich" = enough links.
+_RICH_LINKS = 5
+
+
+def _richness(pf: "PageFetch") -> int:
+    return len(pf.markdown.strip()) + 60 * len(pf.links.get("internal", []))
+
+
+def _is_rich(pf: "PageFetch") -> bool:
+    return len(pf.links.get("internal", [])) >= _RICH_LINKS
 
 
 async def _fallback_fetch(crawler, url: str, settings, tracer, forced: bool = False) -> PageFetch:
@@ -300,9 +319,20 @@ async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: b
             tracer.log("skipped", url, f"crawl4ai raised: {e}")
         if not _looks_blocked(r):
             links = getattr(r, "links", None) or {"internal": [], "external": []}
-            return PageFetch(url, True, getattr(r, "status_code", None),
-                             str(getattr(r, "html", "") or ""), str(getattr(r, "markdown", "") or ""),
-                             links, via="crawl4ai")
+            c4 = PageFetch(url, True, getattr(r, "status_code", None),
+                           str(getattr(r, "html", "") or ""), str(getattr(r, "markdown", "") or ""),
+                           links, via="crawl4ai")
+            if not settings.playwright_fallback or _is_rich(c4):
+                return c4
+            # Thin / link-poor (JS shell): render it and keep whichever is richer. The render
+            # is bounded by fallback_render_timeout_s so it can't blow the site budget.
+            fb = await _fallback_fetch(crawler, url, settings, tracer)
+            if fb.success and _richness(fb) > _richness(c4):
+                tracer.log("fallback", url, f"thin crawl4ai -> richer render "
+                           f"({len(fb.markdown)}c/{len(fb.links.get('internal', []))}L vs "
+                           f"{len(c4.markdown)}c/{len(c4.links.get('internal', []))}L)")
+                return fb
+            return c4
 
     if not settings.playwright_fallback:
         return PageFetch(url, False, getattr(r, "status_code", None))

@@ -61,6 +61,9 @@ class Settings:
     # (verified: Reuters Events / OneTrust). Headed also fits the "you'll see the browser" model.
     fallback_headless: bool = os.getenv("CFP_FALLBACK_HEADLESS", "false").lower() == "true"
     fallback_wait_s: float = float(os.getenv("CFP_FALLBACK_WAIT_S", "8"))
+    # Hard cap on the fallback render's page load (Playwright-native, so it actually
+    # interrupts). Keeps a slow render from consuming the whole per-site budget.
+    fallback_render_timeout_s: int = int(os.getenv("CFP_FALLBACK_RENDER_S", "45"))
     # CDP: drive a REAL Chrome via its debug port (beats IP-reputation anti-bot like
     # Reuters — verified). Launch Chrome with scripts/launch_chrome_cdp.bat, then set
     # CFP_CDP_URL=http://localhost:9222 (or a ws:// url). When set, the fallback ATTACHES
