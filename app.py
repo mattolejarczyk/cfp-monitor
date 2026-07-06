@@ -24,6 +24,7 @@ from src.cfp_monitor.quality_gate import classify_result
 from src.cfp_monitor.scoring import normalize_url
 
 import io
+import os
 import re
 import zipfile
 
@@ -82,8 +83,8 @@ with tab_run:
         max_depth = st.slider("Max crawl depth", 1, 4, 2)
         max_extract = st.slider("Max pages to LLM-extract", 2, 15, 8)
         provider = st.text_input("LLM provider (LiteLLM string)", "openrouter/deepseek/deepseek-chat")
-        cdp_url = st.text_input("CDP url (real Chrome, optional)", "",
-                                help="e.g. http://localhost:9222 — beats hard anti-bot sites. Launch scripts/launch_chrome_cdp.bat first.")
+        cdp_url = st.text_input("CDP url (real Chrome — auto-set by the launcher)", os.getenv("CFP_CDP_URL", ""),
+                                help="Used automatically for hard anti-bot sites (e.g. Reuters) when the CDP Chrome is running. The desktop launcher sets this for you.")
         st.caption("Set OPENROUTER_API_KEY in your environment / .env before running.")
 
     urls_text = st.text_area(
