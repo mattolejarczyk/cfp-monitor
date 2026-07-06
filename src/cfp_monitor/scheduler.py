@@ -27,10 +27,11 @@ def _now_tag() -> str:
 
 
 async def scheduled_run(urls: list[str], db_path: str = "cfp_monitor.db",
-                        out_dir: str = "runs_out", settings: Settings | None = None) -> dict:
+                        out_dir: str = "runs_out", settings: Settings | None = None,
+                        contexts: list[dict | None] | None = None) -> dict:
     settings = settings or Settings()
     settings.require_llm_key()
-    results = await run_urls(urls, settings)
+    results = await run_urls(urls, settings, contexts=contexts)
 
     store = Store(db_path)
     run_id = store.start_run()
@@ -58,16 +59,20 @@ async def scheduled_run(urls: list[str], db_path: str = "cfp_monitor.db",
 
 
 def run_from_file(url_file: str, **kw) -> dict:
-    with open(url_file, encoding="utf-8") as fh:
-        urls = [ln.strip() for ln in fh if ln.strip() and not ln.startswith("#")]
-    return asyncio.run(scheduled_run(urls, **kw))
+    # Accepts a .txt (one URL per line) or the customer .xlsx (URLs + row context for
+    # aggregator navigation). load_inputs keeps urls/contexts aligned by index.
+    from .goldset import load_inputs
+
+    urls, contexts = load_inputs([url_file])
+    return asyncio.run(scheduled_run(urls, contexts=contexts, **kw))
 
 
 def _cli():
     import argparse
 
     p = argparse.ArgumentParser(description="Scheduled CFP monitor run")
-    p.add_argument("--urls", required=True, help="text file of URLs, one per line")
+    p.add_argument("--urls", required=True,
+                   help="URL list: a .txt (one per line) or the customer .xlsx (adds row context)")
     p.add_argument("--db", default="cfp_monitor.db")
     p.add_argument("--out", default="runs_out")
     a = p.parse_args()

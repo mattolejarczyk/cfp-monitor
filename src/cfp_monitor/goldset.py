@@ -38,6 +38,14 @@ class GoldRecord:
     status: str                          # customer workflow state (I)
     status_details: str                  # J
     latest_update: Optional[date]        # E
+    location: str = ""                   # C (city/venue) - feeds aggregator navigation
+    start_date: Optional[date] = None    # D (event start) - parsed when a real serial date
+    start_date_raw: str = ""             # raw D cell
+
+    def context(self) -> dict:
+        """Row context for aggregator navigation: name / location / target year."""
+        dates = self.start_date.isoformat() if self.start_date else self.start_date_raw
+        return {"name": self.name, "location": self.location, "dates": dates}
 
 
 def _read_rows(path: str) -> list[dict]:
@@ -77,6 +85,7 @@ def load_gold(path: str, require_truth: bool = False) -> list[GoldRecord]:
         has_truth = bool(f or (r.get("I") or "").strip() or (r.get("J") or "").strip())
         if require_truth and not has_truth:
             continue
+        d = (r.get("D") or "").strip()
         out.append(GoldRecord(
             name=(r.get("A") or "").strip(),
             url=url,
@@ -85,8 +94,40 @@ def load_gold(path: str, require_truth: bool = False) -> list[GoldRecord]:
             status=(r.get("I") or "").strip(),
             status_details=(r.get("J") or "").strip(),
             latest_update=serial_to_date((r.get("E") or "").strip()),
+            location=(r.get("C") or "").strip(),
+            start_date=serial_to_date(d),
+            start_date_raw=d,
         ))
     return out
+
+
+def load_inputs(items: list[str]) -> tuple[list[str], list[Optional[dict]]]:
+    """Resolve CLI / file inputs to parallel (urls, contexts) lists.
+
+    An .xlsx (the customer list) yields per-row CONTEXT (name / location / dates) that powers
+    aggregator navigation; a .txt file (one URL per line) and bare URLs carry no context, so
+    navigation stays off for them. Contexts align with urls by index (None where unknown).
+    """
+    import os
+
+    urls: list[str] = []
+    contexts: list[Optional[dict]] = []
+    for it in items:
+        if os.path.isfile(it) and it.lower().endswith((".xlsx", ".xlsm")):
+            for rec in load_gold(it):
+                urls.append(rec.url)
+                contexts.append(rec.context())
+        elif os.path.isfile(it):
+            with open(it, encoding="utf-8") as f:
+                for ln in f:
+                    ln = ln.strip()
+                    if ln and not ln.startswith("#"):
+                        urls.append(ln)
+                        contexts.append(None)
+        else:
+            urls.append(it)
+            contexts.append(None)
+    return urls, contexts
 
 
 def compare(result, gold: GoldRecord) -> dict:

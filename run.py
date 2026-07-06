@@ -3,6 +3,8 @@
 
 Usage:
   python run.py examples/urls.txt                 # read URLs from a file (one per line)
+  python run.py "Conference List.xlsx"            # customer xlsx: URLs + row context for
+                                                  #   aggregator navigation (name/location/dates)
   python run.py https://conf.example.com ...      # or pass URLs directly
   python run.py examples/urls.txt -o results.json # write JSON to a file
 """
@@ -11,21 +13,10 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import os
 import sys
 
 from src.cfp_monitor import run_urls, Settings
-
-
-def _load_urls(args: list[str]) -> list[str]:
-    urls: list[str] = []
-    for a in args:
-        if os.path.isfile(a):
-            with open(a, encoding="utf-8") as f:
-                urls += [ln.strip() for ln in f if ln.strip() and not ln.startswith("#")]
-        else:
-            urls.append(a)
-    return urls
+from src.cfp_monitor.goldset import load_inputs
 
 
 def main() -> int:
@@ -36,7 +27,7 @@ def main() -> int:
     ap.add_argument("--max-depth", type=int, help="override crawl depth per site")
     args = ap.parse_args()
 
-    urls = _load_urls(args.inputs)
+    urls, contexts = load_inputs(args.inputs)
     if not urls:
         print("No URLs provided.", file=sys.stderr)
         return 2
@@ -47,7 +38,7 @@ def main() -> int:
     if args.max_depth:
         settings.max_depth = args.max_depth
 
-    results = asyncio.run(run_urls(urls, settings))
+    results = asyncio.run(run_urls(urls, settings, contexts=contexts))
     payload = [r.model_dump(mode="json") for r in results]
     text = json.dumps(payload, indent=2, ensure_ascii=False)
 
