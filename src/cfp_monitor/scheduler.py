@@ -31,6 +31,11 @@ async def scheduled_run(urls: list[str], db_path: str = "cfp_monitor.db",
                         contexts: list[dict | None] | None = None) -> dict:
     settings = settings or Settings()
     settings.require_llm_key()
+    # CDP on by default for scheduled/live runs too: auto-detect or start the real Chrome so
+    # hard anti-bot sites use the proven path instead of the IP-burning automated one.
+    if not settings.cdp_url:
+        from .cdp import ensure_cdp
+        settings.cdp_url = ensure_cdp()
     results = await run_urls(urls, settings, contexts=contexts)
 
     store = Store(db_path)

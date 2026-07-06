@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.cfp_monitor import run_urls, Settings
 from src.cfp_monitor.goldset import load_inputs
 from src.cfp_monitor.coverage import summarize, coverage_markdown, coverage_csv_rows
+from src.cfp_monitor.cdp import ensure_cdp, hard_antibot_urls, hard_antibot_domains
 
 DESKTOP = "C:/Users/matts/Desktop/Nicolia-PR-Prime"
 DEFAULT_LISTS = [
@@ -38,6 +39,31 @@ async def main() -> int:
     os.makedirs(OUT, exist_ok=True)
     settings = Settings()
     settings.require_llm_key()
+
+    # CDP is REQUIRED for any live run. Hard anti-bot sites (Reuters) only crawl through a real
+    # Chrome; running them on the automated-browser path burns the residential IP. Bring CDP up
+    # (as the desktop UI does) so we never silently fall onto the unsafe path.
+    if not settings.cdp_url:
+        settings.cdp_url = ensure_cdp()
+    print(f"CDP: {'on ' + settings.cdp_url if settings.cdp_url else 'OFF (could not start Chrome)'}",
+          file=sys.stderr)
+
+    # Refuse to start on the unsafe path: if any input has a hard anti-bot domain but CDP is not
+    # available, stop rather than hammer the CAPTCHA and flag the IP.
+    all_urls: list[str] = []
+    for _, path in lists:
+        if os.path.isfile(path):
+            u, _c = load_inputs([path])
+            all_urls += u
+    hard = hard_antibot_urls(all_urls)
+    if hard and not settings.cdp_url:
+        print("\nREFUSING TO RUN — these URLs are on hard anti-bot domains "
+              f"{hard_antibot_domains()} and need the real-Chrome (CDP) path, but CDP could not "
+              "be started (install Chrome or run scripts/launch_chrome_cdp.bat), so running now "
+              "would risk flagging your IP:", file=sys.stderr)
+        for u in hard:
+            print("  " + u, file=sys.stderr)
+        return 2
 
     banner = (f"_Batch settings: max_pages={settings.max_pages}, "
               f"max_extract_pages={settings.max_extract_pages}, "
