@@ -60,6 +60,16 @@ def test_summarize_reads_path_and_hop():
     assert row["verdict"] == "PASS"
 
 
+def test_antibot_skip_flagged_for_human():
+    r = ConferenceResult(start_url="https://events.reutersevents.com/x")
+    r.trace = [{"action": "skipped", "reason": "hard anti-bot site: not auto-crawled to protect the IP"}]
+    row = summarize([r])[0]
+    assert row["path"] == "manual-antibot"
+    assert "protect the IP" in row["reason"]
+    md = coverage_markdown("L", [row])
+    assert "Manual / signed-in needed (hard anti-bot)" in md
+
+
 def _run():
     import sys
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]

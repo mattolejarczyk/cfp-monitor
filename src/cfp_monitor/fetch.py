@@ -316,6 +316,16 @@ async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: b
     """crawl4ai first; Playwright fallback when crawl4ai is blocked, a known hard-block
     domain, forced, OR returns a thin/link-poor page (a JS shell) - in which case we render
     and keep whichever of the two is richer. force_fallback=True skips crawl4ai entirely."""
+    # IP PROTECTION: hard anti-bot domains (e.g. Reuters Events) meet automated browsers with a
+    # slider/CAPTCHA challenge. Hitting them repeatedly gets the residential IP flagged/blocked
+    # (verified: reutersevents.com challenges IP + "inspection tools"). So we attempt them ONLY
+    # through a real, human-signed-in Chrome via CDP (which has already cleared the challenge).
+    # Without a CDP endpoint we do NOT touch the network - we flag it for manual handling rather
+    # than hammer the challenge and burn the IP. NEVER attempt to solve the CAPTCHA.
+    if _force_fallback_domain(url) and not getattr(settings, "cdp_url", None):
+        tracer.log("skipped", url, "hard anti-bot site: not auto-crawled to protect the IP - "
+                   "open it in your signed-in Chrome and enable CDP, or verify this row by hand")
+        return PageFetch(url, False, None, via="skipped-antibot")
     if _force_fallback_domain(url):
         force_fallback = True   # known hard-block platform: don't let crawl4ai poison the IP
     r = None

@@ -27,14 +27,21 @@ from .quality_gate import classify_result
 
 # Escalation ladder, cheapest first; "unresolved" is the failed tail. Internal keys stay
 # stable (also used in the CSV); the labels are the plain terms shown in the report.
-PATH_ORDER = ["crawl4ai", "playwright-fallback", "cdp", "unresolved"]
+PATH_ORDER = ["crawl4ai", "playwright-fallback", "cdp", "manual-antibot", "unresolved"]
 _PATH_LABEL = {
     "crawl4ai": "Core crawl (first pass)",
     "playwright-fallback": "Browser control (rendered)",
     "cdp": "Signed-in browser (hard sites)",
+    "manual-antibot": "Manual / signed-in needed (hard anti-bot)",
     "unresolved": "Unresolved (no content)",
     "": "—",
 }
+
+
+def _antibot_skipped(result: ConferenceResult) -> bool:
+    """The start page was deliberately NOT auto-crawled to protect the IP (hard anti-bot)."""
+    return any(e.get("action") == "skipped" and "anti-bot" in (e.get("reason") or "")
+               for e in result.trace or [])
 
 
 def friendly(path: str) -> str:
@@ -56,13 +63,21 @@ def summarize(results: list[ConferenceResult]) -> list[dict]:
     rows = []
     for r in results:
         q = classify_result(r)
+        verdict = q.verdict.value
+        reason = q.reason
+        path = r.resolution_path or "unresolved"
+        if verdict in ("BLOCKED", "ERROR") and _antibot_skipped(r):
+            # Not a failure of the tool: we chose not to hammer the challenge. Flag for a human.
+            reason = ("hard anti-bot site - not auto-crawled to protect the IP; "
+                      "open in signed-in Chrome (CDP) or verify by hand")
+            path = "manual-antibot"
         rows.append({
             "url": r.start_url,
-            "verdict": q.verdict.value,
-            "reason": q.reason,
+            "verdict": verdict,
+            "reason": reason,
             "name": (r.name.value or "").strip(),
             "canonical": (r.canonical_url or "").strip(),
-            "path": r.resolution_path or "unresolved",
+            "path": path,
             "bypass": _bypass_deployed(r),
             "hop": bool(r.aggregator_hop),
         })
