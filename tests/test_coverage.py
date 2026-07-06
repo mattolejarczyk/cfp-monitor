@@ -22,15 +22,17 @@ def test_counts_and_pct():
 
 def test_failures_listed_with_bypass_and_reason():
     md = coverage_markdown("L", ROWS)
-    assert "https://c.com" in md and "status 403" in md and "cdp" in md
+    assert "https://c.com" in md and "status 403" in md and "Signed-in browser" in md
     assert "https://d.com" in md and "boom" in md
 
 
-def test_path_matrix_present():
+def test_path_matrix_uses_plain_terms():
     md = coverage_markdown("L", ROWS)
     assert "By resolution path" in md
-    assert "crawl4ai (first pass)" in md
-    assert "playwright-fallback (our browser)" in md
+    assert "Core crawl (first pass)" in md
+    assert "Browser control (rendered)" in md
+    # internal tool names must NOT leak into the customer-facing report
+    assert "crawl4ai" not in md and "playwright" not in md
 
 
 def test_partial_section():

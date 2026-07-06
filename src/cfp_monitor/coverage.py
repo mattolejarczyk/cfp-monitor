@@ -25,14 +25,21 @@ from collections import Counter
 from .models import ConferenceResult
 from .quality_gate import classify_result
 
-# Escalation ladder, cheapest first; "unresolved" is the failed tail.
+# Escalation ladder, cheapest first; "unresolved" is the failed tail. Internal keys stay
+# stable (also used in the CSV); the labels are the plain terms shown in the report.
 PATH_ORDER = ["crawl4ai", "playwright-fallback", "cdp", "unresolved"]
 _PATH_LABEL = {
-    "crawl4ai": "crawl4ai (first pass)",
-    "playwright-fallback": "playwright-fallback (our browser)",
-    "cdp": "cdp (real signed-in Chrome)",
-    "unresolved": "unresolved (no usable fetch)",
+    "crawl4ai": "Core crawl (first pass)",
+    "playwright-fallback": "Browser control (rendered)",
+    "cdp": "Signed-in browser (hard sites)",
+    "unresolved": "Unresolved (no content)",
+    "": "—",
 }
+
+
+def friendly(path: str) -> str:
+    """Plain-terms label for a resolution/bypass path (Core crawl, Browser control, ...)."""
+    return _PATH_LABEL.get(path, path or "—")
 
 
 def _bypass_deployed(result: ConferenceResult) -> str:
@@ -85,7 +92,7 @@ def coverage_markdown(title: str, rows: list[dict]) -> str:
         pr = [r for r in rows if r["path"] == p]
         pc = Counter(r["verdict"] for r in pr)
         pf = pc.get("BLOCKED", 0) + pc.get("ERROR", 0)
-        out.append(f"| {_PATH_LABEL.get(p, p)} | {pc.get('PASS', 0)} | {pc.get('PARTIAL', 0)} | {pf} | {len(pr)} |")
+        out.append(f"| {friendly(p)} | {pc.get('PASS', 0)} | {pc.get('PARTIAL', 0)} | {pf} | {len(pr)} |")
     hops = [r for r in rows if r["hop"]]
     if hops:
         out += ["", f"**Aggregator hops (directory/org → specific event): {len(hops)}**"]
@@ -97,7 +104,7 @@ def coverage_markdown(title: str, rows: list[dict]) -> str:
     if fails:
         out += ["| # | URL | Verdict | Bypass tried | Reason |", "|--:|---|---|---|---|"]
         for i, r in enumerate(fails, 1):
-            out.append(f"| {i} | {r['url']} | {r['verdict']} | {r['bypass'] or '—'} | {r['reason']} |")
+            out.append(f"| {i} | {r['url']} | {r['verdict']} | {friendly(r['bypass'])} | {r['reason']} |")
     else:
         out.append("_None — every URL was reachable._")
 
@@ -106,7 +113,7 @@ def coverage_markdown(title: str, rows: list[dict]) -> str:
     if parts:
         out += ["| # | URL | Path | Reason |", "|--:|---|---|---|"]
         for i, r in enumerate(parts, 1):
-            out.append(f"| {i} | {r['url']} | {r['path']} | {r['reason']} |")
+            out.append(f"| {i} | {r['url']} | {friendly(r['path'])} | {r['reason']} |")
     else:
         out.append("_None._")
     return "\n".join(out)
