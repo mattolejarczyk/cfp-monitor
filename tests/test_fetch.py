@@ -34,17 +34,6 @@ class _R:
         self.status_code = 200
 
 
-def test_is_rich_and_richness():
-    from cfp_monitor.fetch import _is_rich, _richness, PageFetch
-    thin = PageFetch("u", True, 200, "", "short text", {"internal": [{"href": "a"}, {"href": "b"}], "external": []})
-    rich_chars = PageFetch("u", True, 200, "", "x" * 2000, {"internal": [], "external": []})
-    rich_links = PageFetch("u", True, 200, "", "short", {"internal": [{"href": str(i)} for i in range(10)], "external": []})
-    assert _is_rich(thin) is False
-    assert _is_rich(rich_chars) is True
-    assert _is_rich(rich_links) is True
-    assert _richness(rich_links) > _richness(thin)
-
-
 def test_looks_blocked():
     assert _looks_blocked(None) is True
     assert _looks_blocked(_R(False, "x" * 500)) is True     # not success

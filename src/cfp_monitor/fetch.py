@@ -257,20 +257,6 @@ async def _render_with_consent(url: str, settings, tracer):
             await ctx.close()
 
 
-# A crawl4ai page this "rich" is trusted as-is; below it we suspect a JS shell (content
-# only appears after JS renders) and also try the fallback, keeping whichever is richer.
-_RICH_CHARS = 1500
-_RICH_LINKS = 8
-
-
-def _richness(pf: "PageFetch") -> int:
-    return len(pf.markdown.strip()) + 60 * len(pf.links.get("internal", []))
-
-
-def _is_rich(pf: "PageFetch") -> bool:
-    return len(pf.markdown.strip()) >= _RICH_CHARS or len(pf.links.get("internal", [])) >= _RICH_LINKS
-
-
 async def _fallback_fetch(crawler, url: str, settings, tracer, forced: bool = False) -> PageFetch:
     """Render with our own Playwright (or CDP for hard domains): consent dismissal +
     button click-through, then hand the HTML to crawl4ai raw:// for markdown."""
@@ -314,19 +300,9 @@ async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: b
             tracer.log("skipped", url, f"crawl4ai raised: {e}")
         if not _looks_blocked(r):
             links = getattr(r, "links", None) or {"internal": [], "external": []}
-            c4 = PageFetch(url, True, getattr(r, "status_code", None),
-                           str(getattr(r, "html", "") or ""), str(getattr(r, "markdown", "") or ""),
-                           links, via="crawl4ai")
-            if not settings.playwright_fallback or _is_rich(c4):
-                return c4
-            # Thin / link-poor: likely a JS shell. Render it; keep whichever is richer.
-            fb = await _fallback_fetch(crawler, url, settings, tracer)
-            if fb.success and _richness(fb) > _richness(c4):
-                tracer.log("fallback", url, f"thin crawl4ai -> richer render "
-                           f"({len(fb.markdown)}c/{len(fb.links.get('internal', []))}L vs "
-                           f"{len(c4.markdown)}c/{len(c4.links.get('internal', []))}L)")
-                return fb
-            return c4
+            return PageFetch(url, True, getattr(r, "status_code", None),
+                             str(getattr(r, "html", "") or ""), str(getattr(r, "markdown", "") or ""),
+                             links, via="crawl4ai")
 
     if not settings.playwright_fallback:
         return PageFetch(url, False, getattr(r, "status_code", None))
