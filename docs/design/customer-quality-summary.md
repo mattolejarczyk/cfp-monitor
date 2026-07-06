@@ -36,3 +36,9 @@ The genuinely hard parts of this problem, and how the tool handles each:
 - Replaces hours of manual, site-by-site research with a run that takes minutes.
 - Maintains one reliable list that is not silently changed.
 - Scales across markets and volumes without adding manual effort.
+
+## Planned improvements (roadmapped)
+Two input-side gaps surfaced in testing. Both are on the roadmap; the first needs a short discussion to confirm the approach.
+
+- **Aggregator / directory sites (needs discussion / confirmation).** Some list entries point at an organization or directory that lists MANY events rather than one conference (for example a foundation homepage, a certification body, or a community hub). The tool currently reports "no single conference here," which is accurate but not the result you want. Planned approach: use the spreadsheet row context (location, dates, conference name) to navigate the directory to the specific event, then read it. This mirrors what a person does by hand. Worth confirming the desired behavior before building.
+- **Dead or mistyped URLs (last resort, human-confirmed).** Some list entries are simply wrong (a missing letter, so the address does not resolve). Today the tool flags these as unreachable so a person can fix them. Planned option: when an address does not resolve, search the conference name and propose the most likely correct site for a person to confirm. It never silently substitutes a URL.
