@@ -35,6 +35,7 @@ class ExploreResult:
     pages: list[CrawledPage] = field(default_factory=list)
     forms: list[dict] = field(default_factory=list)              # {url, platform, context}
     external_submissions: list[dict] = field(default_factory=list)  # {url, platform, text}
+    all_links: list[dict] = field(default_factory=list)             # every discovered {href, text}
     start_ok: bool = False
 
 
@@ -96,6 +97,12 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
         internal_links = links.get("internal", []) or []
         external_links = links.get("external", []) or []
         clickables = extract_clickables(html, url)
+
+        # Accumulate every discovered link (internal + external) for aggregator navigation.
+        for l in internal_links + external_links + clickables:
+            href = (l.get("href") or "").strip()
+            if href.lower().startswith("http"):
+                out.all_links.append({"href": href, "text": (l.get("text") or "").strip()[:80]})
 
         # Internal high-value targets → prioritized frontier.
         for l in internal_links + clickables:

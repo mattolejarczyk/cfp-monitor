@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 
+from .aggregator import pick_event_link, score_event_link
 from .config import Settings, DEFAULT
 from .consolidate import consolidate
 from .crawler import explore
@@ -23,15 +24,35 @@ from .scoring import normalize_url, score_link
 from .trace import Tracer
 
 
-async def analyze_conference(crawler, start_url: str, settings: Settings, tracer: Tracer) -> ConferenceResult:
+async def analyze_conference(crawler, start_url: str, settings: Settings, tracer: Tracer,
+                             context: dict | None = None, _depth: int = 0) -> ConferenceResult:
     ex = await explore(crawler, start_url, settings, tracer)
     if not ex.start_ok:
         r = ConferenceResult(start_url=start_url, error="start page could not be fetched")
         r.trace = tracer.dump()
         return r
 
-    # Rank crawled pages for extraction: start page always, then our CFP score, then depth score.
     start_norm = normalize_url(start_url)
+
+    # Aggregator short-circuit (before spending LLM budget). When the row gives us context
+    # (name / location / dates), decide whether we landed on the event's OWN site or on a
+    # directory / org page that merely lists it. Signal: a discovered link matches the row
+    # markedly better than the page we're on. If so, hop to that specific event ONCE and use
+    # the resolved result, skipping the wasteful extraction of the directory's own pages.
+    if _depth == 0 and context:
+        target = pick_event_link(ex.all_links, context, start_url)
+        if target and normalize_url(target) != start_norm:
+            self_score = score_event_link(start_url, "", context)
+            target_score = score_event_link(target, "", context)
+            if target_score >= self_score + 1.0:
+                tracer.log("aggregator", start_url,
+                           f"directory page (self={self_score} < target={target_score}) -> {target}")
+                sub = await analyze_conference(crawler, target, settings, tracer,
+                                               context=context, _depth=1)
+                if sub.name.value:
+                    return sub
+
+    # Rank crawled pages for extraction: start page always, then our CFP score, then depth score.
     ranked = sorted(
         ex.pages,
         key=lambda p: (p.url == start_norm, score_link(p.url), p.score),
@@ -61,7 +82,8 @@ async def analyze_conference(crawler, start_url: str, settings: Settings, tracer
     return result
 
 
-async def run_urls(urls: list[str], settings: Settings | None = None) -> list[ConferenceResult]:
+async def run_urls(urls: list[str], settings: Settings | None = None,
+                   contexts: list[dict] | None = None) -> list[ConferenceResult]:
     """Analyze a fixed list of conference URLs. Reuses one browser for the batch."""
     settings = settings or DEFAULT
     settings.require_llm_key()
@@ -69,14 +91,15 @@ async def run_urls(urls: list[str], settings: Settings | None = None) -> list[Co
 
     results: list[ConferenceResult] = []
     async with AsyncWebCrawler(config=BrowserConfig(headless=settings.headless)) as crawler:
-        for url in urls:
+        for i, url in enumerate(urls):
             url = url.strip()
             if not url or url.startswith("#"):
                 continue
+            ctx = contexts[i] if contexts and i < len(contexts) else None
             tracer = Tracer()
             try:
                 res = await asyncio.wait_for(
-                    analyze_conference(crawler, url, settings, tracer),
+                    analyze_conference(crawler, url, settings, tracer, context=ctx),
                     timeout=settings.per_site_timeout_s,
                 )
             except asyncio.TimeoutError:
