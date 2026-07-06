@@ -37,6 +37,8 @@ class ExploreResult:
     external_submissions: list[dict] = field(default_factory=list)  # {url, platform, text}
     all_links: list[dict] = field(default_factory=list)             # every discovered {href, text}
     start_ok: bool = False
+    start_via: str = ""             # how the START page was fetched: crawl4ai | playwright-fallback | cdp
+    used_fallback: bool = False     # did ANY page on this site need the render fallback?
 
 
 async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreResult:
@@ -73,11 +75,13 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
         if not pf.success:
             tracer.log("skipped", url, f"status={pf.status_code} depth={depth}")
             continue
-        if pf.via == "playwright-fallback":
+        if pf.via != "crawl4ai":
             site_fallback = True
+            out.used_fallback = True
 
         if nu == start_norm:
             out.start_ok = True
+            out.start_via = pf.via
         md = pf.markdown
         html = pf.html
         page_score = 0.0 if depth == 0 else round(-neg, 3)

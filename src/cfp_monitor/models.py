@@ -133,5 +133,9 @@ class ConferenceResult(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
     pages_crawled: int = 0
     pages_skipped: int = 0
+    # How the (final) start page was fetched: crawl4ai | playwright-fallback | cdp | "" (failed).
+    resolution_path: str = ""
+    # True when we navigated from a directory/org page to the specific event (aggregator hop).
+    aggregator_hop: bool = False
     trace: list[dict] = Field(default_factory=list)
     error: Optional[str] = None

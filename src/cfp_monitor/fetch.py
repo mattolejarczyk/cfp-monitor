@@ -201,12 +201,18 @@ async def _click_through_buttons(page, base_url: str, tracer, limit: int = 3) ->
     return found
 
 
+def _will_use_cdp(url: str, settings) -> bool:
+    """CDP (real signed-in Chrome) is used ONLY for known hard-block domains (e.g. Reuters)
+    AND only when a CDP endpoint is configured; everything else uses our launched browser."""
+    return bool(getattr(settings, "cdp_url", None)) and _force_fallback_domain(url)
+
+
 async def _render_with_consent(url: str, settings, tracer):
     """Render `url` in the shared fallback browser, dismiss consent, return
-    (html, anchors, status, body_text). Under CDP, reuse the real signed-in context."""
+    (html, anchors, status, body_text, use_cdp). Under CDP, reuse the real signed-in context."""
     # CDP (real signed-in Chrome) ONLY for known hard-block domains (e.g. Reuters);
     # everything else uses our own launched browser (faster, proven).
-    use_cdp = bool(getattr(settings, "cdp_url", None)) and _force_fallback_domain(url)
+    use_cdp = _will_use_cdp(url, settings)
     if use_cdp:
         browser = await _get_cdp_browser(settings.cdp_url)
         if browser.contexts:
@@ -256,7 +262,7 @@ async def _render_with_consent(url: str, settings, tracer):
             anchors = anchors + await _click_through_buttons(page, url, tracer)
         except Exception:
             pass
-        return html, anchors, status, body_text
+        return html, anchors, status, body_text, use_cdp
     finally:
         await page.close()
         if own_ctx:
@@ -279,12 +285,13 @@ def _is_rich(pf: "PageFetch") -> bool:
 async def _fallback_fetch(crawler, url: str, settings, tracer, forced: bool = False) -> PageFetch:
     """Render with our own Playwright (or CDP for hard domains): consent dismissal +
     button click-through, then hand the HTML to crawl4ai raw:// for markdown."""
-    tracer.log("fallback", url, "playwright render" + (" (forced)" if forced else ""))
+    via = "cdp" if _will_use_cdp(url, settings) else "playwright-fallback"
+    tracer.log("fallback", url, f"{via} render" + (" (forced)" if forced else ""))
     try:
-        html, anchors, status, body_text = await _render_with_consent(url, settings, tracer)
+        html, anchors, status, body_text, _ = await _render_with_consent(url, settings, tracer)
     except Exception as e:
-        tracer.log("skipped", url, f"playwright fallback failed: {e}")
-        return PageFetch(url, False, None, via="playwright-fallback")
+        tracer.log("skipped", url, f"{via} fallback failed: {e}")
+        return PageFetch(url, False, None, via=via)
 
     # Rendered HTML -> markdown via crawl4ai raw:// (local content, anti-bot check skipped).
     md = ""
@@ -301,8 +308,8 @@ async def _fallback_fetch(crawler, url: str, settings, tracer, forced: bool = Fa
 
     links = classify_links(anchors, url)
     ok = len(md.strip()) >= _MIN_MARKDOWN or bool(links["internal"])
-    tracer.log("crawled", url, f"via playwright-fallback chars={len(md)} internal_links={len(links['internal'])}")
-    return PageFetch(url, ok, status, html, md, links, via="playwright-fallback")
+    tracer.log("crawled", url, f"via {via} chars={len(md)} internal_links={len(links['internal'])}")
+    return PageFetch(url, ok, status, html, md, links, via=via)
 
 
 async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: bool = False) -> PageFetch:

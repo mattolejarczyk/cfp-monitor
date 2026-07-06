@@ -50,6 +50,7 @@ async def analyze_conference(crawler, start_url: str, settings: Settings, tracer
                 sub = await analyze_conference(crawler, target, settings, tracer,
                                                context=context, _depth=1)
                 if sub.name.value:
+                    sub.aggregator_hop = True
                     return sub
 
     # Rank crawled pages for extraction: start page always, then our CFP score, then depth score.
@@ -78,6 +79,7 @@ async def analyze_conference(crawler, start_url: str, settings: Settings, tracer
         pages_skipped=tracer.counts().get("skipped", 0),
     )
     result.canonical_url = start_norm
+    result.resolution_path = ex.start_via
     result.trace = tracer.dump()
     return result
 

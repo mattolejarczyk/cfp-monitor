@@ -1,11 +1,16 @@
 """Offline tests for the coverage report formatter."""
-from cfp_monitor.coverage import coverage_markdown, coverage_csv_rows
+from cfp_monitor.coverage import coverage_markdown, coverage_csv_rows, summarize
+from cfp_monitor.models import ConferenceResult, Fact
 
 ROWS = [
-    {"url": "https://a.com", "verdict": "PASS", "reason": "core facts", "name": "A Conf", "canonical": "https://a.com"},
-    {"url": "https://b.com", "verdict": "PARTIAL", "reason": "thin content", "name": "", "canonical": "https://b.com"},
-    {"url": "https://c.com", "verdict": "BLOCKED", "reason": "anti-bot / refused status 403", "name": "", "canonical": ""},
-    {"url": "https://d.com", "verdict": "ERROR", "reason": "pipeline error: boom", "name": "", "canonical": ""},
+    {"url": "https://a.com", "verdict": "PASS", "reason": "core facts", "name": "A Conf",
+     "canonical": "https://a.com", "path": "crawl4ai", "bypass": "", "hop": False},
+    {"url": "https://b.com", "verdict": "PARTIAL", "reason": "thin content", "name": "",
+     "canonical": "https://b.com", "path": "playwright-fallback", "bypass": "playwright-fallback", "hop": False},
+    {"url": "https://c.com", "verdict": "BLOCKED", "reason": "anti-bot / refused status 403", "name": "",
+     "canonical": "", "path": "unresolved", "bypass": "cdp", "hop": False},
+    {"url": "https://d.com", "verdict": "ERROR", "reason": "pipeline error: boom", "name": "",
+     "canonical": "", "path": "unresolved", "bypass": "", "hop": False},
 ]
 
 
@@ -15,10 +20,17 @@ def test_counts_and_pct():
     assert "failed **2 (50%)**" in md
 
 
-def test_failures_listed_with_reason():
+def test_failures_listed_with_bypass_and_reason():
     md = coverage_markdown("L", ROWS)
-    assert "https://c.com" in md and "status 403" in md
+    assert "https://c.com" in md and "status 403" in md and "cdp" in md
     assert "https://d.com" in md and "boom" in md
+
+
+def test_path_matrix_present():
+    md = coverage_markdown("L", ROWS)
+    assert "By resolution path" in md
+    assert "crawl4ai (first pass)" in md
+    assert "playwright-fallback (our browser)" in md
 
 
 def test_partial_section():
@@ -28,8 +40,22 @@ def test_partial_section():
 
 def test_csv_rows():
     rows = coverage_csv_rows(ROWS)
-    assert rows[0] == ["url", "verdict", "reason", "name", "canonical"]
+    assert rows[0] == ["url", "verdict", "path", "bypass", "hop", "reason", "name", "canonical"]
     assert rows[1][1] == "PASS" and len(rows) == 5
+
+
+def test_summarize_reads_path_and_hop():
+    r = ConferenceResult(start_url="https://x.com")
+    r.name = Fact(value="X Conf")
+    r.resolution_path = "cdp"
+    r.aggregator_hop = True
+    r.pages_crawled = 3
+    r.trace = [{"action": "fallback", "reason": "cdp render"}]
+    row = summarize([r])[0]
+    assert row["path"] == "cdp"
+    assert row["hop"] is True
+    assert row["bypass"] == "cdp"
+    assert row["verdict"] == "PASS"
 
 
 def _run():
