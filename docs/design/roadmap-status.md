@@ -54,6 +54,15 @@ The local build is a **coherent end-to-end system**: discover → resilient craw
 - **Telemetry** back to Matt (runs, volumes) for billing/support/abuse detection.
 - **Non-technical UX:** smooth over the CDP-Chrome + one-time sign-in step so customers don't need hand-holding for hard sites.
 
+## Input-quality & aggregator handling (roadmap, added 2026-07-06)
+Surfaced by the cyber-market hardiness test. Two input-side challenges:
+
+**1. Aggregator / organization URLs (not a single event).** Some list entries point at an ORG or directory that lists MANY events, not one conference: e.g. `owasp.org` (the Foundation; the German event is `god.owasp.de/2026`), `isc2.org` (a cert body; Security Congress lives on a cvent page reached via `/professional-development/events`), `securitybsides.com` (a community hub; each city event is its own site, e.g. `bsides.org/event/bsideslv-3/`). The tool correctly says "no single conference here," but for the customer that is still a miss.
+- **Approach:** detect an aggregator/org page (many event-like links, no single conference on it) and use the spreadsheet ROW CONTEXT (location, dates, conference name) to navigate the directory and pick the specific event, then crawl that. This mirrors exactly what a human does. Needs the row context passed into discovery (today we crawl a bare URL with no context).
+
+**2. Dead / typo'd URLs (last-resort recovery).** Some entries are simply wrong (a missing letter, so DNS does not resolve). Today we correctly flag "unreachable" so a human fixes it.
+- **Optional, human-confirmed:** on a hard DNS failure ONLY, search the conference NAME (plus "conference"/"summit") and propose the top candidate domain in the Review UI ("original URL dead, did you mean X?"). Accept only when obvious; never silently substitute. Keeps a human in the loop and avoids over-engineering.
+
 ## Known bounded limits (honest)
 - **Deadlines** are only ~2/12 extractable because most expos don't publish one — surfaced as "needs verification" (feeds the human loop), not a bug.
 - **Hard anti-bot** sites need the CDP Chrome running + signed in (one-time).

@@ -257,30 +257,24 @@ async def _render_with_consent(url: str, settings, tracer):
             await ctx.close()
 
 
-async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: bool = False) -> PageFetch:
-    """crawl4ai first; Playwright fallback when it looks blocked/false-positived.
+# A crawl4ai page this "rich" is trusted as-is; below it we suspect a JS shell (content
+# only appears after JS renders) and also try the fallback, keeping whichever is richer.
+_RICH_CHARS = 1500
+_RICH_LINKS = 8
 
-    `force_fallback=True` skips the crawl4ai attempt entirely — used for later pages of a
-    site whose start page already needed the fallback, so we don't waste 20-60s per page
-    letting crawl4ai fail again."""
-    if _force_fallback_domain(url):
-        force_fallback = True   # known hard-block platform: don't let crawl4ai poison the IP
-    r = None
-    if not force_fallback:
-        try:
-            r = await crawler.arun(url, config=cfg)
-        except Exception as e:
-            tracer.log("skipped", url, f"crawl4ai raised: {e}")
-        if not _looks_blocked(r):
-            links = getattr(r, "links", None) or {"internal": [], "external": []}
-            return PageFetch(url, True, getattr(r, "status_code", None),
-                             str(getattr(r, "html", "") or ""), str(getattr(r, "markdown", "") or ""),
-                             links, via="crawl4ai")
 
-    if not settings.playwright_fallback:
-        return PageFetch(url, False, getattr(r, "status_code", None))
+def _richness(pf: "PageFetch") -> int:
+    return len(pf.markdown.strip()) + 60 * len(pf.links.get("internal", []))
 
-    tracer.log("fallback", url, "playwright render" + (" (forced)" if force_fallback else ""))
+
+def _is_rich(pf: "PageFetch") -> bool:
+    return len(pf.markdown.strip()) >= _RICH_CHARS or len(pf.links.get("internal", [])) >= _RICH_LINKS
+
+
+async def _fallback_fetch(crawler, url: str, settings, tracer, forced: bool = False) -> PageFetch:
+    """Render with our own Playwright (or CDP for hard domains): consent dismissal +
+    button click-through, then hand the HTML to crawl4ai raw:// for markdown."""
+    tracer.log("fallback", url, "playwright render" + (" (forced)" if forced else ""))
     try:
         html, anchors, status, body_text = await _render_with_consent(url, settings, tracer)
     except Exception as e:
@@ -304,3 +298,36 @@ async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: b
     ok = len(md.strip()) >= _MIN_MARKDOWN or bool(links["internal"])
     tracer.log("crawled", url, f"via playwright-fallback chars={len(md)} internal_links={len(links['internal'])}")
     return PageFetch(url, ok, status, html, md, links, via="playwright-fallback")
+
+
+async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: bool = False) -> PageFetch:
+    """crawl4ai first; Playwright fallback when crawl4ai is blocked, a known hard-block
+    domain, forced, OR returns a thin/link-poor page (a JS shell) - in which case we render
+    and keep whichever of the two is richer. force_fallback=True skips crawl4ai entirely."""
+    if _force_fallback_domain(url):
+        force_fallback = True   # known hard-block platform: don't let crawl4ai poison the IP
+    r = None
+    if not force_fallback:
+        try:
+            r = await crawler.arun(url, config=cfg)
+        except Exception as e:
+            tracer.log("skipped", url, f"crawl4ai raised: {e}")
+        if not _looks_blocked(r):
+            links = getattr(r, "links", None) or {"internal": [], "external": []}
+            c4 = PageFetch(url, True, getattr(r, "status_code", None),
+                           str(getattr(r, "html", "") or ""), str(getattr(r, "markdown", "") or ""),
+                           links, via="crawl4ai")
+            if not settings.playwright_fallback or _is_rich(c4):
+                return c4
+            # Thin / link-poor: likely a JS shell. Render it; keep whichever is richer.
+            fb = await _fallback_fetch(crawler, url, settings, tracer)
+            if fb.success and _richness(fb) > _richness(c4):
+                tracer.log("fallback", url, f"thin crawl4ai -> richer render "
+                           f"({len(fb.markdown)}c/{len(fb.links.get('internal', []))}L vs "
+                           f"{len(c4.markdown)}c/{len(c4.links.get('internal', []))}L)")
+                return fb
+            return c4
+
+    if not settings.playwright_fallback:
+        return PageFetch(url, False, getattr(r, "status_code", None))
+    return await _fallback_fetch(crawler, url, settings, tracer, forced=force_fallback)
