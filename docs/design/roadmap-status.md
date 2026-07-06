@@ -1,7 +1,11 @@
 # cfp-monitor — Roadmap & Status
 
-**Date:** 2026-07-04 · Customer: Nicolia / PRIME|PR. Local native-crawl4ai build.
-**Branch:** all work merged to `main`. **51 offline tests green.**
+**Date:** 2026-07-06 · Customer: Nicolia / PRIME|PR. Local native-crawl4ai build.
+**Branch:** all work merged + pushed to `main`. **59 offline tests green.**
+
+**Today (2026-07-06):** ✅ JS-shell recovery (cybertech PARTIAL→PASS); ✅ aggregator/org
+navigation shipped (directory page → specific event via row context); ✅ LOCATION + START DATE
+captured from the customer xlsx and wired end-to-end so navigation runs on the real lists.
 
 ## Where we are — one line
 The local build is a **coherent end-to-end system**: discover → resilient crawl → quality-gate → source-of-truth DB → human verify → customer feed → alerts + weekly report + scheduler. **98% usable coverage** on the 44-URL gold set, **0 errors**.
@@ -68,4 +72,4 @@ Surfaced by the cyber-market hardiness test. Two input-side challenges:
 - **Deadlines** are only ~2/12 extractable because most expos don't publish one — surfaced as "needs verification" (feeds the human loop), not a bug.
 - **Hard anti-bot** sites need the CDP Chrome running + signed in (one-time).
 - **Pure SPA-router buttons** with no URL anywhere: click-through covers most; a rare few still escape.
-- **JS-shell homepages** (content only after render, with ~0 crawlable links, e.g. `cybertechisrael.com`: crawl4ai gets 3.7k chars but 0 links): these come back PARTIAL because there is nothing to explore. Rendering them via the Playwright fallback works *in isolation* but can HANG in-pipeline, and Playwright browser ops do not reliably honor an `asyncio` timeout, so a naive "thin -> fallback" trigger risks turning a usable PARTIAL into a worse timeout ERROR (verified 2026-07-06). Reliable recovery needs a properly cancellable/bounded render (dedicated render step or process) — future work, not a quick trigger change.
+- **JS-shell homepages** (content only after render, e.g. `cybertechisrael.com`): **fixed 2026-07-06** (commit `8d4b562`). The earlier hang came from the fallback's slow consent loop (8 selectors × 2.5s) plus an unbounded render; replacing it with a fast presence-check for consent banners + a hard `fallback_render_timeout_s` (45s) cap recovered cybertech PARTIAL→PASS ("Cybertech Global TLV 2027", 4 pages). Residual limit: a page that renders to genuinely zero recoverable content/links would still be PARTIAL — but that's now rare, not the common JS-shell case.
