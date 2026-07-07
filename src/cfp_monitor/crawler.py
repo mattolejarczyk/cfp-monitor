@@ -14,11 +14,12 @@ from __future__ import annotations
 
 import heapq
 import itertools
+import time
 from dataclasses import dataclass, field
 
 from .discovery import extract_clickables, detect_forms
 from .fetch import fetch_page
-from .scoring import normalize_url, same_site, score_link, detect_submission_platform
+from .scoring import normalize_url, same_site, score_link, detect_submission_platform, is_crawlable
 from .trace import Tracer
 
 
@@ -64,10 +65,20 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
     ext_seen: set[str] = set()
     site_fallback = False   # once the start page needs the Playwright fallback, use it for all pages
 
+    # Reserve part of the per-site budget for LLM extraction: a slow/link-heavy site (e.g. a
+    # HubSpot event site with many large duplicate pages) must not consume ALL the time in the
+    # crawl and leave nothing to extract the homepage (where the name usually is).
+    deadline = time.monotonic() + settings.per_site_timeout_s * settings.explore_budget_fraction
+
     while frontier and len(out.pages) < settings.max_pages:
+        if out.start_ok and time.monotonic() > deadline:
+            tracer.log("budget", start_url,
+                       f"explore time budget reached ({settings.explore_budget_fraction:.0%}) - "
+                       "stopping crawl to leave time for extraction")
+            break
         neg, _, url, depth = heapq.heappop(frontier)
         nu = normalize_url(url)
-        if nu in visited:
+        if nu in visited or not is_crawlable(nu):
             continue
         visited.add(nu)
 
@@ -76,8 +87,12 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
             tracer.log("skipped", url, f"status={pf.status_code} depth={depth}")
             continue
         if pf.via != "crawl4ai":
-            site_fallback = True
             out.used_fallback = True
+            # Only the START page needing the (slow) render fallback makes the WHOLE site use it.
+            # A single thin sub-page shouldn't flip a site whose homepage crawls fine via crawl4ai
+            # into rendering every page (that stalls HubSpot-style sites and blows the budget).
+            if nu == start_norm:
+                site_fallback = True
 
         if nu == start_norm:
             out.start_ok = True
@@ -115,7 +130,7 @@ async def explore(crawler, start_url: str, settings, tracer: Tracer) -> ExploreR
             if not href or not href.lower().startswith("http"):
                 continue
             cu = normalize_url(href)
-            if cu in visited or not same_site(cu, start_url):
+            if cu in visited or not same_site(cu, start_url) or not is_crawlable(cu):
                 continue
             s = score_link(cu, text)
             heapq.heappush(frontier, (-s, next(counter), cu, depth + 1))

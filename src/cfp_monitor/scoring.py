@@ -8,7 +8,7 @@ Two jobs:
 """
 from __future__ import annotations
 
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
 from .keywords import (
     CFP_KEYWORDS,
@@ -18,15 +18,41 @@ from .keywords import (
 )
 
 
+# Query params that are locale/tracking noise, not content selectors — dropping them keeps
+# duplicate pages (e.g. HubSpot's `?hsLang=en-au`) from being crawled twice.
+_DROP_QS_EXACT = {"hslang", "hsctatracking", "gclid", "fbclid", "mc_cid", "mc_eid",
+                  "_hsenc", "_hsmi", "hsctaid", "hsfp"}
+_DROP_QS_PREFIXES = ("utm_", "hsa_", "hs_")
+# Non-content URLs: HubSpot CTA/click tracking + asset dirs + binaries. Never worth crawling.
+_SKIP_URL_SUBSTR = ("/cs/c", "cta_guid", "/_hcms/", "/hs-fs/", "/hubfs/", "/hs/manage")
+_SKIP_URL_EXT = (".pdf", ".jpg", ".jpeg", ".png", ".gif", ".svg", ".zip", ".mp4", ".ics", ".docx", ".xlsx")
+
+
+def _clean_query(q: str) -> str:
+    kept = [(k, v) for k, v in parse_qsl(q, keep_blank_values=True)
+            if k.lower() not in _DROP_QS_EXACT and not k.lower().startswith(_DROP_QS_PREFIXES)]
+    return urlencode(kept)
+
+
 # ---- URL helpers ------------------------------------------------------------
 def normalize_url(url: str) -> str:
-    """Drop fragments and trailing slashes so we don't crawl the same page twice."""
+    """Drop fragments, trailing slashes, and tracking/locale query params so we don't crawl
+    the same page twice (e.g. `/speakers` and `/speakers?hsLang=en-au`)."""
     try:
         p = urlparse(url.strip())
         path = p.path.rstrip("/") or "/"
-        return urlunparse((p.scheme, p.netloc.lower(), path, "", p.query, "")).rstrip("/")
+        return urlunparse((p.scheme, p.netloc.lower(), path, "", _clean_query(p.query), "")).rstrip("/")
     except Exception:
         return url.strip()
+
+
+def is_crawlable(url: str) -> bool:
+    """False for click-tracking/CTA redirects, asset dirs, and binary files (not content pages)."""
+    low = (url or "").lower()
+    if any(s in low for s in _SKIP_URL_SUBSTR):
+        return False
+    path = urlparse(low).path
+    return not path.endswith(_SKIP_URL_EXT)
 
 
 def registrable_domain(url: str) -> str:

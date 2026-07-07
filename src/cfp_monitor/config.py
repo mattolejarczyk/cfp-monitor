@@ -36,6 +36,9 @@ class Settings:
     primary_page_timeout_s: int = int(os.getenv("CFP_PRIMARY_TIMEOUT_S", "35"))
     # How many of the top-scored discovered pages to run LLM extraction on.
     max_extract_pages: int = int(os.getenv("CFP_MAX_EXTRACT_PAGES", "8"))
+    # Fraction of the per-site budget the CRAWL may use before stopping to leave time for
+    # extraction. Prevents link-heavy sites from timing out with the homepage never extracted.
+    explore_budget_fraction: float = float(os.getenv("CFP_EXPLORE_FRACTION", "0.6"))
 
     # --- Behaviour ---
     headless: bool = os.getenv("CFP_HEADLESS", "true").lower() != "false"

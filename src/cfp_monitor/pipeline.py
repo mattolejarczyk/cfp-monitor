@@ -12,6 +12,7 @@ Each conference is isolated behind a timeout + try/except; one browser is reused
 from __future__ import annotations
 
 import asyncio
+import time
 
 from .aggregator import pick_event_link, score_event_link
 from .config import Settings, DEFAULT
@@ -26,6 +27,7 @@ from .trace import Tracer
 
 async def analyze_conference(crawler, start_url: str, settings: Settings, tracer: Tracer,
                              context: dict | None = None, _depth: int = 0) -> ConferenceResult:
+    t0 = time.monotonic()
     ex = await explore(crawler, start_url, settings, tracer)
     if not ex.start_ok:
         r = ConferenceResult(start_url=start_url, error="start page could not be fetched")
@@ -63,8 +65,15 @@ async def analyze_conference(crawler, start_url: str, settings: Settings, tracer
     for p in to_extract:
         tracer.log("scored", p.url, f"selected for extraction (score={p.score:.2f})")
 
+    # Time-box extraction so we ALWAYS return within budget with the core facts. The start page
+    # is ranked first, so even if a slow LLM lets us finish only a page or two, we still capture
+    # the name/dates from the homepage instead of the whole conference being cancelled to nothing.
+    extract_deadline = t0 + settings.per_site_timeout_s * 0.9
     pairs = []
     for p in to_extract:
+        if pairs and time.monotonic() > extract_deadline:
+            tracer.log("budget", p.url, "extraction time budget reached - consolidating pages done so far")
+            break
         pe = await extract_from_markdown(p.markdown, p.url, settings, tracer)
         if pe:
             pairs.append((p.url, pe))
