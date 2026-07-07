@@ -99,6 +99,16 @@ def to_customer_rows(records: Iterable[dict]) -> list[dict]:
     return [to_customer_row(r) for r in records]
 
 
+def to_customer_csv_text(records: Iterable[dict]) -> str:
+    """The customer 15-column CSV as a string (for downloads / in-memory use)."""
+    import io
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=CUSTOMER_HEADERS)
+    writer.writeheader()
+    writer.writerows(to_customer_rows(records))
+    return buf.getvalue()
+
+
 def write_customer_csv(records: Iterable[dict], path: str) -> int:
     """Write the customer 15-column CSV. Returns the number of data rows written."""
     rows = to_customer_rows(records)

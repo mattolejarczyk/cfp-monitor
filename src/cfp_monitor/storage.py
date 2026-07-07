@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS conferences (
     overview            TEXT,
     categories          TEXT,                   -- comma-separated market tags
     priority            TEXT,
+    notes               TEXT,                   -- human-owned free notes (customer column)
     status_details      TEXT,
     quality             TEXT,                   -- PASS / PARTIAL / BLOCKED / ERROR
     result_json         TEXT,                   -- full ConferenceResult
@@ -160,7 +161,15 @@ class Store:
         self.db = sqlite3.connect(path)
         self.db.row_factory = sqlite3.Row
         self.db.executescript(_SCHEMA)
+        self._migrate()
         self.db.commit()
+
+    def _migrate(self) -> None:
+        """Add columns introduced after a DB was first created (safe on existing files)."""
+        have = {r["name"] for r in self.db.execute("PRAGMA table_info(conferences)")}
+        for col in ("notes",):
+            if col not in have:
+                self.db.execute(f"ALTER TABLE conferences ADD COLUMN {col} TEXT")
 
     def close(self) -> None:
         self.db.close()
@@ -277,6 +286,47 @@ class Store:
                         (*col_updates.values(), key))
         self.db.commit()
 
+    # Columns a human may edit directly (not produced by the crawl) — whitelist guards SQL.
+    _PLAIN_EDITABLE = frozenset({"name", "coordinator_email", "overview", "priority",
+                                 "status_details", "notes"})
+
+    def set_fields(self, key: str, fields: dict) -> None:
+        """Directly persist human-owned columns (priority, notes, email, ...). No crawl conflict."""
+        cols = {k: v for k, v in fields.items() if k in self._PLAIN_EDITABLE}
+        if not cols:
+            return
+        set_clause = ", ".join(f"{k}=?" for k in cols)
+        self.db.execute(f"UPDATE conferences SET {set_clause} WHERE key=?",
+                        (*cols.values(), normalize_key(key)))
+        self.db.commit()
+
+    def correct(self, key: str, fields: dict) -> None:
+        """Persist a human value for a CRAWL-tracked field: update the column AND record it in
+        verified_fields so a later crawl can't silently overwrite it (correction-precedence).
+        Does NOT change the verification_status flag — that's the human's explicit checkbox."""
+        key = normalize_key(key)
+        row = self.db.execute("SELECT verified_fields FROM conferences WHERE key=?", (key,)).fetchone()
+        if row is None:
+            raise KeyError(key)
+        verified = json.loads(row["verified_fields"] or "{}")
+        cols = {}
+        for f, v in fields.items():
+            if f in TRACKED_FIELDS:
+                verified[f] = v
+                cols[f] = v
+        if not cols:
+            return
+        cols["verified_fields"] = json.dumps(verified)
+        set_clause = ", ".join(f"{k}=?" for k in cols)
+        self.db.execute(f"UPDATE conferences SET {set_clause} WHERE key=?", (*cols.values(), key))
+        self.db.commit()
+
+    def set_verified(self, key: str, verified: bool) -> None:
+        """Flip only the human verification flag (SUBMISSION DATE VERIFIED column)."""
+        self.db.execute("UPDATE conferences SET verification_status=? WHERE key=?",
+                        ("verified" if verified else "needs_verified", normalize_key(key)))
+        self.db.commit()
+
     # ---- reads ----
     def get(self, key: str) -> Optional[dict]:
         row = self.db.execute("SELECT * FROM conferences WHERE key=?", (normalize_key(key),)).fetchone()
@@ -302,6 +352,7 @@ class Store:
         out = []
         for r in self.all_records():
             out.append({
+                "key": r["key"],
                 "name": r["name"], "url": r["url"], "location": r["location"],
                 "start_dates": r["conference_dates"], "last_checked": r["last_checked"],
                 "submission_deadline": r["cfp_close_date"],
@@ -309,6 +360,6 @@ class Store:
                 "priority": r["priority"], "status": r["cfp_status"],
                 "status_details": r["status_details"], "submission_url": r["submission_url"],
                 "coordinator_email": r["coordinator_email"], "overview": r["overview"],
-                "categories": r["categories"], "notes": None,
+                "categories": r["categories"], "notes": r["notes"],
             })
         return out

@@ -19,9 +19,12 @@ import pandas as pd
 
 from src.cfp_monitor import run_urls, Settings
 from src.cfp_monitor.models import Fact
-from src.cfp_monitor.storage import Store
+from src.cfp_monitor.storage import Store, normalize_key
 from src.cfp_monitor.quality_gate import classify_result
 from src.cfp_monitor.scoring import normalize_url
+from src.cfp_monitor.customer_format import (
+    CUSTOMER_HEADERS, to_customer_rows, to_customer_csv_text, _STATUS_MAP,
+)
 
 import io
 import os
@@ -65,6 +68,19 @@ st.set_page_config(page_title="CFP Monitor", page_icon="🎤", layout="wide")
 st.title("🎤 Conference CFP Monitor")
 
 _STATUS_ICON = {"open": "🟢", "upcoming": "🟡", "unclear": "⚪", "closed": "🔴", "none": "⚫"}
+
+# Review-sheet editing: map each customer column to how it persists.
+#  _PLAIN_COLS   -> human-owned column, saved directly (store.set_fields)
+#  _TRACKED_COLS -> crawl-produced field, saved with correction-precedence (store.correct)
+#  STATUS is tracked but shown with the customer wording, so it reverse-maps on save.
+_PLAIN_COLS = {"CONFERENCE": "name", "PRIORITY": "priority", "STATUS DETAILS": "status_details",
+               "COORDINATOR EMAIL": "coordinator_email", "OVERVIEW": "overview", "NOTES": "notes"}
+_TRACKED_COLS = {"LOCATION": "location", "START DATES": "conference_dates",
+                 "SUBMISSION DEADLINE": "cfp_close_date", "SUBMISSION URL": "submission_url",
+                 "CATEGORIES": "categories"}
+_STATUS_INV = {v: k for k, v in _STATUS_MAP.items()}          # "Open" -> "open", "Needs Review" -> "unclear"
+_STATUS_CHOICES = [""] + list(_STATUS_MAP.values())
+_READONLY_COLS = ["CONFERENCE URL", "LATEST UPDATE"]           # identity + system timestamp
 
 
 def _fact_line(label: str, fact: Fact) -> str:
@@ -130,6 +146,25 @@ with tab_run:
 
         st.success(f"Done — analyzed {len(results)} conference(s) · saved to {DB_PATH} · "
                    f"{ {k: v for k, v in counts.items() if k != 'url_count'} }")
+
+        # Scannable table for THIS run in the customer's 15-column format (URL included, so
+        # every row ties back to its source). Full editing lives in the Review & Verify tab.
+        keys = {normalize_key(r.canonical_url or r.start_url) for r in results}
+        rstore = Store(DB_PATH)
+        run_rows = [d for d in rstore.export_dicts() if d["key"] in keys]
+        rstore.close()
+        cust = to_customer_rows(run_rows)
+        st.subheader("Results — customer format")
+        st.dataframe(pd.DataFrame(cust, columns=CUSTOMER_HEADERS),
+                     use_container_width=True, hide_index=True)
+        c_csv, c_json = st.columns(2)
+        c_csv.download_button("⬇️ Customer CSV (15-col)", data=to_customer_csv_text(run_rows),
+                              file_name="cfp_customer.csv", mime="text/csv", use_container_width=True)
+        c_json.download_button("⬇️ Raw JSON", use_container_width=True,
+                               data=json.dumps([r.model_dump(mode="json") for r in results], indent=2, ensure_ascii=False),
+                               file_name="cfp_results.json", mime="application/json")
+
+        st.subheader("Per-conference detail + evidence")
         for r in results:
             icon = _STATUS_ICON.get(r.cfp_status.value, "⚪")
             with st.expander(f"{icon} {r.name.value or r.start_url} — CFP: {r.cfp_status.value}", expanded=False):
@@ -147,15 +182,11 @@ with tab_run:
                     st.markdown(_fact_line("Submit at", r.submission_url))
                     if r.submission_platform:
                         st.markdown(f"**Platform:** {r.submission_platform}")
-                st.caption(f"Pages crawled: {r.pages_crawled} · start: {r.start_url}")
+                st.caption(f"URL: {r.start_url} · pages crawled: {r.pages_crawled}")
                 if r.evidence:
-                    with st.expander("Evidence"):
-                        for e in r.evidence:
-                            st.markdown(f"- **{e.field}** — [{e.source_url}]({e.source_url})\n\n  > {e.snippet}")
-
-        st.download_button("Download JSON",
-                           data=json.dumps([r.model_dump(mode="json") for r in results], indent=2, ensure_ascii=False),
-                           file_name="cfp_results.json", mime="application/json")
+                    st.markdown("**Evidence**")
+                    for e in r.evidence:
+                        st.markdown(f"- **{e.field}** — [{e.source_url}]({e.source_url})\n\n  > {e.snippet}")
 
 # ────────────────────────────────────────────────────────── Review & Verify ──
 with tab_review:
@@ -168,44 +199,60 @@ with tab_review:
     if not records:
         st.info("No records yet — run a crawl in the first tab.")
     else:
-        df = pd.DataFrame([{
-            "key": r["key"],
-            "Conference": r["name"] or "",
-            "Status": r["cfp_status"] or "",
-            "Deadline": r["cfp_close_date"] or "",
-            "Verified": r["verification_status"] == "verified",
-            "Last Checked": (r["last_checked"] or "")[:10],
-            "Categories": r["categories"] or "",
-            "Details": r["status_details"] or "",
-        } for r in records])
+        # The full customer 15-column sheet, editable in place. Edits to crawl-produced fields
+        # are protected from future crawls (correction-precedence); human-owned columns
+        # (PRIORITY, NOTES, ...) save directly. CONFERENCE URL + LATEST UPDATE are read-only.
+        cust_rows = to_customer_rows(store.export_dicts())
+        keys = [r["key"] for r in records]
+        df = pd.DataFrame(cust_rows, columns=CUSTOMER_HEADERS)
+        df.insert(0, "_key", keys)
+        # SUBMISSION DATE VERIFIED as a real checkbox instead of Yes/Needs Verification text.
+        df["SUBMISSION DATE VERIFIED"] = [r["verification_status"] == "verified" for r in records]
 
         edited = st.data_editor(
-            df, use_container_width=True, hide_index=True, height=460,
-            disabled=["key", "Conference", "Last Checked", "Categories", "Details"],
+            df, use_container_width=True, hide_index=True, height=520,
+            disabled=["_key", *_READONLY_COLS],
             column_config={
-                "key": None,  # hide
-                "Verified": st.column_config.CheckboxColumn("Verified"),
-                "Deadline": st.column_config.TextColumn("Deadline"),
-                "Status": st.column_config.TextColumn("Status"),
+                "_key": None,
+                "SUBMISSION DATE VERIFIED": st.column_config.CheckboxColumn("SUBMISSION DATE VERIFIED"),
+                "STATUS": st.column_config.SelectboxColumn("STATUS", options=_STATUS_CHOICES),
             },
             key="review_editor",
         )
 
-        if st.button("💾 Save verifications", type="primary"):
-            by_key = {r["key"]: r for r in records}
-            n = 0
-            for _, row in edited.iterrows():
-                orig = by_key.get(row["key"])
-                if orig is None:
-                    continue
-                newly_verified = row["Verified"] and orig["verification_status"] != "verified"
-                changed = (row["Deadline"] or "") != (orig["cfp_close_date"] or "") or \
-                          (row["Status"] or "") != (orig["cfp_status"] or "")
-                if newly_verified or (row["Verified"] and changed):
-                    store.verify(row["key"], {"cfp_close_date": row["Deadline"], "cfp_status": row["Status"]})
-                    n += 1
-            st.success(f"Saved {n} verification(s). Verified values will survive future crawls.")
+        st.caption("Editing a crawl field (status, deadline, dates, location, categories, submission URL) "
+                   "locks that value against future crawls. Tick **SUBMISSION DATE VERIFIED** to mark a "
+                   "row human-checked.")
+
+        if st.button("💾 Save changes", type="primary"):
+            orig_by_key = {r["_key"]: r for r in df.to_dict("records")}
+            n_rows = 0
+            for row in edited.to_dict("records"):
+                k = row["_key"]
+                before = orig_by_key.get(k, {})
+                plain, tracked = {}, {}
+                for col, dbcol in _PLAIN_COLS.items():
+                    if (row.get(col) or "") != (before.get(col) or ""):
+                        plain[dbcol] = row.get(col) or None
+                for col, dbcol in _TRACKED_COLS.items():
+                    if (row.get(col) or "") != (before.get(col) or ""):
+                        tracked[dbcol] = row.get(col) or None
+                if (row.get("STATUS") or "") != (before.get("STATUS") or ""):
+                    tracked["cfp_status"] = _STATUS_INV.get(row.get("STATUS") or "", row.get("STATUS")) or None
+                touched = False
+                if plain:
+                    store.set_fields(k, plain); touched = True
+                if tracked:
+                    store.correct(k, tracked); touched = True
+                if bool(row.get("SUBMISSION DATE VERIFIED")) != bool(before.get("SUBMISSION DATE VERIFIED")):
+                    store.set_verified(k, bool(row.get("SUBMISSION DATE VERIFIED"))); touched = True
+                n_rows += 1 if touched else 0
+            st.success(f"Saved changes to {n_rows} row(s).")
             st.rerun()
+
+        st.download_button("⬇️ Download full sheet (customer CSV)",
+                           data=to_customer_csv_text(store.export_dicts()),
+                           file_name="cfp_customer_full.csv", mime="text/csv")
 
         st.divider()
         names = {r["name"] or r["key"]: r["key"] for r in records}
