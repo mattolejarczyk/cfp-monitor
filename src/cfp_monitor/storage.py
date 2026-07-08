@@ -223,7 +223,12 @@ class Store:
         preserved: list[str] = []
         updates: dict[str, object] = {}
 
+        # A failed / blocked crawl extracted nothing real - don't touch the stored facts at all
+        # (protects the source of truth from a bad crawl day). last_checked/quality still update.
+        skip_fields = quality in (Quality.ERROR, Quality.BLOCKED)
         for f in TRACKED_FIELDS:
+            if skip_fields:
+                break
             old_val = row[f]
             new_val = new.get(f)
             if f in verified:
@@ -234,6 +239,11 @@ class Store:
                     self._log_change(conf_id, run_id, f, verified[f], new_val, "conflicts_verified", now)
                     preserved.append(f)
                 continue
+            # Never let a crawl blank out an existing value: a failed / thin / timed-out re-crawl
+            # returns nulls, and the source of truth must not degrade because of a bad crawl day.
+            # (Clearing a field is only ever done through the human-verify/correct path.)
+            if not new_val and old_val:
+                continue
             if (new_val or None) != (old_val or None):
                 updates[f] = new_val
                 changes.append(Change(f, old_val, new_val, "updated"))
@@ -243,7 +253,7 @@ class Store:
         updates["url"] = new["url"]
         updates["coordinator_email"] = row["coordinator_email"] or new["coordinator_email"]
         updates["overview"] = new["overview"] or row["overview"]
-        updates["status_details"] = new["status_details"]
+        updates["status_details"] = new["status_details"] or row["status_details"]
         updates["quality"] = quality.value
         updates["result_json"] = result.model_dump_json()
         updates["event_is_past"] = past_int

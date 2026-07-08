@@ -57,6 +57,31 @@ def test_noop_recrawl_records_no_update():
     assert [c for c in out.changes if c.type == "updated"] == []
 
 
+def test_error_recrawl_preserves_stored_facts():
+    from cfp_monitor.models import ConferenceResult
+    s = Store()
+    s.upsert(mk("https://conf.com", name="Alpha", dates="Oct 2026", close="2026-06-29", status="open"), Quality.PASS)
+    # A failed/timed-out re-crawl returns an empty result: it must NOT degrade the source of truth.
+    s.upsert(ConferenceResult(start_url="https://conf.com", error="per-site timeout"), Quality.ERROR)
+    rec = s.get("https://conf.com")
+    assert rec["name"] == "Alpha"
+    assert rec["conference_dates"] == "Oct 2026"
+    assert rec["cfp_close_date"] == "2026-06-29"
+    assert rec["cfp_status"] == "open"           # not downgraded to the default "unclear"
+    assert rec["quality"] == "ERROR"             # but we DO record that the last attempt failed
+
+
+def test_partial_recrawl_keeps_old_where_new_is_blank():
+    s = Store()
+    s.upsert(mk("https://conf.com", name="Alpha", close="2026-06-29", status="open"), Quality.PASS)
+    # A thin PARTIAL re-crawl finds the name but not the deadline — the deadline must survive.
+    s.upsert(mk("https://conf.com", name="Alpha", close=None, status="open"), Quality.PARTIAL)
+    assert s.get("https://conf.com")["cfp_close_date"] == "2026-06-29"
+    # …but a real new value still applies.
+    s.upsert(mk("https://conf.com", name="Alpha Renamed", close="2026-06-29", status="open"), Quality.PARTIAL)
+    assert s.get("https://conf.com")["name"] == "Alpha Renamed"
+
+
 def test_verified_value_not_overwritten():
     s = Store()
     s.upsert(mk("https://conf.com", name="Alpha", close="2026-06-29"), Quality.PASS)
