@@ -1,30 +1,37 @@
 # cfp-monitor — Roadmap & Status
 
-**Date:** 2026-07-06 · Customer: Nicolia / PRIME|PR. Local native-crawl4ai build.
-**Branch:** all work merged + pushed to `main`. **59 offline tests green.**
+**Date:** 2026-07-07 · Customer: Nicolia / PRIME|PR. Local native-crawl4ai build.
+**Branch:** all work merged + pushed to `main`. **78 offline tests green.**
 
-**Today (2026-07-06):** ✅ JS-shell recovery (cybertech PARTIAL→PASS); ✅ aggregator/org
-navigation shipped (directory page → specific event via row context); ✅ LOCATION + START DATE
-captured from the customer xlsx and wired end-to-end so navigation runs on the real lists.
+**Today (2026-07-07):** ✅ **M5 closed** — coverage report (worked/failed % + failed links with
+reasons + resolution-path breakdown) and the **full 15-column customer sheet in the UI** (editable,
+persisted, exportable, URL included); ✅ **IP protection** — hard anti-bot sites never auto-hit
+without signed-in CDP (stopped an orphaned run hammering Reuters' CAPTCHA); ✅ **CDP-on-by-default**
+for live/scheduled runs; ✅ **HubSpot no-name fix** (URL dedupe + junk-URL skip + explore budget +
+extraction time-box → recovers the homepage name on slow sites); ✅ **source-of-truth guard** — a
+failed/thin re-crawl can no longer wipe good stored data.
+**2026-07-06:** JS-shell recovery (cybertech PARTIAL→PASS); aggregator/org navigation; LOCATION +
+START DATE captured from the xlsx and wired end-to-end.
 
 ## Where we are — one line
-The local build is a **coherent end-to-end system**: discover → resilient crawl → quality-gate → source-of-truth DB → human verify → customer feed → alerts + weekly report + scheduler. **98% usable coverage** on the 44-URL gold set, **0 errors**.
+The local build is a **coherent end-to-end system**: discover → resilient crawl (self-healing, IP-safe) → quality-gate → source-of-truth DB (degrade-proof) → human-editable customer sheet → customer feed → alerts + weekly report + scheduler. Energy gold set **43/44 PASS**; cross-market cyber **49/56 PASS** (100 sites, 0 blocked).
 
 ## Status by capability bucket
 | Bucket | Area | Status |
 |---|---|---|
-| **A** | Crawl + extract core | ✅ **Done.** crawl4ai primary + Playwright fallback (consent dismissal, SPA-button click-through) + **CDP-to-real-Chrome** for hard anti-bot (Reuters). Quality gate (PASS/PARTIAL/BLOCKED, 0 silent failures). Gold set: 43/44 PASS. |
-| **B** | Persistence + review | ✅ **Done.** SQLite source-of-truth, run history, change detection, **verification lifecycle** (correction-precedence), past-event rollover, path/quality memory, **Review & Verify UI**, **15-col customer export** (CSV/JSON, tag-filterable). |
-| **C** | Automation + delivery | 🟡 **Code done, needs activation.** Alerts engine + weekly report + run-once scheduler built. Needs: SMTP creds (to email), Task Scheduler registration, real URL list. |
-| **D** | Extraction quality / eval | 🟡 **Partial.** Gold-set harness done; deadline extraction is **data-bounded** (many expos don't publish one → honest "needs verification" output). Model-default selection not yet formalized. |
-| **Pre** | Discover *new* conferences | ⬜ **Deferred.** Build ingests a fixed/uploaded list; multi-model discovery (Perplexity/GPT/Gemini) is later. |
+| **A** | Crawl + extract core | ✅ **Done — hardened 07-07.** crawl4ai primary + Playwright fallback (consent, SPA-button click-through) + **CDP-to-real-Chrome** for hard anti-bot. Added JS-shell recovery, **aggregator/org navigation** (row context → specific event), **HubSpot budget/dedupe fixes** (homepage-name recovery on slow sites), and **IP-protection** (no auto-hit of anti-bot sites without CDP). Quality gate = 0 silent failures. |
+| **B** | Persistence + review | ✅ **Done — hardened 07-07.** SQLite source-of-truth (**degrade-proof**: a failed/thin re-crawl can't wipe good data), run history, change detection, **verification lifecycle** (correction-precedence), rollover. **Full editable 15-column customer sheet in the UI** (per-row edits + NOTES persisted); CSV/JSON export. |
+| **C** | Automation + delivery | 🟡 **Code done, needs activation.** Alerts + weekly report + run-once scheduler built; **CDP-on-by-default** makes unattended runs IP-safe. Needs: SMTP creds, Task Scheduler registration, real URL list. |
+| **D** | Extraction quality / eval | 🟡 **Partial.** Coverage harness done; homepage-name recovery improved 07-07. **Deadline extraction data-bounded** (many expos publish none → honest "needs verification"). Model-per-field eval not yet formalized. |
+| **Pre** | Discover *new* conferences | ⬜ **Deferred.** Ingests a fixed/uploaded list; multi-model discovery (Perplexity/GPT/Gemini) is later. |
 
 ## Milestone view (vs the VPS M0–M9)
-- **M0–M5** (discovery/reqs → architecture → POC extraction → MVP dashboard → hardening → presentation): ✅ effectively met, and the local build **surpasses the VPS on crawl reliability** (0 blocked vs 6 blocked baseline).
-- **M6 — Scheduling & alerts:** 🟡 code complete (`scheduler.py`, `alerts.py`, `scripts/run_scheduled.bat`); needs activation (below).
-- **M7 — Weekly executive report:** 🟡 `report.py` done (opportunities + system health); email delivery scaffolded (off until SMTP set).
-- **M8 — Client portal / multi-user:** 🟡 Review UI exists; **Brandable integration**: our feed is ready, their app pulls it when access/coordination exists.
-- **M9 — Production hardening:** 🟡 tests + resilient crawl in place; deploy/monitoring on the always-on machine still to do.
+- **M0–M4** (discovery/reqs → architecture → POC → MVP dashboard → hardening): ✅ met; local build **surpasses the VPS on crawl reliability** (0 datacenter-IP blocks).
+- **M5 — Presentation / reporting:** ✅ **Done (07-07).** Coverage report (worked/failed + resolution-path breakdown) + the full editable 15-column customer sheet in the UI. This was the open gap.
+- **M6 — Scheduling & alerts:** 🟡 code complete (`scheduler.py`, `alerts.py`, `scripts/run_scheduled.bat`); CDP-on-by-default made it IP-safe; needs activation (below).
+- **M7 — Weekly executive report:** 🟡 `report.py` done; email delivery scaffolded (off until SMTP set).
+- **M8 — Client portal / multi-user:** 🟡 **advanced 07-07** — the in-app editable customer sheet is the reviewer surface; **Brandable** live pull waits on their side.
+- **M9 — Production hardening:** 🟡 stronger (IP protection, data-integrity guards, 78 tests); deploy/monitoring on the always-on machine still to do.
 
 ## To activate what's built (needs YOU, not more code)
 1. **Run it yourself:** double-click `scripts/launch_chrome_cdp.bat` (once, sign in) for hard sites, then `scripts/launch_ui.bat` → paste/upload URLs → Run. Review/verify in tab 2.
