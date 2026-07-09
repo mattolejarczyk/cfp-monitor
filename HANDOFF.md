@@ -50,7 +50,7 @@ CFP_LICENSE_KEY=cfp_theirkey
 ---
 
 ## 2. What we built (2026-07-06 → 07-09)
-Grouped by area; file pointers in parentheses. **97+ offline tests green.**
+Grouped by area; file pointers in parentheses. **98 offline tests green.**
 
 **Crawl reliability**
 - JS-shell recovery — fast consent check + bounded render (`fetch.py`).
@@ -78,13 +78,33 @@ Grouped by area; file pointers in parentheses. **97+ offline tests green.**
   (`licenseproxy/`), client wiring + friendly launch banner (`config.py`, `extraction.py`,
   `licensing.py`, `app.py`). Both OpenAI and OpenRouter supported.
 
+**Distribution & go-live (2026-07-09, after the backup/installer/billing milestone)**
+- **Proxy DEPLOYED LIVE** at `https://channeled.org/cfp-proxy` (see §1). Verified end-to-end
+  including a **real crawl through the proxy** from the packaged build (Carbon Capture Europe → PASS).
+- **Windows customer installer** (`installer/install.ps1`, `installer/README.md`): one script —
+  finds/installs **Python 3.12** (winget), downloads the app, builds venv + deps + the Playwright
+  Chromium, writes the customer `.env`, drops a **"CFP Monitor" desktop shortcut**. No provider key
+  on the customer's machine. **Validated on the dev machine** (`-SkipDeps` for fast checks, then a
+  full run). Remaining: one smoke test on a genuinely clean/fresh Windows profile before mass send.
+- **Windows hardening — two real bugs found during install validation, both fixed:**
+  1. `.env` was written with a UTF-8 **BOM** (PowerShell's `Set-Content -Encoding UTF8` adds one),
+     which corrupted the first line so `CFP_LLM_PROXY_URL` wasn't read → app fell back to
+     "direct" mode / no license banner. Fixed: installer writes **no-BOM**; `config.py` loads
+     `.env` with `utf-8-sig` so a BOM is tolerated regardless.
+  2. A freshly winget-installed Windows Python's default trust store lacks the modern
+     Let's Encrypt roots → the license banner's TLS check failed. Fixed: the check verifies via
+     **certifi** (`licensing.py`). Crawling was never affected (litellm/httpx already use certifi).
+- **Ops:** license-DB backup script + weekly cron (`scripts/backup_licenses.sh`), monthly billing
+  readout (`admin billing --period YYYY-MM --rate <$/M tokens> [--csv]`).
+
 ---
 
 ## 3. Canonical docs (detail lives here)
 - [`docs/design/roadmap-status.md`](docs/design/roadmap-status.md) — status by milestone + capability.
 - [`docs/design/worklog.md`](docs/design/worklog.md) — append-only session history.
+- [`docs/design/model-costs.md`](docs/design/model-costs.md) — LLM model + cost reference (DeepSeek vs GPT-5 vs Claude), per-conference economics, the `PROXY_MODEL` switch note.
 - [`licenseproxy/README.md`](licenseproxy/README.md) — proxy architecture + deploy.
-- [`licenseproxy/OPERATIONS.md`](licenseproxy/OPERATIONS.md) — day-to-day operator commands.
+- [`licenseproxy/OPERATIONS.md`](licenseproxy/OPERATIONS.md) — day-to-day operator commands (issue/revoke/billing/backup).
 - `.env.example` (customer/dev) and `licenseproxy/.env.example` (vendor) — every setting explained.
 
 ---
@@ -97,9 +117,25 @@ Grouped by area; file pointers in parentheses. **97+ offline tests green.**
 
 ---
 
-## 5. Open / next
-- ✅ **License DB backups** — `scripts/backup_licenses.sh` + weekly cron (install line in OPERATIONS.md).
+## 5. Cost & models (quick reference — full detail in `docs/design/model-costs.md`)
+- **Extraction model:** DeepSeek-V3 (`deepseek-chat`) via OpenRouter — deliberately cheap; the task
+  is clean-markdown → structured JSON, where a frontier model buys little.
+- **Per-1M tokens:** DeepSeek ~$0.14–0.27 in / ~$0.28–1.10 out · GPT-5 $1.25 / $10 · Claude Sonnet 5
+  $3 / $15 · Claude Opus 4.8 $5 / $25.
+- **Per ~100-conference run:** DeepSeek **~$0.50–1** vs GPT-5 ~$5 vs Sonnet ~$7–10 vs Opus ~$16
+  (frontier = ~10–30× the cost for marginal gain on this task; our misses are *crawl* problems, not
+  extractor intelligence).
+- **⚠️ Action:** DeepSeek deprecates the `deepseek-chat` name **2026-07-24** (becomes a V4 alias).
+  When ready, update `PROXY_MODEL` in the VPS `licenseproxy/.env` + `pm2 restart cfp-proxy` — one
+  edit changes the model for **all** customers, no client touch.
+
+---
+
+## 6. Open / next
+- ✅ **License DB backups** — `scripts/backup_licenses.sh` + weekly cron (exact `crontab` line in OPERATIONS.md → Backups).
 - ✅ **Monthly billing readout** — `admin billing --period YYYY-MM --rate <$/M tokens> [--csv]`.
-- 🟡 **Customer installer** — `installer/install.ps1` (+ README) built; **needs one validation run on
-  a clean Windows machine** before mass distribution. v2: wrap in an Inno Setup `.exe`.
-- Optional later: reconciliation **accept/reject per diff**; **Google Sheets** reconciliation (v2).
+- 🟢 **Proxy live** at `channeled.org/cfp-proxy`; **customer installer built + validated on the dev
+  machine** (Python/BOM/TLS fixes done). Remaining before mass send: one smoke test on a clean/fresh
+  Windows profile; v2 wrap in an Inno Setup `.exe`.
+- Optional later: reconciliation **accept/reject per diff**; **Google Sheets** reconciliation (v2);
+  `PROXY_MODEL` bump after the DeepSeek name deprecation.

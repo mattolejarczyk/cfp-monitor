@@ -1,9 +1,16 @@
 # cfp-monitor — Roadmap & Status
 
-**Date:** 2026-07-07 · Customer: Nicolia / PRIME|PR. Local native-crawl4ai build.
-**Branch:** all work merged + pushed to `main`. **78 offline tests green.**
+**Date:** 2026-07-09 · Customer: Nicolia / PRIME|PR. Local native-crawl4ai build.
+**Branch:** all work merged + pushed to `main`. **98 offline tests green.**
 
-**Today (2026-07-07):** ✅ **M5 closed** — coverage report (worked/failed % + failed links with
+**Latest (2026-07-09):** ✅ **Licensing proxy DEPLOYED LIVE** at `https://channeled.org/cfp-proxy`
+(Oracle VPS, nginx→uvicorn:8800, PM2; verified unknown-401 / active-200 / revoked-403 and a real
+crawl through the proxy); ✅ **reconciliation annotator** (annotate the customer's master .xlsx with
+our diffs); ✅ **ops** — license-DB backup cron + `admin billing` readout; ✅ **Windows customer
+installer** built + validated on dev (Python 3.12 via winget, no-BOM `.env`, certifi TLS); ✅
+**model/cost reference** added (`docs/design/model-costs.md`). See [HANDOFF.md](../../HANDOFF.md).
+
+**Earlier (2026-07-07):** ✅ **M5 closed** — coverage report (worked/failed % + failed links with
 reasons + resolution-path breakdown) and the **full 15-column customer sheet in the UI** (editable,
 persisted, exportable, URL included); ✅ **IP protection** — hard anti-bot sites never auto-hit
 without signed-in CDP (stopped an orphaned run hammering Reuters' CAPTCHA); ✅ **CDP-on-by-default**
@@ -60,17 +67,20 @@ The local build is a **coherent end-to-end system**: discover → resilient craw
 - **Kill switch**: `python -m licenseproxy.admin revoke <key>` → that customer's crawling stops on the next extraction call (enforcement is server-side, so it can't be patched out locally).
 - Also: **version floor** (force-upgrade / kill old versions), **feature gating**, **token quota + metering** (resolves "who pays for tokens" — vendor meters & bills). Pure-stdlib `policy.py` enforcement core, 8 unit tests.
 - Resolves the earlier open decision (embed vendor key vs customer key) in favor of the vendor proxy — it delivers the kill switch AND the cost model in one move.
-- Still TODO for full distribution: the standalone one-click installer (above), HTTPS deploy of the proxy, and an optional friendly launch-time `/v1/license` check.
+- **DEPLOYED LIVE 2026-07-09** at `https://channeled.org/cfp-proxy` (Oracle VPS: nginx `location /cfp-proxy/` → uvicorn `127.0.0.1:8800`, PM2, survives reboot). Verified end-to-end incl. a real crawl through the proxy. Friendly launch-time `/v1/license` banner shipped. Operator commands: `licenseproxy/OPERATIONS.md`; deploy/update: `HANDOFF.md` §1.
+- **Windows customer installer SHIPPED + validated on dev** (`installer/install.ps1`): finds/installs Python 3.12, downloads the app, venv+deps+Playwright, writes the customer `.env`, desktop shortcut. Two Windows bugs found during validation and fixed: `.env` BOM (dropped `CFP_LLM_PROXY_URL`) → no-BOM write + `utf-8-sig` load; fresh-Python TLS trust → certifi in the license check. Remaining: one smoke test on a clean Windows profile; v2 Inno Setup `.exe`.
+- **Ops shipped:** license-DB weekly backup (`scripts/backup_licenses.sh` + cron), monthly billing readout (`admin billing --rate`).
+- **Model/cost:** DeepSeek-V3 for extraction (~10–30× cheaper than frontier for this task); full reference + the `PROXY_MODEL` switch + the DeepSeek `deepseek-chat` name deprecation (2026-07-24) in `docs/design/model-costs.md`.
 
 ## Reconciliation vs. the customer master sheet
 **Offline .xlsx annotator SHIPPED 2026-07-07** (`reconcile.py` + `reconcile_xlsx.py` + `scripts/reconcile.py`). Reconciles crawl results against the customer's original spreadsheet using a shared taxonomy — **Confirmed / Changed / Gap-filled / Unverified / Not-crawled** — and writes a copy of their sheet with changed cells highlighted, a comment carrying our value + source + last-checked, and a Reconciliation summary tab. Rows aligned by normalized URL; date columns compared by (year, month) to avoid Excel-serial-vs-verbatim false positives; STATUS deliberately not diffed (their workflow vocabulary ≠ our detection label). Verified on the real Utility sheet (5 confirmed / 12 changed / 1 gap-filled / 49 not-crawled against the 5-row DB).
 - **Quality note:** "Changed" is a review prompt, not a verdict — a human decides update vs conflict. Per-field source is the conference URL + last-checked (verbatim evidence snippets are a later enhancement).
 - **Deferred (roadmap):** accept/reject per diff (tracked-changes style) feeding the verification lifecycle; and a **Google Sheets** surface (v2 — live/collaborative, but needs OAuth; ~3–5 days vs ~1 for offline).
 
-**Open decisions (flag before building):**
-- **LLM token-cost model:** embed Matt's key (Matt pays tokens, simplest) vs. each customer supplies their own OpenRouter key (customer pays). Directly affects margins.
-- **Telemetry** back to Matt (runs, volumes) for billing/support/abuse detection.
-- **Non-technical UX:** smooth over the CDP-Chrome + one-time sign-in step so customers don't need hand-holding for hard sites.
+**Open decisions:**
+- ✅ **LLM token-cost model — RESOLVED:** vendor proxy holds the key, meters tokens, Matt bills the customer (`admin billing`). See `docs/design/model-costs.md`.
+- **Telemetry** back to Matt (runs, volumes) for billing/support/abuse detection — partially covered by proxy usage metering; richer run telemetry still optional.
+- **Non-technical UX:** the installer + desktop icon + auto-CDP launcher now cover most of this; the one-time CDP sign-in is only needed for hard anti-bot rows.
 
 ## Input-quality & aggregator handling (roadmap, added 2026-07-06)
 Surfaced by the cyber-market hardiness test. Two input-side challenges:

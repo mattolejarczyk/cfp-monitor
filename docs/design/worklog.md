@@ -14,6 +14,15 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 - **Ops:** `scripts/backup_licenses.sh` (weekly cron), `admin billing` (per-customer token/$ readout),
   `installer/install.ps1` (Windows one-shot customer installer — needs a clean-machine test).
 - **Handoff:** `HANDOFF.md` (single source of truth for Matt + both Hermes), `scripts/vps_setup.sh`.
+- **Installer validated on dev + Windows hardening (two real bugs fixed):** (1) `.env` written with a
+  UTF-8 BOM dropped `CFP_LLM_PROXY_URL` → installer now writes no-BOM; `config.py` loads via
+  `utf-8-sig`. (2) fresh-Python TLS trust store lacked modern roots → the license banner check now
+  verifies via certifi (`licensing.py`). Crawling was never affected (litellm/httpx use certifi).
+  Installer pins Python 3.11/3.12; literal launcher here-string; `-SkipDeps`/`-ShortcutDir` for
+  validation. Proved the packaged build crawls end-to-end through the live proxy (Carbon Capture → PASS).
+- **Model/cost reference** added (`docs/design/model-costs.md`): DeepSeek-V3 extraction ~10–30× cheaper
+  than GPT-5/Sonnet/Opus for this task; per-conference economics; `PROXY_MODEL` switch; DeepSeek
+  `deepseek-chat` name deprecates 2026-07-24 (update `PROXY_MODEL` then). 98 offline tests green.
 
 ## 2026-07-07
 - **M5 closed.** Coverage report (`coverage.py`, `scripts/coverage_run.py`): worked/failed % +
