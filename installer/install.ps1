@@ -2,39 +2,44 @@
   CFP Monitor — one-shot customer installer (Windows).
 
   What it does (no Python/terminal knowledge needed by the customer):
-    1. Finds Python 3.11+ (installs it via winget if missing).
+    1. Finds Python 3.11/3.12 (installs 3.12 via winget if missing — the version the app is pinned to).
     2. Downloads the app from the public repo (no git needed).
     3. Creates an isolated venv and installs all dependencies.
     4. Installs the Playwright Chromium the crawler uses.
     5. Writes the customer's .env  (proxy URL baked in + their license key).
     6. Creates a Desktop shortcut "CFP Monitor" that launches the app.
 
-  VENDOR usage — give the customer their key, then they run (right-click > Run with PowerShell),
-  or you pre-fill it:
+  VENDOR usage — give the customer their key, then they run (right-click > Run with PowerShell):
      powershell -ExecutionPolicy Bypass -File install.ps1 -LicenseKey cfp_theirkey
 
-  Optional: -ProxyUrl (defaults to the live proxy), -InstallDir.
+  Validation (fast, no heavy downloads, isolated):
+     install.ps1 -LicenseKey cfp_test -SkipDeps -InstallDir C:\Temp\cfp -ShortcutDir C:\Temp\cfp
 #>
 param(
   [Parameter(Mandatory = $true)][string]$LicenseKey,
   [string]$ProxyUrl = "https://channeled.org/cfp-proxy",
-  [string]$InstallDir = "$env:LOCALAPPDATA\CFP-Monitor"
+  [string]$InstallDir = "$env:LOCALAPPDATA\CFP-Monitor",
+  [string]$ShortcutDir = [Environment]::GetFolderPath('Desktop'),
+  [switch]$SkipDeps
 )
 $ErrorActionPreference = "Stop"
 function Say($m) { Write-Host "==> $m" -ForegroundColor Cyan }
 
-# 1. Python 3.11+ -----------------------------------------------------------
-Say "Checking for Python 3.11+"
-$py = $null
-foreach ($c in @("py -3.12", "py -3.11", "python")) {
-  try {
-    $exe, $arg = $c.Split(" ")
-    $v = & $exe $arg --version 2>$null
-    if ($v -match "3\.(1[1-9]|[2-9]\d)") { $py = $c; break }
-  } catch {}
+# 1. Python 3.11/3.12 -------------------------------------------------------
+Say "Checking for Python 3.11/3.12"
+$py = $null; $anypy = $null
+foreach ($c in @("py -3.12", "py -3.11", "python", "py")) {
+  try { $e, $a = $c.Split(" "); $v = & $e $a --version 2>$null } catch { continue }
+  if (-not $v) { continue }
+  if (-not $anypy) { $anypy = $c }
+  if ($v -match "3\.(11|12)\b") { $py = $c; break }
 }
-if (-not $py) {
-  Say "Python not found — installing via winget"
+if (-not $py -and $SkipDeps -and $anypy) {
+  Write-Host "   (validation) no 3.11/3.12; using '$anypy' just to build the venv" -ForegroundColor Yellow
+  $py = $anypy
+}
+elseif (-not $py) {
+  Say "Installing Python 3.12 via winget"
   winget install -e --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements
   $py = "py -3.12"
 }
@@ -52,16 +57,21 @@ Copy-Item "$tmp\cfp-monitor-main\*" $InstallDir -Recurse -Force
 Remove-Item $zip, $tmp -Recurse -Force
 
 # 3-4. venv + deps + Playwright browser ------------------------------------
-Say "Creating environment and installing dependencies (this takes a few minutes)"
+Say "Creating environment"
 Push-Location $InstallDir
-$exe, $arg = $py.Split(" ")
-& $exe $arg -m venv venv
+$e, $a = $py.Split(" ")
+if ($a) { & $e $a -m venv venv } else { & $e -m venv venv }
 $vpy = "$InstallDir\venv\Scripts\python.exe"
-& $vpy -m pip install --quiet --upgrade pip
-& $vpy -m pip install --quiet .
-Say "Installing the crawler browser (Chromium download)"
-& $vpy -m playwright install chromium
-try { & "$InstallDir\venv\Scripts\crawl4ai-setup.exe" } catch { }
+if (-not $SkipDeps) {
+  Say "Installing dependencies (a few minutes)"
+  & $vpy -m pip install --quiet --upgrade pip
+  & $vpy -m pip install --quiet .
+  Say "Installing the crawler browser (Chromium download)"
+  & $vpy -m playwright install chromium
+  try { & "$InstallDir\venv\Scripts\crawl4ai-setup.exe" } catch { }
+} else {
+  Write-Host "   (validation) skipping pip install / Playwright" -ForegroundColor Yellow
+}
 
 # 5. Customer .env (proxy + their license; no LLM key on their machine) -----
 Say "Writing configuration"
@@ -71,18 +81,20 @@ CFP_LICENSE_KEY=$LicenseKey
 CFP_CDP_URL=http://localhost:9222
 "@ | Set-Content -Encoding UTF8 "$InstallDir\.env"
 
-# 6. Launcher + Desktop shortcut -------------------------------------------
+# 6. Launcher (.bat is fully static -> literal here-string, no escaping) -----
 $launcher = "$InstallDir\CFP-Monitor.bat"
-@"
+@'
 @echo off
 cd /d "%~dp0"
-powershell -NoProfile -Command "if (-not (Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue)) { `$c='C:\Program Files\Google\Chrome\Application\chrome.exe'; if(-not(Test-Path `$c)){`$c='C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'}; if(Test-Path `$c){ Start-Process `$c -ArgumentList '--remote-debugging-port=9222','--remote-allow-origins=*',('--user-data-dir='+`$env:USERPROFILE+'\cfp-cdp-profile'),'--no-first-run','--no-default-browser-check','about:blank' } }"
+powershell -NoProfile -Command "if (-not (Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue)) { $c='C:\Program Files\Google\Chrome\Application\chrome.exe'; if(-not(Test-Path $c)){$c='C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'}; if(Test-Path $c){ Start-Process $c -ArgumentList '--remote-debugging-port=9222','--remote-allow-origins=*',('--user-data-dir='+$env:USERPROFILE+'\cfp-cdp-profile'),'--no-first-run','--no-default-browser-check','about:blank' } }"
 "venv\Scripts\python.exe" -m streamlit run app.py
 pause
-"@ | Set-Content -Encoding ASCII $launcher
+'@ | Set-Content -Encoding ASCII $launcher
 
+# Desktop shortcut
+New-Item -ItemType Directory -Force -Path $ShortcutDir | Out-Null
 $ws = New-Object -ComObject WScript.Shell
-$sc = $ws.CreateShortcut("$([Environment]::GetFolderPath('Desktop'))\CFP Monitor.lnk")
+$sc = $ws.CreateShortcut("$ShortcutDir\CFP Monitor.lnk")
 $sc.TargetPath = $launcher
 $sc.WorkingDirectory = $InstallDir
 $sc.IconLocation = "shell32.dll,13"

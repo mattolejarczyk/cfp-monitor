@@ -26,9 +26,19 @@ CFP_LICENSE_KEY=cfp_theirkey
 CFP_CDP_URL=http://localhost:9222
 ```
 
+## Validate before distributing
+Fast, isolated check of the installer logic (no heavy downloads, own folder, no desktop clutter):
+```
+install.ps1 -LicenseKey cfp_test -SkipDeps -InstallDir C:\Temp\cfp -ShortcutDir C:\Temp\cfp
+```
+Verified 2026-07-09: app files, venv, `.env`, launcher `.bat`, and shortcut all produced correctly;
+Python pinned to 3.11/3.12 (winget-installs 3.12 if absent). The **full** run (with deps) still
+wants **one smoke test on a real/clean Windows profile** — see below.
+
 ## Notes / status
-- **Needs one validation run on a clean Windows machine** before mass distribution (dependency
-  download size, and whether the customer already has Python/Chrome). This is the last test step.
+- Full end-to-end (deps + first launch showing the license banner) should be smoke-tested once on a
+  clean machine: `install.ps1 -LicenseKey <valid-key>`, then double-click the Desktop icon and
+  confirm the app opens with a green "License active" banner.
 - Requires internet during install (downloads app + deps + Chromium) and Google Chrome for hard
   anti-bot sites.
 - **v2 polish:** wrap `install.ps1` in an Inno Setup `.exe` for a signed double-click installer +
