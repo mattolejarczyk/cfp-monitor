@@ -55,10 +55,15 @@ The local build is a **coherent end-to-end system**: discover → resilient craw
 - Run the crawl4ai/Playwright browser install as a post-install step; include the CDP-Chrome launcher for hard sites.
 - Optional (v2): auto-update channel so customers pull new versions.
 
-**Licensing + remote revocation:**
-- A lightweight **license server** (Matt-controlled) that issues per-customer keys and can **revoke** them.
-- The app validates the key on launch and re-checks periodically online; **works offline within a grace window**, then locks if it can't confirm an active key.
-- Ties to the subscription model (Brandable tiers): revoke = access ends immediately.
+**Licensing + remote revocation — Option D SHIPPED 2026-07-07 (`licenseproxy/`):**
+- Chosen approach = **server-side dependency**: the customer build never holds the LLM provider key; extraction is routed through a **vendor-hosted licensed proxy** (`CFP_LLM_PROXY_URL` + `CFP_LICENSE_KEY`). The proxy validates the license and forwards to the provider with the VENDOR key, metering tokens.
+- **Kill switch**: `python -m licenseproxy.admin revoke <key>` → that customer's crawling stops on the next extraction call (enforcement is server-side, so it can't be patched out locally).
+- Also: **version floor** (force-upgrade / kill old versions), **feature gating**, **token quota + metering** (resolves "who pays for tokens" — vendor meters & bills). Pure-stdlib `policy.py` enforcement core, 8 unit tests.
+- Resolves the earlier open decision (embed vendor key vs customer key) in favor of the vendor proxy — it delivers the kill switch AND the cost model in one move.
+- Still TODO for full distribution: the standalone one-click installer (above), HTTPS deploy of the proxy, and an optional friendly launch-time `/v1/license` check.
+
+## Reconciliation vs. the customer master sheet (roadmap — added 2026-07-07)
+Reconcile fresh crawl results against the customer's original spreadsheet and highlight differences using a shared taxonomy: **Confirmed / Updated / Gap-filled / Conflict / Unverified / Stale**. Chosen presentation = **annotated copy of their sheet** (highlight changed cells + comment with our value) **+ evidence** (source URL + snippet + last-checked). Deferred enhancement: **accept/reject per diff** (tracked-changes style) the customer approves, feeding the verification lifecycle. LOE/quality trade-off (Google Sheets vs offline .xlsx) to be decided before building the writer.
 
 **Open decisions (flag before building):**
 - **LLM token-cost model:** embed Matt's key (Matt pays tokens, simplest) vs. each customer supplies their own OpenRouter key (customer pays). Directly affects margins.

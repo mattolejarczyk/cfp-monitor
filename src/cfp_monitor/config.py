@@ -16,6 +16,10 @@ except Exception:  # pragma: no cover - dotenv is optional
     pass
 
 
+# Bumped when we ship a customer build; the proxy can refuse versions below a per-license floor.
+CLIENT_VERSION = "1.0.0"
+
+
 @dataclass
 class Settings:
     # --- LLM extraction (LiteLLM provider string + key) ---
@@ -25,6 +29,14 @@ class Settings:
     llm_temperature: float = float(os.getenv("CFP_LLM_TEMPERATURE", "0.0"))
     llm_max_tokens: int = int(os.getenv("CFP_LLM_MAX_TOKENS", "1400"))
     chunk_token_threshold: int = int(os.getenv("CFP_CHUNK_TOKENS", "1400"))
+
+    # --- Licensing (Option D: vendor-controlled LLM proxy = kill switch + token metering) ---
+    # In a CUSTOMER build these are set and OPENROUTER_API_KEY is NOT: extraction is routed to the
+    # vendor's proxy authenticated with the license key. Revoking the key stops crawling. When
+    # llm_proxy_url is empty (dev / vendor machine), extraction calls the provider directly as before.
+    llm_proxy_url: str | None = os.getenv("CFP_LLM_PROXY_URL")
+    license_key: str | None = os.getenv("CFP_LICENSE_KEY")
+    client_version: str = os.getenv("CFP_CLIENT_VERSION", CLIENT_VERSION)
 
     # --- Crawl budget & boundaries (per conference) ---
     max_depth: int = int(os.getenv("CFP_MAX_DEPTH", "2"))
@@ -74,6 +86,16 @@ class Settings:
     cdp_url: str | None = os.getenv("CFP_CDP_URL")
 
     def require_llm_key(self) -> None:
+        # Customer build: extraction goes through the licensed proxy, so a license key is what's
+        # required (the provider key lives only on the vendor's proxy).
+        if self.llm_proxy_url:
+            if not self.license_key:
+                raise RuntimeError(
+                    "No license key. Set CFP_LICENSE_KEY (provided with your subscription). "
+                    "Without an active license the monitor cannot run."
+                )
+            return
+        # Dev / vendor build: talk to the provider directly.
         if self.llm_provider.startswith(("openrouter/", "openai/", "anthropic/")) and not self.openrouter_api_key:
             raise RuntimeError(
                 "No LLM API key. Set OPENROUTER_API_KEY (or switch CFP_LLM_PROVIDER to an "

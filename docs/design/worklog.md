@@ -21,7 +21,11 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
   industrialnetzero + connectinghydrogen now PASS with names.
 - **Source-of-truth guard.** A failed/thin re-crawl can no longer wipe good stored data (skip tracked
   fields on ERROR/BLOCKED; never overwrite non-null with null).
-- 78 offline tests green; all pushed to `main`.
+- **Licensing Option D** (`licenseproxy/`): vendor-hosted licensed LLM proxy = kill switch +
+  token metering + version-floor/feature gating. Customer build routes extraction through the
+  proxy with a license key (no provider key locally); `admin revoke <key>` stops their crawling.
+  Pure-stdlib `policy.py` enforcement core; `server.py` (FastAPI) shell; `admin.py` CLI.
+- 86 offline tests green; all pushed to `main`.
 
 ## 2026-07-06
 - **JS-shell recovery**: fast consent presence-check + bounded fallback render (cybertech PARTIAL→PASS).

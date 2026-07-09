@@ -88,13 +88,28 @@ async def extract_from_markdown(
             ),
         },
     ]
-    kwargs = dict(
-        model=settings.llm_provider,
-        messages=messages,
-        api_key=settings.openrouter_api_key,
-        temperature=settings.llm_temperature,
-        max_tokens=settings.llm_max_tokens,
-    )
+    if settings.llm_proxy_url:
+        # Customer build: route through the vendor's licensed proxy (OpenAI-compatible). The
+        # license key is the credential; the proxy picks the model + holds the provider key.
+        # If the license is revoked / expired / below the version floor, this call fails and
+        # extraction stops — the kill switch.
+        kwargs = dict(
+            model="openai/cfp-extract",                       # nominal; the proxy chooses the real model
+            messages=messages,
+            api_base=settings.llm_proxy_url.rstrip("/") + "/v1",
+            api_key=settings.license_key,
+            extra_headers={"X-Client-Version": settings.client_version},
+            temperature=settings.llm_temperature,
+            max_tokens=settings.llm_max_tokens,
+        )
+    else:
+        kwargs = dict(
+            model=settings.llm_provider,
+            messages=messages,
+            api_key=settings.openrouter_api_key,
+            temperature=settings.llm_temperature,
+            max_tokens=settings.llm_max_tokens,
+        )
     try:
         try:
             resp = await litellm.acompletion(**kwargs, response_format={"type": "json_object"})
