@@ -11,7 +11,9 @@ from dataclasses import dataclass, field
 try:  # optional: load a local .env if present
     from dotenv import load_dotenv
 
-    load_dotenv()
+    # utf-8-sig tolerates a UTF-8 BOM (Windows editors / PowerShell Set-Content add one, which
+    # would otherwise corrupt the FIRST variable name and silently drop it).
+    load_dotenv(encoding="utf-8-sig")
 except Exception:  # pragma: no cover - dotenv is optional
     pass
 

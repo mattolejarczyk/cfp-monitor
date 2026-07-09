@@ -74,12 +74,11 @@ if (-not $SkipDeps) {
 }
 
 # 5. Customer .env (proxy + their license; no LLM key on their machine) -----
+# Write WITHOUT a BOM — PowerShell's Set-Content -Encoding UTF8 adds one, which corrupts the
+# first line so CFP_LLM_PROXY_URL wouldn't be read.
 Say "Writing configuration"
-@"
-CFP_LLM_PROXY_URL=$ProxyUrl
-CFP_LICENSE_KEY=$LicenseKey
-CFP_CDP_URL=http://localhost:9222
-"@ | Set-Content -Encoding UTF8 "$InstallDir\.env"
+$envText = "CFP_LLM_PROXY_URL=$ProxyUrl`r`nCFP_LICENSE_KEY=$LicenseKey`r`nCFP_CDP_URL=http://localhost:9222`r`n"
+[System.IO.File]::WriteAllText("$InstallDir\.env", $envText, (New-Object System.Text.UTF8Encoding($false)))
 
 # 6. Launcher (.bat is fully static -> literal here-string, no escaping) -----
 $launcher = "$InstallDir\CFP-Monitor.bat"
