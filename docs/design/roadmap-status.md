@@ -62,8 +62,10 @@ The local build is a **coherent end-to-end system**: discover → resilient craw
 - Resolves the earlier open decision (embed vendor key vs customer key) in favor of the vendor proxy — it delivers the kill switch AND the cost model in one move.
 - Still TODO for full distribution: the standalone one-click installer (above), HTTPS deploy of the proxy, and an optional friendly launch-time `/v1/license` check.
 
-## Reconciliation vs. the customer master sheet (roadmap — added 2026-07-07)
-Reconcile fresh crawl results against the customer's original spreadsheet and highlight differences using a shared taxonomy: **Confirmed / Updated / Gap-filled / Conflict / Unverified / Stale**. Chosen presentation = **annotated copy of their sheet** (highlight changed cells + comment with our value) **+ evidence** (source URL + snippet + last-checked). Deferred enhancement: **accept/reject per diff** (tracked-changes style) the customer approves, feeding the verification lifecycle. LOE/quality trade-off (Google Sheets vs offline .xlsx) to be decided before building the writer.
+## Reconciliation vs. the customer master sheet
+**Offline .xlsx annotator SHIPPED 2026-07-07** (`reconcile.py` + `reconcile_xlsx.py` + `scripts/reconcile.py`). Reconciles crawl results against the customer's original spreadsheet using a shared taxonomy — **Confirmed / Changed / Gap-filled / Unverified / Not-crawled** — and writes a copy of their sheet with changed cells highlighted, a comment carrying our value + source + last-checked, and a Reconciliation summary tab. Rows aligned by normalized URL; date columns compared by (year, month) to avoid Excel-serial-vs-verbatim false positives; STATUS deliberately not diffed (their workflow vocabulary ≠ our detection label). Verified on the real Utility sheet (5 confirmed / 12 changed / 1 gap-filled / 49 not-crawled against the 5-row DB).
+- **Quality note:** "Changed" is a review prompt, not a verdict — a human decides update vs conflict. Per-field source is the conference URL + last-checked (verbatim evidence snippets are a later enhancement).
+- **Deferred (roadmap):** accept/reject per diff (tracked-changes style) feeding the verification lifecycle; and a **Google Sheets** surface (v2 — live/collaborative, but needs OAuth; ~3–5 days vs ~1 for offline).
 
 **Open decisions (flag before building):**
 - **LLM token-cost model:** embed Matt's key (Matt pays tokens, simplest) vs. each customer supplies their own OpenRouter key (customer pays). Directly affects margins.

@@ -25,7 +25,11 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
   token metering + version-floor/feature gating. Customer build routes extraction through the
   proxy with a license key (no provider key locally); `admin revoke <key>` stops their crawling.
   Pure-stdlib `policy.py` enforcement core; `server.py` (FastAPI) shell; `admin.py` CLI.
-- 86 offline tests green; all pushed to `main`.
+- **Reconciliation annotator** (`reconcile.py` + `reconcile_xlsx.py`, openpyxl): writes an
+  annotated copy of the customer's master .xlsx — changed cells highlighted + commented (our
+  value + source + last-checked) + a summary tab. Taxonomy: Confirmed / Changed / Gap-filled /
+  Unverified / Not-crawled. Date columns compared by (year, month); STATUS not diffed.
+- 93 offline tests green; all pushed to `main`.
 
 ## 2026-07-06
 - **JS-shell recovery**: fast consent presence-check + bounded fallback render (cybertech PARTIAL→PASS).
