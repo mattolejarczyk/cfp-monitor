@@ -5,9 +5,20 @@ extraction call (fail-closed); this is purely for UX. Stdlib only (urllib), no e
 from __future__ import annotations
 
 import json
+import ssl
 import urllib.error
 import urllib.request
 from typing import Optional
+
+
+def _ssl_context():
+    """Verify TLS against certifi's CA bundle — a freshly-installed Windows Python's default trust
+    store often lacks the modern roots (Let's Encrypt), which certifi has. Falls back to default."""
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return None
 
 
 def check_license(settings, timeout: float = 6.0) -> dict:
@@ -26,7 +37,7 @@ def check_license(settings, timeout: float = 6.0) -> dict:
         "X-Client-Version": settings.client_version,
     })
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=_ssl_context()) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         active = bool(data.get("active"))
         return {"mode": "proxy", "ok": active,
