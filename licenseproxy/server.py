@@ -28,9 +28,16 @@ except Exception as e:  # pragma: no cover - server-only dependency
 from .policy import LicenseStore
 
 DB = os.getenv("LICENSE_DB", "licenses.db")
-VENDOR_KEY = os.getenv("OPENROUTER_API_KEY")
 PROXY_MODEL = os.getenv("PROXY_MODEL", "openrouter/deepseek/deepseek-chat")
 REQUIRED_FEATURE = os.getenv("PROXY_FEATURE") or None   # e.g. "crawl" to gate this endpoint
+
+
+def _vendor_key() -> str | None:
+    """Vendor provider key for the configured model — OpenAI or OpenRouter. litellm also reads
+    these from the environment, but we pass explicitly so misconfig fails loudly."""
+    if PROXY_MODEL.startswith("openai/"):
+        return os.getenv("OPENAI_API_KEY")
+    return os.getenv("OPENROUTER_API_KEY")
 
 app = FastAPI(title="cfp-monitor license proxy")
 
@@ -75,7 +82,7 @@ async def chat_completions(request: Request):
         resp = await litellm.acompletion(
             model=PROXY_MODEL,                     # vendor picks the model, not the client
             messages=payload.get("messages", []),
-            api_key=VENDOR_KEY,
+            api_key=_vendor_key(),
             temperature=payload.get("temperature", 0.0),
             max_tokens=payload.get("max_tokens", 1400),
             response_format=payload.get("response_format"),

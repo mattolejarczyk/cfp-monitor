@@ -106,7 +106,7 @@ async def extract_from_markdown(
         kwargs = dict(
             model=settings.llm_provider,
             messages=messages,
-            api_key=settings.openrouter_api_key,
+            api_key=settings.provider_key(),      # OpenAI or OpenRouter, per the model prefix
             temperature=settings.llm_temperature,
             max_tokens=settings.llm_max_tokens,
         )

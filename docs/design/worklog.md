@@ -29,7 +29,12 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
   annotated copy of the customer's master .xlsx — changed cells highlighted + commented (our
   value + source + last-checked) + a summary tab. Taxonomy: Confirmed / Changed / Gap-filled /
   Unverified / Not-crawled. Date columns compared by (year, month); STATUS not diffed.
-- 93 offline tests green; all pushed to `main`.
+- **Licensing go-live:** friendly client license check (`licensing.py` → `/v1/license`) wired
+  into the app (banner + Run disabled when inactive); proxy + client now support **both OpenAI and
+  OpenRouter** (`provider_key()` / `PROXY_MODEL` by prefix); `.env.example` for client + proxy;
+  `scripts/run_proxy.bat`. Proved live over real HTTP: active key → 200, `revoke` → 403 (kill
+  switch), plus a TestClient proof of allow→forward→meter with the provider mocked.
+- 97 offline tests green; all pushed to `main`.
 
 ## 2026-07-06
 - **JS-shell recovery**: fast consent presence-check + bounded fallback render (cybertech PARTIAL→PASS).

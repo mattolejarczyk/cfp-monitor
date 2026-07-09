@@ -18,12 +18,18 @@ metering tokens.
 - `admin.py` — issue / revoke / floor / quota / list / usage CLI.
 
 ## Vendor: run the proxy
+1. `cp licenseproxy/.env.example licenseproxy/.env` and fill in the keys.
+2. Windows: `scripts\run_proxy.bat` (loads `licenseproxy\.env`, starts on :8800).
+   Any OS: `uv run uvicorn licenseproxy.server:app --host 0.0.0.0 --port 8800`.
+
+**Both OpenAI and OpenRouter are supported** — set `PROXY_MODEL` and the matching key:
 ```
-pip install fastapi uvicorn litellm
-export LICENSE_DB=licenses.db
-export OPENROUTER_API_KEY=sk-...            # the VENDOR key (never shipped to customers)
-export PROXY_MODEL=openrouter/deepseek/deepseek-chat
-uvicorn licenseproxy.server:app --host 0.0.0.0 --port 8800
+# OpenRouter
+PROXY_MODEL=openrouter/deepseek/deepseek-chat
+OPENROUTER_API_KEY=sk-or-...        # the VENDOR key, never shipped to customers
+# ...or OpenAI
+# PROXY_MODEL=openai/gpt-4o-mini
+# OPENAI_API_KEY=sk-...
 ```
 Issue a customer key:
 ```
@@ -48,5 +54,6 @@ call routes through the proxy. Revoke the key → extraction fails → the monit
   patching the client the way a pure local check could.
 - Deploy behind HTTPS. Rotate the vendor provider key independently of customer keys.
 - `quota_tokens` is a period cap; reset it on billing with `admin quota <key> <n> --reset-used`.
-- A short launch-time `GET /v1/license` check can be added to the client for a friendly
-  "license inactive" message; today enforcement happens at the extraction call (fail-closed).
+- The client shows a friendly license banner at launch (`licensing.check_license` → `GET /v1/license`)
+  and disables Run when the license is inactive; enforcement still also happens at the extraction
+  call (fail-closed) in case the check is skipped or the server is briefly unreachable.

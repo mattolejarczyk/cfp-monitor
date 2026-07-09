@@ -26,6 +26,7 @@ class Settings:
     # Reuses the same OpenRouter key/model pattern as the rest of the stack.
     llm_provider: str = os.getenv("CFP_LLM_PROVIDER", "openrouter/deepseek/deepseek-chat")
     openrouter_api_key: str | None = os.getenv("OPENROUTER_API_KEY")
+    openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
     llm_temperature: float = float(os.getenv("CFP_LLM_TEMPERATURE", "0.0"))
     llm_max_tokens: int = int(os.getenv("CFP_LLM_MAX_TOKENS", "1400"))
     chunk_token_threshold: int = int(os.getenv("CFP_CHUNK_TOKENS", "1400"))
@@ -95,12 +96,17 @@ class Settings:
                     "Without an active license the monitor cannot run."
                 )
             return
-        # Dev / vendor build: talk to the provider directly.
-        if self.llm_provider.startswith(("openrouter/", "openai/", "anthropic/")) and not self.openrouter_api_key:
-            raise RuntimeError(
-                "No LLM API key. Set OPENROUTER_API_KEY (or switch CFP_LLM_PROVIDER to an "
-                "ollama/* local model that needs no key). See .env.example."
-            )
+        # Dev / vendor build: talk to the provider directly. Supports both OpenAI and OpenRouter.
+        if self.llm_provider.startswith("openai/") and not self.openai_api_key:
+            raise RuntimeError("No OpenAI API key. Set OPENAI_API_KEY in your .env (or switch "
+                               "CFP_LLM_PROVIDER to an openrouter/* model).")
+        if self.llm_provider.startswith("openrouter/") and not self.openrouter_api_key:
+            raise RuntimeError("No OpenRouter API key. Set OPENROUTER_API_KEY in your .env (or switch "
+                               "CFP_LLM_PROVIDER to an openai/* model with OPENAI_API_KEY).")
+
+    def provider_key(self) -> str | None:
+        """The right provider key for the configured model (OpenAI vs OpenRouter)."""
+        return self.openai_api_key if self.llm_provider.startswith("openai/") else self.openrouter_api_key
 
 
 DEFAULT = Settings()

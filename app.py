@@ -67,6 +67,18 @@ def _normalize(raw: list[str]) -> list[str]:
 st.set_page_config(page_title="CFP Monitor", page_icon="🎤", layout="wide")
 st.title("🎤 Conference CFP Monitor")
 
+# License status banner (only meaningful for licensed customer builds; silent in dev/direct mode).
+from src.cfp_monitor.licensing import check_license
+_LIC = check_license(Settings())
+_LICENSE_BLOCKS = _LIC["mode"] == "proxy" and _LIC["ok"] is False
+if _LIC["mode"] == "proxy":
+    if _LIC["ok"] is True:
+        st.caption(f"🔑 License active — {_LIC['info'].get('plan') or 'subscription'}.")
+    elif _LIC["ok"] is False:
+        st.error(f"🔒 License inactive: {_LIC['detail']}  ·  Please contact support to restore service.")
+    else:
+        st.warning(f"🔑 {_LIC['detail']}")
+
 _STATUS_ICON = {"open": "🟢", "upcoming": "🟡", "unclear": "⚪", "closed": "🔴", "none": "⚫"}
 
 # Review-sheet editing: map each customer column to how it persists.
@@ -119,7 +131,7 @@ with tab_run:
         with st.expander("Preview normalized URLs"):
             st.write(urls)
 
-    if st.button("Run", type="primary", disabled=not urls):
+    if st.button("Run", type="primary", disabled=not urls or _LICENSE_BLOCKS):
         settings = Settings()
         settings.max_pages, settings.max_depth, settings.max_extract_pages = max_pages, max_depth, max_extract
         settings.llm_provider = provider
