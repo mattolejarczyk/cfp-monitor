@@ -167,3 +167,23 @@ class LicenseStore:
         rows = self.db.execute(
             "SELECT key, COUNT(*) calls, COALESCE(SUM(total_tokens),0) tokens FROM usage GROUP BY key")
         return {r["key"]: {"calls": r["calls"], "tokens": r["tokens"]} for r in rows}
+
+    def billing(self, period: Optional[str] = None, rate_per_mtok: float = 0.0) -> list[dict]:
+        """Per-customer usage for invoicing. `period` filters by 'YYYY-MM' (None = all time).
+        `rate_per_mtok` = your cost/price in $ per MILLION tokens -> a `cost` column. Every license
+        appears (LEFT JOIN), even with zero usage, so nobody is missed on the invoice."""
+        join = "LEFT JOIN usage u ON u.key = l.key"
+        params: tuple = ()
+        if period:
+            join += " AND u.at LIKE ?"
+            params = (period + "%",)
+        rows = self.db.execute(
+            "SELECT l.key key, l.customer customer, l.plan plan, l.active active, "
+            "COUNT(u.id) calls, COALESCE(SUM(u.total_tokens),0) tokens "
+            f"FROM licenses l {join} GROUP BY l.key ORDER BY tokens DESC", params).fetchall()
+        out = []
+        for r in rows:
+            out.append({"key": r["key"], "customer": r["customer"], "plan": r["plan"],
+                        "active": bool(r["active"]), "calls": r["calls"], "tokens": r["tokens"],
+                        "cost": round(r["tokens"] / 1_000_000 * rate_per_mtok, 4)})
+        return out

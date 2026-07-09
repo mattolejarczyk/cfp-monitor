@@ -5,6 +5,16 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-07-09
+- **License proxy DEPLOYED LIVE** at https://channeled.org/cfp-proxy (Oracle VPS, nginx→uvicorn:8800,
+  PM2). Verified: unknown 401 / active 200 / revoked 403.
+- **Reconciliation annotator** shipped (`reconcile.py` + `reconcile_xlsx.py`): annotated .xlsx copy
+  of the customer master sheet.
+- **Licensing go-live extras:** friendly client license banner; OpenAI+OpenRouter support.
+- **Ops:** `scripts/backup_licenses.sh` (weekly cron), `admin billing` (per-customer token/$ readout),
+  `installer/install.ps1` (Windows one-shot customer installer — needs a clean-machine test).
+- **Handoff:** `HANDOFF.md` (single source of truth for Matt + both Hermes), `scripts/vps_setup.sh`.
+
 ## 2026-07-07
 - **M5 closed.** Coverage report (`coverage.py`, `scripts/coverage_run.py`): worked/failed % +
   failed links with concise reasons + **resolution-path breakdown** (Core crawl / Browser control /

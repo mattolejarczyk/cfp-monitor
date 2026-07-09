@@ -52,6 +52,11 @@ def main() -> int:
     sub.add_parser("list")
     p = sub.add_parser("usage"); p.add_argument("key", nargs="?")
 
+    p = sub.add_parser("billing", help="per-customer token/cost summary for invoicing")
+    p.add_argument("--period", help="filter by month, e.g. 2026-07 (default: all time)")
+    p.add_argument("--rate", type=float, default=0.0, help="$ per MILLION tokens -> adds a cost column")
+    p.add_argument("--csv", action="store_true", help="output CSV instead of a table")
+
     a = ap.parse_args()
     store = LicenseStore(DB)
 
@@ -76,6 +81,23 @@ def main() -> int:
             print(" ", _fmt(lic))
     elif a.cmd == "usage":
         print(store.usage_summary(a.key))
+    elif a.cmd == "billing":
+        rows = store.billing(a.period, a.rate)
+        label = a.period or "all time"
+        if a.csv:
+            import csv, sys as _sys
+            w = csv.DictWriter(_sys.stdout, fieldnames=["customer", "plan", "active", "calls", "tokens", "cost", "key"])
+            w.writeheader(); w.writerows(rows)
+        else:
+            print(f"Billing — {label}" + (f" @ ${a.rate}/M tokens" if a.rate else ""))
+            print(f"  {'customer':24} {'plan':8} {'calls':>7} {'tokens':>12} {'cost':>10}")
+            tt = tc = 0
+            for r in rows:
+                tt += r["tokens"]; tc += r["cost"]
+                flag = "" if r["active"] else " (revoked)"
+                print(f"  {(r['customer'] or '')[:24]:24} {r['plan'][:8]:8} {r['calls']:>7} "
+                      f"{r['tokens']:>12,} {('$'+format(r['cost'],'.2f')):>10}{flag}")
+            print(f"  {'TOTAL':24} {'':8} {'':>7} {tt:>12,} {('$'+format(tc,'.2f')):>10}")
     store.close()
     return 0
 

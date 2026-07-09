@@ -66,6 +66,19 @@ def test_quota_and_metering():
     assert s.usage_summary(k)["tokens"] == 105
 
 
+def test_billing_report():
+    s = LicenseStore()
+    a = s.issue("Acme"); b = s.issue("Beta")
+    s.record_usage(a, "m", 1_000_000, 500_000)     # 1.5M tokens
+    s.record_usage(a, "m", 0, 500_000)             # +0.5M -> 2.0M total
+    # Beta has no usage but must still appear.
+    rows = s.billing(rate_per_mtok=0.20)
+    by_cust = {r["customer"]: r for r in rows}
+    assert by_cust["Acme"]["tokens"] == 2_000_000
+    assert by_cust["Acme"]["cost"] == 0.40         # 2M * $0.20/M
+    assert by_cust["Beta"]["tokens"] == 0 and by_cust["Beta"]["cost"] == 0.0
+
+
 def test_client_requires_license_in_proxy_mode():
     # Proxy configured but no license key -> refuse to run (no silent fallback).
     s = Settings(); s.llm_proxy_url = "https://license.example.com"; s.license_key = None

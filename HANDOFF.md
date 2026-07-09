@@ -97,8 +97,9 @@ Grouped by area; file pointers in parentheses. **97+ offline tests green.**
 
 ---
 
-## 5. Open / next (not blocking)
-- Back up `licenses.db` on the VPS (weekly cron).
-- One-click **customer installer** (biggest remaining item before handing builds to customers).
-- Optional: monthly `admin usage` billing readout; reconciliation **accept/reject per diff**;
-  Google Sheets reconciliation surface (v2).
+## 5. Open / next
+- ✅ **License DB backups** — `scripts/backup_licenses.sh` + weekly cron (install line in OPERATIONS.md).
+- ✅ **Monthly billing readout** — `admin billing --period YYYY-MM --rate <$/M tokens> [--csv]`.
+- 🟡 **Customer installer** — `installer/install.ps1` (+ README) built; **needs one validation run on
+  a clean Windows machine** before mass distribution. v2: wrap in an Inno Setup `.exe`.
+- Optional later: reconciliation **accept/reject per diff**; **Google Sheets** reconciliation (v2).
