@@ -12,7 +12,7 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
   of the customer master sheet.
 - **Licensing go-live extras:** friendly client license banner; OpenAI+OpenRouter support.
 - **Ops:** `scripts/backup_licenses.sh` (weekly cron), `admin billing` (per-customer token/$ readout),
-  `installer/install.ps1` (Windows one-shot customer installer — needs a clean-machine test).
+  `installer/install.ps1` (Windows one-shot customer installer, now hardened for clean-machine unknowns).
 - **Handoff:** `HANDOFF.md` (single source of truth for Matt + both Hermes), `scripts/vps_setup.sh`.
 - **Installer validated on dev + Windows hardening (two real bugs fixed):** (1) `.env` written with a
   UTF-8 BOM dropped `CFP_LLM_PROXY_URL` → installer now writes no-BOM; `config.py` loads via
@@ -23,6 +23,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 - **Model/cost reference** added (`docs/design/model-costs.md`): DeepSeek-V3 extraction ~10–30× cheaper
   than GPT-5/Sonnet/Opus for this task; per-conference economics; `PROXY_MODEL` switch; DeepSeek
   `deepseek-chat` name deprecates 2026-07-24 (update `PROXY_MODEL` then). 98 offline tests green.
+- **Installer hardened for clean-machine unknowns.** `install.ps1`: graceful message when `winget`
+  is absent (points to python.org, "Add to PATH") + re-verifies Python landed after winget; launcher
+  `.bat` now prints an explicit friendly note when Google Chrome isn't installed (normal sites still
+  crawl; only hard anti-bot needs Chrome) instead of silently no-opping; non-fatal Chrome heads-up at
+  install time. Also normalized the whole script to ASCII — stray UTF-8 em-dashes in a no-BOM `.ps1`
+  were tripping the PowerShell 5.1 tokenizer. Validated: parses clean, `-SkipDeps` completes, `.env`
+  written without a BOM.
 
 ## 2026-07-07
 - **M5 closed.** Coverage report (`coverage.py`, `scripts/coverage_run.py`): worked/failed % +

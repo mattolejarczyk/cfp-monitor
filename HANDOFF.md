@@ -85,7 +85,10 @@ Grouped by area; file pointers in parentheses. **98 offline tests green.**
   finds/installs **Python 3.12** (winget), downloads the app, builds venv + deps + the Playwright
   Chromium, writes the customer `.env`, drops a **"CFP Monitor" desktop shortcut**. No provider key
   on the customer's machine. **Validated on the dev machine** (`-SkipDeps` for fast checks, then a
-  full run). Remaining: one smoke test on a genuinely clean/fresh Windows profile before mass send.
+  full run). **Hardened for clean-machine unknowns:** graceful message if `winget` is absent (points
+  to python.org) + re-verifies Python landed; launcher prints a friendly note when Chrome isn't
+  installed (normal sites still crawl); script normalized to ASCII (stray em-dashes were tripping the
+  PS 5.1 parser). Remaining: one smoke test on a genuinely clean/fresh Windows profile before mass send.
 - **Windows hardening — two real bugs found during install validation, both fixed:**
   1. `.env` was written with a UTF-8 **BOM** (PowerShell's `Set-Content -Encoding UTF8` adds one),
      which corrupted the first line so `CFP_LLM_PROXY_URL` wasn't read → app fell back to
@@ -135,7 +138,8 @@ Grouped by area; file pointers in parentheses. **98 offline tests green.**
 - ✅ **License DB backups** — `scripts/backup_licenses.sh` + weekly cron (exact `crontab` line in OPERATIONS.md → Backups).
 - ✅ **Monthly billing readout** — `admin billing --period YYYY-MM --rate <$/M tokens> [--csv]`.
 - 🟢 **Proxy live** at `channeled.org/cfp-proxy`; **customer installer built + validated on the dev
-  machine** (Python/BOM/TLS fixes done). Remaining before mass send: one smoke test on a clean/fresh
-  Windows profile; v2 wrap in an Inno Setup `.exe`.
+  machine** (Python/BOM/TLS fixes done) and **hardened for clean-machine unknowns** (winget-absent
+  and Chrome-absent both handled gracefully; script is ASCII-clean). Remaining before mass send: one
+  smoke test on a clean/fresh Windows profile; v2 wrap in an Inno Setup `.exe`.
 - Optional later: reconciliation **accept/reject per diff**; **Google Sheets** reconciliation (v2);
   `PROXY_MODEL` bump after the DeepSeek name deprecation.

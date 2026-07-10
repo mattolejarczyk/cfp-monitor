@@ -36,8 +36,12 @@ Python pinned to 3.11/3.12 (winget-installs 3.12 if absent). The **full** run (w
 wants **one smoke test on a real/clean Windows profile** — see below.
 
 ## Notes / status
-- Full end-to-end (deps + first launch showing the license banner) should be smoke-tested once on a
-  clean machine: `install.ps1 -LicenseKey <valid-key>`, then double-click the Desktop icon and
+- **Hardened for clean-machine unknowns:** if `winget` is absent the script prints a clear
+  python.org install path (and re-verifies Python landed after a winget install); the launcher prints
+  a friendly note when Google Chrome isn't installed (normal sites still crawl - only hard anti-bot
+  needs Chrome). The script is ASCII-only so the PowerShell 5.1 parser can't trip on stray Unicode.
+- Full end-to-end (deps + first launch showing the license banner) should still be smoke-tested once
+  on a clean machine: `install.ps1 -LicenseKey <valid-key>`, then double-click the Desktop icon and
   confirm the app opens with a green "License active" banner.
 - Requires internet during install (downloads app + deps + Chromium) and Google Chrome for hard
   anti-bot sites.
