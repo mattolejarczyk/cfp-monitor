@@ -1,15 +1,15 @@
 <#
-  CFP Monitor — one-shot customer installer (Windows).
+  CFP Monitor  -  one-shot customer installer (Windows).
 
   What it does (no Python/terminal knowledge needed by the customer):
-    1. Finds Python 3.11/3.12 (installs 3.12 via winget if missing — the version the app is pinned to).
+    1. Finds Python 3.11/3.12 (installs 3.12 via winget if missing  -  the version the app is pinned to).
     2. Downloads the app from the public repo (no git needed).
     3. Creates an isolated venv and installs all dependencies.
     4. Installs the Playwright Chromium the crawler uses.
     5. Writes the customer's .env  (proxy URL baked in + their license key).
     6. Creates a Desktop shortcut "CFP Monitor" that launches the app.
 
-  VENDOR usage — give the customer their key, then they run (right-click > Run with PowerShell):
+  VENDOR usage  -  give the customer their key, then they run (right-click > Run with PowerShell):
      powershell -ExecutionPolicy Bypass -File install.ps1 -LicenseKey cfp_theirkey
 
   Validation (fast, no heavy downloads, isolated):
@@ -39,9 +39,29 @@ if (-not $py -and $SkipDeps -and $anypy) {
   $py = $anypy
 }
 elseif (-not $py) {
+  if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Host ""
+    Write-Host "Python 3.11 or 3.12 is required but wasn't found, and 'winget' (the Windows app" -ForegroundColor Red
+    Write-Host "installer) isn't available on this PC  -  so I can't install Python automatically." -ForegroundColor Red
+    Write-Host "Please install Python 3.12 yourself, then run this installer again:" -ForegroundColor Yellow
+    Write-Host "  1. Open https://www.python.org/downloads/  and download Python 3.12" -ForegroundColor Yellow
+    Write-Host "  2. In the installer, TICK 'Add python.exe to PATH', then Install" -ForegroundColor Yellow
+    Write-Host "  3. Re-run this CFP Monitor installer" -ForegroundColor Yellow
+    exit 1
+  }
   Say "Installing Python 3.12 via winget"
   winget install -e --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements
-  $py = "py -3.12"
+  # Verify it actually landed (winget can no-op or fail without throwing).
+  $py = $null
+  foreach ($c in @("py -3.12", "py -3.11")) {
+    try { $e, $a = $c.Split(" "); if ((& $e $a --version 2>$null) -match "3\.(11|12)\b") { $py = $c; break } } catch {}
+  }
+  if (-not $py) {
+    Write-Host ""
+    Write-Host "The automatic Python 3.12 install didn't complete. Please install it manually and" -ForegroundColor Red
+    Write-Host "re-run: https://www.python.org/downloads/  (tick 'Add python.exe to PATH')." -ForegroundColor Yellow
+    exit 1
+  }
 }
 Say "Using Python: $py"
 
@@ -74,7 +94,7 @@ if (-not $SkipDeps) {
 }
 
 # 5. Customer .env (proxy + their license; no LLM key on their machine) -----
-# Write WITHOUT a BOM — PowerShell's Set-Content -Encoding UTF8 adds one, which corrupts the
+# Write WITHOUT a BOM  -  PowerShell's Set-Content -Encoding UTF8 adds one, which corrupts the
 # first line so CFP_LLM_PROXY_URL wouldn't be read.
 Say "Writing configuration"
 $envText = "CFP_LLM_PROXY_URL=$ProxyUrl`r`nCFP_LICENSE_KEY=$LicenseKey`r`nCFP_CDP_URL=http://localhost:9222`r`n"
@@ -85,7 +105,7 @@ $launcher = "$InstallDir\CFP-Monitor.bat"
 @'
 @echo off
 cd /d "%~dp0"
-powershell -NoProfile -Command "if (-not (Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue)) { $c='C:\Program Files\Google\Chrome\Application\chrome.exe'; if(-not(Test-Path $c)){$c='C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'}; if(Test-Path $c){ Start-Process $c -ArgumentList '--remote-debugging-port=9222','--remote-allow-origins=*',('--user-data-dir='+$env:USERPROFILE+'\cfp-cdp-profile'),'--no-first-run','--no-default-browser-check','about:blank' } }"
+powershell -NoProfile -Command "if (Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue) { exit }; $c='C:\Program Files\Google\Chrome\Application\chrome.exe'; if(-not(Test-Path $c)){$c='C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'}; if(Test-Path $c){ Start-Process $c -ArgumentList '--remote-debugging-port=9222','--remote-allow-origins=*',('--user-data-dir='+$env:USERPROFILE+'\cfp-cdp-profile'),'--no-first-run','--no-default-browser-check','about:blank' } else { Write-Host 'Note: Google Chrome was not found. Normal sites will still crawl fine; only hard anti-bot sites (e.g. Reuters) need Chrome installed. Install Chrome and relaunch if you need those.' -ForegroundColor Yellow }"
 "venv\Scripts\python.exe" -m streamlit run app.py
 pause
 '@ | Set-Content -Encoding ASCII $launcher
@@ -99,6 +119,14 @@ $sc.WorkingDirectory = $InstallDir
 $sc.IconLocation = "shell32.dll,13"
 $sc.Save()
 Pop-Location
+
+# Non-fatal heads-up: Chrome is only needed for hard anti-bot sites (via CDP), not normal crawling.
+$chrome = @("C:\Program Files\Google\Chrome\Application\chrome.exe",
+            "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ }
+if (-not $chrome) {
+  Write-Host "Heads-up: Google Chrome wasn't found. The app runs fine and crawls normal sites;" -ForegroundColor Yellow
+  Write-Host "install Chrome only if you need hard anti-bot sites (e.g. Reuters)." -ForegroundColor Yellow
+}
 
 Say "Done. Double-click 'CFP Monitor' on your Desktop to start."
 Say "Installed to: $InstallDir"
