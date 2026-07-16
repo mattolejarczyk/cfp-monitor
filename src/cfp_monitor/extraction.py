@@ -27,7 +27,9 @@ _INSTRUCTION = (
     "other_editions if the page references a different event year/city than the main one. "
     "Return ONLY a JSON object matching the given schema. Rules: use null for anything "
     "the page does not clearly state; NEVER invent or infer dates, deadlines, or status; "
-    "quote text verbatim where asked; cfp_status must be one of open, closed, upcoming, "
+    "quote text verbatim where asked; for any non-verbatim text use plain ASCII "
+    "punctuation only (standard hyphen and straight quotes, never em/en dashes or "
+    "typographic punctuation); cfp_status must be one of open, closed, upcoming, "
     "unclear (or null) and set it to a value ONLY when the page states it explicitly."
 )
 
