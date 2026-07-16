@@ -97,6 +97,13 @@ Grouped by area; file pointers in parentheses. **98 offline tests green.**
   2. A freshly winget-installed Windows Python's default trust store lacks the modern
      Let's Encrypt roots → the license banner's TLS check failed. Fixed: the check verifies via
      **certifi** (`licensing.py`). Crawling was never affected (litellm/httpx already use certifi).
+- **Windows validation follow-up (2026-07-16):** actual licensed desktop install completed the
+  first-launch license/CDP smoke test and passed a one-conference crawl. Customer output now has two
+  cheap guardrails: the extraction prompt requests ASCII punctuation and the final 15-column
+  customer table/CSV normalizes fields to Excel-safe ASCII. `.xlsx` intake is intentionally strict:
+  only literal URL values in visible Column B are accepted; package XML, hyperlinks, notes, and other
+  columns are ignored. A bad source URL is surfaced as an input-quality issue, never silently replaced.
+
 - **Ops:** license-DB backup script + weekly cron (`scripts/backup_licenses.sh`), monthly billing
   readout (`admin billing --period YYYY-MM --rate <$/M tokens> [--csv]`).
 

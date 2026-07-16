@@ -35,6 +35,12 @@ Verified 2026-07-09: app files, venv, `.env`, launcher `.bat`, and shortcut all 
 Python pinned to 3.11/3.12 (winget-installs 3.12 if absent). The **full** run (with deps) still
 wants **one smoke test on a real/clean Windows profile** — see below.
 
+## Updates
+
+To update an installed customer copy, download the latest `installer/install.ps1` and run it again
+with the existing `cfp_...` license key. It refreshes the app in
+`%LOCALAPPDATA%\CFP-Monitor` and recreates the Desktop shortcut; no provider key is required.
+
 ## Notes / status
 - **Hardened for clean-machine unknowns:** if `winget` is absent the script prints a clear
   python.org install path (and re-verifies Python landed after a winget install); the launcher prints

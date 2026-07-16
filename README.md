@@ -52,6 +52,16 @@ Paste your conference URLs, tune the budget, Run. Each result shows the CFP
 verdict, the facts + confidence, the evidence (source URL + snippet), and the full
 crawl decision trace.
 
+### Customer list uploads and Excel-safe output
+
+- `.txt` and `.csv` uploads extract HTTP(S) URLs from the file text.
+- Customer `.xlsx` uploads intentionally read only literal URL values from visible **Column B**.
+  Workbook XML, hyperlinks, notes, and other columns are not crawl targets.
+- The customer table and CSV export are normalized to Excel-safe ASCII: ordinary hyphens and
+  straight quotes replace typographic punctuation, preventing mojibake such as `â€”`.
+- A bad or stale URL is retained as an input-quality issue; the crawler never silently substitutes
+  a different conference site. Correct the source list, then rerun that entry.
+
 **CLI:**
 ```bash
 python run.py examples/urls.txt -o results.json

@@ -10,7 +10,16 @@ our diffs); ✅ **ops** — license-DB backup cron + `admin billing` readout; �
 installer** built + validated on dev (Python 3.12 via winget, no-BOM `.env`, certifi TLS); ✅
 **model/cost reference** added (`docs/design/model-costs.md`). See [HANDOFF.md](../../HANDOFF.md).
 
-**Earlier (2026-07-07):** ✅ **M5 closed** — coverage report (worked/failed % + failed links with
+**Latest (2026-07-16):** ✅ **Windows licensed customer workflow validated end-to-end** on the
+real desktop install: proxy license banner, dedicated Chrome/CDP, one-URL crawl, and two-row XLSX
+upload all work. Customer presentation fields are now **Excel-safe ASCII** (no em/en dashes or
+mojibake); the extraction prompt requests ASCII punctuation and a deterministic final formatter
+enforces it. `.xlsx` upload intake reads only literal conference URLs from visible **Column B**,
+never workbook XML, hyperlinks, notes, or other columns. Input quality remains a human review gate:
+a wrong/stale source URL is reported honestly and is never silently replaced. Targeted regression
+coverage: customer format 10/10; XLSX intake 2/2.
+
+**Earlier (2026-07-09):** ✅ **M5 closed** — coverage report (worked/failed % + failed links with
 reasons + resolution-path breakdown) and the **full 15-column customer sheet in the UI** (editable,
 persisted, exportable, URL included); ✅ **IP protection** — hard anti-bot sites never auto-hit
 without signed-in CDP (stopped an orphaned run hammering Reuters' CAPTCHA); ✅ **CDP-on-by-default**
