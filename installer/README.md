@@ -1,5 +1,8 @@
 # Customer installer (Windows)
 
+For the exact licensed folder layout, configuration, Desktop shortcut target, CDP behavior, verification,
+and recovery paths, see [`docs/operations/windows-desktop-install.md`](../docs/operations/windows-desktop-install.md).
+
 One script sets up everything on a customer's PC — Python, the app, the crawler browser, their
 license, and a Desktop shortcut. **No provider key ever touches their machine**; all LLM calls go
 through your licensed proxy.

@@ -113,6 +113,7 @@ Grouped by area; file pointers in parentheses. **98 offline tests green.**
 - [`docs/design/roadmap-status.md`](docs/design/roadmap-status.md) — status by milestone + capability.
 - [`docs/design/worklog.md`](docs/design/worklog.md) — append-only session history.
 - [`docs/design/model-costs.md`](docs/design/model-costs.md) — LLM model + cost reference (DeepSeek vs GPT-5 vs Claude), per-conference economics, the `PROXY_MODEL` switch note.
+- [`docs/operations/windows-desktop-install.md`](docs/operations/windows-desktop-install.md) — canonical licensed Windows install, Desktop shortcut, CDP, update, validation, and recovery runbook.
 - [`licenseproxy/README.md`](licenseproxy/README.md) — proxy architecture + deploy.
 - [`licenseproxy/OPERATIONS.md`](licenseproxy/OPERATIONS.md) — day-to-day operator commands (issue/revoke/billing/backup).
 - `.env.example` (customer/dev) and `licenseproxy/.env.example` (vendor) — every setting explained.

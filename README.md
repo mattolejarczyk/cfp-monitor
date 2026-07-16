@@ -35,6 +35,8 @@ app.py            Streamlit UI
 run.py            CLI
 ```
 
+For licensed Windows desktop installation and recovery, see [`docs/operations/windows-desktop-install.md`](docs/operations/windows-desktop-install.md).
+
 ## Setup
 ```bash
 uv sync                     # or: pip install -e .
