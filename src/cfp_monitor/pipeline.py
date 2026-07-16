@@ -94,7 +94,7 @@ async def analyze_conference(crawler, start_url: str, settings: Settings, tracer
 
 
 async def run_urls(urls: list[str], settings: Settings | None = None,
-                   contexts: list[dict] | None = None) -> list[ConferenceResult]:
+                   contexts: list[dict | None] | None = None) -> list[ConferenceResult]:
     """Analyze a fixed list of conference URLs. Reuses one browser for the batch."""
     settings = settings or DEFAULT
     settings.require_llm_key()

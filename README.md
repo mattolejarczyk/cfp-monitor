@@ -57,8 +57,7 @@ crawl decision trace.
 ### Customer list uploads and Excel-safe output
 
 - `.txt` and `.csv` uploads extract HTTP(S) URLs from the file text.
-- Customer `.xlsx` uploads intentionally read only literal URL values from visible **Column B**.
-  Workbook XML, hyperlinks, notes, and other columns are not crawl targets.
+- Customer `.xlsx` uploads use only literal URL values from visible **Column B** as crawl targets; the same row's **A/C/D** values (name, location, event date) are retained only as context for one-hop directory/organization-page resolution.
 - The customer table and CSV export are normalized to Excel-safe ASCII: ordinary hyphens and
   straight quotes replace typographic punctuation, preventing mojibake such as `â€”`.
 - A bad or stale URL is retained as an input-quality issue; the crawler never silently substitutes

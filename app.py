@@ -28,22 +28,13 @@ from src.cfp_monitor.customer_format import (
 
 import os
 
-from src.cfp_monitor.uploads import URL_RE, urls_from_upload
+from src.cfp_monitor.uploads import (
+    URL_RE,
+    normalize_urls_and_contexts,
+    uploaded_urls_and_contexts,
+)
 
 DB_PATH = "cfp_monitor.db"   # source of truth
-def _normalize(raw: list[str]) -> list[str]:
-    """Strip, keep only http(s), dedupe by normalized form (order-preserving)."""
-    seen, out = set(), []
-    for u in raw:
-        u = (u or "").strip().rstrip(",;")
-        if not u.lower().startswith("http"):
-            continue
-        key = normalize_url(u)
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(u)
-    return out
 
 st.set_page_config(page_title="CFP Monitor", page_icon="🎤", layout="wide")
 st.title("🎤 Conference CFP Monitor")
@@ -104,10 +95,15 @@ with tab_run:
     uploaded = st.file_uploader("…or upload a list (.txt / .csv / .xlsx)", type=["txt", "csv", "xlsx"])
 
     raw = URL_RE.findall(urls_text or "")
+    contexts: list[dict | None] = [None] * len(raw)
     if uploaded:
-        raw += urls_from_upload(uploaded.name, uploaded.read())
-    urls = _normalize(raw)
+        uploaded_urls, uploaded_contexts = uploaded_urls_and_contexts(uploaded.name, uploaded.read())
+        raw += uploaded_urls
+        contexts += uploaded_contexts
+    urls, contexts = normalize_urls_and_contexts(raw, contexts)
     st.caption(f"**{len(urls)} unique URL(s)** after normalize + dedupe.")
+    if any(contexts):
+        st.caption("Spreadsheet row context is active for directory/organization-page resolution.")
     if urls:
         with st.expander("Preview normalized URLs"):
             st.write(urls)
@@ -124,7 +120,7 @@ with tab_run:
             st.error(str(e)); st.stop()
 
         with st.spinner(f"Crawling {len(urls)} conference(s)…"):
-            results = asyncio.run(run_urls(urls, settings))
+            results = asyncio.run(run_urls(urls, settings, contexts=contexts))
 
         # Persist to the source-of-truth DB (gate quality + record the run).
         store = Store(DB_PATH)

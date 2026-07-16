@@ -113,8 +113,9 @@ Complete these checks in order:
 ## 7. Customer-list intake guardrails
 
 - `.txt` and `.csv` inputs extract HTTP(S) URLs from text.
-- Customer `.xlsx` files intentionally use only literal URL values in visible **Column B**.
-  Excel package XML, hyperlink metadata, notes, and other columns are not crawl targets.
+- Customer `.xlsx` files use literal URL values in visible **Column B** as crawl targets. The same row's
+  **A/C/D** values (name, location, event date) are retained only for one-hop directory/organization-page
+  resolution. Excel package XML, hyperlink metadata, notes, and all other columns are not crawl targets.
 - The UI reports the normalized/deduplicated URL count before a run. Stop and correct the input if it
   does not match the expected list.
 - A bad or stale source URL is an input-quality failure, not evidence that the crawler failed.

@@ -1,9 +1,14 @@
 """Regression tests for customer URL-list uploads."""
 import io
+from datetime import date
 
 from openpyxl import Workbook
 
-from cfp_monitor.uploads import urls_from_upload
+from cfp_monitor.uploads import (
+    normalize_urls_and_contexts,
+    uploaded_urls_and_contexts,
+    urls_from_upload,
+)
 
 
 def _xlsx_bytes() -> bytes:
@@ -11,13 +16,14 @@ def _xlsx_bytes() -> bytes:
     sheet = workbook.active
     sheet["A1"] = "Conference"
     sheet["B1"] = "Conference URL"
-    sheet["A2"] = "IROS"
+    sheet["A2"] = "IROS 2026"
     sheet["B2"] = "https://iros2026.org/"
+    sheet["C2"] = "Kyoto, Japan"
+    sheet["D2"] = date(2026, 9, 27)
     sheet["A3"] = "RoboBusiness"
     sheet["B3"] = "https://www.robobusiness.com/"
-    # A hyperlink in another column is a note, not a crawl target.
-    sheet["C3"] = "speaking opportunities"
-    sheet["C3"].hyperlink = "https://www.robobusiness.com/speaking-opportunities/"
+    sheet["C3"] = "Santa Clara, California"
+    sheet["D3"] = "2026-10-14"
     out = io.BytesIO()
     workbook.save(out)
     workbook.close()
@@ -31,6 +37,24 @@ def test_xlsx_reads_visible_cells_not_internal_xml_namespaces():
         "https://www.robobusiness.com/",
     ]
     assert all("openxmlformats" not in url for url in urls)
+
+
+def test_xlsx_keeps_scoped_row_context_aligned_to_each_column_b_url():
+    urls, contexts = uploaded_urls_and_contexts("two-conferences.xlsx", _xlsx_bytes())
+    assert urls == ["https://iros2026.org/", "https://www.robobusiness.com/"]
+    assert contexts == [
+        {"name": "IROS 2026", "location": "Kyoto, Japan", "dates": "2026-09-27"},
+        {"name": "RoboBusiness", "location": "Santa Clara, California", "dates": "2026-10-14"},
+    ]
+
+
+def test_normalization_dedupes_urls_without_losing_their_aligned_context():
+    urls, contexts = normalize_urls_and_contexts(
+        [" https://iros2026.org/ ", "https://iros2026.org", "https://robobusiness.com"],
+        [{"name": "IROS 2026"}, None, {"name": "RoboBusiness"}],
+    )
+    assert urls == ["https://iros2026.org/", "https://robobusiness.com"]
+    assert contexts == [{"name": "IROS 2026"}, {"name": "RoboBusiness"}]
 
 
 def test_text_upload_still_extracts_urls():

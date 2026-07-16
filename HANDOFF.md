@@ -101,8 +101,10 @@ Grouped by area; file pointers in parentheses. **98 offline tests green.**
   first-launch license/CDP smoke test and passed a one-conference crawl. Customer output now has two
   cheap guardrails: the extraction prompt requests ASCII punctuation and the final 15-column
   customer table/CSV normalizes fields to Excel-safe ASCII. `.xlsx` intake is intentionally strict:
-  only literal URL values in visible Column B are accepted; package XML, hyperlinks, notes, and other
-  columns are ignored. A bad source URL is surfaced as an input-quality issue, never silently replaced.
+  only literal URL values in visible Column B become crawl targets; the matching row's A/C/D values
+  (name/location/event date) feed the existing one-hop directory/organization resolver. Package XML,
+  hyperlinks, notes, and other columns are ignored. A bad source URL is surfaced as an input-quality
+  issue, never silently replaced.
 
 - **Ops:** license-DB backup script + weekly cron (`scripts/backup_licenses.sh`), monthly billing
   readout (`admin billing --period YYYY-MM --rate <$/M tokens> [--csv]`).
