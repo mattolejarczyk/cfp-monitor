@@ -48,7 +48,7 @@ def _build_reason(res: ConferenceResult) -> str:
     A readable summary of status_basis / evidence / trace — those layers stay intact."""
     word = _STATUS_WORD.get(res.cfp_status, res.cfp_status.value.title())
     why = _BASIS_PHRASE.get(res.status_basis or "", res.status_basis or "reason unrecorded")
-    parts = [f"{word} — {why}."]
+    parts = [f"{word} - {why}."]
     if res.submission_form_found and res.submission_url.value:
         plat = f"{res.submission_platform} form " if res.submission_platform else ""
         via = "Submit via " + (plat or "").strip()

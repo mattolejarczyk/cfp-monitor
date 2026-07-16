@@ -4,7 +4,7 @@ import os
 import tempfile
 
 from cfp_monitor.customer_format import (
-    CUSTOMER_HEADERS, excel_serial, to_customer_row, write_customer_csv,
+    CUSTOMER_HEADERS, excel_safe_text, excel_serial, to_customer_row, write_customer_csv,
 )
 
 
@@ -67,6 +67,17 @@ def test_no_public_deadline_note():
 def test_deadline_present_no_note():
     row = to_customer_row(_rec(submission_deadline="2026-06-29", status="open"))
     assert "No public deadline" not in row["STATUS DETAILS"]
+
+
+def test_customer_cells_are_excel_safe_ascii():
+    row = to_customer_row(_rec(name="Café — 2026", status_details="Closed — deadline passed"))
+    assert row["CONFERENCE"] == "Cafe - 2026"
+    assert row["STATUS DETAILS"] == "Closed - deadline passed"
+    assert all(ord(ch) < 128 for value in row.values() for ch in value)
+
+
+def test_excel_safe_text_removes_remaining_non_ascii_characters():
+    assert excel_safe_text("Smart ‘quotes’ and ™") == "Smart 'quotes' and TM"
 
 
 def _run():

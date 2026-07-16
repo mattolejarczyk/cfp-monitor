@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import re
+import unicodedata
 from datetime import date, datetime
 from typing import Iterable, Optional
 
@@ -31,6 +32,27 @@ _STATUS_MAP = {
 }
 
 _EXCEL_EPOCH = date(1899, 12, 30)  # Excel's day-0 (accounts for the 1900 leap bug)
+
+# Preserve the meaning of common smart punctuation before ASCII normalization.
+_EXCEL_ASCII_REPLACEMENTS = str.maketrans({
+    "—": "-", "–": "-", "−": "-", "…": "...", " ": " ",
+    "‘": "'", "’": "'", "‚": "'", "“": '"', "”": '"', "„": '"',
+    "™": "TM", "®": "(R)", "©": "(C)",
+})
+
+
+def excel_safe_text(value: object) -> str:
+    """Return plain ASCII for customer exports and Excel legacy import paths.
+
+    Smart punctuation such as an em dash can render as mojibake (for example,
+    ``â€”``) when Excel opens a UTF-8 CSV as an ANSI code page. Normalize accented
+    letters where possible and drop other non-ASCII characters.
+    """
+    if value is None:
+        return ""
+    text = str(value).replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+    text = text.translate(_EXCEL_ASCII_REPLACEMENTS)
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
 
 
 def excel_serial(d) -> Optional[int]:
@@ -70,7 +92,7 @@ def to_customer_row(rec: dict) -> dict:
     if has_opp and not (rec.get("submission_deadline") or "").strip():
         note = "No public deadline found - needs verification"
         details = f"{details} - {note}" if details else note
-    return {
+    row = {
         "CONFERENCE": rec.get("name") or "",
         "CONFERENCE URL": rec.get("url") or "",
         "LOCATION": rec.get("location") or "",
@@ -87,6 +109,7 @@ def to_customer_row(rec: dict) -> dict:
         "CATEGORIES": rec.get("categories") or "",
         "NOTES": rec.get("notes") or "",
     }
+    return {header: excel_safe_text(value) for header, value in row.items()}
 
 
 def _short_date(iso: Optional[str]) -> str:

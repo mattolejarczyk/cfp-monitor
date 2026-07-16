@@ -24,6 +24,9 @@ param(
 )
 $ErrorActionPreference = "Stop"
 function Say($m) { Write-Host "==> $m" -ForegroundColor Cyan }
+function Require-Success($step) {
+  if ($LASTEXITCODE -ne 0) { throw "$step failed (exit code $LASTEXITCODE). Installation stopped; fix the error above and rerun the installer." }
+}
 
 # 1. Python 3.11/3.12 -------------------------------------------------------
 Say "Checking for Python 3.11/3.12"
@@ -51,6 +54,7 @@ elseif (-not $py) {
   }
   Say "Installing Python 3.12 via winget"
   winget install -e --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements
+  Require-Success "Python 3.12 installation"
   # Verify it actually landed (winget can no-op or fail without throwing).
   $py = $null
   foreach ($c in @("py -3.12", "py -3.11")) {
@@ -81,13 +85,17 @@ Say "Creating environment"
 Push-Location $InstallDir
 $e, $a = $py.Split(" ")
 if ($a) { & $e $a -m venv venv } else { & $e -m venv venv }
+Require-Success "Python virtual environment creation"
 $vpy = "$InstallDir\venv\Scripts\python.exe"
 if (-not $SkipDeps) {
   Say "Installing dependencies (a few minutes)"
   & $vpy -m pip install --quiet --upgrade pip
+  Require-Success "pip upgrade"
   & $vpy -m pip install --quiet .
+  Require-Success "CFP Monitor dependency installation"
   Say "Installing the crawler browser (Chromium download)"
   & $vpy -m playwright install chromium
+  Require-Success "Playwright Chromium installation"
   try { & "$InstallDir\venv\Scripts\crawl4ai-setup.exe" } catch { }
 } else {
   Write-Host "   (validation) skipping pip install / Playwright" -ForegroundColor Yellow
