@@ -26,30 +26,11 @@ from src.cfp_monitor.customer_format import (
     CUSTOMER_HEADERS, to_customer_rows, to_customer_csv_text, _STATUS_MAP,
 )
 
-import io
 import os
-import re
-import zipfile
+
+from src.cfp_monitor.uploads import URL_RE, urls_from_upload
 
 DB_PATH = "cfp_monitor.db"   # source of truth
-_URL_RE = re.compile(r'https?://[^\s"\'<>)\]]+')
-
-
-def _urls_from_upload(name: str, data: bytes) -> list[str]:
-    """Extract every http(s) URL from an uploaded .txt/.csv/.xlsx (dependency-free)."""
-    if name.lower().endswith(".xlsx"):
-        try:
-            z = zipfile.ZipFile(io.BytesIO(data))
-            text = ""
-            for n in z.namelist():
-                if n == "xl/sharedStrings.xml" or (n.startswith("xl/worksheets/") and n.endswith(".xml")):
-                    text += z.read(n).decode("utf-8", "ignore")
-            return _URL_RE.findall(text)
-        except Exception:
-            return []
-    return _URL_RE.findall(data.decode("utf-8", "ignore"))
-
-
 def _normalize(raw: list[str]) -> list[str]:
     """Strip, keep only http(s), dedupe by normalized form (order-preserving)."""
     seen, out = set(), []
@@ -122,9 +103,9 @@ with tab_run:
     )
     uploaded = st.file_uploader("…or upload a list (.txt / .csv / .xlsx)", type=["txt", "csv", "xlsx"])
 
-    raw = _URL_RE.findall(urls_text or "")
-    if uploaded is not None:
-        raw += _urls_from_upload(uploaded.name, uploaded.read())
+    raw = URL_RE.findall(urls_text or "")
+    if uploaded:
+        raw += urls_from_upload(uploaded.name, uploaded.read())
     urls = _normalize(raw)
     st.caption(f"**{len(urls)} unique URL(s)** after normalize + dedupe.")
     if urls:
