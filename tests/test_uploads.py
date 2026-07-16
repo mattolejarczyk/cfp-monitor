@@ -15,9 +15,9 @@ def _xlsx_bytes() -> bytes:
     sheet["B2"] = "https://iros2026.org/"
     sheet["A3"] = "RoboBusiness"
     sheet["B3"] = "https://www.robobusiness.com/"
-    # A visible hyperlink is also a valid URL-list input.
-    sheet["B4"] = "speaking opportunities"
-    sheet["B4"].hyperlink = "https://www.robobusiness.com/speaking-opportunities/"
+    # A hyperlink in another column is a note, not a crawl target.
+    sheet["C3"] = "speaking opportunities"
+    sheet["C3"].hyperlink = "https://www.robobusiness.com/speaking-opportunities/"
     out = io.BytesIO()
     workbook.save(out)
     workbook.close()
@@ -29,7 +29,6 @@ def test_xlsx_reads_visible_cells_not_internal_xml_namespaces():
     assert urls == [
         "https://iros2026.org/",
         "https://www.robobusiness.com/",
-        "https://www.robobusiness.com/speaking-opportunities/",
     ]
     assert all("openxmlformats" not in url for url in urls)
 

@@ -11,7 +11,12 @@ def _urls_in_text(value: object) -> list[str]:
 
 
 def _xlsx_urls(data: bytes) -> list[str]:
-    """Read URLs from visible workbook cells and hyperlinks, never XLSX package XML."""
+    """Read literal URLs from visible Column B cells, never XLSX package XML.
+
+    The customer workbook uses Column B for conference URLs. Deliberately ignore
+    hyperlink metadata and other columns so workbook-internal links and notes cannot
+    become crawl targets.
+    """
     try:
         from openpyxl import load_workbook
 
@@ -22,11 +27,8 @@ def _xlsx_urls(data: bytes) -> list[str]:
     try:
         urls: list[str] = []
         for sheet in workbook.worksheets:
-            for row in sheet.iter_rows():
-                for cell in row:
-                    urls.extend(_urls_in_text(cell.value))
-                    if cell.hyperlink and cell.hyperlink.target:
-                        urls.extend(_urls_in_text(cell.hyperlink.target))
+            for row in sheet.iter_rows(min_col=2, max_col=2):
+                urls.extend(_urls_in_text(row[0].value))
         return urls
     finally:
         workbook.close()
