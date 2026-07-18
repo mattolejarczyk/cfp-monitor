@@ -5,6 +5,24 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-07-18
+- **UI: live crawl progress + non-destructive downloads** (`app.py`, `pipeline.py`). `run_urls`
+  gained an optional `on_progress(done,total,current)` callback (best-effort); the Run tab shows
+  "Crawling 15 of 51: <site>… · ~ETA left" with the in-flight site name. Results/table/downloads
+  now render from `st.session_state` OUTSIDE the Run-button block, so a download no longer reruns
+  the page into a blank state. Run tab is explicitly read-only; editing stays in Review & Verify.
+- **Competitive review → 3 borrowed, componentized improvements** (commit, 117 tests green):
+  1. **TRACK column** (`tracks.py`) — coarse Speaking/Awards/Other, derived purely from the
+     `opportunity_types` we already extract; appended LAST in `CUSTOMER_HEADERS` (client's 15-col
+     order untouched); read-only in the Review editor. Blank when nothing detected — never guessed.
+  2. **Edition stale-trap** (`consolidate.edition_consistency`) — downgrades a shaky Open to Needs
+     Review when the deadline belongs to a different/past edition; only ever downgrades, never
+     fabricates, fires only on unambiguous years (guards against false flags).
+  3. **"Watching this page" status copy** — honest "located the CFP page, not open yet" wording.
+  Each is isolated from conference identification. Rival was an independent prototype for the same
+  client; its own honest recall was 1 find / 54 sites → **open frontier: measure our recall on the
+  same list** (higher value than more features). Shareable write-up published as a Claude Artifact.
+
 ## 2026-07-09
 - **License proxy DEPLOYED LIVE** at https://channeled.org/cfp-proxy (Oracle VPS, nginx→uvicorn:8800,
   PM2). Verified: unknown 401 / active 200 / revoked 403.
