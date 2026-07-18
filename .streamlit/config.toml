@@ -1,0 +1,10 @@
+# App-level Streamlit config (ships with the customer build).
+[client]
+# Hide the "Deploy" button and the developer menu items. This is a local, licensed,
+# residential-IP tool — it must never be deployed to Streamlit Community Cloud (that would
+# put it on a datacenter IP and defeat the anti-bot advantage). "minimal" keeps the useful
+# running/stop indicator but removes Deploy and edit-oriented menu entries.
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
