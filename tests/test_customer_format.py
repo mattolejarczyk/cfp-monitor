@@ -24,6 +24,23 @@ def test_row_has_exact_headers():
     assert list(row.keys()) == CUSTOMER_HEADERS
 
 
+def test_track_column_is_last_and_derived():
+    # TRACK is appended last so the customer's 15-column order is undisturbed.
+    assert CUSTOMER_HEADERS[-1] == "TRACK"
+    assert CUSTOMER_HEADERS[:15] == [
+        "CONFERENCE", "CONFERENCE URL", "LOCATION", "START DATES", "LATEST UPDATE",
+        "SUBMISSION DEADLINE", "SUBMISSION DATE VERIFIED", "PRIORITY", "STATUS",
+        "STATUS DETAILS", "SUBMISSION URL", "COORDINATOR EMAIL", "OVERVIEW",
+        "CATEGORIES", "NOTES",
+    ]
+    # Blank when no opportunity type was detected (never guessed).
+    assert to_customer_row(_rec())["TRACK"] == ""
+    assert to_customer_row(_rec(opportunity_types=["call_for_speakers"]))["TRACK"] == "Speaking"
+    assert to_customer_row(_rec(opportunity_types=["awards_entry"]))["TRACK"] == "Awards"
+    assert to_customer_row(
+        _rec(opportunity_types=["cfp", "awards_entry"]))["TRACK"] == "Speaking; Awards"
+
+
 def test_status_mapping():
     assert to_customer_row(_rec(status="open"))["STATUS"] == "Open"
     assert to_customer_row(_rec(status="closed"))["STATUS"] == "Closed"

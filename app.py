@@ -75,7 +75,7 @@ _TRACKED_COLS = {"LOCATION": "location", "START DATES": "conference_dates",
                  "CATEGORIES": "categories"}
 _STATUS_INV = {v: k for k, v in _STATUS_MAP.items()}          # "Open" -> "open", "Needs Review" -> "unclear"
 _STATUS_CHOICES = [""] + list(_STATUS_MAP.values())
-_READONLY_COLS = ["CONFERENCE URL", "LATEST UPDATE"]           # identity + system timestamp
+_READONLY_COLS = ["CONFERENCE URL", "LATEST UPDATE", "TRACK"]  # identity + system timestamp + derived track
 
 
 def _fact_line(label: str, fact: Fact) -> str:

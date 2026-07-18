@@ -13,12 +13,17 @@ import unicodedata
 from datetime import date, datetime
 from typing import Iterable, Optional
 
-# Exact customer column order + headers (verbatim from the real sheet).
+from .tracks import track_label
+
+# Exact customer column order + headers. The first 15 are verbatim from the real sheet;
+# TRACK is appended LAST so the customer's existing column sequence is never disturbed.
+# TRACK is a read-only, derived label (Speaking / Awards / Other) — see tracks.py.
 CUSTOMER_HEADERS = [
     "CONFERENCE", "CONFERENCE URL", "LOCATION", "START DATES", "LATEST UPDATE",
     "SUBMISSION DEADLINE", "SUBMISSION DATE VERIFIED", "PRIORITY", "STATUS",
     "STATUS DETAILS", "SUBMISSION URL", "COORDINATOR EMAIL", "OVERVIEW",
     "CATEGORIES", "NOTES",
+    "TRACK",
 ]
 
 # Our detection status (cfp_status) -> customer-facing STATUS wording. Customer
@@ -108,6 +113,8 @@ def to_customer_row(rec: dict) -> dict:
         "OVERVIEW": rec.get("overview") or "",
         "CATEGORIES": rec.get("categories") or "",
         "NOTES": rec.get("notes") or "",
+        # Derived, read-only: which opportunity track(s) the crawl detected. Blank when none.
+        "TRACK": track_label(rec.get("opportunity_types")),
     }
     return {header: excel_safe_text(value) for header, value in row.items()}
 

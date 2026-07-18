@@ -357,6 +357,19 @@ class Store:
         return [dict(r) for r in self.db.execute(
             "SELECT * FROM conferences WHERE event_is_past=1 ORDER BY name")]
 
+    @staticmethod
+    def _opportunity_types(result_json: Optional[str]) -> list[str]:
+        """Pull the crawl's detected opportunity_types out of the stored result (for the
+        read-only TRACK column). Best-effort: a missing/old/corrupt result_json yields []."""
+        if not result_json:
+            return []
+        try:
+            data = json.loads(result_json)
+            types = data.get("opportunity_types") or []
+            return [str(t) for t in types if t]
+        except (ValueError, TypeError, AttributeError):
+            return []
+
     def export_dicts(self) -> list[dict]:
         """Normalized dicts for the customer-format transform (customer_format.py)."""
         out = []
@@ -371,5 +384,7 @@ class Store:
                 "status_details": r["status_details"], "submission_url": r["submission_url"],
                 "coordinator_email": r["coordinator_email"], "overview": r["overview"],
                 "categories": r["categories"], "notes": r["notes"],
+                # Read-only, derived from the crawl result — feeds the TRACK column.
+                "opportunity_types": self._opportunity_types(r["result_json"]),
             })
         return out
