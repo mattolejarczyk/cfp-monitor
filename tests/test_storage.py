@@ -37,6 +37,35 @@ def test_insert_then_get():
     assert rec["last_checked"] and rec["first_seen"]
 
 
+def test_industry_persisted_and_exported():
+    s = Store()
+    r = mk("https://conf.com", name="Alpha", status="open")
+    r.industry = "Robotics"
+    s.upsert(r, Quality.PASS)
+    assert s.get("https://conf.com")["industry"] == "Robotics"
+    assert s.export_dicts()[0]["industry"] == "Robotics"
+
+
+def test_industry_not_blanked_by_a_later_run_without_one():
+    s = Store()
+    r = mk("https://conf.com", name="Alpha", status="open")
+    r.industry = "Utility"
+    s.upsert(r, Quality.PASS)
+    s.upsert(mk("https://conf.com", name="Alpha", status="open"), Quality.PASS)  # no industry this run
+    assert s.get("https://conf.com")["industry"] == "Utility"
+
+
+def test_run_input_manifest_stored_and_read_back():
+    s = Store()
+    run_id = s.start_run()
+    manifest = {"raw_count": 54, "kept_count": 51, "dropped_count": 3, "dropped": []}
+    s.finish_run(run_id, {"url_count": 51, "PASS": 20}, industry="Utility", input_manifest=manifest)
+    runs = s.recent_runs()
+    assert runs[0]["industry"] == "Utility"
+    assert runs[0]["input_manifest"]["raw_count"] == 54
+    assert runs[0]["input_manifest"]["kept_count"] == 51
+
+
 def test_change_detection():
     s = Store()
     s.upsert(mk("https://conf.com", name="Alpha", status="open"), Quality.PASS)

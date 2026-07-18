@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS conferences (
     id                  INTEGER PRIMARY KEY,
     key                 TEXT UNIQUE NOT NULL,   -- normalized url (natural key)
     url                 TEXT,
+    industry            TEXT,                   -- input-side industry label (per-run / per-row)
     name                TEXT,
     location            TEXT,
     conference_dates    TEXT,
@@ -62,6 +63,8 @@ CREATE TABLE IF NOT EXISTS runs (
     id           INTEGER PRIMARY KEY,
     started_at   TEXT,
     finished_at  TEXT,
+    industry     TEXT,                          -- run-level industry label (if set)
+    input_manifest TEXT,                         -- JSON audit of the input normalize/dedupe step
     url_count    INTEGER DEFAULT 0,
     pass_count   INTEGER DEFAULT 0,
     partial_count INTEGER DEFAULT 0,
@@ -99,6 +102,7 @@ def _fields_from_result(result: ConferenceResult, categories) -> dict:
     cats = categories if isinstance(categories, str) else ",".join(sorted(set(categories or [])))
     return {
         "url": result.canonical_url or result.start_url,
+        "industry": result.industry,
         "name": result.name.value,
         "location": result.location.value,
         "conference_dates": result.conference_dates.value,
@@ -167,9 +171,13 @@ class Store:
     def _migrate(self) -> None:
         """Add columns introduced after a DB was first created (safe on existing files)."""
         have = {r["name"] for r in self.db.execute("PRAGMA table_info(conferences)")}
-        for col in ("notes",):
+        for col in ("notes", "industry"):
             if col not in have:
                 self.db.execute(f"ALTER TABLE conferences ADD COLUMN {col} TEXT")
+        run_have = {r["name"] for r in self.db.execute("PRAGMA table_info(runs)")}
+        for col in ("industry", "input_manifest"):
+            if col not in run_have:
+                self.db.execute(f"ALTER TABLE runs ADD COLUMN {col} TEXT")
 
     def close(self) -> None:
         self.db.close()
@@ -180,15 +188,33 @@ class Store:
         self.db.commit()
         return int(cur.lastrowid)
 
-    def finish_run(self, run_id: int, counts: dict) -> None:
+    def finish_run(self, run_id: int, counts: dict, industry: Optional[str] = None,
+                   input_manifest: Optional[dict] = None) -> None:
         self.db.execute(
-            "UPDATE runs SET finished_at=?, url_count=?, pass_count=?, partial_count=?, "
-            "blocked_count=?, error_count=? WHERE id=?",
-            (_now(), counts.get("url_count", 0), counts.get(Quality.PASS.value, 0),
+            "UPDATE runs SET finished_at=?, industry=?, input_manifest=?, url_count=?, pass_count=?, "
+            "partial_count=?, blocked_count=?, error_count=? WHERE id=?",
+            (_now(), industry or None,
+             json.dumps(input_manifest) if input_manifest is not None else None,
+             counts.get("url_count", 0), counts.get(Quality.PASS.value, 0),
              counts.get(Quality.PARTIAL.value, 0), counts.get(Quality.BLOCKED.value, 0),
              counts.get(Quality.ERROR.value, 0), run_id),
         )
         self.db.commit()
+
+    def recent_runs(self, limit: int = 20) -> list[dict]:
+        """Recent finished runs (newest first) with their input-audit manifest parsed."""
+        rows = self.db.execute(
+            "SELECT * FROM runs WHERE finished_at IS NOT NULL ORDER BY id DESC LIMIT ?", (limit,)
+        ).fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            try:
+                d["input_manifest"] = json.loads(r["input_manifest"]) if r["input_manifest"] else None
+            except (ValueError, TypeError):
+                d["input_manifest"] = None
+            out.append(d)
+        return out
 
     # ---- upsert with change detection + correction-precedence ----
     def upsert(self, result: ConferenceResult, quality: Quality, categories=None,
@@ -202,11 +228,11 @@ class Store:
 
         if row is None:
             self.db.execute(
-                "INSERT INTO conferences (key, url, name, location, conference_dates, cfp_status,"
+                "INSERT INTO conferences (key, url, industry, name, location, conference_dates, cfp_status,"
                 " cfp_close_date, submission_url, coordinator_email, overview, categories,"
                 " status_details, quality, result_json, event_is_past, first_seen, last_checked, last_changed)"
-                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (key, new["url"], new["name"], new["location"], new["conference_dates"], new["cfp_status"],
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (key, new["url"], new["industry"], new["name"], new["location"], new["conference_dates"], new["cfp_status"],
                  new["cfp_close_date"], new["submission_url"], new["coordinator_email"], new["overview"],
                  new["categories"], new["status_details"], quality.value,
                  result.model_dump_json(), past_int, now, now, now),
@@ -251,6 +277,9 @@ class Store:
 
         # Always refresh non-tracked columns + last_checked; last_changed only if changed.
         updates["url"] = new["url"]
+        # Industry is input metadata (not crawl-tracked): update to the latest run's label,
+        # but never blank an existing label just because this run didn't carry one.
+        updates["industry"] = new["industry"] or row["industry"]
         updates["coordinator_email"] = row["coordinator_email"] or new["coordinator_email"]
         updates["overview"] = new["overview"] or row["overview"]
         updates["status_details"] = new["status_details"] or row["status_details"]
@@ -375,7 +404,7 @@ class Store:
         out = []
         for r in self.all_records():
             out.append({
-                "key": r["key"],
+                "key": r["key"], "industry": r["industry"],
                 "name": r["name"], "url": r["url"], "location": r["location"],
                 "start_dates": r["conference_dates"], "last_checked": r["last_checked"],
                 "submission_deadline": r["cfp_close_date"],

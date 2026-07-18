@@ -101,6 +101,9 @@ class PageExtraction(BaseModel):
 class ConferenceResult(BaseModel):
     start_url: str
     canonical_url: Optional[str] = None
+    # Input-side metadata (NOT extracted from the page): which industry list this URL came
+    # from, for filtering/grouping in the review UI. Set by the caller, never by the crawl.
+    industry: Optional[str] = None
     name: Fact = Field(default_factory=Fact)
     description: Optional[str] = None
     location: Fact = Field(default_factory=Fact)

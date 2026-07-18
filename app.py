@@ -31,9 +31,10 @@ import time
 
 from src.cfp_monitor.uploads import (
     URL_RE,
-    normalize_urls_and_contexts,
+    normalize_urls_and_contexts_audited,
     uploaded_urls_and_contexts,
 )
+from src.cfp_monitor.filtering import closing_within, days_until
 
 DB_PATH = "cfp_monitor.db"   # source of truth
 
@@ -98,6 +99,12 @@ with tab_run:
                                 help="Used automatically for hard anti-bot sites (e.g. Reuters) when the CDP Chrome is running. The desktop launcher sets this for you.")
         st.caption("Set OPENROUTER_API_KEY in your environment / .env before running.")
 
+    run_industry = st.text_input(
+        "Industry for this run", "",
+        placeholder="e.g. Utility, Robotics",
+        help="Labels every conference in this run so you can filter by industry later. "
+             "If your uploaded sheet has an 'Industry' column, that value wins per row.",
+    )
     urls_text = st.text_area(
         "Paste conference URLs (any text — links are auto-extracted)",
         placeholder="https://conf-a.example.com\nhttps://conf-b.example.org",
@@ -111,10 +118,23 @@ with tab_run:
         uploaded_urls, uploaded_contexts = uploaded_urls_and_contexts(uploaded.name, uploaded.read())
         raw += uploaded_urls
         contexts += uploaded_contexts
-    urls, contexts = normalize_urls_and_contexts(raw, contexts)
-    st.caption(f"**{len(urls)} unique URL(s)** after normalize + dedupe.")
+    urls, contexts, input_manifest = normalize_urls_and_contexts_audited(raw, contexts)
+    st.caption(f"**{len(urls)} unique URL(s)** from {input_manifest['raw_count']} found "
+               f"· {input_manifest['dropped_count']} folded/skipped after normalize + dedupe.")
     if any(contexts):
         st.caption("Spreadsheet row context is active for directory/organization-page resolution.")
+    if input_manifest["dropped"]:
+        with st.expander(f"Why {input_manifest['raw_count']} → {input_manifest['kept_count']} "
+                         f"(input audit for this run)"):
+            dupes = [d for d in input_manifest["dropped"] if d["reason"] == "duplicate"]
+            nonurls = [d for d in input_manifest["dropped"] if d["reason"] == "not_a_url"]
+            if dupes:
+                st.markdown(f"**{len(dupes)} duplicate URL(s) folded** (same target after normalize):")
+                st.dataframe(pd.DataFrame([{"dropped URL": d["url"], "folded into": d["duplicate_of"]}
+                                          for d in dupes]), width="stretch", hide_index=True)
+            if nonurls:
+                st.markdown(f"**{len(nonurls)} non-URL value(s) skipped:**")
+                st.write([d["url"] for d in nonurls])
     if urls:
         with st.expander("Preview normalized URLs"):
             st.write(urls)
@@ -150,10 +170,11 @@ with tab_run:
             site = current.split("://", 1)[-1][:52]
             prog.progress(done / total, text=f"Crawling {done + 1} of {total}: {site}…{eta}")
 
-        results = asyncio.run(run_urls(urls, settings, contexts=contexts, on_progress=_on_progress))
+        results = asyncio.run(run_urls(urls, settings, contexts=contexts,
+                                       on_progress=_on_progress, industry=run_industry.strip() or None))
         prog.empty()
 
-        # Persist to the source-of-truth DB (gate quality + record the run).
+        # Persist to the source-of-truth DB (gate quality + record the run + input audit).
         store = Store(DB_PATH)
         run_id = store.start_run()
         counts = {"url_count": len(results)}
@@ -161,7 +182,8 @@ with tab_run:
             q = classify_result(r).verdict
             counts[q.value] = counts.get(q.value, 0) + 1
             store.upsert(r, q, run_id=run_id)
-        store.finish_run(run_id, counts)
+        store.finish_run(run_id, counts, industry=run_industry.strip() or None,
+                         input_manifest=input_manifest)
         store.close()
 
         # Reload the just-crawled rows in the customer 15-column format (URL included, so every
@@ -242,19 +264,62 @@ with tab_review:
     if not records:
         st.info("No records yet — run a crawl in the first tab.")
     else:
-        # The full customer 15-column sheet, editable in place. Edits to crawl-produced fields
-        # are protected from future crawls (correction-precedence); human-owned columns
-        # (PRIORITY, NOTES, ...) save directly. CONFERENCE URL + LATEST UPDATE are read-only.
-        cust_rows = to_customer_rows(store.export_dicts())
-        keys = [r["key"] for r in records]
-        df = pd.DataFrame(cust_rows, columns=CUSTOMER_HEADERS)
-        df.insert(0, "_key", keys)
-        # SUBMISSION DATE VERIFIED as a real checkbox instead of Yes/Needs Verification text.
+        # The full customer sheet (15 cols + TRACK), editable in place, with an INDUSTRY column
+        # for grouping. Edits to crawl-produced fields are protected from future crawls
+        # (correction-precedence); human-owned columns save directly. _key/URL/LATEST UPDATE/
+        # TRACK/INDUSTRY are read-only. export_dicts and all_records share the same order.
+        exports = store.export_dicts()
+        df = pd.DataFrame(to_customer_rows(exports), columns=CUSTOMER_HEADERS)
+        df.insert(0, "_key", [r["key"] for r in records])
+        df.insert(1, "INDUSTRY", [r["industry"] or "" for r in records])
         df["SUBMISSION DATE VERIFIED"] = [r["verification_status"] == "verified" for r in records]
 
+        # ---- Filters (industry / status / track / deadline / search) ----
+        industries = sorted({(r["industry"] or "").strip() for r in records if (r["industry"] or "").strip()})
+        status_opts = [s for s in _STATUS_CHOICES if s]
+        track_opts = ["Speaking", "Awards", "Other", "(none)"]
+        f1, f2, f3 = st.columns([1.2, 1.5, 1.5])
+        pick_industry = f1.selectbox("Industry", ["(all)"] + industries)
+        pick_status = f2.multiselect("Status", status_opts, default=[],
+                                     help="Leave empty for all. Pick 'Open' for what's actionable now.")
+        pick_track = f3.multiselect("Track", track_opts, default=[])
+        f4, f5 = st.columns([1.2, 2.3])
+        pick_deadline = f4.selectbox("Deadline", ["Any", "Closing ≤ 30 days", "Closing ≤ 60 days",
+                                                  "Closing ≤ 90 days", "Past due", "Undated"],
+                                     help="Date filters use only deadlines that parse to a full "
+                                          "year-month-day; vaguer ones show under 'Undated'.")
+        search = f5.text_input("Search conference or URL", "")
+
+        mask = pd.Series(True, index=df.index)
+        if pick_industry != "(all)":
+            mask &= df["INDUSTRY"] == pick_industry
+        if pick_status:
+            mask &= df["STATUS"].isin(pick_status)
+        if pick_track:
+            def _track_match(v: str) -> bool:
+                parts = [p.strip() for p in (v or "").split(";") if p.strip()]
+                return ("(none)" in pick_track) if not parts else any(p in pick_track for p in parts)
+            mask &= df["TRACK"].map(_track_match)
+        if pick_deadline != "Any":
+            dl = df["SUBMISSION DEADLINE"]
+            if pick_deadline == "Past due":
+                mask &= dl.map(lambda s: (days_until(s) is not None and days_until(s) < 0))
+            elif pick_deadline == "Undated":
+                mask &= dl.map(lambda s: days_until(s) is None)
+            else:
+                win = int(pick_deadline.split("≤")[1].split("days")[0].strip())
+                mask &= dl.map(lambda s: closing_within(s, win))
+        if search.strip():
+            q = search.strip().lower()
+            mask &= (df["CONFERENCE"].str.lower().str.contains(q, na=False, regex=False) |
+                     df["CONFERENCE URL"].str.lower().str.contains(q, na=False, regex=False))
+
+        view = df[mask].reset_index(drop=True)
+        st.caption(f"Showing **{len(view)}** of {len(df)} conference(s).")
+
         edited = st.data_editor(
-            df, use_container_width=True, hide_index=True, height=520,
-            disabled=["_key", *_READONLY_COLS],
+            view, width="stretch", hide_index=True, height=520,
+            disabled=["_key", "INDUSTRY", *_READONLY_COLS],
             column_config={
                 "_key": None,
                 "SUBMISSION DATE VERIFIED": st.column_config.CheckboxColumn("SUBMISSION DATE VERIFIED"),
@@ -265,10 +330,10 @@ with tab_review:
 
         st.caption("Editing a crawl field (status, deadline, dates, location, categories, submission URL) "
                    "locks that value against future crawls. Tick **SUBMISSION DATE VERIFIED** to mark a "
-                   "row human-checked.")
+                   "row human-checked. INDUSTRY and TRACK are set by the crawl and read-only here.")
 
         if st.button("💾 Save changes", type="primary"):
-            orig_by_key = {r["_key"]: r for r in df.to_dict("records")}
+            orig_by_key = {r["_key"]: r for r in view.to_dict("records")}
             n_rows = 0
             for row in edited.to_dict("records"):
                 k = row["_key"]
@@ -293,9 +358,14 @@ with tab_review:
             st.success(f"Saved changes to {n_rows} row(s).")
             st.rerun()
 
-        st.download_button("⬇️ Download full sheet (customer CSV)",
-                           data=to_customer_csv_text(store.export_dicts()),
-                           file_name="cfp_customer_full.csv", mime="text/csv")
+        visible_keys = set(view["_key"])
+        d1, d2 = st.columns(2)
+        d1.download_button("⬇️ Download shown rows (customer CSV)",
+                           data=to_customer_csv_text([e for e in exports if e["key"] in visible_keys]),
+                           file_name="cfp_customer.csv", mime="text/csv", width="stretch")
+        d2.download_button("⬇️ Download full sheet (customer CSV)",
+                           data=to_customer_csv_text(exports),
+                           file_name="cfp_customer_full.csv", mime="text/csv", width="stretch")
 
         st.divider()
         names = {r["name"] or r["key"]: r["key"] for r in records}
@@ -304,7 +374,25 @@ with tab_review:
             changes = store.changes_for(names[pick])
             if changes:
                 st.dataframe(pd.DataFrame(changes)[["detected_at", "field", "old_value", "new_value", "change_type"]],
-                             use_container_width=True, hide_index=True)
+                             width="stretch", hide_index=True)
             else:
                 st.caption("No recorded changes yet.")
+
+        with st.expander("Run history + input audit (how each list became its crawl targets)"):
+            runs = store.recent_runs(20)
+            if not runs:
+                st.caption("No completed runs yet.")
+            for run in runs:
+                m = run.get("input_manifest") or {}
+                head = f"**Run {run['id']}** · {(run.get('finished_at') or '')[:19]}"
+                if run.get("industry"):
+                    head += f" · _{run['industry']}_"
+                st.markdown(head)
+                st.caption(
+                    f"{run.get('url_count', 0)} targets — "
+                    f"PASS {run.get('pass_count', 0)} · PARTIAL {run.get('partial_count', 0)} · "
+                    f"BLOCKED {run.get('blocked_count', 0)} · ERROR {run.get('error_count', 0)}"
+                    + (f"  ·  input: {m.get('raw_count', '?')} found → {m.get('kept_count', '?')} unique "
+                       f"({m.get('dropped_count', 0)} folded/skipped)" if m else "")
+                )
     store.close()

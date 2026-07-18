@@ -96,6 +96,7 @@ async def analyze_conference(crawler, start_url: str, settings: Settings, tracer
 async def run_urls(urls: list[str], settings: Settings | None = None,
                    contexts: list[dict | None] | None = None,
                    on_progress: "Callable[[int, int, str | None], None] | None" = None,
+                   industry: str | None = None,
                    ) -> list[ConferenceResult]:
     """Analyze a fixed list of conference URLs. Reuses one browser for the batch.
 
@@ -103,6 +104,9 @@ async def run_urls(urls: list[str], settings: Settings | None = None,
     conference with ``done`` = number already finished and ``current`` = the URL about to
     be crawled, and once more at the end with ``current=None``. It lets a caller (e.g. the
     Streamlit UI) show "Crawling 15 of 51: <site>…" and an ETA.
+
+    ``industry`` is the run-level industry label; a per-row ``context["industry"]`` (e.g. from
+    an Industry column in the upload) overrides it. Stored as input metadata on each result.
     """
     settings = settings or DEFAULT
     settings.require_llm_key()
@@ -139,6 +143,8 @@ async def run_urls(urls: list[str], settings: Settings | None = None,
             except Exception as e:
                 res = ConferenceResult(start_url=url, error=f"{type(e).__name__}: {e}")
                 res.trace = tracer.dump()
+            # Input metadata: per-row industry (from context) wins, else the run-level label.
+            res.industry = ((ctx or {}).get("industry") or industry) or None
             results.append(res)
             done += 1
     _report(done, None)
