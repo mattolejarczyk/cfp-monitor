@@ -27,6 +27,7 @@ from src.cfp_monitor.customer_format import (
 )
 
 import os
+import time
 
 from src.cfp_monitor.uploads import (
     URL_RE,
@@ -35,6 +36,16 @@ from src.cfp_monitor.uploads import (
 )
 
 DB_PATH = "cfp_monitor.db"   # source of truth
+
+
+def _fmt_dur(seconds: float) -> str:
+    """Compact human duration: '45s', '4m 10s', '1h 3m'."""
+    s = max(0, int(round(seconds)))
+    if s < 60:
+        return f"{s}s"
+    if s < 3600:
+        return f"{s // 60}m {s % 60}s"
+    return f"{s // 3600}h {(s % 3600) // 60}m"
 
 st.set_page_config(page_title="CFP Monitor", page_icon="🎤", layout="wide")
 st.title("🎤 Conference CFP Monitor")
@@ -119,8 +130,28 @@ with tab_run:
         except Exception as e:
             st.error(str(e)); st.stop()
 
-        with st.spinner(f"Crawling {len(urls)} conference(s)…"):
-            results = asyncio.run(run_urls(urls, settings, contexts=contexts))
+        # Live progress: "Crawling 15 of 51: <site>… · ~4m left". run_urls calls this back
+        # once before each conference (and once at the end). Sites are crawled one at a time,
+        # so a bar that sits on the same number is a sign that site is slow/stuck — each is
+        # capped at the per-site timeout, then it advances on its own.
+        prog = st.progress(0.0, text=f"Starting… 0 of {len(urls)}")
+        t_start = time.monotonic()
+
+        def _on_progress(done: int, total: int, current: str | None) -> None:
+            if not total:
+                return
+            if current is None:
+                prog.progress(1.0, text=f"Done — {total} of {total} crawled")
+                return
+            eta = ""
+            if done:
+                per = (time.monotonic() - t_start) / done
+                eta = f" · ~{_fmt_dur(per * (total - done))} left"
+            site = current.split("://", 1)[-1][:52]
+            prog.progress(done / total, text=f"Crawling {done + 1} of {total}: {site}…{eta}")
+
+        results = asyncio.run(run_urls(urls, settings, contexts=contexts, on_progress=_on_progress))
+        prog.empty()
 
         # Persist to the source-of-truth DB (gate quality + record the run).
         store = Store(DB_PATH)
@@ -133,23 +164,46 @@ with tab_run:
         store.finish_run(run_id, counts)
         store.close()
 
-        st.success(f"Done — analyzed {len(results)} conference(s) · saved to {DB_PATH} · "
-                   f"{ {k: v for k, v in counts.items() if k != 'url_count'} }")
-
-        # Scannable table for THIS run in the customer's 15-column format (URL included, so
-        # every row ties back to its source). Full editing lives in the Review & Verify tab.
+        # Reload the just-crawled rows in the customer 15-column format (URL included, so every
+        # row ties back to its source). Stash everything in session_state so the results survive
+        # a rerun — clicking a download button reruns the script, and we don't want the results
+        # (or the page) to disappear when that happens.
         keys = {normalize_key(r.canonical_url or r.start_url) for r in results}
         rstore = Store(DB_PATH)
         run_rows = [d for d in rstore.export_dicts() if d["key"] in keys]
         rstore.close()
-        cust = to_customer_rows(run_rows)
+        st.session_state["last_run"] = {
+            "results": results,
+            "run_rows": run_rows,
+            "cust": to_customer_rows(run_rows),
+            "counts": counts,
+        }
+
+    # ── Results (rendered from session_state, OUTSIDE the Run button block) ────────
+    # Because this reads session_state rather than the transient Run-button value, downloads
+    # are non-destructive: the table, buttons, and detail all stay put after a download. This
+    # tab is read-only — to change any value, use the Review & Verify tab.
+    lr = st.session_state.get("last_run")
+    if lr:
+        results, run_rows, counts = lr["results"], lr["run_rows"], lr["counts"]
+        head, clear = st.columns([5, 1])
+        head.success(f"Done — analyzed {len(results)} conference(s) · saved to {DB_PATH} · "
+                     f"{ {k: v for k, v in counts.items() if k != 'url_count'} }")
+        if clear.button("Clear results", width="stretch"):
+            del st.session_state["last_run"]
+            st.rerun()
+
         st.subheader("Results — customer format")
-        st.dataframe(pd.DataFrame(cust, columns=CUSTOMER_HEADERS),
-                     use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(lr["cust"], columns=CUSTOMER_HEADERS),
+                     width="stretch", hide_index=True)
+
+        st.markdown("**Download** — these save a file only; they don't change your data "
+                    "or this page. Editing lives in the **Review & Verify** tab.")
         c_csv, c_json = st.columns(2)
         c_csv.download_button("⬇️ Customer CSV (15-col)", data=to_customer_csv_text(run_rows),
-                              file_name="cfp_customer.csv", mime="text/csv", use_container_width=True)
-        c_json.download_button("⬇️ Raw JSON", use_container_width=True,
+                              file_name="cfp_customer.csv", mime="text/csv", width="stretch",
+                              key="dl_run_csv")
+        c_json.download_button("⬇️ Raw JSON", width="stretch", key="dl_run_json",
                                data=json.dumps([r.model_dump(mode="json") for r in results], indent=2, ensure_ascii=False),
                                file_name="cfp_results.json", mime="application/json")
 

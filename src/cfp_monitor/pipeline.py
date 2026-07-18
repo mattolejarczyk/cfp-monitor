@@ -94,18 +94,38 @@ async def analyze_conference(crawler, start_url: str, settings: Settings, tracer
 
 
 async def run_urls(urls: list[str], settings: Settings | None = None,
-                   contexts: list[dict | None] | None = None) -> list[ConferenceResult]:
-    """Analyze a fixed list of conference URLs. Reuses one browser for the batch."""
+                   contexts: list[dict | None] | None = None,
+                   on_progress: "Callable[[int, int, str | None], None] | None" = None,
+                   ) -> list[ConferenceResult]:
+    """Analyze a fixed list of conference URLs. Reuses one browser for the batch.
+
+    ``on_progress(done, total, current)`` is called (best-effort) at the start of each
+    conference with ``done`` = number already finished and ``current`` = the URL about to
+    be crawled, and once more at the end with ``current=None``. It lets a caller (e.g. the
+    Streamlit UI) show "Crawling 15 of 51: <site>…" and an ETA.
+    """
     settings = settings or DEFAULT
     settings.require_llm_key()
     from crawl4ai import AsyncWebCrawler, BrowserConfig
 
+    total = sum(1 for u in urls if u.strip() and not u.strip().startswith("#"))
+
+    def _report(done: int, current: str | None) -> None:
+        if on_progress is None:
+            return
+        try:
+            on_progress(done, total, current)
+        except Exception:
+            pass  # progress is cosmetic — never let it break a run
+
     results: list[ConferenceResult] = []
+    done = 0
     async with AsyncWebCrawler(config=BrowserConfig(headless=settings.headless)) as crawler:
         for i, url in enumerate(urls):
             url = url.strip()
             if not url or url.startswith("#"):
                 continue
+            _report(done, url)
             ctx = contexts[i] if contexts and i < len(contexts) else None
             tracer = Tracer()
             try:
@@ -120,5 +140,7 @@ async def run_urls(urls: list[str], settings: Settings | None = None,
                 res = ConferenceResult(start_url=url, error=f"{type(e).__name__}: {e}")
                 res.trace = tracer.dump()
             results.append(res)
+            done += 1
+    _report(done, None)
     await close_fallback_browser()
     return results
