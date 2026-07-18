@@ -22,6 +22,20 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
   Each is isolated from conference identification. Rival was an independent prototype for the same
   client; its own honest recall was 1 find / 54 sites → **open frontier: measure our recall on the
   same list** (higher value than more features). Shareable write-up published as a Claude Artifact.
+- **Industry dimension + run input-audit + Tier-1 review filters** (127 tests). Driven by the PR-firm
+  workflow (speaking/awards across industries, worked to deadlines):
+  - **Industry**: per-run label in the Run tab, overridden per-row by an optional "Industry" column in
+    the upload (`ConferenceResult.industry`, `run_urls(industry=)`, `uploads` header scan). Persisted
+    non-tracked in `storage` (migrated; never blanked by a run without one).
+  - **Run input-audit** (explains the 54→51): `uploads.normalize_urls_and_contexts_audited` returns a
+    manifest {raw/kept/dropped[{url,reason,duplicate_of}]}; stored per run (`runs.input_manifest`,
+    `Store.recent_runs`); shown in the Run tab after upload and a Review "Run history + input audit" panel.
+  - **Tier-1 filters** in Review & Verify: Industry / Status / Track / Deadline-window / text search,
+    applied to the editable sheet (save + CSV download honor the filter). INDUSTRY is a read-only column,
+    NOT added to the customer 15-col export. `filtering.parse_deadline` accepts only a full y-m-d (no
+    guessing) so a PR user never sees a false "closing soon". `python-dateutil` declared explicitly.
+  - Deferred (noted for the user): true per-run historical snapshots ("show the sheet as of run X");
+    current model = living master record + change history, so "latest run" == current state.
 
 ## 2026-07-09
 - **License proxy DEPLOYED LIVE** at https://channeled.org/cfp-proxy (Oracle VPS, nginx→uvicorn:8800,
