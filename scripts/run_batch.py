@@ -258,6 +258,12 @@ def cmd_markets(args) -> int:
 
 
 def main() -> int:
+    # Line-buffer stdout: a batch is long-running and usually redirected to a log, where
+    # Python's default block buffering would hide all progress until the process exits.
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except Exception:
+        pass
     ap = argparse.ArgumentParser(description="Crawl a folder of market lists, one file at a time.")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
