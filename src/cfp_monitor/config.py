@@ -39,6 +39,9 @@ class Settings:
     # llm_proxy_url is empty (dev / vendor machine), extraction calls the provider directly as before.
     llm_proxy_url: str | None = os.getenv("CFP_LLM_PROXY_URL")
     license_key: str | None = os.getenv("CFP_LICENSE_KEY")
+    # Folder holding the customer's market list workbooks (batch runs). Set per customer —
+    # surfaced in the UI so they can point at their own folder without editing files.
+    markets_dir: str | None = os.getenv("CFP_MARKETS_DIR")
     client_version: str = os.getenv("CFP_CLIENT_VERSION", CLIENT_VERSION)
 
     # --- Crawl budget & boundaries (per conference) ---
