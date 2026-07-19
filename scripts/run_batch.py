@@ -28,6 +28,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.cfp_monitor import run_urls, Settings                      # noqa: E402
+from src.cfp_monitor.cdp import (                                    # noqa: E402
+    ensure_cdp, hard_antibot_domains, hard_antibot_urls,
+)
 from src.cfp_monitor.markets import MarketRegistry, parse_filename   # noqa: E402
 from src.cfp_monitor.quality_gate import classify_result             # noqa: E402
 from src.cfp_monitor.storage import Store                            # noqa: E402
@@ -190,6 +193,29 @@ def cmd_run(args) -> int:
         print(f"Cannot start: {e}")
         store.close()
         return 1
+
+    # CDP (real signed-in Chrome) is the standard path for live runs, exactly as the desktop
+    # launcher does it for the UI. Start it before crawling so hard anti-bot sites resolve
+    # instead of being skipped. If it can't start, clear cdp_url so the protective skip fires
+    # rather than leaving a configured-but-dead endpoint.
+    hard_total = 0
+    for r in pending:
+        try:
+            hard_total += len(hard_antibot_urls(_load_file(Path(r["file"]))[0]))
+        except Exception:
+            pass
+    cdp = ensure_cdp()
+    if cdp:
+        settings.cdp_url = cdp
+        print(f"CDP browser ready at {cdp} - hard anti-bot sites will be crawled via real Chrome.")
+    else:
+        settings.cdp_url = None
+        print("WARNING: no CDP browser (Chrome not found, or it failed to start).")
+        print("         Hard anti-bot sites will be SKIPPED to protect your IP, never hammered.")
+    if hard_total:
+        print(f"         This batch contains {hard_total} URL(s) on hard anti-bot domains "
+              f"({', '.join(hard_antibot_domains())}).")
+    print()
 
     t0 = time.monotonic()
     failed = 0

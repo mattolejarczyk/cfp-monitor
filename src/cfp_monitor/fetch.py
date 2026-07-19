@@ -9,6 +9,7 @@ the anti-bot check) for markdown. Links are classified in Python (unit-testable)
 """
 from __future__ import annotations
 
+import socket
 from dataclasses import dataclass, field
 from typing import Optional
 from urllib.parse import urlparse
@@ -201,10 +202,33 @@ async def _click_through_buttons(page, base_url: str, tracer, limit: int = 3) ->
     return found
 
 
+def cdp_reachable(cdp_url: Optional[str]) -> bool:
+    """True only if something is ACTUALLY listening at the configured CDP endpoint.
+
+    Configured != available. The installer writes CFP_CDP_URL into every customer .env, so a
+    truthiness check on `cdp_url` is always True and would silently disable the anti-bot skip
+    below whenever the debug Chrome isn't running. This tests the socket instead.
+    (Deliberately implemented here rather than imported from cdp.py, which imports from us.)
+    """
+    if not cdp_url:
+        return False
+    try:
+        parsed = urlparse(cdp_url if "://" in str(cdp_url) else f"http://{cdp_url}")
+        host, port = parsed.hostname or "127.0.0.1", parsed.port or 9222
+    except (ValueError, TypeError):
+        return False
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)
+            return s.connect_ex((host, port)) == 0
+    except OSError:
+        return False
+
+
 def _will_use_cdp(url: str, settings) -> bool:
     """CDP (real signed-in Chrome) is used ONLY for known hard-block domains (e.g. Reuters)
-    AND only when a CDP endpoint is configured; everything else uses our launched browser."""
-    return bool(getattr(settings, "cdp_url", None)) and _force_fallback_domain(url)
+    AND only when a CDP endpoint is actually reachable; everything else uses our browser."""
+    return cdp_reachable(getattr(settings, "cdp_url", None)) and _force_fallback_domain(url)
 
 
 async def _render_with_consent(url: str, settings, tracer):
@@ -322,9 +346,10 @@ async def fetch_page(crawler, url: str, cfg, settings, tracer, force_fallback: b
     # through a real, human-signed-in Chrome via CDP (which has already cleared the challenge).
     # Without a CDP endpoint we do NOT touch the network - we flag it for manual handling rather
     # than hammer the challenge and burn the IP. NEVER attempt to solve the CAPTCHA.
-    if _force_fallback_domain(url) and not getattr(settings, "cdp_url", None):
+    if _force_fallback_domain(url) and not cdp_reachable(getattr(settings, "cdp_url", None)):
         tracer.log("skipped", url, "hard anti-bot site: not auto-crawled to protect the IP - "
-                   "open it in your signed-in Chrome and enable CDP, or verify this row by hand")
+                   "start the CDP Chrome (launcher or scripts/launch_chrome_cdp.bat), "
+                   "or verify this row by hand")
         return PageFetch(url, False, None, via="skipped-antibot")
     if _force_fallback_domain(url):
         force_fallback = True   # known hard-block platform: don't let crawl4ai poison the IP
