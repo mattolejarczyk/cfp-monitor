@@ -70,13 +70,20 @@ _STATUS_ICON = {"open": "🟢", "upcoming": "🟡", "unclear": "⚪", "closed": 
 #  _TRACKED_COLS -> crawl-produced field, saved with correction-precedence (store.correct)
 #  STATUS is tracked but shown with the customer wording, so it reverse-maps on save.
 _PLAIN_COLS = {"CONFERENCE": "name", "PRIORITY": "priority", "STATUS DETAILS": "status_details",
-               "COORDINATOR EMAIL": "coordinator_email", "OVERVIEW": "overview", "NOTES": "notes"}
+               "COORDINATOR EMAIL": "coordinator_email", "OVERVIEW": "overview", "NOTES": "notes",
+               # STATUS is the CUSTOMER's submission/pipeline state - human-owned, saved
+               # directly, and never produced or overwritten by a crawl.
+               "STATUS": "submission_status"}
 _TRACKED_COLS = {"LOCATION": "location", "START DATES": "conference_dates",
                  "SUBMISSION DEADLINE": "cfp_close_date", "SUBMISSION URL": "submission_url",
                  "CATEGORIES": "categories"}
 _STATUS_INV = {v: k for k, v in _STATUS_MAP.items()}          # "Open" -> "open", "Needs Review" -> "unclear"
 _STATUS_CHOICES = [""] + list(_STATUS_MAP.values())
-_READONLY_COLS = ["CONFERENCE URL", "LATEST UPDATE", "TRACK"]  # identity + system timestamp + derived track
+# The customer's own pipeline vocabulary (from their sheets). Ours never writes these.
+_WORKFLOW_CHOICES = ["", "Researching", "Monitoring", "Info Needed", "Drafting Abstract",
+                     "Submitted", "Accepted", "Client Declined"]
+# identity + system timestamp + everything the crawl derives
+_READONLY_COLS = ["CONFERENCE URL", "LATEST UPDATE", "TRACK", "RESEARCH STATUS", "EDITION"]
 
 
 def _fact_line(label: str, fact: Fact) -> str:
@@ -283,9 +290,13 @@ with tab_review:
         f1, f2, f3 = st.columns([1.2, 1.5, 1.5])
         pick_industry = f1.selectbox("Market", ["(all)"] + store.all_markets(),
                                      help="An event on several market lists appears under each.")
-        pick_status = f2.multiselect("Status", status_opts, default=[],
-                                     help="Leave empty for all. Pick 'Open' for what's actionable now.")
+        pick_status = f2.multiselect("Research status", status_opts, default=[],
+                                     help="What WE detected. Pick 'Open' for what's actionable now.")
         pick_track = f3.multiselect("Track", track_opts, default=[])
+        f4a, f4b, f5 = st.columns([1.0, 1.2, 2.0])
+        editions = sorted({(e.get("edition") or "") for e in exports if e.get("edition")})
+        pick_edition = f4a.selectbox("Edition", ["(all)"] + editions)
+        pick_submitted = f4b.multiselect("Your status", [c for c in _WORKFLOW_CHOICES if c], default=[])
         f4, f5 = st.columns([1.2, 2.3])
         pick_deadline = f4.selectbox("Deadline", ["Any", "Closing ≤ 30 days", "Closing ≤ 60 days",
                                                   "Closing ≤ 90 days", "Past due", "Undated"],
@@ -297,7 +308,9 @@ with tab_review:
         if pick_industry != "(all)":
             mask &= pd.Series([pick_industry in m for m in market_lists], index=df.index)
         if pick_status:
-            mask &= df["STATUS"].isin(pick_status)
+            # match on the underlying detection value, since the column shows "Open (2027)"
+            research_raw = [_STATUS_MAP.get((e.get("status") or "").lower(), "") for e in exports]
+            mask &= pd.Series([s in pick_status for s in research_raw], index=df.index)
         if pick_track:
             def _track_match(v: str) -> bool:
                 parts = [p.strip() for p in (v or "").split(";") if p.strip()]
@@ -312,6 +325,10 @@ with tab_review:
             else:
                 win = int(pick_deadline.split("≤")[1].split("days")[0].strip())
                 mask &= dl.map(lambda s: closing_within(s, win))
+        if pick_edition != "(all)":
+            mask &= pd.Series([(e.get("edition") or "") == pick_edition for e in exports], index=df.index)
+        if pick_submitted:
+            mask &= df["STATUS"].isin(pick_submitted)
         if search.strip():
             q = search.strip().lower()
             mask &= (df["CONFERENCE"].str.lower().str.contains(q, na=False, regex=False) |
@@ -326,7 +343,9 @@ with tab_review:
             column_config={
                 "_key": None,
                 "SUBMISSION DATE VERIFIED": st.column_config.CheckboxColumn("SUBMISSION DATE VERIFIED"),
-                "STATUS": st.column_config.SelectboxColumn("STATUS", options=_STATUS_CHOICES),
+                "STATUS": st.column_config.SelectboxColumn(
+                    "STATUS", options=_WORKFLOW_CHOICES,
+                    help="Your submission pipeline state. Never changed by a crawl."),
             },
             key="review_editor",
         )
@@ -348,8 +367,6 @@ with tab_review:
                 for col, dbcol in _TRACKED_COLS.items():
                     if (row.get(col) or "") != (before.get(col) or ""):
                         tracked[dbcol] = row.get(col) or None
-                if (row.get("STATUS") or "") != (before.get("STATUS") or ""):
-                    tracked["cfp_status"] = _STATUS_INV.get(row.get("STATUS") or "", row.get("STATUS")) or None
                 touched = False
                 if plain:
                     store.set_fields(k, plain); touched = True

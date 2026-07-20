@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS conferences (
     cfp_close_date      TEXT,
     submission_url      TEXT,
     coordinator_email   TEXT,
+    submission_status   TEXT,                   -- HUMAN-owned pipeline state; a crawl NEVER writes it
+    edition             TEXT,                   -- which edition (year) the research status refers to
     overview            TEXT,
     categories          TEXT,                   -- comma-separated market tags
     priority            TEXT,
@@ -109,6 +111,23 @@ def normalize_key(url: str) -> str:
     return u.rstrip("/")
 
 
+_YEAR_RE = re.compile(r"(?<!\d)(20\d{2})(?!\d)")
+
+
+def edition_year(*texts) -> Optional[str]:
+    """The edition (year) a record's research status refers to.
+
+    Conferences recur annually, so a bare "Closed" is ambiguous -- closed for 2026, or
+    forever? We take the LATEST year stated in the event dates (falling back to the
+    deadline), because the row always tracks the NEXT actionable edition. Returns None when
+    no year is stated: we never invent one."""
+    for t in texts:
+        years = _YEAR_RE.findall(str(t or ""))
+        if years:
+            return max(years)
+    return None
+
+
 def _fields_from_result(result: ConferenceResult, categories) -> dict:
     cats = categories if isinstance(categories, str) else ",".join(sorted(set(categories or [])))
     return {
@@ -124,6 +143,7 @@ def _fields_from_result(result: ConferenceResult, categories) -> dict:
         "overview": result.description or result.audience_topics.value,
         "categories": cats,
         "status_details": result.reason or result.status_basis,
+        "edition": edition_year(result.conference_dates.value, result.cfp_close_date.value),
     }
 
 
@@ -182,7 +202,7 @@ class Store:
     def _migrate(self) -> None:
         """Add columns introduced after a DB was first created (safe on existing files)."""
         have = {r["name"] for r in self.db.execute("PRAGMA table_info(conferences)")}
-        for col in ("notes", "industry"):
+        for col in ("notes", "industry", "submission_status", "edition"):
             if col not in have:
                 self.db.execute(f"ALTER TABLE conferences ADD COLUMN {col} TEXT")
         run_have = {r["name"] for r in self.db.execute("PRAGMA table_info(runs)")}
@@ -247,11 +267,11 @@ class Store:
             self.db.execute(
                 "INSERT INTO conferences (key, url, industry, name, location, conference_dates, cfp_status,"
                 " cfp_close_date, submission_url, coordinator_email, overview, categories,"
-                " status_details, quality, result_json, event_is_past, first_seen, last_checked, last_changed)"
-                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                " status_details, edition, quality, result_json, event_is_past, first_seen, last_checked, last_changed)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (key, new["url"], new["industry"], new["name"], new["location"], new["conference_dates"], new["cfp_status"],
                  new["cfp_close_date"], new["submission_url"], new["coordinator_email"], new["overview"],
-                 new["categories"], new["status_details"], quality.value,
+                 new["categories"], new["status_details"], new["edition"], quality.value,
                  result.model_dump_json(), past_int, now, now, now),
             )
             conf_id = int(self.db.execute("SELECT id FROM conferences WHERE key=?", (key,)).fetchone()["id"])
@@ -298,6 +318,7 @@ class Store:
         # Industry is input metadata (not crawl-tracked): update to the latest run's label,
         # but never blank an existing label just because this run didn't carry one.
         updates["industry"] = new["industry"] or row["industry"]
+        updates["edition"] = new["edition"] or row["edition"]
         updates["coordinator_email"] = row["coordinator_email"] or new["coordinator_email"]
         updates["overview"] = new["overview"] or row["overview"]
         updates["status_details"] = new["status_details"] or row["status_details"]
@@ -383,7 +404,7 @@ class Store:
 
     # Columns a human may edit directly (not produced by the crawl) — whitelist guards SQL.
     _PLAIN_EDITABLE = frozenset({"name", "coordinator_email", "overview", "priority",
-                                 "status_details", "notes"})
+                                 "status_details", "notes", "submission_status"})
 
     def set_fields(self, key: str, fields: dict) -> None:
         """Directly persist human-owned columns (priority, notes, email, ...). No crawl conflict."""
@@ -475,6 +496,7 @@ class Store:
                 "priority": r["priority"], "status": r["cfp_status"],
                 "status_details": r["status_details"], "submission_url": r["submission_url"],
                 "coordinator_email": r["coordinator_email"], "overview": r["overview"],
+                "submission_status": r["submission_status"], "edition": r["edition"],
                 "categories": r["categories"], "notes": r["notes"],
                 # Read-only, derived from the crawl result — feeds the TRACK column.
                 "opportunity_types": self._opportunity_types(r["result_json"]),

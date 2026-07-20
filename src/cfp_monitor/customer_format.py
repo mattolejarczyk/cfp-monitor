@@ -17,13 +17,16 @@ from .tracks import track_label
 
 # Exact customer column order + headers. The first 15 are verbatim from the real sheet;
 # TRACK is appended LAST so the customer's existing column sequence is never disturbed.
-# TRACK is a read-only, derived label (Speaking / Awards / Other) — see tracks.py.
+# TRACK / RESEARCH STATUS / EDITION are ours and read-only. NOTE: the customer's own STATUS
+# column is THEIR submission/pipeline state (Submitted, Accepted, Drafting Abstract, ...) --
+# we surface it but never write it. Our detection lives in RESEARCH STATUS instead, so a
+# crawl can never clobber where they are in their own workflow.
 CUSTOMER_HEADERS = [
     "CONFERENCE", "CONFERENCE URL", "LOCATION", "START DATES", "LATEST UPDATE",
     "SUBMISSION DEADLINE", "SUBMISSION DATE VERIFIED", "PRIORITY", "STATUS",
     "STATUS DETAILS", "SUBMISSION URL", "COORDINATOR EMAIL", "OVERVIEW",
     "CATEGORIES", "NOTES",
-    "TRACK",
+    "TRACK", "RESEARCH STATUS", "EDITION",
 ]
 
 # Our detection status (cfp_status) -> customer-facing STATUS wording. Customer
@@ -87,7 +90,11 @@ def _coerce_date(d) -> Optional[date]:
 
 def to_customer_row(rec: dict) -> dict:
     """Map one internal export dict (Store.export_dicts item) to the 15 columns."""
-    status = _STATUS_MAP.get((rec.get("status") or "").lower(), rec.get("status") or "")
+    research = _STATUS_MAP.get((rec.get("status") or "").lower(), rec.get("status") or "")
+    edition = rec.get("edition") or ""
+    # Conferences recur, so an unqualified verdict is ambiguous: say WHICH edition it is for.
+    if research and edition:
+        research = f"{research} ({edition})"
     verified = "Yes" if rec.get("verified") else "Needs Verification"
     # Honest deadline handling: if an opportunity exists but no public deadline was found,
     # say so explicitly (feeds the human-verification workflow) rather than leaving a blank
@@ -106,7 +113,7 @@ def to_customer_row(rec: dict) -> dict:
         "SUBMISSION DEADLINE": rec.get("submission_deadline") or "",
         "SUBMISSION DATE VERIFIED": verified,
         "PRIORITY": rec.get("priority") or "",
-        "STATUS": status,
+        "STATUS": rec.get("submission_status") or "",   # customer-owned; never written by us
         "STATUS DETAILS": details,
         "SUBMISSION URL": rec.get("submission_url") or "",
         "COORDINATOR EMAIL": rec.get("coordinator_email") or "",
@@ -115,6 +122,8 @@ def to_customer_row(rec: dict) -> dict:
         "NOTES": rec.get("notes") or "",
         # Derived, read-only: which opportunity track(s) the crawl detected. Blank when none.
         "TRACK": track_label(rec.get("opportunity_types")),
+        "RESEARCH STATUS": research,
+        "EDITION": edition,
     }
     return {header: excel_safe_text(value) for header, value in row.items()}
 

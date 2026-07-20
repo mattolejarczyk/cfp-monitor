@@ -26,7 +26,7 @@ def test_row_has_exact_headers():
 
 def test_track_column_is_last_and_derived():
     # TRACK is appended last so the customer's 15-column order is undisturbed.
-    assert CUSTOMER_HEADERS[-1] == "TRACK"
+    assert CUSTOMER_HEADERS[-3:] == ["TRACK", "RESEARCH STATUS", "EDITION"]
     assert CUSTOMER_HEADERS[:15] == [
         "CONFERENCE", "CONFERENCE URL", "LOCATION", "START DATES", "LATEST UPDATE",
         "SUBMISSION DEADLINE", "SUBMISSION DATE VERIFIED", "PRIORITY", "STATUS",
@@ -41,11 +41,26 @@ def test_track_column_is_last_and_derived():
         _rec(opportunity_types=["cfp", "awards_entry"]))["TRACK"] == "Speaking; Awards"
 
 
-def test_status_mapping():
-    assert to_customer_row(_rec(status="open"))["STATUS"] == "Open"
-    assert to_customer_row(_rec(status="closed"))["STATUS"] == "Closed"
-    assert to_customer_row(_rec(status="unclear"))["STATUS"] == "Needs Review"
-    assert to_customer_row(_rec(status="none"))["STATUS"] == "No Opportunity"
+def test_research_status_mapping():
+    assert to_customer_row(_rec(status="open"))["RESEARCH STATUS"] == "Open"
+    assert to_customer_row(_rec(status="closed"))["RESEARCH STATUS"] == "Closed"
+    assert to_customer_row(_rec(status="unclear"))["RESEARCH STATUS"] == "Needs Review"
+    assert to_customer_row(_rec(status="none"))["RESEARCH STATUS"] == "No Opportunity"
+
+
+def test_research_status_is_edition_qualified():
+    """A bare 'Closed' is ambiguous across annual editions - say which year."""
+    assert to_customer_row(_rec(status="open", edition="2027"))["RESEARCH STATUS"] == "Open (2027)"
+    assert to_customer_row(_rec(status="closed", edition="2026"))["RESEARCH STATUS"] == "Closed (2026)"
+
+
+def test_customer_status_column_is_theirs_and_never_ours():
+    """STATUS carries the customer's pipeline state; detection must never appear there."""
+    r = to_customer_row(_rec(status="open", submission_status="Submitted (2026)"))
+    assert r["STATUS"] == "Submitted (2026)"
+    assert r["RESEARCH STATUS"].startswith("Open")
+    # with no human value set, their column stays blank rather than showing our verdict
+    assert to_customer_row(_rec(status="open"))["STATUS"] == ""
 
 
 def test_verified_label():
