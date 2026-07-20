@@ -112,6 +112,8 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
     totals = {b: sum(1 for r in records if r["_bucket"] == b) for b in BUCKETS}
     n_events = len(records)
     watched = n_events - totals["Verify"]
+    pipeline = totals["Upcoming"] + totals["Monitoring"]
+    nice_date = f"{today.strftime('%d %B %Y').lstrip('0')}"
     new_events = [r for r in records if r["_new"]]
 
     def rank(r: dict) -> tuple:
@@ -212,6 +214,21 @@ h1{{font-size:clamp(23px,3.6vw,33px);margin:0 0 6px;letter-spacing:-.01em}}
 h2{{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}}
 .lede{{color:var(--mut);margin:0 0 18px}}
 .meta{{color:var(--mut);font-size:13px;margin-bottom:26px}}
+.hero{{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:24px}}
+.hsub{{color:var(--mut);margin:6px 0 0;font-size:14px}}
+.tools{{display:flex;gap:8px}}
+.kpi.lead{{background:linear-gradient(160deg,var(--accent),color-mix(in srgb,var(--accent) 78%,#000));
+border-color:transparent;color:#fff}}
+.kpi.lead .v{{font-size:40px;color:#fff}} .kpi.lead .l{{color:rgba(255,255,255,.88);font-size:13px}}
+.of{{font-size:16px;color:var(--mut)}}
+@media print{{
+  .tools{{display:none}} body{{background:#fff}}
+  .kpi,.roll,details.mkt{{box-shadow:none}}
+  .kpi.lead{{background:#fff;color:var(--ink);border:2px solid var(--accent)}}
+  .kpi.lead .v{{color:var(--accent)}} .kpi.lead .l{{color:var(--mut)}}
+  section{{break-inside:avoid}}
+}}
 .kpis{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:26px}}
 .kpi{{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}}
 .kpi .v{{font-size:29px;font-weight:650;letter-spacing:-.02em}}
@@ -255,16 +272,24 @@ footer{{color:var(--mut);font-size:12.5px;border-top:1px solid var(--line);paddi
 a{{color:var(--accent)}}
 </style>
 <div class="wrap">
-<h1>{title}</h1>
-<p class="lede">Speaking and awards opportunities found across {len(markets)} markets.</p>
-<div class="meta">Updated {today.isoformat()} &middot; {n_events} events tracked</div>
+<header class="hero">
+  <div>
+    <h1>{title}</h1>
+    <p class="hsub">{len(markets)} markets &middot; {n_events} events tracked &middot; updated {nice_date}</p>
+  </div>
+  <div class="tools"><button id="dl">Download</button><button id="pr">Print / PDF</button></div>
+</header>
 
 <div class="kpis">
-  <div class="kpi"><div class="v b-open">{totals['Open']}</div><div class="l">Open now &mdash; act on these</div></div>
-  <div class="kpi"><div class="v b-upcoming">{totals['Upcoming']}</div><div class="l">Opening on a known date</div></div>
-  <div class="kpi"><div class="v b-monitoring">{totals['Monitoring']}</div><div class="l">Page found, watching for the call</div></div>
-  <div class="kpi"><div class="v">{watched}<span style="font-size:16px;color:var(--mut)">/{n_events}</span></div>
+  <div class="kpi lead">
+    <div class="v">{totals['Open']}</div>
+    <div class="l">Open now &mdash; ready to submit</div>
+  </div>
+  <div class="kpi"><div class="v b-upcoming">{pipeline}</div>
+    <div class="l">In the pipeline &mdash; watching for the call</div></div>
+  <div class="kpi"><div class="v">{watched}<span class="of">/{n_events}</span></div>
     <div class="l">Submission page under watch</div></div>
+  <div class="kpi"><div class="v">{len(markets)}</div><div class="l">Markets covered</div></div>
 </div>
 
 <section>
@@ -282,6 +307,17 @@ a{{color:var(--accent)}}
 </div>
 <script>
 (function(){{
+  var d=document.getElementById('dl'),pr=document.getElementById('pr');
+  if(pr) pr.onclick=function(){{window.print();}};
+  if(d) d.onclick=function(){{
+    // Self-contained snapshot: styles are inline, so the saved file opens anywhere offline.
+    var blob=new Blob(['<!doctype html>
+'+document.documentElement.outerHTML],
+                      {{type:'text/html;charset=utf-8'}});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='opportunities-{today.isoformat()}.html'; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); setTimeout(function(){{URL.revokeObjectURL(a.href);}},1000);
+  }};
   var fb=document.getElementById('fb'),fe=document.getElementById('fe');
   if(!fb||!fe) return;   // summary mode has no filter controls
   function apply(){{
