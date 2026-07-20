@@ -12,7 +12,11 @@ from datetime import date, datetime, timedelta
 from typing import Optional
 
 try:  # dateutil ships with pandas; guard so the package never hard-depends on it.
+    import warnings as _warnings
     from dateutil import parser as _dparser
+    # Conference deadlines carry local tz abbreviations ("5:00 p.m. PT") that dateutil cannot
+    # resolve. We only use the y/m/d, so the warning is pure log noise on every run/report.
+    _warnings.filterwarnings("ignore", message=".*tzname.*", module="dateutil.*")
 except Exception:  # pragma: no cover - only hit if dateutil is truly absent
     _dparser = None
 
