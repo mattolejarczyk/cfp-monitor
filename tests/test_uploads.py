@@ -100,6 +100,44 @@ def test_no_industry_column_leaves_context_industry_absent():
     assert all("industry" not in (c or {}) for c in contexts)
 
 
+def _award_xlsx_bytes() -> bytes:
+    """An award workbook: no CONFERENCE URL / LOCATION / START DATES; URL lives in a
+    'SUBMISSION URL' column further right, and C/D are dates (not location/dates)."""
+    wb = Workbook()
+    ws = wb.active
+    for col, head in enumerate(
+        ["AWARD", "OVERVIEW", "LATEST UPDATE", "SUBMISSION DEADLINE", "SUBMISSION DATE VERIFIED",
+         "SUBMISSION STATUS", "STATUS DETAILS", "SUBMISSION URL", "COORDINATOR EMAIL", "CATEGORIES"],
+        start=1):
+        ws.cell(row=1, column=col, value=head)
+    ws.cell(row=2, column=1, value="ASTORS Homeland Security Awards")
+    ws.cell(row=2, column=2, value="Security awards program")
+    ws.cell(row=2, column=4, value=date(2026, 6, 15))            # a DATE in col D
+    ws.cell(row=2, column=8, value="https://americansecuritytoday.com/astors-awards/")   # URL in H
+    ws.cell(row=2, column=10, value="https://example.com/a-category-link")               # must NOT be crawled
+    out = io.BytesIO()
+    wb.save(out)
+    wb.close()
+    return out.getvalue()
+
+
+def test_award_layout_reads_submission_url_column_by_header():
+    urls, contexts = uploaded_urls_and_contexts("Utility Global Award List.xlsx", _award_xlsx_bytes())
+    # only the SUBMISSION URL column is a crawl target -- the CATEGORIES link is ignored.
+    assert urls == ["https://americansecuritytoday.com/astors-awards/"]
+    # name comes from AWARD; the date columns are NOT mislabeled as location/dates.
+    assert contexts[0]["name"] == "ASTORS Homeland Security Awards"
+    assert not contexts[0].get("location")
+    assert not contexts[0].get("dates")
+
+
+def test_conference_layout_still_reads_column_b_and_full_context():
+    # Regression: header-driven intake must leave conference behavior byte-identical.
+    urls, contexts = uploaded_urls_and_contexts("two-conferences.xlsx", _xlsx_bytes())
+    assert urls == ["https://iros2026.org/", "https://www.robobusiness.com/"]
+    assert contexts[0] == {"name": "IROS 2026", "location": "Kyoto, Japan", "dates": "2026-09-27"}
+
+
 def _run():
     import sys
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
