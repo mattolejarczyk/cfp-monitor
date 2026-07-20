@@ -11,8 +11,11 @@ reconciles:
     Upcoming   submission page found AND the site states when the call opens
     Monitoring submission page found, but no open date announced yet
     Closed     the deadline for that edition has passed
-    Verify     needs a human: no submission page found, or the data refers to an
-               edition that has already gone by
+    Verify     needs a human: no submission page found for it yet
+
+A past-dated event (its edition/date already behind us) is always Closed -- the past-date
+quality gate in customer_format.gated_status enforces that, so a stale page that still reads
+"open" can never masquerade as a live opportunity.
 
 "Page under watch" = Open + Upcoming + Monitoring + Closed, i.e. every event where we have
 pinpointed the submission page. That is the honest confidence signal: for those we see the
@@ -24,6 +27,7 @@ import html
 from datetime import date, datetime, timedelta
 from typing import Optional
 
+from .customer_format import gated_status
 from .filtering import days_until
 from .storage import Store
 
@@ -33,28 +37,19 @@ _BUCKET_NOTE = {
     "Upcoming": "Submission page found and the site states when the call opens",
     "Monitoring": "Submission page found; no open date announced yet",
     "Closed": "Deadline passed for that edition",
-    "Verify": "Needs a human: no submission page found, or the edition has gone by",
+    "Verify": "Needs a human: no submission page found for it yet",
 }
 
 
-def _stale(rec: dict, year: int) -> bool:
-    """The record's verdict refers to an edition that has already gone by."""
-    if rec.get("event_is_past") == 1:
-        return True
-    ed = rec.get("edition")
-    try:
-        return bool(ed) and int(ed) < year
-    except (TypeError, ValueError):
-        return False
+def bucket_of(rec: dict, today: date) -> str:
+    """Which rollup bucket the event falls in, AFTER the past-date quality gate.
 
-
-def bucket_of(rec: dict, year: int) -> str:
-    status = (rec.get("cfp_status") or "").lower()
+    A past-dated event is Closed (the gate in customer_format.gated_status enforces this), so
+    a stale page that still reads 'open' can't masquerade as an opportunity."""
+    status = gated_status(rec, today)
     has_page = bool((rec.get("submission_url") or "").strip())
     if status == "closed":
         return "Closed"
-    if _stale(rec, year):
-        return "Verify"          # a live-sounding verdict on a dead edition is not trustworthy
     if status == "open":
         return "Open"
     if status == "upcoming":
@@ -62,9 +57,7 @@ def bucket_of(rec: dict, year: int) -> str:
     return "Monitoring" if has_page else "Verify"
 
 
-def verify_reason(rec: dict, year: int) -> str:
-    if _stale(rec, year):
-        return "Information refers to an edition that has passed - needs re-checking"
+def verify_reason(rec: dict, today: date) -> str:
     return "No submission page found yet - needs a manual look"
 
 
@@ -90,7 +83,6 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
     `detail=True` adds the "new since last update" list and the expandable per-market tables
     with Submit links -- kept for when the process has matured."""
     today = today or date.today()
-    year = today.year
     cutoff = (datetime.combine(today, datetime.min.time()) - timedelta(days=new_since_days)).isoformat()
 
     records = store.all_records()
@@ -100,7 +92,7 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
         markets_by_key.setdefault(row[0], []).append(row[1])
 
     for r in records:
-        r["_bucket"] = bucket_of(r, year)
+        r["_bucket"] = bucket_of(r, today)
         r["_markets"] = markets_by_key.get(r["key"], [])
         r["_new"] = bool(r.get("first_seen") and str(r["first_seen"]) >= cutoff)
 
@@ -139,7 +131,7 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
             mine = html.escape(r.get("submission_status") or "")
             action = (f'<a class="go" href="{html.escape(sub)}" target="_blank" rel="noopener">Submit &rarr;</a>'
                       if sub else "")
-            note = (verify_reason(r, year) if b == "Verify"
+            note = (verify_reason(r, today) if b == "Verify"
                     else _deadline_note(r, today))
             items.append(
                 f'<tr class="r b-{b.lower()}" data-bucket="{b}" data-edition="{ed}" data-mine="{mine}">'

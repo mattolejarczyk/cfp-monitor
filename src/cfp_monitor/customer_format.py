@@ -88,22 +88,61 @@ def _coerce_date(d) -> Optional[date]:
     return None
 
 
-def to_customer_row(rec: dict) -> dict:
+def is_past_edition(rec: dict, today: Optional[date] = None) -> bool:
+    """True when this record's edition/event is already behind us. Two independent signals,
+    either of which is decisive:
+      * event_is_past  - the event's own dates ended before today, OR
+      * edition year   - the edition we captured is an earlier year than the current one.
+    Conservative: an unknown/undeterminable date is NOT treated as past."""
+    today = today or date.today()
+    if rec.get("event_is_past") == 1:
+        return True
+    ed = rec.get("edition")
+    try:
+        return bool(ed) and int(ed) < today.year
+    except (TypeError, ValueError):
+        return False
+
+
+def gated_status(rec: dict, today: Optional[date] = None) -> str:
+    """Detection status after the past-date QUALITY GATE.
+
+    A conference that has already happened cannot be Open/Upcoming/Needs-Review -- for that
+    edition the window is shut -- so any past-dated record collapses to 'closed'. Applied at
+    DISPLAY time and never stored, so a status flips to Closed automatically once the date
+    passes, without a re-crawl. 'none' (no opportunity found) is left as-is: it was never an
+    opportunity to begin with, so 'closed' would overstate it."""
+    raw = (rec.get("status") or rec.get("cfp_status") or "").lower()
+    if raw in ("", "none"):
+        return raw
+    if is_past_edition(rec, today):
+        return "closed"
+    return raw
+
+
+def to_customer_row(rec: dict, today: Optional[date] = None) -> dict:
     """Map one internal export dict (Store.export_dicts item) to the 15 columns."""
-    research = _STATUS_MAP.get((rec.get("status") or "").lower(), rec.get("status") or "")
+    today = today or date.today()
+    gs = gated_status(rec, today)
+    research = _STATUS_MAP.get(gs, gs.title())
     edition = rec.get("edition") or ""
     # Conferences recur, so an unqualified verdict is ambiguous: say WHICH edition it is for.
     if research and edition:
         research = f"{research} ({edition})"
     verified = "Yes" if rec.get("verified") else "Needs Verification"
-    # Honest deadline handling: if an opportunity exists but no public deadline was found,
+    # Honest deadline handling: if a LIVE opportunity exists but no public deadline was found,
     # say so explicitly (feeds the human-verification workflow) rather than leaving a blank
-    # cell that implies there is none. Many expos simply don't publish a submission deadline.
+    # cell that implies there is none. Past-dated rows are closed, so they get no such note.
     details = rec.get("status_details") or ""
-    has_opp = (rec.get("status") or "").lower() in ("open", "upcoming", "unclear") or bool(rec.get("submission_url"))
+    has_opp = gs in ("open", "upcoming", "unclear") or (bool(rec.get("submission_url")) and gs != "closed")
     if has_opp and not (rec.get("submission_deadline") or "").strip():
         note = "No public deadline found - needs verification"
         details = f"{details} - {note}" if details else note
+    # When the gate closed a row the crawl thought was live, the stored reason ("call is open")
+    # would now contradict the status - lead with the honest reason instead.
+    if gs == "closed" and (rec.get("status") or "").lower() not in ("closed", "none", ""):
+        past_note = f"This edition ({edition}) has passed." if edition else "This edition has passed."
+        details = f"{past_note} {details}".strip()
     row = {
         "CONFERENCE": rec.get("name") or "",
         "CONFERENCE URL": rec.get("url") or "",
@@ -134,23 +173,24 @@ def _short_date(iso: Optional[str]) -> str:
     return d.isoformat() if d else (iso or "")
 
 
-def to_customer_rows(records: Iterable[dict]) -> list[dict]:
-    return [to_customer_row(r) for r in records]
+def to_customer_rows(records: Iterable[dict], today: Optional[date] = None) -> list[dict]:
+    today = today or date.today()
+    return [to_customer_row(r, today) for r in records]
 
 
-def to_customer_csv_text(records: Iterable[dict]) -> str:
+def to_customer_csv_text(records: Iterable[dict], today: Optional[date] = None) -> str:
     """The customer 15-column CSV as a string (for downloads / in-memory use)."""
     import io
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=CUSTOMER_HEADERS)
     writer.writeheader()
-    writer.writerows(to_customer_rows(records))
+    writer.writerows(to_customer_rows(records, today))
     return buf.getvalue()
 
 
-def write_customer_csv(records: Iterable[dict], path: str) -> int:
+def write_customer_csv(records: Iterable[dict], path: str, today: Optional[date] = None) -> int:
     """Write the customer 15-column CSV. Returns the number of data rows written."""
-    rows = to_customer_rows(records)
+    rows = to_customer_rows(records, today)
     with open(path, "w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=CUSTOMER_HEADERS)
         writer.writeheader()
