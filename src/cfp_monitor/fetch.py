@@ -214,8 +214,12 @@ def cdp_reachable(cdp_url: Optional[str]) -> bool:
         return False
     try:
         parsed = urlparse(cdp_url if "://" in str(cdp_url) else f"http://{cdp_url}")
-        host, port = parsed.hostname or "127.0.0.1", parsed.port or 9222
+        host, port = parsed.hostname, parsed.port or 9222
     except (ValueError, TypeError):
+        return False
+    if not host:
+        # Malformed value (e.g. "http://"). Never silently fall back to localhost: that would
+        # report a broken config as reachable whenever an unrelated Chrome happens to be up.
         return False
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

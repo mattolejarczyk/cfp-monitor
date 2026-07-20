@@ -264,22 +264,25 @@ with tab_review:
     if not records:
         st.info("No records yet — run a crawl in the first tab.")
     else:
-        # The full customer sheet (15 cols + TRACK), editable in place, with an INDUSTRY column
+        # The full customer sheet (15 cols + TRACK), editable in place, with a MARKETS column
         # for grouping. Edits to crawl-produced fields are protected from future crawls
         # (correction-precedence); human-owned columns save directly. _key/URL/LATEST UPDATE/
-        # TRACK/INDUSTRY are read-only. export_dicts and all_records share the same order.
+        # TRACK/MARKETS are read-only. export_dicts and all_records share the same order.
         exports = store.export_dicts()
         df = pd.DataFrame(to_customer_rows(exports), columns=CUSTOMER_HEADERS)
         df.insert(0, "_key", [r["key"] for r in records])
-        df.insert(1, "INDUSTRY", [r["industry"] or "" for r in records])
+        # An event can belong to several markets (CES is on Consumer Electronics, Utility AND
+        # Robotics), so this is a list per row and the filter matches ANY of them.
+        market_lists = [e.get("markets") or [] for e in exports]
+        df.insert(1, "MARKETS", ["; ".join(m) for m in market_lists])
         df["SUBMISSION DATE VERIFIED"] = [r["verification_status"] == "verified" for r in records]
 
-        # ---- Filters (industry / status / track / deadline / search) ----
-        industries = sorted({(r["industry"] or "").strip() for r in records if (r["industry"] or "").strip()})
+        # ---- Filters (market / status / track / deadline / search) ----
         status_opts = [s for s in _STATUS_CHOICES if s]
         track_opts = ["Speaking", "Awards", "Other", "(none)"]
         f1, f2, f3 = st.columns([1.2, 1.5, 1.5])
-        pick_industry = f1.selectbox("Industry", ["(all)"] + industries)
+        pick_industry = f1.selectbox("Market", ["(all)"] + store.all_markets(),
+                                     help="An event on several market lists appears under each.")
         pick_status = f2.multiselect("Status", status_opts, default=[],
                                      help="Leave empty for all. Pick 'Open' for what's actionable now.")
         pick_track = f3.multiselect("Track", track_opts, default=[])
@@ -292,7 +295,7 @@ with tab_review:
 
         mask = pd.Series(True, index=df.index)
         if pick_industry != "(all)":
-            mask &= df["INDUSTRY"] == pick_industry
+            mask &= pd.Series([pick_industry in m for m in market_lists], index=df.index)
         if pick_status:
             mask &= df["STATUS"].isin(pick_status)
         if pick_track:
@@ -319,7 +322,7 @@ with tab_review:
 
         edited = st.data_editor(
             view, width="stretch", hide_index=True, height=520,
-            disabled=["_key", "INDUSTRY", *_READONLY_COLS],
+            disabled=["_key", "MARKETS", *_READONLY_COLS],
             column_config={
                 "_key": None,
                 "SUBMISSION DATE VERIFIED": st.column_config.CheckboxColumn("SUBMISSION DATE VERIFIED"),
@@ -330,7 +333,7 @@ with tab_review:
 
         st.caption("Editing a crawl field (status, deadline, dates, location, categories, submission URL) "
                    "locks that value against future crawls. Tick **SUBMISSION DATE VERIFIED** to mark a "
-                   "row human-checked. INDUSTRY and TRACK are set by the crawl and read-only here.")
+                   "row human-checked. MARKETS and TRACK are set by the crawl and read-only here.")
 
         if st.button("💾 Save changes", type="primary"):
             orig_by_key = {r["_key"]: r for r in view.to_dict("records")}

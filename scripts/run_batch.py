@@ -33,7 +33,7 @@ from src.cfp_monitor.cdp import (                                    # noqa: E40
 )
 from src.cfp_monitor.markets import MarketRegistry, parse_filename   # noqa: E402
 from src.cfp_monitor.quality_gate import classify_result             # noqa: E402
-from src.cfp_monitor.storage import Store                            # noqa: E402
+from src.cfp_monitor.storage import Store, normalize_key             # noqa: E402
 from src.cfp_monitor.uploads import (                                # noqa: E402
     normalize_urls_and_contexts_audited, uploaded_urls_and_contexts,
 )
@@ -238,7 +238,7 @@ def cmd_run(args) -> int:
             for res in results:
                 q = classify_result(res).verdict
                 counts[q.value] = counts.get(q.value, 0) + 1
-                store.upsert(res, q, run_id=run_id)
+                store.upsert(res, q, run_id=run_id, source_list=p.name)
             store.finish_run(run_id, counts, industry=r["market"], input_manifest=manifest)
             r["status"], r["note"] = "done", (
                 f"run {run_id}: " + " ".join(f"{k}={v}" for k, v in counts.items() if k != "url_count"))
@@ -262,6 +262,40 @@ def cmd_run(args) -> int:
     print(f"Batch complete in {_fmt(time.monotonic() - t0)} - "
           f"{len(pending) - failed} succeeded, {failed} failed. Review in the app.")
     return 1 if failed else 0
+
+
+# --------------------------------------------------- sync market membership ----
+def cmd_sync_markets(args) -> int:
+    """Rebuild market membership from the source lists WITHOUT crawling.
+
+    Membership is input metadata, so it can be derived directly from each list file. Use this
+    to restore memberships that were lost while `industry` was a single overwritten column
+    (an event on three lists kept only the one crawled last), or any time lists change.
+    """
+    if not Path(args.manifest).exists():
+        print(f"No manifest at {args.manifest} - run 'plan' first.")
+        return 2
+    rows = _read_manifest(args.manifest)
+    store = Store(DB_PATH)
+    reg = MarketRegistry(store.db)
+    known = {r["key"] for r in store.all_records()}
+    total = 0
+    for r in rows:
+        market, p = reg.resolve(r["market"]), Path(r["file"])
+        if not market or not p.exists():
+            continue
+        try:
+            urls, _, _ = _load_file(p)
+        except Exception as e:
+            print(f"  {p.name}: unreadable ({type(e).__name__})")
+            continue
+        added = sum(1 for u in urls
+                    if normalize_key(u) in known and store.add_market(normalize_key(u), market, p.name))
+        total += added
+        print(f"  {p.name}: +{added} membership(s) for {market}")
+    print(f"\n{total} membership(s) added. Markets in use: {', '.join(store.all_markets())}")
+    store.close()
+    return 0
 
 
 # --------------------------------------------------------------- markets ----
@@ -302,6 +336,10 @@ def main() -> int:
     p2.add_argument("--manifest", default=MANIFEST)
     p2.add_argument("--stop-on-error", action="store_true")
     p2.set_defaults(func=cmd_run)
+
+    p4 = sub.add_parser("sync-markets", help="rebuild market membership from the lists (no crawl)")
+    p4.add_argument("--manifest", default=MANIFEST)
+    p4.set_defaults(func=cmd_sync_markets)
 
     p3 = sub.add_parser("markets", help="list or add markets")
     p3.add_argument("--add", help="register a genuinely new market")

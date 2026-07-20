@@ -71,6 +71,17 @@ CREATE TABLE IF NOT EXISTS runs (
     blocked_count INTEGER DEFAULT 0,
     error_count  INTEGER DEFAULT 0
 );
+-- Market membership is MANY-TO-MANY: one event (the natural key) can sit on several market
+-- lists (e.g. CES is on Consumer Electronics, Utility and Robotics). Keeping it here instead
+-- of a single conferences.industry column means each market's customer sees the same single
+-- source-of-truth record -- one human correction benefits every market at once.
+CREATE TABLE IF NOT EXISTS conference_markets (
+    conference_key TEXT NOT NULL,
+    market         TEXT NOT NULL,
+    source_list    TEXT,                        -- which list asserted it (auditability)
+    first_seen     TEXT,
+    PRIMARY KEY (conference_key, market)
+);
 CREATE TABLE IF NOT EXISTS changes (
     id            INTEGER PRIMARY KEY,
     conference_id INTEGER,
@@ -178,6 +189,12 @@ class Store:
         for col in ("industry", "input_manifest"):
             if col not in run_have:
                 self.db.execute(f"ALTER TABLE runs ADD COLUMN {col} TEXT")
+        # Backfill market membership from the legacy single-value industry column. Idempotent
+        # (INSERT OR IGNORE), so it is safe to run on every open and loses nothing.
+        self.db.execute(
+            "INSERT OR IGNORE INTO conference_markets (conference_key, market, source_list, first_seen)"
+            " SELECT key, TRIM(industry), 'backfill', ? FROM conferences"
+            " WHERE industry IS NOT NULL AND TRIM(industry) <> ''", (_now(),))
 
     def close(self) -> None:
         self.db.close()
@@ -218,7 +235,7 @@ class Store:
 
     # ---- upsert with change detection + correction-precedence ----
     def upsert(self, result: ConferenceResult, quality: Quality, categories=None,
-               run_id: Optional[int] = None) -> UpsertOutcome:
+               run_id: Optional[int] = None, source_list: Optional[str] = None) -> UpsertOutcome:
         key = normalize_key(result.canonical_url or result.start_url)
         new = _fields_from_result(result, categories)
         now = _now()
@@ -239,6 +256,7 @@ class Store:
             )
             conf_id = int(self.db.execute("SELECT id FROM conferences WHERE key=?", (key,)).fetchone()["id"])
             self._log_change(conf_id, run_id, "record", None, new["name"], "new_record", now)
+            self._add_market(key, new["industry"], source_list, now)
             self.db.commit()
             return UpsertOutcome(key=key, created=True,
                                  changes=[Change("record", None, new["name"], "new_record")])
@@ -293,8 +311,46 @@ class Store:
         set_clause = ", ".join(f"{k}=?" for k in updates)
         self.db.execute(f"UPDATE conferences SET {set_clause} WHERE id=?",
                         (*updates.values(), conf_id))
+        # Membership comes from the INPUT list, so record it whatever the crawl outcome:
+        # an event is on that market's list even if this particular crawl timed out.
+        self._add_market(key, new["industry"], source_list, now)
         self.db.commit()
         return UpsertOutcome(key=key, created=False, changes=changes, preserved_verified=preserved)
+
+    # ---- market membership (many-to-many) ----
+    def _add_market(self, key: str, market: Optional[str], source_list: Optional[str],
+                    when: str) -> None:
+        """Record that this event belongs to `market`. ADDITIVE ONLY: an event on several
+        market lists keeps every one of them, and a failed/timed-out crawl never strips a
+        membership (same degrade-proof principle as the field-level guard above)."""
+        if not market or not str(market).strip():
+            return
+        self.db.execute(
+            "INSERT OR IGNORE INTO conference_markets (conference_key, market, source_list, first_seen)"
+            " VALUES (?,?,?,?)", (key, str(market).strip(), source_list, when))
+
+    def add_market(self, key: str, market: str, source_list: Optional[str] = None) -> bool:
+        """Assert membership for an existing conference. Returns True if it was newly added.
+
+        Membership is INPUT metadata, so it can be rebuilt straight from the market list files
+        without re-crawling -- which is how memberships lost to the old single-value `industry`
+        column get restored."""
+        k = normalize_key(key)
+        had = market and market.strip() in set(self.markets_for(k))
+        self._add_market(k, market, source_list, _now())
+        self.db.commit()
+        return bool(market and market.strip() and not had)
+
+    def markets_for(self, key: str) -> list[str]:
+        """Every market this event belongs to."""
+        return [r[0] for r in self.db.execute(
+            "SELECT market FROM conference_markets WHERE conference_key=? ORDER BY market",
+            (normalize_key(key),))]
+
+    def all_markets(self) -> list[str]:
+        """Distinct markets that have at least one event (drives the review filter)."""
+        return [r[0] for r in self.db.execute(
+            "SELECT DISTINCT market FROM conference_markets ORDER BY market")]
 
     def _log_change(self, conf_id, run_id, fieldname, old, new, ctype, when) -> None:
         self.db.execute(
@@ -401,10 +457,17 @@ class Store:
 
     def export_dicts(self) -> list[dict]:
         """Normalized dicts for the customer-format transform (customer_format.py)."""
+        memberships: dict[str, list[str]] = {}
+        for k, m in self.db.execute(
+                "SELECT conference_key, market FROM conference_markets ORDER BY market"):
+            memberships.setdefault(k, []).append(m)
         out = []
         for r in self.all_records():
             out.append({
                 "key": r["key"], "industry": r["industry"],
+                # Authoritative many-to-many membership (industry above is the legacy
+                # single value kept only for backward compatibility).
+                "markets": memberships.get(r["key"], []),
                 "name": r["name"], "url": r["url"], "location": r["location"],
                 "start_dates": r["conference_dates"], "last_checked": r["last_checked"],
                 "submission_deadline": r["cfp_close_date"],
