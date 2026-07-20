@@ -209,6 +209,17 @@ class Store:
         for col in ("industry", "input_manifest"):
             if col not in run_have:
                 self.db.execute(f"ALTER TABLE runs ADD COLUMN {col} TEXT")
+        # Backfill `edition` for rows stored before the column existed. Pure derivation from
+        # dates we already hold - no crawl needed. Only touches NULL editions, so it is
+        # idempotent and cheap after the first pass.
+        stale = self.db.execute(
+            "SELECT key, conference_dates, cfp_close_date FROM conferences"
+            " WHERE (edition IS NULL OR edition = '')"
+            "   AND (conference_dates IS NOT NULL OR cfp_close_date IS NOT NULL)").fetchall()
+        for row in stale:
+            year = edition_year(row["conference_dates"], row["cfp_close_date"])
+            if year:
+                self.db.execute("UPDATE conferences SET edition=? WHERE key=?", (year, row["key"]))
         # Backfill market membership from the legacy single-value industry column. Idempotent
         # (INSERT OR IGNORE), so it is safe to run on every open and loses nothing.
         self.db.execute(
