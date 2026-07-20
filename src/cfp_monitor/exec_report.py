@@ -85,7 +85,7 @@ def _deadline_note(rec: dict, today: date) -> str:
 
 def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities",
                  new_since_days: int = 7, today: Optional[date] = None,
-                 detail: bool = False) -> str:
+                 detail: bool = False, sheets_note: str = "", sheets_url: str = "") -> str:
     """`detail=False` renders the executive summary only (KPIs + the reconciling rollup).
     `detail=True` adds the "new since last update" list and the expandable per-market tables
     with Submit links -- kept for when the process has matured."""
@@ -196,16 +196,23 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
     else:
         lower = ""
         footer = ('Full detail for every event &mdash; deadlines, submission links and notes &mdash; '
-                  'lives in the working spreadsheet.')
+                  'lives in the per-market sheets.')
+    if sheets_note or sheets_url:
+        label = html.escape(sheets_note) if sheets_note else "Open the market sheets"
+        where = (f'<a class="go" href="{html.escape(sheets_url)}">{label}</a>'
+                 if sheets_url else f'<span class="where">{label}</span>')
+        lower = (f'<section class="sheets"><h2>Individual market sheets</h2>'
+                 f'<p class="lede">One spreadsheet per market, with every event, deadline and '
+                 f'submission link.</p>{where}</section>') + lower
 
     return f"""<title>{title}</title>
 <style>
 :root{{--bg:#f6f7f8;--card:#fff;--ink:#16181d;--mut:#5d6570;--line:#e3e6e8;
 --open:#12805f;--upcoming:#1a6fb5;--monitoring:#7a5cb8;--closed:#8a8f97;--verify:#b0761a;
---accent:#12805f;--shadow:0 1px 2px rgba(16,20,24,.05),0 8px 28px rgba(16,20,24,.06)}}
+--accent:#12805f;--accent-soft:#12805f14;--accent-line:#12805f45;--shadow:0 1px 2px rgba(16,20,24,.05),0 8px 28px rgba(16,20,24,.06)}}
 @media(prefers-color-scheme:dark){{:root{{--bg:#14171c;--card:#1b1f26;--ink:#e9ecef;--mut:#98a1ad;
 --line:#2b313a;--open:#43b892;--upcoming:#5aa6e0;--monitoring:#a68ae0;--closed:#8b929b;--verify:#d9a147;
---accent:#43b892;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.32)}}}}
+--accent:#43b892;--accent-soft:#43b89224;--accent-line:#43b89255;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.32)}}}}
 *{{box-sizing:border-box}}
 body{{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,
 'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased}}
@@ -218,15 +225,13 @@ h2{{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}}
 flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:24px}}
 .hsub{{color:var(--mut);margin:6px 0 0;font-size:14px}}
 .tools{{display:flex;gap:8px}}
-.kpi.lead{{background:linear-gradient(160deg,var(--accent),color-mix(in srgb,var(--accent) 78%,#000));
-border-color:transparent;color:#fff}}
-.kpi.lead .v{{font-size:40px;color:#fff}} .kpi.lead .l{{color:rgba(255,255,255,.88);font-size:13px}}
+.kpi.lead{{background:var(--accent-soft);border-color:var(--accent-line)}}
+.kpi.lead .v{{font-size:40px;color:var(--accent)}} .kpi.lead .l{{color:var(--mut);font-size:13px}}
 .of{{font-size:16px;color:var(--mut)}}
 @media print{{
   .tools{{display:none}} body{{background:#fff}}
   .kpi,.roll,details.mkt{{box-shadow:none}}
-  .kpi.lead{{background:#fff;color:var(--ink);border:2px solid var(--accent)}}
-  .kpi.lead .v{{color:var(--accent)}} .kpi.lead .l{{color:var(--mut)}}
+  .kpi.lead{{background:#fff;border:1.5px solid var(--accent)}}
   section{{break-inside:avoid}}
 }}
 .kpis{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:26px}}
@@ -266,6 +271,8 @@ font-weight:600;padding:5px 11px;border-radius:7px;white-space:nowrap}}
 select,button{{font:inherit;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);
 background:var(--card);color:var(--ink)}}
 button{{cursor:pointer}}
+.where{{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
+color:var(--ink);padding:9px 13px;border-radius:8px;font-size:13.5px}}
 .legend{{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--mut);font-size:12.5px;margin-top:8px}}
 .new-list{{margin:0;padding-left:18px}} .new-list li{{margin:4px 0}}
 footer{{color:var(--mut);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px;margin-top:34px}}
