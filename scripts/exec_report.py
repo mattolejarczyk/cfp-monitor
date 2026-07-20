@@ -12,9 +12,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import csv                                            # noqa: E402
 import re                                             # noqa: E402
 
-from src.cfp_monitor.customer_format import write_customer_csv   # noqa: E402
+from src.cfp_monitor.customer_format import (                    # noqa: E402
+    CUSTOMER_HEADERS, to_customer_row, write_customer_csv,
+)
 from src.cfp_monitor.exec_report import build_report             # noqa: E402
 from src.cfp_monitor.storage import Store                        # noqa: E402
 
@@ -41,8 +44,27 @@ def write_market_sheets(store: Store, out_dir: Path) -> list[tuple[str, int]]:
     for market, recs in sorted(markets.items()):
         path = out_dir / f"{_safe(market)}.csv"
         written.append((path.name, write_customer_csv(recs, str(path))))
+    # Combined sheet: one row per event-MARKET pair, grouped by market. An event on several
+    # market lists therefore appears once under each of them -- that is what makes the sheet
+    # sortable/filterable by market, and it mirrors the per-market sheets exactly.
+    status_rank = {"open": 0, "upcoming": 1, "unclear": 2, "none": 3, "closed": 4}
+    combined = []
+    for market, recs in sorted(markets.items()):
+        for rec in sorted(recs, key=lambda r: (status_rank.get((r.get("status") or "").lower(), 9),
+                                               (r.get("name") or "").lower())):
+            combined.append({"MARKET": market, **to_customer_row(rec)})
+    # Events not on any market list still belong in the combined view.
+    assigned = {r["key"] for recs in markets.values() for r in recs}
+    for rec in exports:
+        if rec["key"] not in assigned:
+            combined.append({"MARKET": "(unassigned)", **to_customer_row(rec)})
+
     all_path = out_dir / "All markets.csv"
-    written.append((all_path.name, write_customer_csv(exports, str(all_path))))
+    with open(all_path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=["MARKET"] + CUSTOMER_HEADERS)
+        w.writeheader()
+        w.writerows(combined)
+    written.append((all_path.name, len(combined)))
     return written
 
 
