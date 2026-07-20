@@ -22,10 +22,13 @@ def main() -> int:
     ap.add_argument("--out", default="opportunities.html")
     ap.add_argument("--new-days", type=int, default=7)
     ap.add_argument("--title", default="Speaking &amp; Awards Opportunities")
+    ap.add_argument("--detail", action="store_true",
+                    help="include the new-this-run list and per-market event tables "
+                         "(default is the executive summary only)")
     a = ap.parse_args()
 
     store = Store(a.db)
-    html = build_report(store, title=a.title, new_since_days=a.new_days)
+    html = build_report(store, title=a.title, new_since_days=a.new_days, detail=a.detail)
     store.close()
     Path(a.out).write_text(html, encoding="utf-8")
     print(f"Wrote {a.out} ({len(html):,} bytes)")

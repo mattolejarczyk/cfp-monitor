@@ -84,7 +84,11 @@ def _deadline_note(rec: dict, today: date) -> str:
 
 
 def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities",
-                 new_since_days: int = 7, today: Optional[date] = None) -> str:
+                 new_since_days: int = 7, today: Optional[date] = None,
+                 detail: bool = False) -> str:
+    """`detail=False` renders the executive summary only (KPIs + the reconciling rollup).
+    `detail=True` adds the "new since last update" list and the expandable per-market tables
+    with Submit links -- kept for when the process has matured."""
     today = today or date.today()
     year = today.year
     cutoff = (datetime.combine(today, datetime.min.time()) - timedelta(days=new_since_days)).isoformat()
@@ -133,8 +137,8 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
             mine = html.escape(r.get("submission_status") or "")
             action = (f'<a class="go" href="{html.escape(sub)}" target="_blank" rel="noopener">Submit &rarr;</a>'
                       if sub else "")
-            detail = (verify_reason(r, year) if b == "Verify"
-                      else _deadline_note(r, today))
+            note = (verify_reason(r, year) if b == "Verify"
+                    else _deadline_note(r, today))
             items.append(
                 f'<tr class="r b-{b.lower()}" data-bucket="{b}" data-edition="{ed}" data-mine="{mine}">'
                 f'<td class="nm"><a href="{site}" target="_blank" rel="noopener">{name}</a>'
@@ -142,7 +146,7 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
                 f'{f"<div class=sub>{loc}</div>" if loc else ""}</td>'
                 f'<td><span class="tag b-{b.lower()}">{b}</span></td>'
                 f'<td>{ed or "&mdash;"}</td>'
-                f'<td class="dl">{detail}</td>'
+                f'<td class="dl">{note}</td>'
                 f'<td>{mine or "&mdash;"}</td>'
                 f'<td class="act">{action}</td></tr>')
         sections.append(
@@ -153,7 +157,7 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
             f'<th>Deadline / next step</th><th>Your status</th><th></th>'
             f'</tr></thead><tbody>{"".join(items)}</tbody></table></div></details>')
 
-    head = "".join(f"<th>{b}</th>" for b in BUCKETS)
+    head = "".join(f'<th class="n">{b}</th>' for b in BUCKETS)
     body = "".join(
         f'<tr><td class="mk">{html.escape(m)}</td><td class="tot">{sum(counts[m].values())}</td>'
         + "".join(f'<td class="n b-{b.lower()}">{counts[m][b] or "&middot;"}</td>' for b in BUCKETS)
@@ -176,6 +180,21 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
 
     legend = " ".join(f'<span class="lg"><b class="tag b-{b.lower()}">{b}</b> {_BUCKET_NOTE[b]}</span>'
                       for b in BUCKETS)
+
+    if detail:
+        lower = (new_block
+                 + '<section><h2>Browse by market</h2><div class="controls">'
+                 + '<select id="fb"><option value="">All statuses</option>'
+                 + "".join(f"<option>{b}</option>" for b in BUCKETS)
+                 + f'</select><select id="fe"><option value="">All editions</option>{ed_opts}</select>'
+                 + '<button id="fo">Open only</button><button id="fr">Reset</button></div>'
+                 + "".join(sections) + '</section>')
+        footer = ('Each conference links to its own site; <b>Submit &rarr;</b> goes straight to the '
+                  'submission page. &ldquo;Your status&rdquo; is yours to maintain &mdash; we never change it.')
+    else:
+        lower = ""
+        footer = ('Full detail for every event &mdash; deadlines, submission links and notes &mdash; '
+                  'lives in the working spreadsheet.')
 
     return f"""<title>{title}</title>
 <style>
@@ -205,8 +224,8 @@ th{{text-align:left;font-size:11.5px;letter-spacing:.07em;text-transform:upperca
 font-weight:600;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}}
 td{{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}}
 tr:last-child td{{border-bottom:none}}
-.n,.tot{{text-align:right;font-variant-numeric:tabular-nums}}
-.mk{{font-weight:550}} .tfoot td{{font-weight:650;background:rgba(125,125,125,.06)}}
+th.n,td.n,td.tot{{text-align:center;font-variant-numeric:tabular-nums}}
+.mk{{text-align:left;font-weight:550}} .tfoot td{{font-weight:650;background:rgba(125,125,125,.06)}}
 .b-open{{color:var(--open)}}.b-upcoming{{color:var(--upcoming)}}.b-monitoring{{color:var(--monitoring)}}
 .b-closed{{color:var(--closed)}}.b-verify{{color:var(--verify)}}
 .tag{{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;
@@ -251,31 +270,20 @@ a{{color:var(--accent)}}
 <section>
   <h2>Opportunities by market</h2>
   <p class="lede">Every row adds up to its event total.</p>
-  <div class="tw"><table class="roll"><thead><tr><th>Market</th><th class="tot">Events</th>{head}</tr></thead>
+  <div class="tw"><table class="roll"><thead><tr><th>Market</th><th class="n">Events</th>{head}</tr></thead>
   <tbody>{body}</tbody>
   <tfoot class="tfoot"><tr><td class="mk">All markets (unique)</td><td class="tot">{n_events}</td>{foot}</tr></tfoot>
   </table></div>
   <div class="legend">{legend}</div>
 </section>
 
-{new_block}
-
-<section>
-  <h2>Browse by market</h2>
-  <div class="controls">
-    <select id="fb"><option value="">All statuses</option>{''.join(f'<option>{b}</option>' for b in BUCKETS)}</select>
-    <select id="fe"><option value="">All editions</option>{ed_opts}</select>
-    <button id="fo">Open only</button><button id="fr">Reset</button>
-  </div>
-  {''.join(sections)}
-</section>
-
-<footer>Each conference links to its own site; <b>Submit &rarr;</b> goes straight to the submission page.
-&ldquo;Your status&rdquo; is yours to maintain &mdash; we never change it.</footer>
+{lower}
+<footer>{footer}</footer>
 </div>
 <script>
 (function(){{
   var fb=document.getElementById('fb'),fe=document.getElementById('fe');
+  if(!fb||!fe) return;   // summary mode has no filter controls
   function apply(){{
     var b=fb.value,e=fe.value;
     document.querySelectorAll('tr.r').forEach(function(r){{
