@@ -318,8 +318,7 @@ a{{color:var(--accent)}}
   if(pr) pr.onclick=function(){{window.print();}};
   if(d) d.onclick=function(){{
     // Self-contained snapshot: styles are inline, so the saved file opens anywhere offline.
-    var blob=new Blob(['<!doctype html>
-'+document.documentElement.outerHTML],
+    var blob=new Blob(['<!doctype html>'+document.documentElement.outerHTML],
                       {{type:'text/html;charset=utf-8'}});
     var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
     a.download='opportunities-{today.isoformat()}.html'; document.body.appendChild(a); a.click();

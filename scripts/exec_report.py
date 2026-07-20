@@ -68,7 +68,8 @@ def main() -> int:
         written = write_market_sheets(store, Path(a.sheets_dir))
         for name, n in written:
             print(f"  {name:<42}{n:>5} rows")
-        note = note or f"Saved to: {Path(a.sheets_dir).resolve()}"
+        # Never bake the operator's real filesystem path into a customer-facing page.
+        note = note or "Saved to your computer: <path-on-your-local-computer>"
     html = build_report(store, title=a.title, new_since_days=a.new_days, detail=a.detail,
                         sheets_note=note, sheets_url=a.sheets_url)
     store.close()
