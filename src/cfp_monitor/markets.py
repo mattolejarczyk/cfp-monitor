@@ -21,11 +21,11 @@ from typing import Iterable, Optional
 
 # Seed vocabulary, taken from the customer's own list filenames (their wording, not ours).
 DEFAULT_MARKETS = [
-    "Additive Manufacturing & 3D Printing",
-    "Arnica",
-    "Bioeconomy & Biofuels",
-    "Biotech & MedTech",
+    "Additive Mfg",
+    "Bioeconomy",
+    "BioMedTech",
     "Consumer Electronics",
+    "Cybersecurity",
     "Robotics",
     "Semiconductor",
     "Utility",
@@ -45,14 +45,18 @@ _CONF_WORDS = {"conference", "conferences"}
 # which are camel-case contractions of ours -- without these the vocabulary silently forks
 # ("AdditiveMfg" alongside "Additive Manufacturing & 3D Printing") and every filter splits.
 ALIASES: dict[str, str] = {
-    "AdditiveMfg": "Additive Manufacturing & 3D Printing",
-    "AdditiveManufacturing": "Additive Manufacturing & 3D Printing",
+    # grounding-sheet spellings
+    "AdditiveMfg": "Additive Mfg",
+    "AdditiveManufacturing": "Additive Mfg",
     "ConsumerElectronics": "Consumer Electronics",
-    "Bioeconomy": "Bioeconomy & Biofuels",
-    "Biofuels": "Bioeconomy & Biofuels",
-    "BioMedTech": "Biotech & MedTech",
-    "Biotech": "Biotech & MedTech",
-    "MedTech": "Biotech & MedTech",
+    "Biofuels": "Bioeconomy",
+    "Biotech": "BioMedTech",
+    "MedTech": "BioMedTech",
+    # our earlier, longer canonical names + the client-workbook label for cyber
+    "Additive Manufacturing & 3D Printing": "Additive Mfg",
+    "Bioeconomy & Biofuels": "Bioeconomy",
+    "Biotech & MedTech": "BioMedTech",
+    "Arnica": "Cybersecurity",
 }
 
 

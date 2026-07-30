@@ -156,10 +156,15 @@ def test_grounding_market_labels_resolve_to_our_canonical_markets():
     from cfp_monitor.markets import MarketRegistry
 
     reg = MarketRegistry(sqlite3.connect(":memory:"))
-    assert reg.resolve("AdditiveMfg") == "Additive Manufacturing & 3D Printing"
+    assert reg.resolve("AdditiveMfg") == "Additive Mfg"
     assert reg.resolve("ConsumerElectronics") == "Consumer Electronics"
-    assert reg.resolve("Bioeconomy") == "Bioeconomy & Biofuels"
-    assert reg.resolve("BioMedTech") == "Biotech & MedTech"
+    assert reg.resolve("Bioeconomy") == "Bioeconomy"
+    assert reg.resolve("BioMedTech") == "BioMedTech"
+    # the client-workbook label for the cyber market resolves to the market name
+    assert reg.resolve("Arnica") == "Cybersecurity"
+    # our earlier, longer names still resolve so nothing breaks on old data
+    assert reg.resolve("Additive Manufacturing & 3D Printing") == "Additive Mfg"
+    assert reg.resolve("Biotech & MedTech") == "BioMedTech"
     for exact in ("Robotics", "Semiconductor", "Utility"):
         assert reg.resolve(exact) == exact
 

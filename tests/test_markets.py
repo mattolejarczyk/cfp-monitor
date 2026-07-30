@@ -65,8 +65,8 @@ def test_case_and_separator_variants_resolve_to_one_canonical_name():
     reg = _reg()
     for variant in ("utility", "UTILITY", " Utility ", "utility"):
         assert reg.resolve(variant) == "Utility"
-    assert reg.resolve("biotech medtech") == "Biotech & MedTech"
-    assert reg.resolve("Biotech_MedTech") == "Biotech & MedTech"
+    assert reg.resolve("biomedtech") == "BioMedTech"
+    assert reg.resolve("Bio_Med_Tech") == "BioMedTech"
 
 
 def test_adding_an_existing_market_reuses_canonical_spelling():
