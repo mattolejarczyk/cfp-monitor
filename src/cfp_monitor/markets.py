@@ -39,10 +39,21 @@ _BOILERPLATE = {
 _AWARD_WORDS = {"award", "awards"}
 _CONF_WORDS = {"conference", "conferences"}
 
-# Optional aliases: filename token -> canonical market. Lets a list keep its own filename
-# while the registry shows a different label (e.g. "Arnica" -> "Cybersecurity") without a
-# data migration. Keys are matched after normalization.
-ALIASES: dict[str, str] = {}
+# Aliases: any external spelling -> canonical market. Lets a source keep its own vocabulary
+# while the registry stays a single controlled list. Matched after normalization, so case and
+# punctuation are irrelevant. Populated with the labels the grounding discovery layer emits,
+# which are camel-case contractions of ours -- without these the vocabulary silently forks
+# ("AdditiveMfg" alongside "Additive Manufacturing & 3D Printing") and every filter splits.
+ALIASES: dict[str, str] = {
+    "AdditiveMfg": "Additive Manufacturing & 3D Printing",
+    "AdditiveManufacturing": "Additive Manufacturing & 3D Printing",
+    "ConsumerElectronics": "Consumer Electronics",
+    "Bioeconomy": "Bioeconomy & Biofuels",
+    "Biofuels": "Bioeconomy & Biofuels",
+    "BioMedTech": "Biotech & MedTech",
+    "Biotech": "Biotech & MedTech",
+    "MedTech": "Biotech & MedTech",
+}
 
 
 def normalize(name: Optional[str]) -> str:

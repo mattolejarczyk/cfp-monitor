@@ -84,6 +84,36 @@ CREATE TABLE IF NOT EXISTS conference_markets (
     first_seen     TEXT,
     PRIMARY KEY (conference_key, market)
 );
+-- Grounding (Google-Search) DISCOVERY claims. Deliberately a SEPARATE table from
+-- `conferences`: that table is our verified source of truth, this one holds unverified
+-- third-party claims. Keeping them apart means a grounding value can never silently
+-- overwrite a crawled fact, and the read layer can state which one it is showing.
+CREATE TABLE IF NOT EXISTS grounding_facts (
+    event_id        TEXT PRIMARY KEY,
+    conference_key  TEXT,                       -- normalize_key(url); joins to conferences
+    name            TEXT,
+    url             TEXT,
+    city            TEXT,
+    state_province  TEXT,
+    country         TEXT,
+    edition         TEXT,
+    deadline        TEXT,                       -- as grounding reported it (raw)
+    submission_url  TEXT,
+    cfp_model       TEXT,                       -- controlled enum
+    status          TEXT,                       -- RAW grounding status, never rewritten
+    overview        TEXT,
+    categories      TEXT,
+    coordinator_email TEXT,
+    deadline_quote  TEXT,                       -- verbatim source text, when supplied
+    is_projected    TEXT,                       -- stated on the page vs inferred
+    source_as_of    TEXT,
+    deadline_evidence_url TEXT,
+    main_info_url   TEXT,
+    issues          TEXT,                       -- crawl-free contradictions found at import
+    verify_state    TEXT DEFAULT 'unverified',  -- unverified|verified|contradicted|not_found
+    verify_detail   TEXT,
+    imported_at     TEXT
+);
 CREATE TABLE IF NOT EXISTS changes (
     id            INTEGER PRIMARY KEY,
     conference_id INTEGER,
@@ -202,7 +232,7 @@ class Store:
     def _migrate(self) -> None:
         """Add columns introduced after a DB was first created (safe on existing files)."""
         have = {r["name"] for r in self.db.execute("PRAGMA table_info(conferences)")}
-        for col in ("notes", "industry", "submission_status", "edition"):
+        for col in ("notes", "industry", "submission_status", "edition", "event_id"):
             if col not in have:
                 self.db.execute(f"ALTER TABLE conferences ADD COLUMN {col} TEXT")
         run_have = {r["name"] for r in self.db.execute("PRAGMA table_info(runs)")}

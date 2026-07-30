@@ -20,7 +20,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.cfp_monitor.grounding import gated_status, load_master_csv   # noqa: E402
+from src.cfp_monitor.grounding import (                              # noqa: E402
+    gated_status, load_master_csv, seed_store,
+)
+from src.cfp_monitor.storage import Store                            # noqa: E402
 
 DERIVED = ["EVENT_ID_CANON", "CITY_CLEAN", "CFP_MODEL_CANON",
            "GATED_STATUS_CALC", "ISSUES_CALC", "VERIFY_STATE"]
@@ -31,6 +34,7 @@ def main() -> int:
     ap.add_argument("csv_path")
     ap.add_argument("--out", default="grounding_seed.csv")
     ap.add_argument("--issues-only", action="store_true", help="write only rows with an issue")
+    ap.add_argument("--seed", metavar="DB", help="also seed the discovery table in this DB")
     a = ap.parse_args()
 
     today = date.today()
@@ -65,6 +69,29 @@ def main() -> int:
             })
             w.writerow(rec)
     print("\nWrote {} ({} rows, {} columns)".format(a.out, len(out_rows), len(fields)))
+
+    if a.seed:
+        store = Store(a.seed)
+        s = seed_store(store, rows)
+        total_g = store.db.execute("SELECT COUNT(*) FROM grounding_facts").fetchone()[0]
+        joined = store.db.execute(
+            "SELECT COUNT(*) FROM conferences WHERE event_id IS NOT NULL AND event_id<>''"
+        ).fetchone()[0]
+        store.close()
+        print("\nSeeded discovery layer in {}".format(a.seed))
+        print("  inserted {} | updated {}".format(s["inserted"], s["updated"]))
+        print("  already in our verified DB   {}".format(s["matched_existing"]))
+        print("  NEW to us (grounding only)   {}".format(s["new_to_us"]))
+        print("  market memberships added     {}".format(s["markets_added"]))
+        print("  grounding_facts rows total   {}".format(total_g))
+        print("  verified records now joined  {}".format(joined))
+        if s["unmapped_markets"]:
+            print("\n  UNMAPPED market labels (no membership recorded - needs a decision):")
+            for label, n in sorted(s["unmapped_markets"].items(), key=lambda kv: -kv[1]):
+                print("    {:>4}  {!r}".format(n, label))
+            print("    Map each in markets.ALIASES, or register it:")
+            print('      python scripts/run_batch.py markets --add "<Name>"')
+        print("\n  Verified crawl data untouched: grounding lives in its own table.")
     return 0
 
 

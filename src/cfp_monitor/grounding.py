@@ -304,3 +304,81 @@ def normalize_rows(raw_rows: Iterable[dict], today: Optional[date] = None
 def load_master_csv(path: str, today: Optional[date] = None) -> tuple[list[GroundingRow], dict]:
     with open(path, newline="", encoding="utf-8-sig") as fh:
         return normalize_rows(list(csv.DictReader(fh)), today)
+
+
+# ---------------------------------------------------------------------- seed --
+def seed_store(store, rows: Iterable[GroundingRow]) -> dict:
+    """Write normalized grounding rows into the DISCOVERY table and record market membership.
+
+    Deliberately does NOT touch the `conferences` table's crawl-produced fields. Grounding is
+    an unverified third-party claim; our verified record must stay authoritative. What this
+    does do:
+      * upsert the claim into `grounding_facts` (raw values preserved),
+      * stamp `event_id` onto an existing verified record so the two layers can be joined,
+      * add market membership, which is INPUT metadata and safe to assert either way.
+    A conference grounding knows about but we have never crawled is left for the verification
+    pass to pick up -- we do not fabricate a `conferences` row from unverified data.
+    """
+    from .markets import MarketRegistry
+    from .storage import normalize_key
+
+    now = _now_iso()
+    stats = {"inserted": 0, "updated": 0, "matched_existing": 0, "new_to_us": 0,
+             "markets_added": 0, "unmapped_markets": {}}
+    existing = {r["key"] for r in store.all_records()}
+    # Grounding uses its own market spellings ("AdditiveMfg"). Route every one through the
+    # controlled registry so the vocabulary cannot fork; anything it cannot resolve is
+    # REPORTED rather than silently registered as a new market.
+    registry = MarketRegistry(store.db)
+
+    for row in rows:
+        key = normalize_key(row.url)
+        known = key in existing
+        stats["matched_existing" if known else "new_to_us"] += 1
+        was = store.db.execute("SELECT 1 FROM grounding_facts WHERE event_id=?",
+                               (row.event_id,)).fetchone()
+        store.db.execute(
+            "INSERT INTO grounding_facts (event_id, conference_key, name, url, city,"
+            " state_province, country, edition, deadline, submission_url, cfp_model, status,"
+            " overview, categories, coordinator_email, deadline_quote, is_projected,"
+            " source_as_of, deadline_evidence_url, main_info_url, issues, verify_state,"
+            " imported_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            " ON CONFLICT(event_id) DO UPDATE SET"
+            "  conference_key=excluded.conference_key, name=excluded.name, url=excluded.url,"
+            "  city=excluded.city, state_province=excluded.state_province,"
+            "  country=excluded.country, edition=excluded.edition, deadline=excluded.deadline,"
+            "  submission_url=excluded.submission_url, cfp_model=excluded.cfp_model,"
+            "  status=excluded.status, overview=excluded.overview,"
+            "  categories=excluded.categories, coordinator_email=excluded.coordinator_email,"
+            "  deadline_quote=excluded.deadline_quote, is_projected=excluded.is_projected,"
+            "  source_as_of=excluded.source_as_of,"
+            "  deadline_evidence_url=excluded.deadline_evidence_url,"
+            "  main_info_url=excluded.main_info_url, issues=excluded.issues,"
+            "  imported_at=excluded.imported_at",
+            (row.event_id, key, row.name, row.url, row.city, row.state, row.country,
+             row.edition, row.deadline, row.submission_url, row.cfp_model,
+             row.grounding_status, row.overview, row.categories, row.coordinator_email,
+             row.deadline_quote, row.is_projected, row.source_as_of,
+             row.deadline_evidence_url, row.main_info_url, "; ".join(row.issues),
+             "unverified", now))
+        stats["updated" if was else "inserted"] += 1
+
+        if known:
+            # Join the layers without altering any crawled value.
+            store.db.execute("UPDATE conferences SET event_id=? WHERE key=? AND"
+                             " (event_id IS NULL OR event_id='')", (row.event_id, key))
+            canonical = registry.resolve(row.market) if row.market else None
+            if canonical:
+                if store.add_market(key, canonical, "grounding"):
+                    stats["markets_added"] += 1
+            elif row.market:
+                # Unknown label: do NOT invent a market. Surface it for a human decision.
+                stats["unmapped_markets"][row.market] = \
+                    stats["unmapped_markets"].get(row.market, 0) + 1
+    store.db.commit()
+    return stats
+
+
+def _now_iso() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")

@@ -146,3 +146,30 @@ def test_loose_date_parsing_is_conservative():
     assert parse_loose_date("2026-03-15") == date(2026, 3, 15)
     for vague in ("March 2026", "TBD", "", None, "Q4 2026"):
         assert parse_loose_date(vague) is None
+
+
+# ---- market vocabulary must not fork on import ------------------------------
+def test_grounding_market_labels_resolve_to_our_canonical_markets():
+    """Regression: grounding emits camel-case contractions ("AdditiveMfg"). Passing those
+    through unmapped forked the vocabulary -- 8 markets became 13 and every filter split."""
+    import sqlite3
+    from cfp_monitor.markets import MarketRegistry
+
+    reg = MarketRegistry(sqlite3.connect(":memory:"))
+    assert reg.resolve("AdditiveMfg") == "Additive Manufacturing & 3D Printing"
+    assert reg.resolve("ConsumerElectronics") == "Consumer Electronics"
+    assert reg.resolve("Bioeconomy") == "Bioeconomy & Biofuels"
+    assert reg.resolve("BioMedTech") == "Biotech & MedTech"
+    for exact in ("Robotics", "Semiconductor", "Utility"):
+        assert reg.resolve(exact) == exact
+
+
+def test_unknown_market_label_is_not_auto_registered():
+    """An unrecognized label must be reported, never invented into the registry."""
+    import sqlite3
+    from cfp_monitor.markets import MarketRegistry
+
+    reg = MarketRegistry(sqlite3.connect(":memory:"))
+    before = set(reg.all())
+    assert reg.resolve("SomeBrandNewSector") is None
+    assert set(reg.all()) == before
