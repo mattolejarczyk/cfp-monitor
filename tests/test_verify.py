@@ -111,3 +111,17 @@ def test_archive_noise_does_not_create_a_false_contradiction():
 def test_a_plausible_current_cycle_date_still_contradicts():
     page = "Submission deadline April 30, 2027."
     assert verify_against_page(page, "3/15/2027").state == CONTRADICTED
+
+
+def test_a_failed_crawl_cannot_CONFIRM_either():
+    """Regression: a record populated FROM the discovery layer (because our own crawl failed)
+    made cross_check 'verify' grounding against grounding's own data -- circular
+    self-confirmation. A non-PASS crawl must decline both ways."""
+    assert cross_check("8/31/2026", "Open", _ours("8/31/2026", quality="ERROR"),
+                       TODAY, "2026") is None
+    assert cross_check("8/31/2026", "Open", _ours("August 31, 2026", quality="BLOCKED"),
+                       TODAY, "2026") is None
+    # ...but a real successful crawl that agrees still verifies
+    out = cross_check("8/31/2026", "Open", _ours("August 31, 2026", quality="PASS"),
+                      TODAY, "2026")
+    assert out.state == VERIFIED

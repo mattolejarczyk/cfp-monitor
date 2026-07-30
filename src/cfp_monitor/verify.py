@@ -129,6 +129,12 @@ def cross_check(claim_deadline: str, claim_status: str, crawled: dict,
     theirs = _parse_date(claim_deadline)
     if not ours_raw or not theirs:
         return None
+    # The quality gate comes FIRST, before confirmation as well as contradiction. A failed or
+    # thin crawl left no independent evidence, and such a row may have been populated from the
+    # discovery layer itself -- in which case "our record agrees" is grounding confirming
+    # grounding. Circular self-confirmation is worse than no answer, so decline outright.
+    if crawled.get("quality") not in ("PASS",):
+        return None
     if find_date(ours_raw, theirs):
         return Outcome(VERIFIED, f"our crawl of the page also reports {claim_deadline}", "L0")
 
@@ -136,8 +142,6 @@ def cross_check(claim_deadline: str, claim_status: str, crawled: dict,
     if ours is None:
         # Prose or a yearless fragment: not firm enough to disprove anything.
         return None
-    if crawled.get("quality") not in ("PASS",):
-        return None                     # a thin/failed crawl is not authoritative either
     ed = (edition or "").strip()[:4]
     if ed.isdigit() and ours.year < int(ed):
         return None                     # our value predates the edition in question -> stale
