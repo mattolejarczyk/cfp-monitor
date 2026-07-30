@@ -26,7 +26,7 @@ CUSTOMER_HEADERS = [
     "SUBMISSION DEADLINE", "SUBMISSION DATE VERIFIED", "PRIORITY", "STATUS",
     "STATUS DETAILS", "SUBMISSION URL", "COORDINATOR EMAIL", "OVERVIEW",
     "CATEGORIES", "NOTES",
-    "TRACK", "RESEARCH STATUS", "EDITION",
+    "TRACK", "RESEARCH STATUS", "EDITION", "CONFIDENCE",
 ]
 
 # Our detection status (cfp_status) -> customer-facing STATUS wording. Customer
@@ -86,6 +86,38 @@ def _coerce_date(d) -> Optional[date]:
         except ValueError:
             return None
     return None
+
+
+def confidence(rec: dict) -> str:
+    """How well-evidenced this row's deadline is, in the customer's terms.
+
+    Three states, chosen so the label answers "can I act on this without checking first?":
+
+      Confirmed    we read this deadline on the event's own page
+      Check link   the submission link did not resolve - do not send a client to it
+      Unconfirmed  it comes from research we could not confirm on the page
+
+    Deliberately distinct from the SUBMISSION DATE VERIFIED column, which records that a
+    HUMAN checked the row. This one is about where the DATA came from. A forecast for a
+    future edition can never read Confirmed even if it later proves right, because at the
+    time of writing nothing on the page said it.
+    """
+    state = (rec.get("verify_state") or "").lower()
+    detail = (rec.get("verify_detail") or "").lower()
+    projected = str(rec.get("is_projected") or "").strip().lower() in ("true", "yes", "1", "y")
+    if state == "contradicted":
+        return "Check link" if "404" in detail or "does not exist" in detail else "Disputed"
+    if projected:
+        return "Unconfirmed"
+    if state == "verified":
+        return "Confirmed"
+    if state in ("not_found", "unverified"):
+        return "Unconfirmed"
+    # No discovery claim at all: our own crawl is the only source. A clean crawl that found
+    # a deadline is confirmed; anything thinner is not.
+    if (rec.get("submission_deadline") or "").strip() and rec.get("quality") == "PASS":
+        return "Confirmed"
+    return ""
 
 
 def is_past_edition(rec: dict, today: Optional[date] = None) -> bool:
@@ -163,6 +195,9 @@ def to_customer_row(rec: dict, today: Optional[date] = None) -> dict:
         "TRACK": track_label(rec.get("opportunity_types")),
         "RESEARCH STATUS": research,
         "EDITION": edition,
+        # How well-evidenced the deadline is (see confidence()). Distinct from SUBMISSION
+        # DATE VERIFIED, which records a HUMAN check rather than the data's source.
+        "CONFIDENCE": confidence(rec),
     }
     return {header: excel_safe_text(value) for header, value in row.items()}
 

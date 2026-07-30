@@ -523,6 +523,19 @@ class Store:
         for k, m in self.db.execute(
                 "SELECT conference_key, market FROM conference_markets ORDER BY market"):
             memberships.setdefault(k, []).append(m)
+        # Discovery-layer verification outcome, joined in read-only. It never alters a stored
+        # value; it only lets the customer view state how well-evidenced a row is.
+        checks: dict[str, dict] = {}
+        try:
+            for row in self.db.execute(
+                    "SELECT conference_key, verify_state, verify_detail, deadline_quote,"
+                    " deadline_evidence_url, is_projected FROM grounding_facts"):
+                checks.setdefault(row[0], {"verify_state": row[1], "verify_detail": row[2],
+                                           "deadline_quote": row[3],
+                                           "deadline_evidence_url": row[4],
+                                           "is_projected": row[5]})
+        except Exception:
+            pass                     # a DB predating the discovery layer simply has none
         out = []
         for r in self.all_records():
             out.append({
@@ -539,6 +552,8 @@ class Store:
                 "coordinator_email": r["coordinator_email"], "overview": r["overview"],
                 "submission_status": r["submission_status"], "edition": r["edition"],
                 "categories": r["categories"], "notes": r["notes"],
+                "quality": r["quality"],
+                **checks.get(r["key"], {}),
                 # Read-only, derived from the crawl result — feeds the TRACK column.
                 "opportunity_types": self._opportunity_types(r["result_json"]),
             })

@@ -27,7 +27,7 @@ import html
 from datetime import date, datetime, timedelta
 from typing import Optional
 
-from .customer_format import gated_status
+from .customer_format import confidence, gated_status
 from .filtering import days_until
 from .storage import Store
 
@@ -105,6 +105,9 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
     n_events = len(records)
     watched = n_events - totals["Verify"]
     pipeline = totals["Upcoming"] + totals["Monitoring"]
+    open_rows = [r for r in records if r["_bucket"] == "Open"]
+    open_confirmed = sum(1 for r in open_rows if confidence(r) == "Confirmed")
+    check_link = sum(1 for r in records if confidence(r) == "Check link")
     nice_date = f"{today.strftime('%d %B %Y').lstrip('0')}"
     new_events = [r for r in records if r["_new"]]
 
@@ -133,6 +136,9 @@ def build_report(store: Store, title: str = "Speaking &amp; Awards Opportunities
                       if sub else "")
             note = (verify_reason(r, today) if b == "Verify"
                     else _deadline_note(r, today))
+            conf = confidence(r)
+            if conf and conf != "Confirmed":
+                note += f' <span class="conf c-{conf.split()[0].lower()}">{conf}</span>' 
             items.append(
                 f'<tr class="r b-{b.lower()}" data-bucket="{b}" data-edition="{ed}" data-mine="{mine}">'
                 f'<td class="nm"><a href="{site}" target="_blank" rel="noopener">{name}</a>'
@@ -263,6 +269,9 @@ font-weight:600;padding:5px 11px;border-radius:7px;white-space:nowrap}}
 select,button{{font:inherit;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);
 background:var(--card);color:var(--ink)}}
 button{{cursor:pointer}}
+.conf{{font-size:11px;font-weight:600;padding:1px 7px;border-radius:99px;margin-left:6px;
+white-space:nowrap;border:1px solid currentColor}}
+.c-unconfirmed{{color:var(--mut)}} .c-check{{color:var(--verify)}} .c-disputed{{color:var(--verify)}}
 .where{{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent-line);
 color:var(--ink);padding:9px 13px;border-radius:8px;font-size:13.5px}}
 .legend{{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--mut);font-size:12.5px;margin-top:8px}}
@@ -288,7 +297,8 @@ a{{color:var(--accent)}}
     <div class="l">In the pipeline &mdash; watching for the call</div></div>
   <div class="kpi"><div class="v">{watched}<span class="of">/{n_events}</span></div>
     <div class="l">Submission page under watch</div></div>
-  <div class="kpi"><div class="v">{len(markets)}</div><div class="l">Markets covered</div></div>
+  <div class="kpi"><div class="v">{open_confirmed}<span class="of">/{totals['Open']}</span></div>
+    <div class="l">Open opportunities with a confirmed deadline</div></div>
 </div>
 
 <section>

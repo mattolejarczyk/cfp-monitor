@@ -26,7 +26,7 @@ def test_row_has_exact_headers():
 
 def test_track_column_is_last_and_derived():
     # TRACK is appended last so the customer's 15-column order is undisturbed.
-    assert CUSTOMER_HEADERS[-3:] == ["TRACK", "RESEARCH STATUS", "EDITION"]
+    assert CUSTOMER_HEADERS[-4:] == ["TRACK", "RESEARCH STATUS", "EDITION", "CONFIDENCE"]
     assert CUSTOMER_HEADERS[:15] == [
         "CONFERENCE", "CONFERENCE URL", "LOCATION", "START DATES", "LATEST UPDATE",
         "SUBMISSION DEADLINE", "SUBMISSION DATE VERIFIED", "PRIORITY", "STATUS",
@@ -127,3 +127,19 @@ def _run():
 
 if __name__ == "__main__":
     _run()
+
+
+def test_confidence_column_reflects_verification_state():
+    """CONFIDENCE says where the DATA came from; SUBMISSION DATE VERIFIED says a HUMAN
+    checked it. They are different questions and must not be conflated."""
+    assert to_customer_row(_rec(verify_state="verified"))["CONFIDENCE"] == "Confirmed"
+    assert to_customer_row(_rec(verify_state="not_found"))["CONFIDENCE"] == "Unconfirmed"
+    assert to_customer_row(_rec(verify_state="contradicted",
+                                verify_detail="submission link returns 404"))["CONFIDENCE"] == "Check link"
+
+
+def test_a_projected_deadline_is_never_confirmed():
+    """A forecast for a future edition cannot be 'Confirmed' even if it later proves right:
+    at the time of writing, nothing on the page said it."""
+    row = to_customer_row(_rec(verify_state="verified", is_projected="true"))
+    assert row["CONFIDENCE"] == "Unconfirmed"
