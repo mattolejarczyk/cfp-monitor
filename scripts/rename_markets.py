@@ -53,8 +53,28 @@ def main() -> int:
             " (SELECT conference_key FROM conference_markets WHERE market=?)", (old, new))
         db.execute("UPDATE conference_markets SET market=? WHERE market=?", (new, old))
         db.execute("DELETE FROM industries WHERE name=?", (old,))
-    # Re-seed the registry with the new canonical vocabulary.
+        # The legacy single-value `conferences.industry` column MUST move too. Store._migrate()
+        # backfills membership from it on every DB open, so leaving stale names there
+        # resurrects the old markets the moment anything reopens the database.
+        db.execute("UPDATE conferences SET industry=? WHERE industry=?", (new, old))
+    # Sweep up any membership row whose name the registry no longer recognizes -- e.g. rows
+    # already resurrected from the legacy column by an earlier reopen. Resolve through the
+    # alias table so they land on the right canonical market instead of being dropped.
     MarketRegistry(db, seed=DEFAULT_MARKETS)
+    registry = MarketRegistry(db)
+    orphaned = [r[0] for r in db.execute(
+        "SELECT DISTINCT market FROM conference_markets WHERE market NOT IN"
+        " (SELECT name FROM industries)")]
+    for name in orphaned:
+        target = registry.resolve(name)
+        if target:
+            db.execute(
+                "DELETE FROM conference_markets WHERE market=? AND conference_key IN"
+                " (SELECT conference_key FROM conference_markets WHERE market=?)",
+                (name, target))
+            db.execute("UPDATE conference_markets SET market=? WHERE market=?", (target, name))
+            db.execute("UPDATE conferences SET industry=? WHERE industry=?", (target, name))
+            print("  swept orphaned membership {!r} -> {!r}".format(name, target))
     db.commit()
 
     print("\nMarket membership after:")
