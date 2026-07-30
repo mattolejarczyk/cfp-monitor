@@ -7,8 +7,9 @@ and well-crawled before it counts as contrary evidence at all.
 from datetime import date
 
 from cfp_monitor.verify import (
-    CONTRADICTED, NOT_FOUND, VERIFIED, cross_check, date_variants, find_date,
-    other_deadline_dates, verify_against_page,
+    CONTRADICTED, NOT_FOUND, VERIFIED, closure_evidence, cross_check,
+    cross_check_status, date_variants, find_date, other_deadline_dates, page_status,
+    verify_against_page,
 )
 
 TODAY = date(2026, 7, 29)
@@ -139,3 +140,63 @@ def test_zero_padded_day_matches():
 def test_padding_does_not_create_false_matches():
     assert not find_date("December 14, 2026", date(2026, 12, 4))
     assert not find_date("December 04, 2027", date(2026, 12, 4))
+
+
+# ---- status verification: the question that actually matters ---------------
+def test_closure_language_is_detected():
+    """The real SEMICON Europa page text: definitive closure with no date at all."""
+    real = ("The deadline has expired, and submissions will no longer be accepted. "
+            "We thank all authors who have submitted their abstracts.")
+    assert page_status(real) == "closed"
+    assert "deadline has expired" in closure_evidence(real).lower()
+
+
+def test_open_language_is_detected():
+    assert page_status("The Call for Papers is now open. Submit your abstract today.") == "open"
+
+
+def test_closed_wins_when_both_phrases_appear():
+    """Pages keep their 'submit your abstract' banner above an expiry notice."""
+    assert page_status("Submit your abstract. NOTE: the deadline has passed.") == "closed"
+
+
+def test_neutral_page_yields_no_status():
+    assert page_status("Welcome to the conference. Register now.") is None
+    assert page_status("") is None
+
+
+def test_page_saying_closed_contradicts_a_claim_of_open():
+    out = verify_against_page("The deadline has expired; submissions are no longer accepted.",
+                              "", "Open")
+    assert out.state == CONTRADICTED and "CLOSED" in out.detail
+
+
+def test_page_saying_closed_verifies_when_no_date_is_claimed():
+    """A closed call with no date is fully actionable - that is a verification, not a gap."""
+    out = verify_against_page("Call for papers is now closed.", "", "Closed")
+    assert out.state == VERIFIED
+
+
+def _crawled(status, basis, quality="PASS"):
+    import json
+    return {"cfp_status": status, "quality": quality,
+            "result_json": json.dumps({"status_basis": basis})}
+
+
+def test_explicit_page_status_contradicts_a_wrong_claim():
+    out = cross_check_status("Open", _crawled("closed", "explicit_closed"))
+    assert out.state == CONTRADICTED and "CLOSED" in out.detail
+
+
+def test_explicit_page_status_verifies_a_matching_claim():
+    assert cross_check_status("Closed", _crawled("closed", "explicit_closed")).state == VERIFIED
+
+
+def test_open_and_upcoming_are_not_treated_as_a_conflict():
+    """Both mean the opportunity is still live; that is not a disagreement worth flagging."""
+    assert cross_check_status("Upcoming", _crawled("open", "explicit_open")).state == VERIFIED
+
+
+def test_inferred_status_is_not_firm_enough_to_contradict():
+    assert cross_check_status("Open", _crawled("closed", "inferred_from_live_submission_form")) is None
+    assert cross_check_status("Open", _crawled("closed", "explicit_closed", quality="ERROR")) is None

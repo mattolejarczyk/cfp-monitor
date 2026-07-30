@@ -20,8 +20,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.cfp_monitor.storage import Store                      # noqa: E402
 from src.cfp_monitor.verify import Outcome                     # noqa: E402
 from src.cfp_monitor.verify import (                            # noqa: E402
-    CONTRADICTED, NOT_FOUND, VERIFIED, check_link, cross_check, fetch_text,
-    verify_against_page,
+    CONTRADICTED, NOT_FOUND, VERIFIED, check_link, cross_check, cross_check_status,
+    fetch_text, verify_against_page,
 )
 
 
@@ -66,9 +66,12 @@ def main() -> int:
     for r in rows:
         outcome = None
         if "0" in a.layers and r["conference_key"] in crawled:
-            outcome = cross_check(r["deadline"], r["status"],
-                                  crawled[r["conference_key"]], today,
-                                  edition=r["edition"] or "")
+            # STATUS first: whether the call is open settles more than the exact date does.
+            outcome = cross_check_status(r["status"], crawled[r["conference_key"]])
+            if outcome is None:
+                outcome = cross_check(r["deadline"], r["status"],
+                                      crawled[r["conference_key"]], today,
+                                      edition=r["edition"] or "")
         if outcome is None and "1" in a.layers:
             outcome = check_link(r["submission_url"])
         if outcome is None and "2" in a.layers:
@@ -76,7 +79,7 @@ def main() -> int:
             for candidate in (r["deadline_evidence_url"], r["submission_url"], r["url"]):
                 text, note = fetch_text(candidate or "")
                 if text:
-                    outcome = verify_against_page(text, r["deadline"])
+                    outcome = verify_against_page(text, r["deadline"], r["status"])
                     outcome.detail += f"  <- {candidate[:60]}"
                     break
             else:

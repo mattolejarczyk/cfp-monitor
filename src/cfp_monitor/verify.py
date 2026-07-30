@@ -114,6 +114,78 @@ class Outcome:
     layer: str
 
 
+# ------------------------------------------------------- status verification --
+# A page that says the call is over settles the question outright, with or without a date.
+# For a PR firm "can my client still submit?" is the operative question -- a closed call with
+# no date is fully actionable (skip it, watch for next year), whereas a date we cannot tie to
+# a status is not. So status evidence is checked FIRST and treated as decisive.
+_CLOSED_PHRASES = re.compile(
+    r"(deadline (has )?(now )?(expired|passed|closed)"
+    r"|submissions? (are |is |will )?(no longer|not) (be )?(accepted|being accepted)"
+    r"|call for (papers|abstracts|speakers|presentations) (is |has )?(now )?closed"
+    r"|submissions? (are |is )?(now )?closed"
+    r"|closed for submissions"
+    r"|thank(s| you)? (all )?(the )?authors who (have )?submitted)", re.I)
+_OPEN_PHRASES = re.compile(
+    r"(call for (papers|abstracts|speakers|presentations) (is )?(now )?open"
+    r"|submissions? (are |is )?(now )?open"
+    r"|submit your (paper|abstract|proposal|talk)"
+    r"|now accepting (papers|abstracts|submissions|proposals))", re.I)
+
+
+def page_status(page_text: str) -> Optional[str]:
+    """'closed' | 'open' | None, from explicit language on the page.
+
+    Closed wins when both appear: a page often keeps its "submit your abstract" banner above a
+    notice that the deadline has expired, and the notice is the operative fact.
+    """
+    if not page_text:
+        return None
+    if _CLOSED_PHRASES.search(page_text):
+        return "closed"
+    if _OPEN_PHRASES.search(page_text):
+        return "open"
+    return None
+
+
+def closure_evidence(page_text: str) -> str:
+    """The sentence that establishes closure, for the audit trail."""
+    m = _CLOSED_PHRASES.search(page_text or "")
+    if not m:
+        return ""
+    start = max(0, m.start() - 60)
+    return re.sub(r"\s+", " ", page_text[start:m.end() + 60]).strip()
+
+
+def cross_check_status(claim_status: str, crawled: dict) -> Optional[Outcome]:
+    """Compare a grounding STATUS against a status our crawler read EXPLICITLY off the page.
+
+    Only `explicit_*` bases count: those mean the page itself stated the call's state, rather
+    than us inferring it from a form's presence. An inferred status is not firm enough to
+    overrule the discovery layer.
+    """
+    import json as _json
+
+    if crawled.get("quality") != "PASS":
+        return None
+    try:
+        basis = (_json.loads(crawled.get("result_json") or "{}").get("status_basis") or "")
+    except (ValueError, TypeError):
+        return None
+    if not basis.startswith("explicit_"):
+        return None
+    ours = (crawled.get("cfp_status") or "").lower()
+    theirs = (claim_status or "").lower()
+    if not ours or not theirs:
+        return None
+    # "upcoming" and "open" both mean the opportunity is still live; don't call that a conflict.
+    live = {"open", "upcoming"}
+    if ours == theirs or (ours in live and theirs in live):
+        return Outcome(VERIFIED, f"the page itself states the call is {ours}", "L0s")
+    return Outcome(CONTRADICTED,
+                   f"the page itself states the call is {ours.upper()}, not {theirs}", "L0s")
+
+
 # ------------------------------------------------------------------- layer 0 --
 def cross_check(claim_deadline: str, claim_status: str, crawled: dict,
                 today: Optional[date] = None, edition: str = "") -> Optional[Outcome]:
@@ -224,11 +296,26 @@ def fetch_text(url: str, timeout: int = 20, max_bytes: int = 900_000) -> tuple[s
     return re.sub(r"\s+", " ", text), "ok"
 
 
-def verify_against_page(page_text: str, claim_deadline: str) -> Outcome:
-    """Resolve a claimed deadline against the live page text."""
-    theirs = _parse_date(claim_deadline)
+def verify_against_page(page_text: str, claim_deadline: str,
+                        claim_status: str = "") -> Outcome:
+    """Resolve a claim against the live page text -- STATUS first, then the deadline.
+
+    Explicit closure language settles the question even when no date is present, which is the
+    outcome that actually matters: "can my client still submit?" A page reading "the deadline
+    has expired and submissions will no longer be accepted" is definitive, and treating it as
+    "no deadline found" (as this used to) discarded the strongest evidence on the page.
+    """
     if not page_text:
         return Outcome(NOT_FOUND, "page could not be read", "L2")
+    said = page_status(page_text)
+    theirs = _parse_date(claim_deadline)
+    if said == "closed" and (claim_status or "").lower() in ("open", "upcoming"):
+        quote = closure_evidence(page_text)
+        return Outcome(CONTRADICTED,
+                       "the page states the call is CLOSED"
+                       + (f': "{quote[:110]}"' if quote else ""), "L2")
+    if said == "closed" and not theirs:
+        return Outcome(VERIFIED, "the page confirms the call is closed for this edition", "L2")
     if not theirs:
         return Outcome(NOT_FOUND, "no parseable deadline to check", "L2")
     if find_date(page_text, theirs):
