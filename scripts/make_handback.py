@@ -127,14 +127,31 @@ def main() -> int:
       "and reply with one of:")
     w("")
     w("1. **CORRECTED** - our finding is right; give the corrected deadline.")
-    w("2. **DEFENDED** - yours is right; give `DEADLINE_QUOTE` (the verbatim sentence) plus "
-      "the exact URL where that sentence appears.")
+    w("2. **DEFENDED** - yours is right. Populate all three existing v4 fields:")
+    w("   - `DEADLINE_QUOTE` - the verbatim sentence from the page")
+    w("   - `DEADLINE_EVIDENCE_URL` - **the exact page that sentence appears on**")
+    w("   - `SOURCE_AS_OF` - when that page was published or last updated")
     w("3. **UNCERTAIN** - neither can be established; set the deadline blank and "
       "`CFP MODEL TYPE = Not Announced`.")
     w("")
     w("Option 2 is the most valuable outcome even when you are right, because a verbatim "
       "quote plus a deep link lets us confirm it automatically next time instead of "
       "re-litigating it.")
+    w("")
+    w("### Two things that make the evidence usable (or useless)")
+    w("")
+    w("**The evidence URL must be the page carrying the quote, not the site's front page.** "
+      "In the v4 backfill, `DEADLINE_EVIDENCE_URL` was identical to `MAIN_INFO_URL` on 255 of "
+      "404 rows (63%). A homepage link cannot verify a deadline: we fetch it, the sentence "
+      "isn't there, and the claim stays unverified - which is how a correct deadline ends up "
+      "looking unconfirmed. Deep-link it.")
+    w("")
+    w("**Include the LABEL in the quote, not just the date.** Our leading theory for most of "
+      "these disputes is that one of us read a secondary deadline. Conferences routinely "
+      "publish several - main track, workshop, poster, late-breaking, extended. "
+      "`\"March 15, 2027\"` does not settle anything; "
+      "`\"Main track paper submission deadline: March 15, 2027\"` settles it immediately and "
+      "tells us which deadline we should have been reading.")
     w("")
     for i, r in enumerate(disputes, 1):
         ours = crawled.get(r["conference_key"], {})
