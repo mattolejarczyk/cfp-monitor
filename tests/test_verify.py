@@ -125,3 +125,17 @@ def test_a_failed_crawl_cannot_CONFIRM_either():
     out = cross_check("8/31/2026", "Open", _ours("August 31, 2026", quality="PASS"),
                       TODAY, "2026")
     assert out.state == VERIFIED
+
+
+def test_zero_padded_day_matches():
+    """Regression: 'December 04, 2026' failed to match a 12/4/2026 claim, producing a false
+    contradiction against a date that was printed on the page."""
+    d = date(2026, 12, 4)
+    for text in ("Submission deadline: December 04, 2026", "deadline 04 December 2026",
+                 "Submission deadline: December 4, 2026", "due 12/04/2026"):
+        assert find_date(text, d), text
+
+
+def test_padding_does_not_create_false_matches():
+    assert not find_date("December 14, 2026", date(2026, 12, 4))
+    assert not find_date("December 04, 2027", date(2026, 12, 4))

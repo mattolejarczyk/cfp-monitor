@@ -47,13 +47,18 @@ def date_variants(d: date) -> list[str]:
     verification robust to HTML whitespace, cookie banners and re-worded copy.
     """
     mon, abbr = _MONTHS[d.month - 1], _MONTHS[d.month - 1][:3]
-    out = {
-        f"{mon} {d.day}, {d.year}", f"{mon} {d.day} {d.year}",
-        f"{d.day} {mon} {d.year}", f"{abbr} {d.day}, {d.year}", f"{abbr} {d.day} {d.year}",
-        f"{d.day} {abbr} {d.year}", f"{d.year}-{d.month:02d}-{d.day:02d}",
-        f"{d.month}/{d.day}/{d.year}", f"{d.month:02d}/{d.day:02d}/{d.year}",
-        f"{d.day}/{d.month}/{d.year}", f"{d.month}/{d.day}/{str(d.year)[2:]}",
-    }
+    out = set()
+    # Both bare and zero-padded day numbers. Omitting the padded form caused a real false
+    # contradiction: a page reading "December 04, 2026" did not match a claim of 12/4/2026,
+    # so we reported a conflict against a date that was in fact printed on the page.
+    for day in {str(d.day), f"{d.day:02d}"}:
+        out |= {
+            f"{mon} {day}, {d.year}", f"{mon} {day} {d.year}", f"{day} {mon} {d.year}",
+            f"{abbr} {day}, {d.year}", f"{abbr} {day} {d.year}", f"{day} {abbr} {d.year}",
+            f"{d.month}/{day}/{d.year}", f"{day}/{d.month}/{d.year}",
+            f"{d.month}/{day}/{str(d.year)[2:]}",
+        }
+    out |= {f"{d.year}-{d.month:02d}-{d.day:02d}", f"{d.month:02d}/{d.day:02d}/{d.year}"}
     return [normalize_text(v) for v in out]
 
 
