@@ -178,3 +178,50 @@ def test_unknown_market_label_is_not_auto_registered():
     before = set(reg.all())
     assert reg.resolve("SomeBrandNewSector") is None
     assert set(reg.all()) == before
+
+
+# ---- one event, several calls ------------------------------------------------
+def test_speaking_stays_unsuffixed_so_existing_keys_do_not_move():
+    """Everything imported before OPPORTUNITY_TYPE existed is a speaking row. Suffixing it
+    would orphan several hundred already-loaded records across eight markets."""
+    from cfp_monitor.grounding import event_id
+    bare = event_id("CEDIA Expo", "2026", "Denver")
+    assert event_id("CEDIA Expo", "2026", "Denver", opportunity="Speaking") == bare
+    assert event_id("CEDIA Expo", "2026", "Denver", opportunity="") == bare
+
+
+def test_a_second_opportunity_gets_its_own_key():
+    """The collision this prevents: CEDIA's call for presentations and its Best of Show awards
+    entry are different calls with different deadlines; on one key the second overwrites."""
+    from cfp_monitor.grounding import event_id
+    speaking = event_id("CEDIA Expo", "2026", "Denver", opportunity="Speaking")
+    awards = event_id("CEDIA Expo", "2026", "Denver", opportunity="Awards")
+    exhibiting = event_id("CEDIA Expo", "2026", "Denver", opportunity="Exhibiting")
+    assert len({speaking, awards, exhibiting}) == 3
+    assert awards.endswith("-awards")
+
+
+def test_opportunity_rows_both_survive_the_loader():
+    """End to end: two rows, same event, different calls -- neither may be dropped."""
+    from cfp_monitor.grounding import normalize_rows
+    base = {"CONFERENCE": "CEDIA Expo", "CONFERENCE URL": "https://cediaexpo.com/",
+            "Market": "ConsumerElectronics", "EDITION": "2026", "CITY": "Denver",
+            "STATE_PROVINCE": "Colorado", "COUNTRY": "USA", "LOCATION": "Denver, CO"}
+    rows, rep = normalize_rows([
+        dict(base, OPPORTUNITY_TYPE="Speaking", **{"SUBMISSION DEADLINE": "3/31/2026"}),
+        dict(base, OPPORTUNITY_TYPE="Awards", **{"SUBMISSION DEADLINE": "8/21/2026"}),
+    ])
+    assert rep["duplicates"] == 0
+    assert len(rows) == 2
+    assert len({r.event_id for r in rows}) == 2
+
+
+def test_a_true_duplicate_is_still_collapsed():
+    """The dedupe must keep working: same event, same opportunity, twice."""
+    from cfp_monitor.grounding import normalize_rows
+    base = {"CONFERENCE": "CEDIA Expo", "CONFERENCE URL": "https://cediaexpo.com/",
+            "Market": "ConsumerElectronics", "EDITION": "2026", "CITY": "Denver"}
+    rows, rep = normalize_rows([dict(base, OPPORTUNITY_TYPE="Awards"),
+                                dict(base, OPPORTUNITY_TYPE="Awards")])
+    assert rep["duplicates"] == 1
+    assert len(rows) == 1

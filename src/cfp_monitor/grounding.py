@@ -113,19 +113,31 @@ def slug(text: str, max_len: int = 48, strip_years: bool = False) -> str:
     return cut.rsplit("-", 1)[0] if "-" in cut else cut
 
 
-def event_id(name: str, edition: str, city: str, location: str = "") -> str:
-    """Canonical key: <year>-<name-slug>-<city|virtual|tbd>.
+def event_id(name: str, edition: str, city: str, location: str = "",
+             opportunity: str = "") -> str:
+    """Canonical key: <year>-<name-slug>-<city|virtual|tbd>[-<opportunity>].
 
     Market is deliberately EXCLUDED: one event can serve several markets (CES is Consumer
     Electronics AND Semiconductor), and market-in-the-key would split it into two records.
     Membership belongs in the many-to-many table instead.
+
+    OPPORTUNITY is included, because one event genuinely runs several calls with different
+    deadlines -- CEDIA Expo has a call for presentations AND a Best of Show awards entry. Those
+    are separate opportunities and the client acts on them separately, so they need separate
+    rows. Without this they collapse onto one key and the second silently overwrites the first.
+
+    Speaking stays UNSUFFIXED: it is the default opportunity and every record imported before
+    this column existed is one, so leaving it bare keeps those keys stable instead of orphaning
+    several hundred rows across the markets already loaded.
     """
     year = (edition or "").strip()[:4]
     year = year if year.isdigit() else "tbd"
     place = slug(city, 28)
     if not place:
         place = "virtual" if _ONLINE_HINT.search(location or "") else "tbd"
-    return f"{year}-{slug(name, strip_years=True)}-{place}".strip("-")
+    base = f"{year}-{slug(name, strip_years=True)}-{place}".strip("-")
+    opp = slug(opportunity, 14)
+    return base if opp in ("", "speaking") else f"{base}-{opp}"
 
 
 # --------------------------------------------------------------------- dates --
@@ -228,6 +240,7 @@ _COL = {
     "categories": "CATEGORIES", "email": "COORDINATOR EMAIL",
     "quote": "DEADLINE_QUOTE", "projected": "IS_PROJECTED", "as_of": "SOURCE_AS_OF",
     "dl_evidence": "DEADLINE_EVIDENCE_URL", "main_info": "MAIN_INFO_URL",
+    "opportunity": "OPPORTUNITY_TYPE",
 }
 
 
@@ -261,7 +274,7 @@ def normalize_rows(raw_rows: Iterable[dict], today: Optional[date] = None
             report["model_normalized"] += 1
 
         row = GroundingRow(
-            event_id=event_id(v("name"), v("edition"), city, location),
+            event_id=event_id(v("name"), v("edition"), city, location, v("opportunity")),
             name=v("name"), url=v("url"), market=v("market"), edition=v("edition"),
             city=city, state=v("state"), country=v("country"),
             deadline=v("deadline"), submission_url=v("submission_url"),
