@@ -84,7 +84,9 @@ def main() -> int:
                     continue
                 text, note = fetch_text(candidate)
                 if text:
-                    outcome = verify_against_page(text, r["deadline"], r["status"])
+                    outcome = verify_against_page(
+                        text, r["deadline"], r["status"],
+                        cited_page=bool(cited) and candidate.rstrip("/") == cited.rstrip("/"))
                     outcome.detail = l2_detail(outcome, candidate, cited)
                     break
             else:

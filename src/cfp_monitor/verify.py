@@ -340,7 +340,7 @@ def fetch_text(url: str, timeout: int = 20, max_bytes: int = 900_000) -> tuple[s
 
 
 def verify_against_page(page_text: str, claim_deadline: str,
-                        claim_status: str = "") -> Outcome:
+                        claim_status: str = "", cited_page: bool = True) -> Outcome:
     """Resolve a claim against the live page text -- STATUS first, then the deadline.
 
     Explicit closure language settles the question even when no date is present, which is the
@@ -364,9 +364,15 @@ def verify_against_page(page_text: str, claim_deadline: str,
     if find_date(page_text, theirs):
         return Outcome(VERIFIED, f"page states {claim_deadline}", "L2")
     others = other_deadline_dates(page_text, exclude=theirs)
-    if others:
+    # A rival date only disproves the claim when it is on the page that was CITED for it.
+    # A homepage we fell back to carries event dates, registration dates and last year's
+    # deadline side by side; treating any of those as "the real deadline" invents conflicts.
+    if others and cited_page:
         return Outcome(CONTRADICTED,
                        "page gives a different deadline: " + ", ".join(others[:3]), "L2")
+    if others:
+        return Outcome(NOT_FOUND,
+                       "a different date appears here but this is not the cited page", "L2")
     return Outcome(NOT_FOUND, "deadline not stated on the page - grounding value stands", "L2")
 
 

@@ -319,3 +319,26 @@ def test_status_check_ignores_editions_when_one_side_is_unknown():
     out = cross_check_status("upcoming", _status_rec(cfp_status="closed", edition=""),
                              TODAY, edition="2027")
     assert out.state == CONTRADICTED
+
+
+def test_a_rival_date_on_a_fallback_page_does_not_disprove_the_claim():
+    """Real case: MWC was 'contradicted' by a date scraped off a homepage we fell back to,
+    with no citation at all. A homepage carries event dates and registration dates next to
+    each other; none of them is necessarily the CFP deadline."""
+    page = "Submission deadline: December 15, 2026."
+    out = verify_against_page(page, "10/30/2026", "upcoming", cited_page=False)
+    assert out.state == NOT_FOUND
+    assert "not the cited page" in out.detail
+
+
+def test_the_same_rival_date_still_disproves_it_on_the_cited_page():
+    page = "Submission deadline: December 15, 2026."
+    assert verify_against_page(page, "10/30/2026", "upcoming",
+                               cited_page=True).state == CONTRADICTED
+
+
+def test_closure_language_is_decisive_even_off_the_cited_page():
+    """Status evidence is different in kind: a page saying the call is closed means it."""
+    page = "The call for papers is now closed."
+    assert verify_against_page(page, "10/30/2026", "open",
+                               cited_page=False).state == CONTRADICTED
