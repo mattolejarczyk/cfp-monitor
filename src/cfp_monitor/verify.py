@@ -268,6 +268,28 @@ def check_link(url: str) -> Optional[Outcome]:
 _TAG = re.compile(r"<(script|style)[^>]*>.*?</\1>", re.S | re.I)
 
 
+def _pdf_text(raw: bytes, max_pages: int = 12) -> tuple[str, str]:
+    """Extract text from a PDF's first pages. Returns (text, note).
+
+    Deadlines are near the front of a call-for-papers PDF, so a page cap keeps a long
+    proceedings document from costing seconds. A PDF we cannot parse returns empty text,
+    which resolves to not_found -- never a false disproof.
+    """
+    try:
+        import io as _io
+
+        from pypdf import PdfReader
+    except ImportError:
+        return "", "pdf (pypdf not installed)"
+    try:
+        reader = PdfReader(_io.BytesIO(raw))
+        parts = [(page.extract_text() or "") for page in reader.pages[:max_pages]]
+    except Exception as e:
+        return "", f"pdf unreadable ({type(e).__name__})"
+    text = re.sub(r"\s+", " ", " ".join(parts)).strip()
+    return text, ("pdf" if text else "pdf (no extractable text)")
+
+
 def fetch_text(url: str, timeout: int = 20, max_bytes: int = 900_000) -> tuple[str, str]:
     """Plain HTTP GET reduced to visible text. Returns (text, note).
 
@@ -281,14 +303,20 @@ def fetch_text(url: str, timeout: int = 20, max_bytes: int = 900_000) -> tuple[s
     try:
         req = urllib.request.Request(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            "Accept": "text/html,application/xhtml+xml"})
+            "Accept": "text/html,application/xhtml+xml,application/pdf"})
         with urllib.request.urlopen(req, timeout=timeout, context=_ctx()) as resp:
+            ctype = (resp.headers.get("Content-Type") or "").lower()
             raw = resp.read(max_bytes)
-        html = raw.decode("utf-8", "ignore")
     except urllib.error.HTTPError as e:
         return "", f"HTTP {e.code}"
     except Exception as e:
         return "", type(e).__name__
+    # A call-for-papers PDF is a perfectly good citation -- conferences routinely publish the
+    # deadline only in one. Detect by magic bytes as well as content-type, since servers
+    # mislabel PDFs as octet-stream.
+    if "application/pdf" in ctype or raw[:5] == b"%PDF-":
+        return _pdf_text(raw)
+    html = raw.decode("utf-8", "ignore")
     html = _TAG.sub(" ", html)
     text = re.sub(r"<[^>]+>", " ", html)
     text = (text.replace("&nbsp;", " ").replace("&amp;", "&")

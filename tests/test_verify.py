@@ -200,3 +200,31 @@ def test_open_and_upcoming_are_not_treated_as_a_conflict():
 def test_inferred_status_is_not_firm_enough_to_contradict():
     assert cross_check_status("Open", _crawled("closed", "inferred_from_live_submission_form")) is None
     assert cross_check_status("Open", _crawled("closed", "explicit_closed", quality="ERROR")) is None
+
+
+# ---- PDF citations ---------------------------------------------------------
+def test_unparseable_pdf_yields_no_text_not_a_false_disproof():
+    """A PDF we cannot read must return empty text, which resolves to not_found. It must
+    never raise, and must never be mistaken for 'the deadline is absent from the page'."""
+    from cfp_monitor.verify import _pdf_text
+
+    text, note = _pdf_text(b"%PDF-1.4 this is not actually a valid pdf body")
+    assert text == "" and "pdf" in note.lower()
+
+
+def test_pdf_text_never_raises_on_junk():
+    from cfp_monitor.verify import _pdf_text
+
+    for junk in (b"", b"\x00\x01\x02", b"%PDF-"):
+        text, note = _pdf_text(junk)
+        assert text == ""
+
+
+def test_a_pdf_with_no_extractable_text_is_reported_as_such():
+    """Scanned/image-only PDFs parse fine but yield nothing; say so rather than implying
+    the page was silent about the deadline."""
+    from cfp_monitor.verify import _pdf_text
+
+    text, note = _pdf_text(b"%PDF-1.4 garbage")
+    assert text == ""
+    assert "pdf" in note
