@@ -157,12 +157,18 @@ def closure_evidence(page_text: str) -> str:
     return re.sub(r"\s+", " ", page_text[start:m.end() + 60]).strip()
 
 
-def cross_check_status(claim_status: str, crawled: dict) -> Optional[Outcome]:
+def cross_check_status(claim_status: str, crawled: dict,
+                       today: Optional[date] = None, edition: str = "") -> Optional[Outcome]:
     """Compare a grounding STATUS against a status our crawler read EXPLICITLY off the page.
 
     Only `explicit_*` bases count: those mean the page itself stated the call's state, rather
     than us inferring it from a form's presence. An inferred status is not firm enough to
     overrule the discovery layer.
+
+    Carries the SAME conservatism as `cross_check`, and for the same reason: a status is only
+    contrary evidence when it describes the same edition and is still current. Without those
+    guards this compared a 2026 record against a 2027 claim, and called a record whose own
+    deadline expired months ago "open" -- manufacturing contradictions out of our own stale rows.
     """
     import json as _json
 
@@ -177,6 +183,15 @@ def cross_check_status(claim_status: str, crawled: dict) -> Optional[Outcome]:
     ours = (crawled.get("cfp_status") or "").lower()
     theirs = (claim_status or "").lower()
     if not ours or not theirs:
+        return None
+    # Different editions are different calls; our 2026 row says nothing about their 2027 claim.
+    ed, ours_ed = (edition or "").strip()[:4], (crawled.get("edition") or "").strip()[:4]
+    if ed.isdigit() and ours_ed.isdigit() and ed != ours_ed:
+        return None
+    # A record whose own deadline has already passed is describing last cycle. Its "open" is
+    # a stale artefact, not evidence -- defer to the live page instead of contradicting.
+    closed_on = _parse_date(crawled.get("cfp_close_date") or "")
+    if closed_on and closed_on < (today or date.today()):
         return None
     # "upcoming" and "open" both mean the opportunity is still live; don't call that a conflict.
     live = {"open", "upcoming"}

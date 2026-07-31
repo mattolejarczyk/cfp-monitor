@@ -8,7 +8,7 @@ from datetime import date
 
 from cfp_monitor.verify import (
     CONTRADICTED, NOT_FOUND, VERIFIED, closure_evidence, cross_check,
-    Outcome, cross_check_status, date_variants, find_date, l2_detail, no_page_detail,
+    Outcome, cross_check, cross_check_status, date_variants, find_date, l2_detail, no_page_detail,
     other_deadline_dates, page_status,
     verify_against_page,
 )
@@ -281,3 +281,41 @@ def test_a_fallback_never_changes_the_verdict_itself():
         out = Outcome(state, "detail", "L2")
         l2_detail(out, "https://x.org/", "")
         assert out.state == state
+
+
+# ---- status cross-check must be as conservative as the deadline cross-check --
+def _status_rec(**kw):
+    base = {"quality": "PASS", "result_json": '{"status_basis": "explicit_text"}',
+            "cfp_status": "open", "cfp_close_date": "", "edition": ""}
+    base.update(kw)
+    return base
+
+
+def test_status_check_declines_across_editions():
+    """Real case: our 2026 embedded world row was used to contradict a 2027 claim."""
+    assert cross_check_status("upcoming", _status_rec(cfp_status="closed", edition="2026"),
+                              TODAY, edition="2027") is None
+
+
+def test_status_check_still_works_when_editions_agree():
+    out = cross_check_status("upcoming", _status_rec(cfp_status="closed", edition="2027"),
+                             TODAY, edition="2027")
+    assert out.state == CONTRADICTED
+
+
+def test_status_check_declines_when_our_own_record_has_expired():
+    """Real case: an IBC row reading 'open' whose own close date was 5 Dec 2025."""
+    stale = _status_rec(cfp_status="open", cfp_close_date="5 December 2025")
+    assert cross_check_status("closed", stale, TODAY) is None
+
+
+def test_status_check_accepts_a_record_whose_deadline_is_still_ahead():
+    fresh = _status_rec(cfp_status="open", cfp_close_date="December 5, 2026")
+    assert cross_check_status("open", fresh, TODAY).state == VERIFIED
+
+
+def test_status_check_ignores_editions_when_one_side_is_unknown():
+    """A missing edition must not silently suppress a real conflict."""
+    out = cross_check_status("upcoming", _status_rec(cfp_status="closed", edition=""),
+                             TODAY, edition="2027")
+    assert out.state == CONTRADICTED

@@ -67,7 +67,8 @@ def main() -> int:
         outcome = None
         if "0" in a.layers and r["conference_key"] in crawled:
             # STATUS first: whether the call is open settles more than the exact date does.
-            outcome = cross_check_status(r["status"], crawled[r["conference_key"]])
+            outcome = cross_check_status(r["status"], crawled[r["conference_key"]],
+                                         today, edition=r["edition"] or "")
             if outcome is None:
                 outcome = cross_check(r["deadline"], r["status"],
                                       crawled[r["conference_key"]], today,
