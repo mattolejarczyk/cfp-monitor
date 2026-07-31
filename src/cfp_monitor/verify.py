@@ -353,3 +353,32 @@ def verify_against_page(page_text: str, claim_deadline: str,
         return Outcome(CONTRADICTED,
                        "page gives a different deadline: " + ", ".join(others[:3]), "L2")
     return Outcome(NOT_FOUND, "deadline not stated on the page - grounding value stands", "L2")
+
+
+def _same_url(a: str, b: str) -> bool:
+    return bool(a) and bool(b) and a.strip().rstrip("/") == b.strip().rstrip("/")
+
+
+def no_page_detail(cited: str) -> str:
+    """Why nothing could be read -- a missing citation is not a silent citation."""
+    if not cited:
+        return "no evidence URL supplied - nothing to check; grounding stands"
+    return f"the cited page could not be read - grounding stands  <- {cited[:60]}"
+
+
+def l2_detail(outcome: Outcome, used: str, cited: str) -> str:
+    """Label an L2 result by the page we ACTUALLY read.
+
+    Only the cited page can confirm the claim it was cited for. When we fall back to a
+    submission page or homepage, a silent page proves nothing -- saying "deadline not stated
+    on the page" there would dress an unchecked claim up as a checked one. An explicit
+    open/closed statement is still real evidence wherever we find it, so those are kept and
+    simply marked as coming from elsewhere.
+    """
+    tail = f"  <- {used[:60]}"
+    if _same_url(used, cited):
+        return f"{outcome.detail}  <- cited page {used[:60]}"
+    why = "no evidence URL supplied" if not cited else "cited page unreadable"
+    if outcome.state == NOT_FOUND:
+        return f"{why}; fell back to a page that does not state it - unverifiable{tail}"
+    return f"{outcome.detail} (not the cited page; {why}){tail}"

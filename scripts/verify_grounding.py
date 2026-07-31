@@ -21,7 +21,7 @@ from src.cfp_monitor.storage import Store                      # noqa: E402
 from src.cfp_monitor.verify import Outcome                     # noqa: E402
 from src.cfp_monitor.verify import (                            # noqa: E402
     CONTRADICTED, NOT_FOUND, VERIFIED, check_link, cross_check, cross_check_status,
-    fetch_text, verify_against_page,
+    fetch_text, l2_detail, no_page_detail, verify_against_page,
 )
 
 
@@ -76,14 +76,18 @@ def main() -> int:
             outcome = check_link(r["submission_url"])
         if outcome is None and "2" in a.layers:
             # Prefer the page grounding cited for the deadline; fall back to the submit page.
-            for candidate in (r["deadline_evidence_url"], r["submission_url"], r["url"]):
-                text, note = fetch_text(candidate or "")
+            cited = (r["deadline_evidence_url"] or "").strip()
+            for candidate in (cited, r["submission_url"], r["url"]):
+                candidate = (candidate or "").strip()
+                if not candidate:
+                    continue
+                text, note = fetch_text(candidate)
                 if text:
                     outcome = verify_against_page(text, r["deadline"], r["status"])
-                    outcome.detail += f"  <- {candidate[:60]}"
+                    outcome.detail = l2_detail(outcome, candidate, cited)
                     break
             else:
-                outcome = Outcome(NOT_FOUND, "no page could be read - grounding stands", "L2")
+                outcome = Outcome(NOT_FOUND, no_page_detail(cited), "L2")
         if outcome is None:
             results["unresolved"].append((r, None))
             continue

@@ -8,7 +8,8 @@ from datetime import date
 
 from cfp_monitor.verify import (
     CONTRADICTED, NOT_FOUND, VERIFIED, closure_evidence, cross_check,
-    cross_check_status, date_variants, find_date, other_deadline_dates, page_status,
+    Outcome, cross_check_status, date_variants, find_date, l2_detail, no_page_detail,
+    other_deadline_dates, page_status,
     verify_against_page,
 )
 
@@ -228,3 +229,55 @@ def test_a_pdf_with_no_extractable_text_is_reported_as_such():
     text, note = _pdf_text(b"%PDF-1.4 garbage")
     assert text == ""
     assert "pdf" in note
+
+
+# ---- provenance: label the result by the page we actually read -------------
+def test_cited_page_result_is_reported_verbatim():
+    out = Outcome(NOT_FOUND, "deadline not stated on the page - grounding value stands", "L2")
+    d = l2_detail(out, "https://x.org/cfp", "https://x.org/cfp")
+    assert "cited page" in d
+    assert "deadline not stated on the page" in d
+
+
+def test_trailing_slash_does_not_make_the_cited_page_look_like_a_fallback():
+    out = Outcome(NOT_FOUND, "deadline not stated on the page", "L2")
+    assert "cited page" in l2_detail(out, "https://x.org/cfp/", "https://x.org/cfp")
+
+
+def test_silent_fallback_page_is_never_reported_as_a_silent_citation():
+    """The bug this guards: a homepage that never carried the deadline was being
+    reported as 'deadline not stated on the page', which reads like we checked
+    the cited source and found it silent."""
+    out = Outcome(NOT_FOUND, "deadline not stated on the page - grounding value stands", "L2")
+    d = l2_detail(out, "https://x.org/", "")
+    assert "no evidence URL supplied" in d
+    assert "unverifiable" in d
+    assert "deadline not stated on the page" not in d
+
+
+def test_fallback_distinguishes_missing_citation_from_unreadable_one():
+    out = Outcome(NOT_FOUND, "deadline not stated on the page", "L2")
+    assert "no evidence URL supplied" in l2_detail(out, "https://x.org/", "")
+    assert "cited page unreadable" in l2_detail(out, "https://x.org/", "https://x.org/gone")
+
+
+def test_positive_evidence_survives_a_fallback_but_is_marked_as_such():
+    """A homepage saying the call is closed IS evidence -- keep it, but say where it came from."""
+    out = Outcome(CONTRADICTED, "the page states the call is CLOSED", "L2")
+    d = l2_detail(out, "https://x.org/", "")
+    assert "the page states the call is CLOSED" in d
+    assert "not the cited page" in d
+
+
+def test_no_page_read_separates_missing_citation_from_dead_citation():
+    assert "no evidence URL supplied" in no_page_detail("")
+    assert "could not be read" in no_page_detail("https://x.org/gone")
+    assert "x.org/gone" in no_page_detail("https://x.org/gone")
+
+
+def test_a_fallback_never_changes_the_verdict_itself():
+    """Relabelling is cosmetic: state must be untouched, so no row flips on this fix."""
+    for state in (VERIFIED, CONTRADICTED, NOT_FOUND):
+        out = Outcome(state, "detail", "L2")
+        l2_detail(out, "https://x.org/", "")
+        assert out.state == state
