@@ -1,8 +1,32 @@
-# Pipeline contract — upstream grounding ↔ downstream monitor
+# Joint Pipeline Contract — upstream grounding ↔ downstream monitor
 
-**Status:** authoritative. Both sides work to this document.
-**Last ruling added:** 2026-07-31.
+**Version 1.1** · 2026-08-01 · **supersedes v1.0 in full**
+**Status:** authoritative for both sides. Where this and upstream *Specification v4.3*
+disagree on interface, boundary, acceptance or defect rulings, **this document wins** and
+v4.3 is amended to match.
 **Read this first** if you are picking up the CFP pipeline with no prior context.
+
+> **One text, both sides.** This file is versioned in the downstream git repo and sent whole
+> after any change. Replace any earlier copy with it verbatim rather than merging — two
+> divergent copies of a joint document is the exact failure this contract exists to prevent.
+
+---
+
+## What changed since v1.0
+
+v1.0 was assembled from an extract and was missing five sections. Nothing in it was wrong;
+this version is a superset.
+
+| Added | Why it matters |
+|---|---|
+| **§10 Rulings on hard cases** | The most important addition. Nine precedents that each cost real debugging — venue-vs-city, one event running several calls, regional siblings, renamed duplicates, editions, PDFs, 403s. Without these they get re-litigated. |
+| **§6 Verification model** | The three layers and the five guards, each traced to the false positive that produced it. Explains *what makes a citation useful downstream*, so the deep-link rule reads as a consequence rather than a preference. |
+| **§7 What the customer sees** | The four confidence labels, so it is clear where `IS_PROJECTED` actually lands. |
+| **§5 Downstream obligations** | What downstream promises never to do to upstream's data. |
+| **§12 Ruling log** | Dated trail, so future changes are traceable. |
+
+Also amended: R9 and R10 now carry the reasoning behind them, and the acceptance gate states
+explicitly which side owns each criterion.
 
 ---
 
@@ -195,12 +219,14 @@ Precedents. Each cost real debugging; do not re-litigate without new evidence.
 
 ## 11. Related documents
 
-| Document | Contents |
-|---|---|
-| `docs/operations/market-runbook.md` | The downstream SOP — commands, order, checks *(pending)* |
-| *Specification v4.3* (upstream-held) | Full upstream rules; §4 here is its summary |
-| `HANDOFF.md` | Project-wide map |
-| `docs/design/roadmap-status.md` | Feature status and history |
+| Document | Held by | Contents |
+|---|---|---|
+| *Specification v4.3* | upstream | Full upstream mechanics. §4 here is a **summary only** — v4.3 is the full text. If a rule changes, change it there and tell us. |
+| `docs/operations/market-runbook.md` | downstream | The operating procedure: commands, order, checks, failure modes. Internal — no action for upstream. |
+| `HANDOFF.md` | downstream | Project-wide map |
+| `docs/design/roadmap-status.md` | downstream | Feature status and history |
+
+The last three are downstream-internal and listed for completeness, not as required reading.
 
 ---
 
@@ -218,3 +244,4 @@ Precedents. Each cost real debugging; do not re-litigate without new evidence.
 | 2026-07-31 | Grounding keys include the opportunity; `Speaking` stays unsuffixed |
 | 2026-07-31 | Evidence attaches to the record it describes, or to nothing |
 | 2026-07-31 | R9 name stability, R10 call-level identity added |
+| 2026-08-01 | Contract v1.1 issued as one shared text, superseding the v1.0 extract |
