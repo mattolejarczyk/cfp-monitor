@@ -181,7 +181,52 @@ class Gate:
                 bad_proj.append(f'{self.g(r, "CONFERENCE")[:36]}: {d} verified with no citation')
         self.add("R2", "Future date marked verified only with a citation", bad_proj)
 
-    def run(self, today: date):
+    # ---- 7 & 8. downstream criteria, once the delivery is loaded ----------
+    def check_loaded(self, db: str, market: str):
+        """Contract criteria 7 and 8, which need the database rather than the file."""
+        from src.cfp_monitor.storage import Store
+        from src.cfp_monitor.customer_format import to_customer_row
+
+        store = Store(db)
+        keys = {r[0] for r in store.db.execute(
+            "SELECT conference_key FROM conference_markets WHERE market=?", (market,))}
+        recs = [r for r in store.export_dicts() if r["key"] in keys]
+        if not recs:
+            self.add("7", "Rows carry only their own evidence", [f"no rows for market {market!r}"])
+            return
+
+        # 7. Test the claim pick_claim ACTUALLY attached, not an arbitrary one sharing the key.
+        # Comparing against "whichever row the DB returns first" is the very bug pick_claim
+        # exists to fix, and would report a failure on rows that are correct.
+        from collections import defaultdict
+
+        from src.cfp_monitor.storage import choose_claim
+        claims = defaultdict(list)
+        for row in store.db.execute(
+                "SELECT conference_key, verify_state, name, edition FROM grounding_facts"):
+            claims[row[0]].append({"verify_state": row[1], "_name": row[2], "_edition": row[3]})
+        borrowed = []
+        for r in recs:
+            chosen = choose_claim(dict(r), claims.get(r["key"], []))
+            if chosen is None:
+                continue
+            ours = str(r.get("edition") or "")[:4]
+            theirs = str(chosen.get("_edition") or "")[:4]
+            if ours.isdigit() and theirs.isdigit() and ours != theirs:
+                borrowed.append(f'{(r.get("name") or "")[:40]}: record {ours} '
+                                f'wearing claim {theirs} ({chosen["_name"][:30]})')
+        self.add("7", "No row wearing another event's evidence", borrowed)
+
+        # 8. every open row must carry a usable label.
+        blank = []
+        for r in recs:
+            row = to_customer_row(r)
+            if row["RESEARCH STATUS"].startswith(("Open", "Upcoming")) and not row["CONFIDENCE"]:
+                blank.append(f'{row["CONFERENCE"][:40]}: {row["RESEARCH STATUS"]} but CONFIDENCE blank')
+        self.add("8", "Open rows are labelled Confirmed or Unconfirmed", blank)
+        store.close()
+
+    def run(self, today: date, db: str = "", market: str = ""):
         self.check_structure()
         if not self.rows:
             return
@@ -190,6 +235,8 @@ class Gate:
         self.check_opportunity()
         self.check_past(today)
         self.check_schema_rules()
+        if db and market:
+            self.check_loaded(db, market)
 
     def report(self, verbose_limit: int = 12) -> bool:
         print(f"\n{'=' * 74}\nACCEPTANCE GATE - {self.path.name}  ({len(self.rows)} rows)\n{'=' * 74}")
@@ -215,13 +262,15 @@ def main() -> int:
     ap.add_argument("csv_paths", nargs="+")
     ap.add_argument("--no-network", action="store_true", help="skip the citation fetches")
     ap.add_argument("--json", help="write machine-readable results here")
+    ap.add_argument("--db", help="database to check criteria 7-8 against (needs --market)")
+    ap.add_argument("--market", help="canonical market name, e.g. \"Consumer Electronics\"")
     a = ap.parse_args()
 
     today = date.today()
     all_ok, payload = True, {}
     for p in a.csv_paths:
         gate = Gate(p, network=not a.no_network)
-        gate.run(today)
+        gate.run(today, db=a.db or "", market=a.market or "")
         all_ok &= gate.report()
         payload[Path(p).name] = [
             {"check": n, "name": nm, "passed": ok, "failures": f}

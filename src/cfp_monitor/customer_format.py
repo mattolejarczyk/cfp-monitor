@@ -117,6 +117,11 @@ def confidence(rec: dict) -> str:
     # a deadline is confirmed; anything thinner is not.
     if (rec.get("submission_deadline") or "").strip() and rec.get("quality") == "PASS":
         return "Confirmed"
+    # A row we are presenting as live must still say how well-evidenced it is. Leaving this
+    # blank on an open row reads as "no concerns" when it means the opposite: we have no
+    # deadline and no claim to stand behind. Blank is reserved for rows nobody can act on.
+    if (rec.get("status") or "").strip().lower() in ("open", "upcoming"):
+        return "Unconfirmed"
     return ""
 
 

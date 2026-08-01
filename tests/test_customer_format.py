@@ -143,3 +143,15 @@ def test_a_projected_deadline_is_never_confirmed():
     at the time of writing, nothing on the page said it."""
     row = to_customer_row(_rec(verify_state="verified", is_projected="true"))
     assert row["CONFIDENCE"] == "Unconfirmed"
+
+
+def test_an_open_row_with_nothing_behind_it_reads_unconfirmed_not_blank():
+    """Blank on an open row reads as 'no concerns' when it means the opposite: no deadline
+    and no claim to stand behind. Blank is reserved for rows nobody can act on."""
+    row = to_customer_row(_rec(status="open", submission_deadline="", quality="PARTIAL"))
+    assert row["CONFIDENCE"] == "Unconfirmed"
+
+
+def test_a_closed_row_with_nothing_behind_it_stays_blank():
+    row = to_customer_row(_rec(status="closed", submission_deadline="", quality="PARTIAL"))
+    assert row["CONFIDENCE"] == ""

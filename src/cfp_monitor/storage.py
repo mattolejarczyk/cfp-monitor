@@ -270,7 +270,7 @@ def _related(ours: str, theirs: str, floor: float = 0.5) -> bool:
     return len(a & b) / min(len(a), len(b)) >= floor
 
 
-def pick_claim(record: dict, candidates: list[dict]) -> dict:
+def choose_claim(record: dict, candidates: list[dict]) -> "dict | None":
     """Choose the grounding claim that describes THIS record, or none at all.
 
     Several claims legitimately share one conference_key. A preview event lives on its
@@ -285,7 +285,7 @@ def pick_claim(record: dict, candidates: list[dict]) -> dict:
     evidence is wrong in a way nobody downstream can see.
     """
     if not candidates:
-        return {}
+        return None
     ours_ed = str(record.get("edition") or "").strip()[:4]
 
     pool = candidates
@@ -295,15 +295,15 @@ def pick_claim(record: dict, candidates: list[dict]) -> dict:
         unknown = [c for c in pool if not str(c.get("_edition") or "").strip()[:4].isdigit()]
         pool = same or unknown
         if not pool:
-            return {}
+            return None
     chosen = _only_event(pool)
     if chosen is not None:
         # One event -- but is it OURS? A big show runs several calls off one domain, and
         # IBC's Accelerator programme was picking up IBC Technical Papers' evidence purely
         # because both live on show.ibc.org in the same edition.
         if _same_event(record.get("name"), chosen.get("_name")):
-            return {k: v for k, v in chosen.items() if k not in _CLAIM_META}
-        return {}
+            return chosen
+        return None
 
     # Still several distinct events: only an unmistakable name relationship can settle it.
     ours = _squash(record.get("name"))
@@ -314,9 +314,14 @@ def pick_claim(record: dict, candidates: list[dict]) -> dict:
                  if ours in _squash(c.get("_name")) or _squash(c.get("_name")) in ours]):
             chosen = _only_event(shortlist)
             if chosen is not None:
-                return {k: v for k, v in chosen.items() if k not in _CLAIM_META}
-    return {}
+                return chosen
+    return None
 
+
+def pick_claim(record: dict, candidates: list[dict]) -> dict:
+    """The export-facing view of choose_claim: the chosen claim without our matching fields."""
+    chosen = choose_claim(record, candidates)
+    return {} if chosen is None else {k: v for k, v in chosen.items() if k not in _CLAIM_META}
 
 # Decisive states actually settle the question; not_found and friends merely failed to.
 _DECISIVE = ("verified", "contradicted")
