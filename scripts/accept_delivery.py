@@ -96,9 +96,17 @@ class Gate:
                 continue                       # blocked-but-trusted; exempt from the quote test
             quote = self.g(r, "DEADLINE_QUOTE")
             if quote and text and norm(quote) not in norm(text):
-                missing_quote.append(f'{name}: quote not on page - "{quote[:60]}"')
+                # Distinguish a PARAPHRASE from an unsupported claim. If the deadline itself
+                # is on the page, the substance was read correctly and only the wording was
+                # rewritten -- a much smaller fault than a citation that supports nothing,
+                # and one that needs a different fix.
+                from src.cfp_monitor.verify import _parse_date, find_date
+                d = _parse_date(self.g(r, "SUBMISSION DEADLINE"))
+                kind = "paraphrase, date IS on page" if (d and find_date(text, d)) \
+                    else "quote and date both absent"
+                missing_quote.append(f'{name}: {kind} - "{quote[:52]}"')
         self.add("2", "Cited pages resolve (404/410 = fail, 403 allowed)", dead)
-        self.add("3", "Cited page contains its quote (403 exempt)", missing_quote)
+        self.add("3", "Cited page contains its quote verbatim (403 exempt)", missing_quote)
 
     # ---- 4. prose vs projection -------------------------------------------
     def check_prose(self):
