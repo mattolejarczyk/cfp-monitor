@@ -221,6 +221,131 @@ def guess_event_past(dates_text: Optional[str], today: Optional[date] = None) ->
     return end < today
 
 
+_CLAIM_META = ("_name", "_edition")
+
+
+def _squash(text: str) -> str:
+    return "".join(c for c in (text or "").lower() if c.isalnum())
+
+
+def _tokens(text: str) -> set:
+    """Words, minus the edition year -- which is matched separately and would otherwise
+    make every 2027 event look like every other 2027 event."""
+    words = re.findall(r"[a-z0-9]+", (text or "").lower())
+    return {w for w in words if not (len(w) == 4 and w.isdigit())}
+
+
+# Words that distinguish sibling editions of one brand rather than describing it. Two names
+# that each carry one of these, and disagree, are different events however similar they look:
+# "OWASP Global AppSec Europe" and "OWASP Global AppSec USA" share 75% of their words.
+_VARIANT = {
+    "europe", "european", "usa", "us", "america", "americas", "asia", "apac", "emea",
+    "china", "japan", "india", "uk", "canada", "mena", "africa", "pacific", "nordic",
+    "east", "west", "north", "south", "eu", "na",
+    "spring", "summer", "autumn", "fall", "winter",
+}
+
+
+def _same_event(a: str, b: str) -> bool:
+    """Related AND not two different regional/seasonal editions of the same brand."""
+    if not _related(a, b):
+        return False
+    va, vb = _tokens(a) & _VARIANT, _tokens(b) & _VARIANT
+    # Only a DISAGREEMENT separates them. One side merely omitting the qualifier is normal:
+    # our crawler stores "IoT Tech Expo" for "IoT Tech Expo Global 2027".
+    return not (va and vb and va != vb)
+
+
+def _related(ours: str, theirs: str, floor: float = 0.5) -> bool:
+    """Do two names plausibly describe the same event?
+
+    Substring matching is too brittle for this: "AAOS 2027 Annual Meeting" and "AAOS Annual
+    Meeting 2027" are the same event with the year moved, and neither contains the other.
+    Token overlap against the SHORTER name handles both that and the abbreviations our crawler
+    stores ("TROOPERS" for "Troopers 2026 (Troopers Cybersecurity Conference)").
+    """
+    a, b = _tokens(ours), _tokens(theirs)
+    if not a or not b:
+        return True                     # nothing to judge on -- fall back to the key match
+    return len(a & b) / min(len(a), len(b)) >= floor
+
+
+def pick_claim(record: dict, candidates: list[dict]) -> dict:
+    """Choose the grounding claim that describes THIS record, or none at all.
+
+    Several claims legitimately share one conference_key. A preview event lives on its
+    parent's domain (three CES Unveiled rows on ces.tech); an event runs separate speaking
+    and awards calls; and the same event arrives twice under slightly different names when
+    upstream renames it between deliveries ("CP+ 2027 (Camera & Photo Imaging Show)" and
+    "CP+ Camera & Photo Imaging Show 2027" are one event with two canonical ids).
+
+    This used to take whichever row the database returned first, which attached ShowStoppers
+    at CES 2027's evidence to our ShowStoppers @ IFA 25 record. Where the match is not clear
+    we return nothing: an unlabelled row is honest, whereas a row wearing another event's
+    evidence is wrong in a way nobody downstream can see.
+    """
+    if not candidates:
+        return {}
+    ours_ed = str(record.get("edition") or "").strip()[:4]
+
+    pool = candidates
+    if ours_ed.isdigit():
+        # An edition mismatch means a different event cycle -- never each other's evidence.
+        same = [c for c in pool if str(c.get("_edition") or "").strip()[:4] == ours_ed]
+        unknown = [c for c in pool if not str(c.get("_edition") or "").strip()[:4].isdigit()]
+        pool = same or unknown
+        if not pool:
+            return {}
+    chosen = _only_event(pool)
+    if chosen is not None:
+        # One event -- but is it OURS? A big show runs several calls off one domain, and
+        # IBC's Accelerator programme was picking up IBC Technical Papers' evidence purely
+        # because both live on show.ibc.org in the same edition.
+        if _same_event(record.get("name"), chosen.get("_name")):
+            return {k: v for k, v in chosen.items() if k not in _CLAIM_META}
+        return {}
+
+    # Still several distinct events: only an unmistakable name relationship can settle it.
+    ours = _squash(record.get("name"))
+    if ours:
+        for shortlist in (
+                [c for c in pool if _squash(c.get("_name")) == ours],
+                [c for c in pool
+                 if ours in _squash(c.get("_name")) or _squash(c.get("_name")) in ours]):
+            chosen = _only_event(shortlist)
+            if chosen is not None:
+                return {k: v for k, v in chosen.items() if k not in _CLAIM_META}
+    return {}
+
+
+# Decisive states actually settle the question; not_found and friends merely failed to.
+_DECISIVE = ("verified", "contradicted")
+
+
+def _only_event(pool: list[dict]) -> "dict | None":
+    """Collapse rows describing ONE event, or None if the pool spans several.
+
+    Upstream renames events between deliveries, so the same event arrives twice under two
+    canonical ids. Those are duplicates, not rivals -- declining on them would throw away
+    evidence we hold. Rows sharing a name and edition are therefore collapsed to the one that
+    actually resolved something; two decisive states that disagree are a real conflict and
+    still decline.
+    """
+    if not pool:
+        return None
+    if len({str(c.get("_edition") or "")[:4] for c in pool}) > 1:
+        return None
+    # Duplicates rarely arrive spelled identically -- "AAOS 2027 Annual Meeting" and "AAOS
+    # Annual Meeting 2027" are one event -- so group by relatedness, not by exact spelling.
+    first = pool[0].get("_name")
+    if not all(_same_event(first, c.get("_name")) for c in pool[1:]):
+        return None
+    decisive = [c for c in pool if (c.get("verify_state") or "") in _DECISIVE]
+    if len({c.get("verify_state") for c in decisive}) > 1:
+        return None                       # genuinely conflicting evidence -- ask a human
+    return (decisive or pool)[0]
+
+
 class Store:
     def __init__(self, path: str = ":memory:"):
         self.db = sqlite3.connect(path)
@@ -525,15 +650,15 @@ class Store:
             memberships.setdefault(k, []).append(m)
         # Discovery-layer verification outcome, joined in read-only. It never alters a stored
         # value; it only lets the customer view state how well-evidenced a row is.
-        checks: dict[str, dict] = {}
+        claims: dict[str, list[dict]] = {}
         try:
             for row in self.db.execute(
                     "SELECT conference_key, verify_state, verify_detail, deadline_quote,"
-                    " deadline_evidence_url, is_projected FROM grounding_facts"):
-                checks.setdefault(row[0], {"verify_state": row[1], "verify_detail": row[2],
-                                           "deadline_quote": row[3],
-                                           "deadline_evidence_url": row[4],
-                                           "is_projected": row[5]})
+                    " deadline_evidence_url, is_projected, name, edition FROM grounding_facts"):
+                claims.setdefault(row[0], []).append(
+                    {"verify_state": row[1], "verify_detail": row[2], "deadline_quote": row[3],
+                     "deadline_evidence_url": row[4], "is_projected": row[5],
+                     "_name": row[6], "_edition": row[7]})
         except Exception:
             pass                     # a DB predating the discovery layer simply has none
         out = []
@@ -553,7 +678,7 @@ class Store:
                 "submission_status": r["submission_status"], "edition": r["edition"],
                 "categories": r["categories"], "notes": r["notes"],
                 "quality": r["quality"],
-                **checks.get(r["key"], {}),
+                **pick_claim(r, claims.get(r["key"], [])),
                 # Read-only, derived from the crawl result — feeds the TRACK column.
                 "opportunity_types": self._opportunity_types(r["result_json"]),
             })
