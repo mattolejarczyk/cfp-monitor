@@ -1,6 +1,6 @@
 # cfp-monitor — Handoff & Single Source of Truth
 
-**Updated 2026-07-09.** This file is the shared reference for **Matt + both Hermes instances**
+**Updated 2026-08-01.** This file is the shared reference for **Matt + both Hermes instances**
 (local dev box and the VPS). It lives in the public repo, so:
 
 - **Read the latest:** `git pull` in your clone, then open this file — never paste long command
@@ -22,6 +22,12 @@ Two halves that work together:
 
 Crawling stays local (keeps the residential-IP anti-bot advantage); the VPS only brokers
 LLM + license, so there is **no anti-bot regression** from using the VPS.
+
+3. **Grounding pipeline** (added late July 2026): an upstream Google-Search-grounded research
+   process supplies one 35-column CSV per market; we import it as *unverified discovery*, check
+   its claims against live pages, and label the customer view by how well-evidenced each row is.
+   Upstream claims never overwrite crawled facts — they live in their own table.
+   **Start here:** [`docs/operations/pipeline-contract.md`](docs/operations/pipeline-contract.md).
 
 ---
 
@@ -112,6 +118,13 @@ Grouped by area; file pointers in parentheses. **98 offline tests green.**
 ---
 
 ## 3. Canonical docs (detail lives here)
+
+**The grounding pipeline (read in this order):**
+- [`docs/operations/pipeline-contract.md`](docs/operations/pipeline-contract.md) — **authoritative.** The upstream/downstream interface: principles, ownership boundary, verification model, the 9-point acceptance gate, the review loop, and rulings on cases that have caused real defects. Cold starts begin here.
+- [`docs/operations/market-runbook.md`](docs/operations/market-runbook.md) — the operating procedure: exact commands in order, what to check at each step, and failure modes with their fixes.
+- Upstream holds *Specification v4.3* (their mechanics). Where it and the contract disagree, **the contract wins** and v4.3 is amended.
+
+**Everything else:**
 - [`docs/design/roadmap-status.md`](docs/design/roadmap-status.md) — status by milestone + capability.
 - [`docs/design/worklog.md`](docs/design/worklog.md) — append-only session history.
 - [`docs/design/model-costs.md`](docs/design/model-costs.md) — LLM model + cost reference (DeepSeek vs GPT-5 vs Claude), per-conference economics, the `PROXY_MODEL` switch note.
