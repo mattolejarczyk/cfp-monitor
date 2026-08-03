@@ -342,3 +342,30 @@ def test_closure_language_is_decisive_even_off_the_cited_page():
     page = "The call for papers is now closed."
     assert verify_against_page(page, "10/30/2026", "open",
                                cited_page=False).state == CONTRADICTED
+
+
+# ---- a rule is not a closure statement --------------------------------------
+def test_a_conditional_rule_is_not_read_as_closure():
+    """Real case: USENIX Security 2026 was contradicted on 'Once the registration deadline
+    has passed, the submission's author list ...' - a policy about author lists."""
+    page = ("Once the registration deadline has passed, the submission's author list "
+            "is final and may not be changed.")
+    assert page_status(page) is None
+
+
+def test_a_registration_deadline_says_nothing_about_the_call():
+    assert page_status("The registration deadline has passed.") is None
+    assert page_status("Early-bird deadline has expired.") is None
+
+
+def test_a_plain_closure_statement_still_registers():
+    assert page_status("The submission deadline has passed.") == "closed"
+    assert page_status("The call for papers is now closed.") == "closed"
+    assert page_status("Submissions are no longer accepted.") == "closed"
+
+
+def test_a_real_closure_after_a_conditional_elsewhere_still_registers():
+    """A conditional sentence must not immunise the whole page."""
+    page = ("If a co-author violates the requirement the paper is rejected. "
+            "Separately: the call for papers is now closed.")
+    assert page_status(page) == "closed"

@@ -126,6 +126,28 @@ _CLOSED_PHRASES = re.compile(
     r"|submissions? (are |is )?(now )?closed"
     r"|closed for submissions"
     r"|thank(s| you)? (all )?(the )?authors who (have )?submitted)", re.I)
+# A closure phrase inside a CONDITIONAL is policy, not a statement of current state.
+# USENIX Security 2026 was contradicted on "Once the registration deadline has passed, the
+# submission's author list ..." -- a rule about author lists, read as "this call is closed".
+# Also guards the wrong deadline entirely: a registration or early-bird cutoff says nothing
+# about whether papers are still being accepted.
+_CONDITIONAL = re.compile(
+    r"\b(once|if|when|after|unless|should|until|in the event|please note that)\b[^.]{0,80}$",
+    re.I)
+_OTHER_DEADLINE = re.compile(
+    r"\b(registration|early[- ]bird|hotel|booth|exhibit\w*|payment|visa|badge)\s+deadline\b",
+    re.I)
+
+
+def _is_real_closure(text: str, start: int, end: int) -> bool:
+    """True when a closure match states this call's state rather than describing a rule."""
+    before = text[max(0, start - 90):start]
+    if _CONDITIONAL.search(before):
+        return False
+    window = text[max(0, start - 60):end + 20]
+    return not _OTHER_DEADLINE.search(window)
+
+
 _OPEN_PHRASES = re.compile(
     r"(call for (papers|abstracts|speakers|presentations) (is )?(now )?open"
     r"|submissions? (are |is )?(now )?open"
@@ -141,16 +163,24 @@ def page_status(page_text: str) -> Optional[str]:
     """
     if not page_text:
         return None
-    if _CLOSED_PHRASES.search(page_text):
+    if _first_closure(page_text):
         return "closed"
     if _OPEN_PHRASES.search(page_text):
         return "open"
     return None
 
 
+def _first_closure(page_text: str):
+    """The first closure match that is a real statement of state, not a conditional rule."""
+    for m in _CLOSED_PHRASES.finditer(page_text or ""):
+        if _is_real_closure(page_text, m.start(), m.end()):
+            return m
+    return None
+
+
 def closure_evidence(page_text: str) -> str:
     """The sentence that establishes closure, for the audit trail."""
-    m = _CLOSED_PHRASES.search(page_text or "")
+    m = _first_closure(page_text or "")
     if not m:
         return ""
     start = max(0, m.start() - 60)
