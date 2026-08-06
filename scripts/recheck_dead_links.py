@@ -57,11 +57,64 @@ async def browser_check(urls: list[str]) -> dict[str, tuple[str, int, int]]:
     return out
 
 
+def recheck_csv(path: str) -> int:
+    """Same second opinion, but on a delivery CSV that has not been imported yet.
+
+    Added 2026-08-06. Without this the browser check was only reachable once a
+    delivery was in the database, so anything working at the CSV stage had no way
+    to tell TRULY DEAD from BLOCKED-TO-SCRIPTS - and a parallel, weaker checker got
+    built instead. Same browser_check(), just a different source of URLs.
+    """
+    import csv as _csv
+    from src.cfp_monitor.verify import link_status
+
+    with open(path, encoding="utf-8-sig", newline="") as fh:
+        rows = list(_csv.DictReader(fh))
+
+    columns = ["DEADLINE_EVIDENCE_URL", "VENUE_EVIDENCE_URL",
+               "CFP_SUBMISSION_URL", "MAIN_INFO_URL"]
+    suspects: dict[str, list[str]] = {}
+    seen: dict[str, int | None] = {}
+    for r in rows:
+        for c in columns:
+            u = (r.get(c) or "").strip()
+            if not u.startswith("http"):
+                continue
+            if u not in seen:
+                seen[u], _ = link_status(u)
+            if seen[u] in (404, 410):
+                suspects.setdefault(u, []).append(f'{(r.get("CONFERENCE") or "")[:36]} [{c}]')
+
+    print(f"pass 1 checked {len(seen)} url(s); {len(suspects)} returned 404/410\n")
+    if not suspects:
+        print("Nothing for the browser to re-check.")
+        return 0
+
+    results = asyncio.run(browser_check(list(suspects)))
+    dead, false_404 = [], []
+    for u, where in suspects.items():
+        verdict, status, chars = results.get(u, ("no result", 0, 0))
+        (dead if verdict == "dead" else false_404).append((u, verdict, where))
+        print(f"  {verdict[:12]:<13} {u[:66]}")
+        for w in where:
+            print(f"                {w}")
+
+    print(f"\ntruly dead: {len(dead)}   |   reachable in a browser: {len(false_404)}")
+    if false_404:
+        print("\nThese were FALSE 404s - the link works, our plain HTTP request was blocked.")
+        print("Withdrawing their citations would have been wrong (contract 5.2).")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Re-check 'dead' links with a real browser.")
     ap.add_argument("--db", default="cfp_monitor.db")
+    ap.add_argument("--csv", help="re-check a delivery CSV instead of the database")
     ap.add_argument("--apply", action="store_true", help="downgrade false 404s to not_found")
     a = ap.parse_args()
+
+    if a.csv:
+        return recheck_csv(a.csv)
 
     store = Store(a.db)
     rows = [dict(r) for r in store.db.execute(
