@@ -22,7 +22,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.cfp_monitor.verify import fetch_text, link_status      # noqa: E402
 
-EXPECTED_COLS = 35
+# 36 since the v1.2 amendment added FORMAT as the last column (2026-08-05).
+# Deliveries still emitting 35 columns predate the amendment and fail check 1,
+# which is intended: upstream must adopt the column, not have it inferred for them.
+EXPECTED_COLS = 36
+VALID_FORMATS = {"In-Person", "Virtual", "Hybrid"}
+# Values that mean "not found" dressed up as data. 2.6 requires an honest blank.
+PLACEHOLDERS = {"n/a", "na", "n.a.", "tbd", "tba", "unknown", "none", "null", "various",
+                "multiple", "multiple cities", "multiple states", "multiple locations",
+                "multiple regional cities", "varies", "to be announced",
+                "to be determined", "-", "--"}
+# A CITY that is not a city: the row is standing in for a series of events.
+SERIES_HINT = re.compile(r"\bmultiple\b|\bvarious\b|\bregional\b|\bnationwide\b|\bseveral\b", re.I)
+# Prose that says the event is over for good.
+DEFUNCT_PHRASES = re.compile(
+    r"permanently ended|permanently concluded|no future editions|final edition|last edition|"
+    r"discontinued|no longer (?:being )?(?:held|running)|has been cancell?ed|"
+    r"ceased operations|will not (?:be held|return)|final year", re.I)
 OPPORTUNITIES = {"Speaking", "Awards", "Exhibiting", "Registration"}
 # Present-tense claims that assert a live call. Only legitimate with a citation behind them.
 ACTIVE_PROSE = re.compile(r"\b(active|now open|now accepting|currently accepting)\b", re.I)
@@ -47,11 +63,21 @@ class Gate:
     def __init__(self, path: str, network: bool = True):
         self.path, self.network = Path(path), network
         self.results: list[tuple[str, str, bool, list[str]]] = []
+        self.notes: list[tuple[str, str, list[str]]] = []
         self.rows: list[dict] = []
         self.raw_widths: list[tuple[int, int]] = []
 
     def add(self, num, name, failures):
         self.results.append((num, name, not failures, failures))
+
+    def note(self, num, name, items):
+        """Advisory: reported, but does not reject the delivery.
+
+        For findings that are valid under the contract yet must not pass silently -
+        a declared stub row is shippable under 2.1, but nobody should discover it
+        in the customer's sheet.
+        """
+        self.notes.append((num, name, items))
 
     # ---- 1. structure ------------------------------------------------------
     def check_structure(self):
@@ -181,6 +207,70 @@ class Gate:
                 bad_proj.append(f'{self.g(r, "CONFERENCE")[:36]}: {d} verified with no citation')
         self.add("R2", "Future date marked verified only with a citation", bad_proj)
 
+        # ---- added 2026-08-06, folded in from a parallel validator ---------
+        # Each of these came from a real defect seen in the Robotics or
+        # Cybersecurity markets; none was covered by the checks above.
+
+        # 2.6 - a placeholder is not a value. An honest blank is required instead.
+        placeholders = []
+        for r in self.rows:
+            for c in ("CITY", "STATE_PROVINCE", "COUNTRY", "CONFERENCE DATES",
+                      "SUBMISSION DEADLINE", "START DATE", "LOCATION"):
+                if self.g(r, c).strip().lower() in PLACEHOLDERS:
+                    placeholders.append(f'{self.g(r, "CONFERENCE")[:36]}: {c}={self.g(r, c)!r}')
+        self.add("2.6", "No placeholder values where a real value belongs", placeholders)
+
+        # 5.4 - a row standing in for many events cannot key on a city.
+        # SecureWorld Expo produced CITY='Multiple Cities' across twelve events.
+        series = [f'{self.g(r, "CONFERENCE")[:36]}: CITY={self.g(r, "CITY")!r}'
+                  for r in self.rows
+                  if SERIES_HINT.search(f'{self.g(r, "CITY")} {self.g(r, "STATE_PROVINCE")}')]
+        self.add("5.4", "No row representing a SERIES rather than one event", series)
+
+        # A call cannot close after the event it feeds has started. When it does,
+        # the deadline belongs to a different edition or a different event.
+        late = []
+        for r in self.rows:
+            d, s = self.g(r, "SUBMISSION DEADLINE"), self.g(r, "START DATE")
+            if (re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", s)
+                    and d > s):
+                late.append(f'{self.g(r, "CONFERENCE")[:36]}: deadline {d} after start {s}')
+        self.add("6b", "Submission deadline precedes the event it feeds", late)
+
+        # A row whose own prose says the event has ended cannot claim a verified
+        # edition. ShmooCon and Japan Robot Week both did.
+        defunct = []
+        for r in self.rows:
+            prose = f'{self.g(r, "STATUS DETAILS")} {self.g(r, "NOTES")} {self.g(r, "DEADLINE_QUOTE")}'
+            if not DEFUNCT_PHRASES.search(prose):
+                continue
+            if (self.g(r, "IS_PROJECTED").lower() == "false"
+                    or "verified" in self.g(r, "GROUNDING_CONFIDENCE").lower()):
+                defunct.append(f'{self.g(r, "CONFERENCE")[:36]}: says ended, claims '
+                               f'{self.g(r, "GROUNDING_CONFIDENCE")!r}')
+        self.add("2.1b", "No discontinued event claiming a verified edition", defunct)
+
+        # EDITION is a year. DEF CON 34 arrived with EDITION='34', which then
+        # keyed its EVENT_ID as '34-def-con-34-...'.
+        bad_edition = [f'{self.g(r, "CONFERENCE")[:36]}: EDITION={self.g(r, "EDITION")!r}'
+                       for r in self.rows
+                       if self.g(r, "EDITION")
+                       and not re.fullmatch(r"(19|20)\d{2}", self.g(r, "EDITION").strip())]
+        self.add("R8d", "EDITION is a plain 4-digit year", bad_edition)
+
+        # FORMAT (v1.2). Blank is allowed - an honest blank beats a guessed format.
+        bad_format = [f'{self.g(r, "CONFERENCE")[:36]}: FORMAT={self.g(r, "FORMAT")!r}'
+                      for r in self.rows
+                      if self.g(r, "FORMAT") and self.g(r, "FORMAT") not in VALID_FORMATS]
+        self.add("R12", "FORMAT is In-Person, Virtual, Hybrid or blank", bad_format)
+
+        # An ungrounded stub is shippable but must be declared, never silent.
+        stubs = [self.g(r, "CONFERENCE")[:40] for r in self.rows
+                 if "Audit Exception" in self.g(r, "STATUS DETAILS")]
+        if stubs:
+            self.note("STUB", f"{len(stubs)} ungrounded stub row(s) - valid under 2.1 but "
+                              f"they must be declared in the manifest", stubs)
+
     # ---- 7 & 8. downstream criteria, once the delivery is loaded ----------
     def check_loaded(self, db: str, market: str):
         """Contract criteria 7 and 8, which need the database rather than the file."""
@@ -253,6 +343,12 @@ class Gate:
                     print(f"           - {f}")
                 if len(failures) > verbose_limit:
                     print(f"           ... and {len(failures) - verbose_limit} more")
+        for num, name, items in self.notes:
+            print(f"  [NOTE] {num:<4} {name}  ({len(items)})")
+            for i in items[:verbose_limit]:
+                print(f"           - {i}")
+            if len(items) > verbose_limit:
+                print(f"           ... and {len(items) - verbose_limit} more")
         print(f"\n  RESULT: {'ACCEPTED' if ok else 'REJECTED'}\n")
         return ok
 
