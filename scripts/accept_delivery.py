@@ -25,7 +25,7 @@ from src.cfp_monitor.verify import fetch_text, link_status      # noqa: E402
 # 36 since the v1.2 amendment added FORMAT as the last column (2026-08-05).
 # Deliveries still emitting 35 columns predate the amendment and fail check 1,
 # which is intended: upstream must adopt the column, not have it inferred for them.
-EXPECTED_COLS = 36
+EXPECTED_COLS = 38   # +LIFECYCLE_EVIDENCE_URL, +LIFECYCLE_QUOTE (v1.3 R16)
 VALID_FORMATS = {"In-Person", "Virtual", "Hybrid"}
 # Values that mean "not found" dressed up as data. 2.6 requires an honest blank.
 PLACEHOLDERS = {"n/a", "na", "n.a.", "tbd", "tba", "unknown", "none", "null", "various",
@@ -35,13 +35,17 @@ PLACEHOLDERS = {"n/a", "na", "n.a.", "tbd", "tba", "unknown", "none", "null", "v
 # A CITY that is not a city: the row is standing in for a series of events.
 SERIES_HINT = re.compile(r"\bmultiple\b|\bvarious\b|\bregional\b|\bnationwide\b|\bseveral\b", re.I)
 # Prose that says the event is over for good.
+# A rotating event is not a dead one - EMO Hannover moves venue on a cycle.
+ROTATION = re.compile(r'cycle dictates|rotat|alternat|moves to|held instead in', re.I)
 DEFUNCT_PHRASES = re.compile(
     r"permanently ended|permanently concluded|no future editions|final edition|last edition|"
     r"discontinued|no longer (?:being )?(?:held|running)|has been cancell?ed|"
     r"ceased operations|will not (?:be held|return)|final year", re.I)
 OPPORTUNITIES = {"Speaking", "Awards", "Exhibiting", "Registration"}
 # Present-tense claims that assert a live call. Only legitimate with a citation behind them.
-ACTIVE_PROSE = re.compile(r"\b(active|now open|now accepting|currently accepting)\b", re.I)
+# "(?<!last )" keeps this off past-tense uses such as "the last active edition was held in
+# July 2024", which describe a DORMANT event rather than asserting a live call.
+ACTIVE_PROSE = re.compile(r"(?<!last )\b(active|now open|now accepting|currently accepting)\b", re.I)
 # Words that only appear in a venue name. "Park" is deliberately absent: Menlo Park and
 # Overland Park are cities, and flagging them would train people to ignore this check.
 VENUE_HINT = re.compile(
@@ -136,11 +140,17 @@ class Gate:
 
     # ---- 4. prose vs projection -------------------------------------------
     def check_prose(self):
+        # A row that states the event is DISCONTINUED is exempt: its prose legitimately
+        # contains "active" in a past or negated sense - "the last active edition was
+        # held in 2024", "no subsequent editions or active staging". Matching the bare
+        # word there flags correct rows and invites someone to "fix" them. Rows claiming
+        # a verified edition while saying they have ended are caught by check 2.1b.
         bad = [f'{self.g(r, "CONFERENCE")[:40]}: {self.g(r, "STATUS DETAILS")[:70]}'
                for r in self.rows
                if self.g(r, "IS_PROJECTED").lower() == "true"
-               and ACTIVE_PROSE.search(self.g(r, "STATUS DETAILS"))]
-        self.add("4", "No active-call prose on an IS_PROJECTED=true row", bad)
+               and ACTIVE_PROSE.search(self.g(r, "STATUS DETAILS"))
+               and not DEFUNCT_PHRASES.search(self.g(r, "STATUS DETAILS"))]
+        self.add("4", "No active-call prose on an IS_PROJECTED=true row (defunct rows exempt)", bad)
 
     # ---- 5. opportunity isolation -----------------------------------------
     def check_opportunity(self):
@@ -161,10 +171,17 @@ class Gate:
         for r in self.rows:
             d = self.g(r, "SUBMISSION DEADLINE")
             if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) and d < today.isoformat():
+                # A ROLLING FORM has no closing date by definition, so a past date on
+                # one is a priority or early-bird deadline, not a closure - BIO-Europe
+                # 2026 states exactly that: "the priority review deadline was July 31,
+                # but applications remain open on a rolling basis". Flagging those
+                # invites someone to close a call that is genuinely still open.
+                if self.g(r, "CFP MODEL TYPE").strip().lower() == "rolling form":
+                    continue
                 if self.g(r, "STATUS").lower() in ("open", "upcoming"):
                     bad.append(f'{self.g(r, "CONFERENCE")[:40]}: {d} but STATUS='
                                f'{self.g(r, "STATUS")}')
-        self.add("6", f"No past deadline presented as open (as of {today})", bad)
+        self.add("6", f"No past deadline presented as open (as of {today}; rolling forms exempt)", bad)
 
     # ---- R8 / R11 schema rules --------------------------------------------
     def check_schema_rules(self):
@@ -265,6 +282,20 @@ class Gate:
         self.add("R12", "FORMAT is In-Person, Virtual, Hybrid or blank", bad_format)
 
         # An ungrounded stub is shippable but must be declared, never silent.
+        # R16 - a lifecycle claim is the most consequential finding the research
+        # produces: it removes an event from the pipeline for good. It must carry its
+        # OWN citation, in its OWN fields, so an R1 deadline withdrawal can never
+        # delete it. Prose alone is not enough (R16.5).
+        unevidenced = []
+        for r in self.rows:
+            prose = f'{self.g(r, "STATUS DETAILS")} {self.g(r, "NOTES")}'
+            if not DEFUNCT_PHRASES.search(prose) or ROTATION.search(prose):
+                continue
+            if not (self.g(r, "LIFECYCLE_EVIDENCE_URL") and self.g(r, "LIFECYCLE_QUOTE")):
+                unevidenced.append(f'{self.g(r, "CONFERENCE")[:40]}: says the event has ended, '
+                                   f'but carries no lifecycle citation')
+        self.add("R16", "A discontinuation claim carries its own evidence", unevidenced)
+
         stubs = [self.g(r, "CONFERENCE")[:40] for r in self.rows
                  if "Audit Exception" in self.g(r, "STATUS DETAILS")]
         if stubs:
