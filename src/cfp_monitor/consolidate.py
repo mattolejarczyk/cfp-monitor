@@ -92,10 +92,15 @@ def _build_reason(res: ConferenceResult) -> str:
     word = _STATUS_WORD.get(res.cfp_status, res.cfp_status.value.title())
     why = _BASIS_PHRASE.get(res.status_basis or "", res.status_basis or "reason unrecorded")
     parts = [f"{word} - {why}."]
-    if res.submission_form_found and res.submission_url.value:
-        plat = f"{res.submission_platform} form " if res.submission_platform else ""
-        via = "Submit via " + (plat or "").strip()
-        parts.append(f"{via}: {res.submission_url.value}.".replace("  ", " "))
+    if res.submission_url.value:
+        if res.submission_form_found:
+            platform = f" {res.submission_platform} form" if res.submission_platform else ""
+            label = f"Submit via{platform}"
+        else:
+            # A named destination is useful even without a detected form. Do not
+            # mislabel the page as a live form, and do not hide the actionable URL.
+            label = "Submission URL"
+        parts.append(f"{label}: {res.submission_url.value}.")
     # "Watching this page" copy: when we located the submission/CFP page but the call isn't
     # confirmed open (upcoming, or opportunity-signals-without-a-live-form), say so honestly
     # instead of leaving it vague — only asserted because a page was actually located.
@@ -216,7 +221,7 @@ def consolidate(
                        evidence=[Evidence(field="submission_url", source_url=opp, snippet="best opportunity page (no explicit submit link found)")])
     res.submission_url = sub
     res.submission_platform = platform
-    res.submission_form_found = bool(form_present or sub.value)
+    res.submission_form_found = form_present
 
     # --- multi-edition caution (feat 10) ---
     # Flag only when pages genuinely DISAGREE on the conference dates (the real
