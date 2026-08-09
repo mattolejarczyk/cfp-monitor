@@ -1,0 +1,229 @@
+{
+  "rows": [
+    {
+      "name": "Venue Still In City 2026",
+      "market": "Robotics",
+      "event_id": "2026-venue-still-in-city-berlin",
+      "city": "Berlin",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-09-01",
+      "deadline_quote": "Deadline is 1 September 2026",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Good City Blank State 2026",
+      "market": "Cybersecurity",
+      "event_id": "2026-good-city-blank-state-seattle",
+      "city": "Seattle",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-10-01",
+      "deadline_quote": "Submissions close 1 October",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "City Equals State 2026",
+      "market": "Semiconductor",
+      "event_id": "2026-city-equals-state-tokyo",
+      "city": "Tokyo",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-11-01",
+      "deadline_quote": "Papers due 1 November",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "True City State 2026",
+      "market": "Utility",
+      "event_id": "2026-true-city-state-hong-kong",
+      "city": "Hong Kong",
+      "cfp_model": "Not Announced",
+      "deadline": "",
+      "deadline_quote": "",
+      "is_projected": "true",
+      "source_as_of": "2026-08-01",
+      "issues": [
+        "NO_SUBMISSION_URL"
+      ]
+    },
+    {
+      "name": "Postcode In Location 2026",
+      "market": "Cybersecurity",
+      "event_id": "2026-postcode-in-location-heidelberg",
+      "city": "Heidelberg",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-09-15",
+      "deadline_quote": "CFP closes 15 September",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Blank City Parse Location 2026",
+      "market": "ConsumerElectronics",
+      "event_id": "2026-blank-city-parse-location-las-vegas",
+      "city": "Las Vegas",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-09-20",
+      "deadline_quote": "Apply by 20 September",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Location Is TBD 2027",
+      "market": "Bioeconomy",
+      "event_id": "2027-location-is-tbd-tbd",
+      "city": "",
+      "cfp_model": "Not Announced",
+      "deadline": "",
+      "deadline_quote": "",
+      "is_projected": "true",
+      "source_as_of": "2026-08-01",
+      "issues": [
+        "NO_CITY",
+        "NO_SUBMISSION_URL"
+      ]
+    },
+    {
+      "name": "Suffixed Opportunity 2026",
+      "market": "AdditiveMfg",
+      "event_id": "2026-suffixed-opportunity-chicago-exhibiting",
+      "city": "Chicago",
+      "cfp_model": "Not Announced",
+      "deadline": "",
+      "deadline_quote": "",
+      "is_projected": "true",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Regional Sibling Europe 2026",
+      "market": "BioMedTech",
+      "event_id": "2026-regional-sibling-europe-vienna",
+      "city": "Vienna",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-09-05",
+      "deadline_quote": "EU deadline 5 September",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Regional Sibling USA 2026",
+      "market": "BioMedTech",
+      "event_id": "2026-regional-sibling-usa-boston",
+      "city": "Boston",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-09-25",
+      "deadline_quote": "US deadline 25 September",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Model Needs Normalizing 2026",
+      "market": "Robotics",
+      "event_id": "2026-model-needs-normalizing-munich",
+      "city": "Munich",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-10-10",
+      "deadline_quote": "Due 10 October",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Multi Market Event 2026",
+      "market": "Robotics",
+      "event_id": "2026-multi-market-event-hannover",
+      "city": "Hannover",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-10-15",
+      "deadline_quote": "Due 15 October",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Multi Market Event 2026",
+      "market": "AdditiveMfg",
+      "event_id": "2026-multi-market-event-hannover",
+      "city": "Hannover",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-10-15",
+      "deadline_quote": "Due 15 October",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Exact Duplicate Row 2026",
+      "market": "Utility",
+      "event_id": "2026-exact-duplicate-row-oslo",
+      "city": "Oslo",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-09-30",
+      "deadline_quote": "Due 30 September",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Placeholder In Quote 2026",
+      "market": "Semiconductor",
+      "event_id": "2026-placeholder-in-quote-dresden",
+      "city": "Dresden",
+      "cfp_model": "Not Announced",
+      "deadline": "",
+      "deadline_quote": "",
+      "is_projected": "true",
+      "source_as_of": "",
+      "issues": [
+        "NO_SUBMISSION_URL"
+      ]
+    },
+    {
+      "name": "Year In Name Only 2027",
+      "market": "Bioeconomy",
+      "event_id": "tbd-year-in-name-only-lyon",
+      "city": "Lyon",
+      "cfp_model": "Not Announced",
+      "deadline": "2027-01-15",
+      "deadline_quote": "Due 15 January 2027",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": []
+    },
+    {
+      "name": "Past Deadline Still Open 2026",
+      "market": "Cybersecurity",
+      "event_id": "2026-past-deadline-still-open-austin",
+      "city": "Austin",
+      "cfp_model": "Not Announced",
+      "deadline": "2026-01-05",
+      "deadline_quote": "Closed 5 January",
+      "is_projected": "false",
+      "source_as_of": "2026-08-01",
+      "issues": [
+        "PASSED_DEADLINE (215 days past)"
+      ]
+    }
+  ],
+  "report": {
+    "input": 18,
+    "kept": 17,
+    "duplicates": 1,
+    "city_repaired": 3,
+    "model_normalized": 14,
+    "issue_counts": {
+      "NO_CITY": 1,
+      "NO_SUBMISSION_URL": 3,
+      "PASSED_DEADLINE": 1
+    }
+  }
+}
