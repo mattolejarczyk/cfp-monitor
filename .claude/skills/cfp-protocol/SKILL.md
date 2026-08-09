@@ -45,10 +45,45 @@ The instruction to read the runbook already existed. It did not fire because the
 as a small diagnostic question and grew. **Re-check the stage you are in when the task
 changes shape.**
 
+## The second failure: a rule whose premise expired
+
+On 2026-08-08 four defects were found in code that had been correct when written:
+
+- `clean_city` corrupted 23 of the 26 rows it "repaired" (Seattle -> Washington, Tokyo ->
+  Tokyo Big Sight), and since the canonical key derives from the city, 24 EVENT_IDs with it.
+  It was RIGHT in July, when grounding really did put venues in `CITY`. Upstream fixed their
+  side; nobody re-examined ours; a repair became a corruption. **Every test passed** - they
+  all asserted the function FIXES broken input, none that it LEAVES GOOD INPUT ALONE.
+- `make_handback.py` had its counts hard-coded in a header string, so every hand-back after
+  the first reported cycle one's numbers to upstream as current.
+- `recheck_dead_links.py --csv` checked `CFP_SUBMISSION_URL` but not `SUBMISSION URL`, so the
+  mode meant to catch dead links skipped the link the customer actually clicks.
+- A clear-before-import scoped by market membership deleted 4 rows silently, because
+  `conference_markets` still held the previous cycle's memberships.
+
+None was carelessness. **The shape to watch for is logic whose assumption stopped being true
+and nothing re-checked it.** Before trusting a transformation, ask what it assumes about its
+input and whether that is still so.
+
 ## Non-negotiables
 
 - **One gate.** `scripts/accept_delivery.py` decides whether a delivery is acceptable.
   Never build a second opinion. New contract checks go *into* it.
+- **A mutation needs a reconciliation.** After any import or migration, run
+  `scripts/check_invariants.py`. It is not a second gate: the gate judges a DELIVERY against
+  the contract, this judges the DATABASE against the delivery. A file can be perfectly
+  acceptable and still land in a database that lost four rows.
+- **Never clear rows before importing.** Import upserts. Import, then reconcile, then delete
+  only what you can positively identify as superseded. Anything with no counterpart and no
+  declared reason is KEPT and declared in `market_sheets/held_rows.txt` (contract 2.1).
+- **Never bless a golden-master diff without reading every line.** Changing anything that
+  derives a value (`clean_city`, `event_id`, `gated_status`, `confidence`) rewrites stored
+  data across every row. `tests/test_golden_derivation.py` and `scripts/snapshot_delivery.py`
+  turn that into a diff you approve or reject. Blessing a corruption makes it permanent.
+- **A reported number is derived, never written down.** If a count appears in a report, it is
+  computed at render time from the data it describes.
+- **Test that GOOD input survives, not only that bad input is fixed.** That inversion is the
+  cheap general defence, and its absence is why 26 corrupted cities passed a full suite.
 - **Only 404/410 disprove a link.** 403, 500, timeouts and empty bodies mean
   blocked-or-broken, never dead. Before acting on any "dead link", get the browser second
   opinion: `scripts/recheck_dead_links.py --db ...` or `--csv <delivery.csv>`.
@@ -91,6 +126,17 @@ requests and teaches nothing.
 | Upstream working area: audit script, market CSVs | a folder outside this repo |
 | Cross-party documents, manifests, agendas | `handoff-files`, beside the upstream area |
 | Long-term memory | the Obsidian vault - see its `MEMORY.md` |
+
+## What runs without anyone starting it
+
+| Job | When | Cost |
+|---|---|---|
+| CFP Weekly Verification | Sunday 01:00 | none - no LLM calls |
+| CFP Monthly Re-Research | 1st, 02:00 | ~400 grounded requests |
+
+Weekly re-checks what is loaded; only the monthly run DISCOVERS anything new. Before running
+an audit by hand, check whether the scheduled job already covers it - quota was exhausted
+once already.
 
 **Paths are machine-specific and deliberately not recorded here.** Read the local
 `CLAUDE.md` for the actual locations on this machine.

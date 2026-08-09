@@ -2,7 +2,13 @@
 
 **Audience:** whoever is operating the pipeline, including a session starting cold.
 **Read `pipeline-contract.md` first** — it says *why*. This says *how*.
-**Last executed:** 2026-08-01 (Consumer Electronics v4.3, Bioeconomy v4.3).
+**Last executed:** 2026-08-08 (all 8 markets, 406 rows, first full downstream verification).
+
+> **Schema is 38 columns, not the 35 the contract still says.** `FORMAT` was added as 36 and
+> `LIFECYCLE_EVIDENCE_URL` / `LIFECYCLE_QUOTE` as 37-38. `EXPECTED_COLS` in
+> `accept_delivery.py` is already 38. The contract text lags because it is a JOINT document
+> and amendments **v1.2 and v1.3 are still drafted-but-unsent** in `handoff-files`. Do not
+> edit the contract unilaterally to close the gap - send the amendments.
 
 ---
 
@@ -40,7 +46,7 @@ uv run --with pypdf python scripts/accept_delivery.py "/c/Users/matts/Downloads/
 Exits non-zero on failure, so it can gate an automated step. Add `--no-network` for a fast
 structural pass (skips the citation fetches, which take a few minutes).
 
-**Read check 1 first.** If rows do not parse to 35 fields, every later check is measuring
+**Read check 1 first.** If rows do not parse to 38 fields, every later check is measuring
 shifted columns and its output is meaningless.
 
 **Check 3 distinguishes two very different faults:**
@@ -73,9 +79,31 @@ cd "/c/Users/matts/AppData/Local/CFP-Monitor"
 cp cfp_monitor.db "cfp_monitor.backup-pre-<market>-$(date +%Y%m%d-%H%M%S).db"
 ```
 
-**If this market was loaded before, clear the superseded grounding rows first.** Upstream
-renames events between deliveries, so a re-import otherwise leaves the old rows behind as
-duplicates:
+### Do NOT clear before importing. Import first, reconcile after.
+
+**Superseded 2026-08-08 - the old instruction is kept below only so nobody reinvents it.**
+
+The old step deleted rows before importing. It does not do what it claims: it deletes rows
+whose `event_id` is in the NEW seed, but a renamed or re-keyed event has a DIFFERENT id, so
+the stale row survives anyway. Import is an upsert, so the deletion buys nothing.
+
+Worse, the obvious "improvement" - scoping the delete by market membership - actively
+destroys data. `conference_markets` holds the PREVIOUS cycle's memberships, so processing
+market 5 deletes rows that markets 1-4 just imported, and market 5's CSV has nothing to put
+back. That silently lost 4 rows on 2026-08-08 and nothing complained.
+
+**Do this instead:**
+
+1. Import every market (below). It upserts; nothing needs clearing.
+2. Reconcile: list DB rows that are not in any current seed.
+3. Classify each one. Same name present under a corrected key, or a rename declared in the
+   manifest, means superseded - delete it. **No counterpart and no declared reason means
+   KEEP it** (contract 2.1) and add it to `market_sheets/held_rows.txt` with the reason.
+4. Run `scripts/check_invariants.py`. It fails if a delivered row is missing or an extra row
+   is undeclared, which is the check that would have caught the 4 lost rows immediately.
+
+<details>
+<summary>The superseded pre-import delete (do not use)</summary>
 
 ```bash
 ./venv/Scripts/python.exe -c "
@@ -88,6 +116,8 @@ cur = s.db.execute('delete from grounding_facts where event_id in (%s)' % ','.jo
                    tuple(old))
 s.db.commit(); print('removed', cur.rowcount)"
 ```
+
+</details>
 
 Then import:
 
@@ -127,6 +157,25 @@ pages and takes several minutes for ~50 rows.
 
 **Expect `not_found` to dominate.** That is the contract working: unverifiable claims stand and
 are labelled `Unconfirmed`. A market where everything verifies would be the surprising result.
+
+---
+
+## 3b. Reconcile the database - do not skip this
+
+```bash
+./venv/Scripts/python.exe scripts/check_invariants.py --db cfp_monitor.db
+```
+
+Six invariants: every delivered row present, no undeclared extra rows, no venue or postcode
+in a canonical key, nothing left unverified, `event_id` unique, link results populated.
+Exits non-zero on any violation.
+
+**This asks a different question from the gate.** `accept_delivery.py` judges a DELIVERY
+against the contract; this judges the DATABASE against the delivery. A file can be perfectly
+acceptable and still be imported into a database that quietly lost four rows.
+
+Rows kept deliberately but absent from the delivery go in `market_sheets/held_rows.txt` with
+a reason. An undeclared extra row is a violation - that is the point of the file.
 
 ---
 
@@ -179,6 +228,11 @@ contained at least one problem introduced by a fix.
 
 | Symptom | Cause | Fix |
 |---|---|---|
+| Rows silently missing after a multi-market import | cleared by market membership; `conference_markets` held LAST cycle's memberships | never clear before import; `check_invariants.py` catches it |
+| A canonical key contains a venue or postcode | `clean_city` overrode a correct `CITY` (fixed 2026-08-08) | re-import, remove the old-key rows, `check_invariants.py` |
+| Two rows for one conference across cycles | its key changed, usually via the city | compare keys, not names; the golden master shows key churn as a diff |
+| A count in a report never changes | it was hard-coded in a string (`make_handback`, fixed 2026-08-08) | derive every reported number at render time |
+| Dead-link count lower than expected | reading `verify_state`, which only sees links layer 1 reached | use `link_checks`, populated by `weekly_verify.py` |
 | `Market` column holds dates; `OPPORTUNITY_TYPE` holds `PASSED_DEADLINE (…)` | unquoted comma split the row | `repair_delivery.py`; upstream must fix its writer |
 | `database is locked` | a verify sweep holds the DB | wait for it; do not open a second connection |
 | Streamlit shows no change | it runs the **live build**, not the dev repo | copy the file across |
@@ -227,7 +281,50 @@ cp cfp_monitor.db "cfp_monitor.backup-pre-M-$(date +%Y%m%d-%H%M%S).db"
 
 # 4  gate again with the loaded criteria
 ./venv/Scripts/python.exe scripts/accept_delivery.py ".../M.csv" --no-network --db cfp_monitor.db --market "<Canonical>"
+
+# 5  reconcile the DB against the delivery - catches rows lost during import
+./venv/Scripts/python.exe scripts/check_invariants.py --db cfp_monitor.db
 ```
+
+---
+
+## What runs on a schedule (nobody has to remember these)
+
+| Job | When | What it does | Cost |
+|---|---|---|---|
+| **CFP Weekly Verification** | Sunday 01:00 | `run_weekly.bat` -> `weekly_verify.py`: layers 0/1/2 across every market, browser recheck, invariants, digest of what CHANGED | none |
+| **CFP Monthly Re-Research** | 1st, 02:00 | `run_monthly.ps1` in the upstream area: archives the previous cycle, then a fresh grounded audit of all 8 markets | ~400 grounded requests |
+
+Weekly finds links that died and deadlines that moved. **Only the monthly run finds
+conferences we do not track**, which is why the split exists - weekly re-research would be
+~400 requests a week and that is what exhausted quota on 2026-08-04.
+
+Digest lands in `runs_out\weekly_verify_<stamp>.md`. Email only happens if `CFP_SMTP_*` and
+`CFP_ALERT_TO` are set; otherwise it is written to disk and nothing is lost.
+
+Both tasks have `StartWhenAvailable` and `AllowStartIfOnBatteries` set. Without those a
+01:00 job on a sleeping or unplugged machine silently never runs.
+
+---
+
+## Before you change anything that DERIVES a value
+
+`clean_city`, `event_id`, `gated_status`, `confidence`, `normalize_cfp_model` - a change here
+rewrites stored values across every row, and the suite will not necessarily notice. On
+2026-08-08 a tidy-up corrupted 26 cities and 24 canonical keys with all tests passing.
+
+```bash
+# 1. before the change - confirm the baseline is clean
+uv run python scripts/snapshot_delivery.py --delivery <upstream Markets dir> \
+    --exclude "test_,single_,_Conf_,backup" --snapshot <private repo>/derivation_snapshot.json
+
+# 2. make the change, then run it again. Non-zero means derivation moved.
+# 3. read EVERY line of the diff. Only then:
+uv run python tests/test_golden_derivation.py --bless   # synthetic fixture
+#    and re-run step 1 with --bless                     # real delivery
+```
+
+**Never bless without reading the diff.** Blessing a corruption is how it becomes permanent.
 
 Tests, before any commit:
 
