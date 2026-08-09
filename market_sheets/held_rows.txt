@@ -1,0 +1,15 @@
+# Rows kept in grounding_facts that are NOT in the current delivery.
+#
+# Contract 2.1: discovery is innocent until proven guilty. An event vanishing from a
+# delivery is not evidence it ceased to exist, so we label rather than delete. Every row
+# here is a DECISION - if it is not listed, check_invariants.py treats it as an accident.
+#
+# Format:  <event_id>  # <reason>
+
+2026-aes-convention-new-york  # Dropped from the 2026-08-07 delivery with no reason declared (breaches R7). Present in the previous delivery and in the audit input. Question sent to upstream 2026-08-08; held pending their answer.
+
+# NOTE ON LOCATION. The generated *_seed.csv files live only in the live build and are
+# disposable - they are rebuilt on every import. THIS file is different: it records a
+# decision, so it is version-controlled here and copied across to the live build with the
+# scripts. If the live build is ever rebuilt without it, check_invariants.py will correctly
+# report the held row as an undeclared extra.

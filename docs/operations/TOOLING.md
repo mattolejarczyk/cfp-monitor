@@ -22,6 +22,12 @@ Work on a market moves through three stages. Use the tool that belongs to the st
 | **Before** research | Is this input worth spending requests on? | `preflight_market.py` * |
 | **During** research | Is this market finished, and did anything get lost? | `validate_market_output.py` * |
 | **Before** shipping or loading | Does this delivery meet the contract? | **`scripts/accept_delivery.py`** |
+| **After** any import or migration | Does the DATABASE still hold what was delivered? | **`scripts/check_invariants.py`** |
+
+`accept_delivery.py` and `check_invariants.py` are not duplicates: the first judges a
+DELIVERY against the contract, the second judges the DATABASE against the delivery. A file
+can be perfectly acceptable and still be imported into a database that quietly lost four
+rows - which is exactly what happened on 2026-08-08.
 
 `*` lives in the **upstream working area**, a folder outside this repo. Its path is
 machine-specific - see the local `CLAUDE.md` rather than hard-coding it here.
@@ -39,6 +45,7 @@ not add a second opinion elsewhere.
 | `scripts/accept_delivery.py` | The full acceptance gate. Structure, citation resolution, quote-verbatim, prose-vs-projection, past deadlines, R2/R8/R11/R12, placeholders, series rows, deadline sanity, defunct events, stub declaration. | Exits non-zero on failure. `--no-network` skips the citation fetches. `--db`/`--market` add criteria 7-8. **Read check 1 first** - if rows do not parse, every later check is measuring shifted columns. |
 | `scripts/recheck_dead_links.py` | **Second opinion on links the fast pass called dead**, using a real browser. Distinguishes TRULY DEAD from BLOCKED-TO-SCRIPTS. | `--db` for loaded rows, `--csv <path>` for a delivery not yet imported. **A plain-HTTP 404 is never sufficient evidence to withdraw a citation.** Run this before believing any "dead link" finding. |
 | `scripts/verify_grounding.py` | Layers 0/1/2 verification: own-crawl cross-check, link check, live page fetch including PDFs. | One market at a time. `--market` takes UPSTREAM's spelling, via the seed CSV. |
+| `scripts/check_invariants.py` | **Database integrity after a mutation.** Every delivered row still present; no undeclared extra rows; no venue or postcode in a canonical key; nothing left unverified; event_id unique; link results populated. Exits non-zero on any violation. | Rows deliberately kept but absent from the delivery are declared in `market_sheets/held_rows.txt` - an undeclared extra is a violation, which is the point. Run by `weekly_verify.py`, and by hand after any import or migration. |
 | `scripts/weekly_verify.py` | **The weekly sweep.** Runs `verify_grounding.py` across every market, then the browser recheck, then diffs against the previous state and emails a digest of what CHANGED - dead submission links and newly contradicted deadlines. Markets are auto-discovered from `market_sheets/*_seed.csv`. | **No LLM calls, no API quota.** Discovery is the separate MONTHLY grounded audit. Entry point `scripts/run_weekly.bat`. |
 | `scripts/verify_report.py` | Human-readable verification summary. | |
 | `src/cfp_monitor/verify.py` | `link_status()`, `fetch_text()` - the cheap pass-1 primitives. | 403 = real-but-blocked, NOT dead. Only 404/410 disprove. |

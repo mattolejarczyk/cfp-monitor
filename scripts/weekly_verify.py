@@ -235,8 +235,24 @@ def main() -> int:
     print("\n--- submission links (all rows, independent of verify_state) ---")
     dead_links = check_all_submission_links(a.db, use_browser=not a.no_browser)
 
+    # Integrity BEFORE reporting. A digest computed over a database that lost rows is a
+    # confident answer to the wrong question, so violations lead the digest.
+    print("\n--- database invariants ---")
+    inv = subprocess.run([py, "scripts/check_invariants.py", "--db", a.db,
+                          "--seed-dir", a.seed_dir], cwd=str(cwd),
+                         capture_output=True, text=True)
+    print(inv.stdout.rstrip())
+    invariants_ok = inv.returncode == 0
+
     after = snapshot(a.db)
     digest, changed = build_digest(before, after, label, today, open_issues=len(dead_links))
+    if not invariants_ok:
+        head = ["> **DATABASE INVARIANTS VIOLATED - read this before trusting anything below.**",
+                "> The figures in this digest are computed over a database that failed its",
+                "> integrity checks.", "", "```", inv.stdout.strip(), "```", ""]
+        lines = digest.split("\n")
+        digest = "\n".join(lines[:2] + head + lines[2:])
+        changed += 1
     if dead_links:
         lines = [f"## Dead submission links ({len(dead_links)})",
                  "Browser-confirmed. A client clicking these reaches nothing.", ""]
@@ -251,6 +267,10 @@ def main() -> int:
     report = out / f"weekly_verify_{stamp}.md"
     report.write_text(digest, encoding="utf-8")
     print(f"wrote {report}")
+
+    if not invariants_ok:
+        print("\n*** INVARIANTS VIOLATED - see the digest. Do not act on these figures "
+              "until the database is reconciled. ***")
 
     if a.dry_run:
         print("dry run - no email sent")
