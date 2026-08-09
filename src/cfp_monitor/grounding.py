@@ -71,6 +71,25 @@ def clean_city(location: str, city: str = "", state: str = "", country: str = ""
     if _TBD_HINT.search(city or "") or _TBD_HINT.search(location or ""):
         if not (city and not _TBD_HINT.search(city)):
             return ""
+    # TRUST A DELIVERED CITY THAT DOES NOT LOOK LIKE A VENUE.  (added 2026-08-08)
+    #
+    # This function exists because grounding used to put the VENUE in CITY. Upstream fixed
+    # that; CITY is now reliable, and overriding it with a LOCATION parse made things worse
+    # on 23 of 26 rows in the 8-market delivery. Two ways it failed:
+    #
+    #   Seattle -> Washington   STATE_PROVINCE/COUNTRY are often blank, so there is nothing
+    #   Buffalo -> New York     to drop and "last fragment wins" lands on the state.
+    #   Rotterdam -> Netherlands
+    #
+    #   Tokyo -> Tokyo Big Sight   when CITY == STATE_PROVINCE (city-states and prefectures)
+    #   Berlin -> Hilton Berlin    pass 1 drops the state, which IS the city, leaving the
+    #   Singapore -> Marina Bay Sands   venue - and being truthy it short-circuits pass 2.
+    #
+    # Parsing LOCATION stays as the FALLBACK for when CITY is missing or is itself a venue.
+    # Contract 2.5: decline rather than guess. A delivered city we cannot fault beats a
+    # heuristic that silently substitutes a state, a country or a hotel.
+    if city and not _VENUE_HINT.search(city):
+        return city
     parts = [p.strip() for p in re.split(r"[,/]", location or "") if p.strip()]
     countries = {(country or "").strip().lower(), "usa", "us", "united states",
                  "uk", "united kingdom"}

@@ -46,6 +46,30 @@ def test_city_state_is_not_destroyed_by_dropping_the_state():
     assert clean_city("AsiaWorld-Expo, Hong Kong", "AsiaWorld-Expo", "Hong Kong", "Hong Kong") == "Hong Kong"
 
 
+def test_a_good_delivered_city_is_never_overridden():
+    """Regression, 2026-08-08: this function corrupted 23 of 26 rows it "repaired".
+
+    It was written when grounding put the VENUE in CITY, so it always preferred its own
+    LOCATION parse. Upstream fixed CITY, and the override started substituting states,
+    countries and hotels for correct city names. Two distinct failure modes, both here.
+    """
+    # 1. STATE_PROVINCE and COUNTRY blank -> nothing to drop, "last fragment wins" lands
+    #    on the state or the country.
+    assert clean_city("Seattle, Washington, USA", "Seattle", "", "") == "Seattle"
+    assert clean_city("Buffalo Convention Center, Buffalo, New York, USA",
+                      "Buffalo", "", "") == "Buffalo"
+    assert clean_city("Anaheim Convention Center, Anaheim, California, USA",
+                      "Anaheim", "", "") == "Anaheim"
+    assert clean_city("Postillion Hotel WTC Rotterdam, Rotterdam, Netherlands",
+                      "Rotterdam", "", "") == "Rotterdam"
+    # 2. CITY == STATE_PROVINCE -> pass 1 drops the state, which IS the city, leaving the
+    #    venue; being truthy it short-circuited the city-state fallback.
+    assert clean_city("Tokyo Big Sight, Tokyo, Japan", "Tokyo", "Tokyo", "Japan") == "Tokyo"
+    assert clean_city("Marina Bay Sands, Singapore", "Singapore",
+                      "Singapore", "Singapore") == "Singapore"
+    assert clean_city("Hilton Berlin, Berlin, Germany", "Berlin", "Berlin", "Germany") == "Berlin"
+
+
 def test_tbd_location_yields_no_city_never_invented():
     assert clean_city("USA (Location TBD), USA", "", "", "USA") == ""
     assert clean_city("Location TBD", "", "", "") == ""
