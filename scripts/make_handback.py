@@ -24,25 +24,60 @@ from src.cfp_monitor.storage import Store          # noqa: E402
 def main() -> int:
     ap = argparse.ArgumentParser(description="Build the upstream hand-back document.")
     ap.add_argument("--db", default="cfp_monitor.db")
-    ap.add_argument("--seed-csv", default="market_sheets/grounding_seed.csv")
+    ap.add_argument("--seed-csv", default="", help="one seed CSV; default is every *_seed.csv")
+    ap.add_argument("--seed-dir", default="market_sheets")
     ap.add_argument("--out", default="handback.md")
     a = ap.parse_args()
 
+    # Read EVERY per-market seed, not one combined file. Deliveries are now imported one
+    # market at a time, so the old single grounding_seed.csv is stale and left most rows
+    # showing an unknown market ("?") in the hand-back.
     market_of: dict[str, str] = {}
-    seed = Path(a.seed_csv)
-    if seed.exists():
-        with open(seed, newline="", encoding="utf-8") as fh:
+    seeds = [Path(a.seed_csv)] if a.seed_csv else []
+    if not seeds or not seeds[0].exists():
+        seeds = sorted(Path(a.seed_dir).glob("*_seed.csv"))
+    for seed in seeds:
+        if not seed.exists():
+            continue
+        with open(seed, newline="", encoding="utf-8-sig") as fh:
             for row in csv.DictReader(fh):
-                market_of.setdefault((row.get("EVENT_ID_CANON") or "").strip(),
-                                     (row.get("Market") or "").strip())
+                eid = (row.get("EVENT_ID_CANON") or "").strip()
+                mk = (row.get("Market") or "").strip()
+                if eid and mk:
+                    market_of.setdefault(eid, mk)
 
     store = Store(a.db)
     rows = [dict(r) for r in store.db.execute(
         "SELECT * FROM grounding_facts WHERE verify_state='contradicted' ORDER BY name")]
+    # Counts come from the DB. They used to be hard-coded in the header string, so every
+    # hand-back after the first reported the FIRST cycle's numbers to upstream.
+    tally = {s or "(blank)": n for s, n in store.db.execute(
+        "SELECT verify_state, count(*) FROM grounding_facts GROUP BY verify_state")}
+    n_total = sum(tally.values())
     crawled = {r["key"]: r for r in store.all_records()}
     store.close()
 
     dead = [r for r in rows if "404" in (r["verify_detail"] or "")]
+
+    # Prefer link_checks (weekly_verify checks EVERY submission link) over verify_state, which
+    # only sees links layer 1 happened to reach - it missed 8 of 45 because those rows resolved
+    # at layer 0 and never got as far as the link test.
+    store2 = Store(a.db)
+    try:
+        known_dead = {u for (u,) in store2.db.execute(
+            "select url from link_checks where state='dead'")}
+    except Exception:
+        known_dead = set()
+    if known_dead:
+        seen = {r["submission_url"] for r in dead}
+        extra = [dict(r) for r in store2.db.execute(
+            "select * from grounding_facts where submission_url in (%s)"
+            % ",".join("?" * len(known_dead)), tuple(known_dead))
+            if r["submission_url"] not in seen]
+        if extra:
+            print(f"  link_checks adds {len(extra)} dead link(s) verify_state did not see")
+        dead = sorted(dead + extra, key=lambda r: (r["name"] or ""))
+    store2.close()
     disputes = [r for r in rows if r not in dead]
 
     paths = Counter()
@@ -57,12 +92,13 @@ def main() -> int:
     w("# Verification findings for the conference discovery sweep")
     w("")
     w(f"_Generated {date.today().isoformat()} from an automated verification pass over "
-      f"all 379 claims in Conference_List_2026_2027_MASTER_v4.csv._")
+      f"all {n_total} claims currently loaded._")
     w("")
-    w("**Overall: 17 verified, 45 contradicted, 317 not-found.** Not-found means our checker "
+    w(f"**Overall: {tally.get('verified', 0)} verified, {tally.get('contradicted', 0)} "
+      f"contradicted, {tally.get('not_found', 0)} not-found.** Not-found means our checker "
       "could not read a deadline on the page; per our agreed precedence that is NOT a "
-      "disproof, so those values stand untouched. Only the 45 below need your attention, "
-      "and they split into two unrelated problems.")
+      f"disproof, so those values stand untouched. Only the {tally.get('contradicted', 0)} "
+      "below need your attention, and they split into two unrelated problems.")
     w("")
     w("| | Count | What it needs |")
     w("|---|--:|---|")

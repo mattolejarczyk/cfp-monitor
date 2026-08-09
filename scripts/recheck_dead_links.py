@@ -71,7 +71,11 @@ def recheck_csv(path: str) -> int:
     with open(path, encoding="utf-8-sig", newline="") as fh:
         rows = list(_csv.DictReader(fh))
 
-    columns = ["DEADLINE_EVIDENCE_URL", "VENUE_EVIDENCE_URL",
+    # "SUBMISSION URL" added 2026-08-08. It is the link the CUSTOMER clicks, and it is a
+    # distinct column from CFP_SUBMISSION_URL - 22 of 406 rows in the 8-market delivery had
+    # a SUBMISSION URL that appeared nowhere else, so the CSV mode was silently skipping the
+    # one link whose death the customer would actually notice.
+    columns = ["SUBMISSION URL", "DEADLINE_EVIDENCE_URL", "VENUE_EVIDENCE_URL",
                "CFP_SUBMISSION_URL", "MAIN_INFO_URL"]
     suspects: dict[str, list[str]] = {}
     seen: dict[str, int | None] = {}
