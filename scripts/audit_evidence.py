@@ -33,6 +33,7 @@ and only a `contradicted` verdict earned on the cited page may leave the buildin
 from __future__ import annotations
 
 import argparse
+import asyncio
 import re
 import sqlite3
 import sys
@@ -42,9 +43,54 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.cfp_monitor.config import Settings                       # noqa: E402
+from src.cfp_monitor.fetch import close_fallback_browser, fetch_page   # noqa: E402
+from src.cfp_monitor.trace import Tracer                          # noqa: E402
 from src.cfp_monitor.verify import (                              # noqa: E402
     _parse_date, fetch_text, find_date, other_deadline_dates, page_status,
 )
+
+
+async def escalate(urls: list[str]) -> dict[str, tuple[str, str]]:
+    """Second pass for pages plain HTTP could not read: {url: (text, rung)}.
+
+    The ladder is owned by fetch.py - crawl4ai, then a headed Playwright render, then a real
+    Chrome over CDP for hard anti-bot domains. It is NEVER re-implemented here (TOOLING.md),
+    and hard anti-bot sites are skipped rather than hammered, to protect the residential IP.
+
+    Run as a SECOND phase so the cheap path still handles the majority: on 2026-08-10, 3,238
+    of 4,021 claims resolved over plain HTTP in about 25 minutes. Only the remainder pays for
+    a browser.
+    """
+    from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
+
+    settings = Settings()
+    out: dict[str, tuple[str, str]] = {}
+    cfg = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, verbose=False,
+                           remove_consent_popups=settings.remove_consent_popups,
+                           remove_overlay_elements=settings.remove_overlay_elements,
+                           magic=settings.crawl_magic,
+                           page_timeout=settings.primary_page_timeout_s * 1000)
+    tracer = Tracer()
+    async with AsyncWebCrawler(config=BrowserConfig(headless=True, verbose=False)) as crawler:
+        for i, url in enumerate(urls, 1):
+            try:
+                pf = await asyncio.wait_for(
+                    fetch_page(crawler, url, cfg, settings, tracer),
+                    timeout=settings.per_site_timeout_s)
+            except Exception as exc:
+                print(f"  [{i}/{len(urls)}] {url[:58]} -> {type(exc).__name__}", flush=True)
+                continue
+            text = (pf.markdown or "") if pf.success else ""
+            if text:
+                out[url] = (text, pf.via)
+                print(f"  [{i}/{len(urls)}] {url[:58]} -> {pf.via} "
+                      f"({len(text)}c)", flush=True)
+            else:
+                print(f"  [{i}/{len(urls)}] {url[:58]} -> still unreadable "
+                      f"({pf.via})", flush=True)
+    await close_fallback_browser()
+    return out
 
 # A page that loads but says "not found" is not a source. amp.org/education/amp-annual-meeting
 # returned a soft 404 and its text was mined for a date, which then contradicted a correct
@@ -226,6 +272,10 @@ def main() -> int:
                     help="only pages cited by rows we currently dispute")
     ap.add_argument("--field", help="restrict to one field, e.g. deadline")
     ap.add_argument("--recheck", action="store_true", help="re-audit rows already checked")
+    ap.add_argument("--no-escalate", action="store_true",
+                    help="plain HTTP only; skip the browser phase")
+    ap.add_argument("--retry-unreadable", action="store_true",
+                    help="go straight to the browser for pages already known unreadable")
     a = ap.parse_args()
 
     con = sqlite3.connect(a.db)
@@ -240,7 +290,9 @@ def main() -> int:
     con.commit()
     where = ["1=1"]
     params: list = []
-    if not a.recheck:
+    if a.retry_unreadable:
+        where.append("verdict = 'unreadable'")
+    elif not a.recheck:
         where.append("verdict = 'unchecked'")
     if a.field:
         where.append("field = ?"); params.append(a.field)
@@ -264,6 +316,11 @@ def main() -> int:
     print("one visit per page; the ladder is climbed on failure\n")
 
     tally: dict[str, int] = defaultdict(int)
+    # --retry-unreadable skips the cheap pass entirely: these pages already failed it once,
+    # so re-fetching them over plain HTTP only spends time to learn the same thing.
+    failed: list[str] = list(urls) if a.retry_unreadable else []
+    if a.retry_unreadable:
+        urls = []
     now = datetime.now().isoformat(timespec="seconds")
     for i, url in enumerate(urls, 1):
         claims = by_url[url]
@@ -271,9 +328,7 @@ def main() -> int:
         ok, why = readable(text)
         method = "http"
         if not ok:
-            # TODO(ladder): escalate to Playwright then CDP here. Until that lands, an
-            # unreadable page is recorded as unreadable - which is the honest verdict and
-            # leaves every claim standing, rather than guessing from another page.
+            failed.append(url)
             for c in claims:
                 con.execute("""update evidence set verdict='unreadable', detail=?, method=?,
                                fetched_at=?, found_quote=null where id=?""",
@@ -300,8 +355,37 @@ def main() -> int:
         con.commit()
     con.commit()
 
+    # ---- phase 2: climb the ladder for what plain HTTP could not read --------------------
+    # Cheapest first: the plain sweep above resolved 3,238 of 4,021 claims in ~25 minutes on
+    # 2026-08-10. Only the remainder pays for a browser.
+    if failed and not a.no_escalate:
+        print(f"\n--- escalating {len(failed)} unreadable page(s) through the ladder ---")
+        rescued = asyncio.run(escalate(failed))
+        for url, (text, via) in rescued.items():
+            ok2, _ = readable(text)
+            if not ok2:
+                continue
+            for c in by_url[url]:
+                verdict, detail, found = check(c["field"], c["value_claimed"], text)
+                exp, block = exportable(verdict, found, url, names.get(c["event_id"], ""))
+                con.execute("""update evidence set verdict=?, detail=?, found_quote=?,
+                               method=?, fetched_at=?, call_type=?, exportable=?,
+                               export_block=? where id=?""",
+                            (verdict, detail, found or None, via, now,
+                             call_label(found) or None, exp, block or None, c["id"]))
+                tally["unreadable"] -= 1
+                tally[verdict] += 1
+                tally["rescued"] += 1
+        con.commit()
+        print(f"\n  {tally.get('rescued', 0)} claim(s) recovered by the browser")
+
     print("\n--- verdicts ---")
+    # Clamp: phase 2 decrements `unreadable` as it rescues pages, and in --retry-unreadable
+    # mode that counter starts at zero, so it can go negative. A negative count in a report
+    # reads as a bug even when the underlying data is right.
     for k in ("verified", "contradicted", "no_quote", "unreadable"):
+        if tally.get(k, 0) < 0:
+            tally[k] = 0
         if tally.get(k):
             print(f"  {k:<14} {tally[k]}")
     print("\nOnly `contradicted` is a finding. `unreadable` and `no_quote` leave the claim")
