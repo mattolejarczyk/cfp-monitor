@@ -3,7 +3,7 @@
     python scripts/make_handback.py --db cfp_monitor.db --out handback.md
 
 Two clearly separated sections, because the two problems need different treatment:
-  A. Dead submission links  -> a PROMPT fix (systemic); the rows are evidence, not work items.
+  A. Links that no longer resolve -> a PROMPT fix, plus the replacements we located.
   B. Deadline disputes      -> a targeted DEFEND-OR-CORRECT re-check of those rows only.
 """
 from __future__ import annotations
@@ -27,6 +27,8 @@ def main() -> int:
     ap.add_argument("--seed-csv", default="", help="one seed CSV; default is every *_seed.csv")
     ap.add_argument("--seed-dir", default="market_sheets")
     ap.add_argument("--out", default="handback.md")
+    ap.add_argument("--replacements", help="CSV from find_replacement_links.py - "
+                    "turns Section A from a complaint list into a correction list")
     a = ap.parse_args()
 
     # Read EVERY per-market seed, not one combined file. Deliveries are now imported one
@@ -87,6 +89,18 @@ def main() -> int:
             paths[p] += 1
     invented = [(p, n) for p, n in paths.most_common() if n > 1]
 
+    # Built from the replacement CSV when one is supplied, so every number here is DERIVED.
+    # The previous version stated counts in prose that were typed once and never recomputed.
+    repl = {}
+    if a.replacements and Path(a.replacements).exists():
+        with open(a.replacements, encoding="utf-8-sig", newline="") as fh:
+            repl = {r["CONFERENCE"]: r for r in csv.DictReader(fh)}
+
+    n_conf = sum(1 for r in repl.values() if r.get("VERDICT") == "CONFIDENT")
+    n_rev = sum(1 for r in repl.values() if r.get("VERDICT") == "REVIEW")
+    states = Counter(r.get("CFP STATE") or "Undetermined" for r in repl.values())
+    n_open = states.get("Call open", 0)
+
     L = []
     w = L.append
     w("# Verification findings for the conference discovery sweep")
@@ -102,35 +116,69 @@ def main() -> int:
     w("")
     w("| | Count | What it needs |")
     w("|---|--:|---|")
-    w(f"| A. Dead submission links | {len(dead)} | A prompt rule. Rows are evidence, not work items. |")
+    w(f"| A. Links that no longer resolve | {len(dead)} | A prompt rule, plus {n_conf} corrections we found for you. |")
     w(f"| B. Deadline disputes | {len(disputes)} | Targeted re-check: defend or correct. |")
     w("")
     w("---")
     w("")
 
     # ---------------- Section A ----------------
-    w(f"## Section A - {len(dead)} submission URLs that do not exist")
+
+    w(f"## Section A - {len(dead)} submission links that no longer resolve")
     w("")
-    w("Every one of these was checked twice: first with a plain HTTP request, then again "
-      "with a **real headless browser** (judging on page content as well as status code, so "
-      "soft 404s that return 200 with a \"page not found\" body are caught). "
-      f"**{len(dead)} of {len(dead)} confirmed genuinely dead - zero false positives.** "
-      "These are not sites blocking us; the pages are not there.")
+    w("Each was checked twice: a plain HTTP request, then a **real browser** judging page "
+      "content as well as status code, so a soft 404 returning 200 with a \"page not found\" "
+      f"body is still caught. **{len(dead)} of {len(dead)} confirmed unreachable, zero false "
+      "positives** - these are not sites blocking us.")
     w("")
-    if invented:
-        w("### The pattern: constructed paths, not retrieved URLs")
+    w("**An unreachable link is not a broken conference.** Those are separate facts and we "
+      "report them separately:")
+    w("")
+    w("| | |")
+    w("|---|--:|")
+    w(f"| Links that no longer resolve | {len(dead)} |")
+    if repl:
+        w(f"| ...for which we found the **current page** | **{n_conf}** |")
+        w(f"| ...candidates we are unsure about, not sent | {n_rev} |")
+        w(f"| ...no live page found | {len(dead) - n_conf - n_rev} |")
+    w("")
+    if repl:
+        w("And what the CALL is doing, which is the part that matters to the customer. This is "
+          "a claim, so each row in the attached CSV carries the sentence it was read from and "
+          "the page it was read on:")
         w("")
-        w("The same invented path appears across unrelated domains, which is the signature of "
-          "a URL being assembled rather than retrieved:")
+        w("| Call state | Rows |")
+        w("|---|--:|")
+        for st, n in states.most_common():
+            w(f"| {st} | {n} |")
         w("")
-        w("| Path appended | Times | Example domains |")
-        w("|---|--:|---|")
-        for p, n in invented:
-            ex = [re.sub(r"^https?://(www\.)?", "", r["submission_url"] or "").split("/")[0]
-                  for r in dead
-                  if re.sub(r"^https?://[^/]+", "", r["submission_url"] or "").rstrip("/").lower() == p]
-            w(f"| `{p}` | {n} | {', '.join(ex[:3])} |")
+        if n_open:
+            w(f"**{n_open} of these calls are open right now.** The opportunity is live and only "
+              "the URL is stale, so these are moved pages rather than ended calls - which is why "
+              "we went and looked for where they moved to.")
+            w("")
+        w(f"### {n_conf} replacements we are confident in")
         w("")
+        w("Attached: `replacement_links_20260809.csv`. Every URL below was retrieved and "
+          "verified, and each states how to submit - we discarded candidates that were "
+          "homepages, speaker listings or a different call at the same event, because offering "
+          "those would waste your time.")
+        w("")
+        w("| Conference | Was | Now |")
+        w("|---|---|---|")
+        for r in sorted(repl.values(), key=lambda x: x["CONFERENCE"]):
+            if r.get("VERDICT") != "CONFIDENT":
+                continue
+            was = (r.get("UNREACHABLE URL") or r.get("DEAD URL") or "")
+            w(f"| {r['CONFERENCE'][:44]} | `{was[:58]}` | `{r['PROPOSED URL'][:58]}` |")
+        w("")
+        w("**Take these as corrections, or defend the originals** - the usual three answers "
+          "apply. We have not written them into anything; `SUBMISSION URL` is yours.")
+        w("")
+        if n_rev:
+            w(f"The {n_rev} we are unsure about are in the CSV marked `REVIEW`. We are not "
+              "asking you to act on those - they are there so you can see what we saw.")
+            w("")
     w("### What we need from the next sweep")
     w("")
     w("> Never output a URL you have not actually retrieved. Do not build a submission URL by "
@@ -138,13 +186,13 @@ def main() -> int:
       "`/apply-to-speak`) to a domain. If you cannot retrieve a specific, working submission "
       "URL, leave `SUBMISSION_URL` blank and set `CFP MODEL TYPE = Not Announced`.")
     w("")
-    w("**A blank is more useful to us than a plausible dead link.** We can crawl to find the "
+    w("**A blank is more useful to us than a plausible URL that does not resolve.** We can crawl to find the "
       "real one; we cannot tell a fabricated URL from a real one without fetching it, and a "
-      "client who clicks a dead link loses trust in the whole list.")
+      "client who clicks through to nothing loses trust in the whole list.")
     w("")
-    w("### The confirmed-dead links")
+    w("### Every link that no longer resolves")
     w("")
-    w("| Conference | Market | Dead submission URL |")
+    w("| Conference | Market | Unreachable URL |")
     w("|---|---|---|")
     for r in dead:
         w("| {} | {} | `{}` |".format(
