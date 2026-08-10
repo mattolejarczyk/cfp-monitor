@@ -1,38 +1,44 @@
-"""Find the CURRENT submission page for conferences whose link has died.
+"""Find the CURRENT submission page for conferences whose link no longer resolves.
 
-A dead submission link almost never means a dead conference. Organisers retire or move the
-call-for-papers page between editions, so the event is healthy and only the URL we hold is
-stale. On 2026-08-09, 45 of 256 links (18%) were in that state.
+An unreachable submission link almost never means an unreachable conference. Organisers
+retire or move the call-for-papers page between editions, so the event is healthy and only
+the URL we hold is stale. On 2026-08-09 that was 45 of 256 links (18%).
 
-Reporting them is not the same as fixing them. This closes the loop: for each dead link,
-explore the conference's own site and propose the live page that replaces it.
+THREE FACTS, KEPT SEPARATE
+Conflating them is how "45 dead links" came to sound like 45 broken conferences.
+
+    LINK STATE   Live | Unreachable                     - an OBSERVATION
+    OUTCOME      Replacement found | Candidate needs review | No live page found
+    CFP STATE    Call open | Call closed | Announced, not yet open |
+                 No speaking opportunity offered | Undetermined   - a CLAIM, with evidence
+
+The CFP state is the one that matters to a customer and it is a claim like any other, so it
+carries the sentence it was read from and the page it was read on. "The call has closed and
+the page was retired" is a useful answer; "the link is dead" is not.
 
 WHAT IT REUSES
     pipeline.run_urls      the FULL analysis - score-driven exploration, LLM extraction,
-                           evidence-backed consolidation. Returns submission_url as a Fact
-                           carrying the page it was read on.
-    verify.link_status     to confirm the proposal actually resolves
+                           evidence-backed consolidation.
+    consolidate._BASIS_PHRASE   the project's own evidence wording, so the customer sees the
+                           phrasing the evidence layer produced, not a second vocabulary.
+    verify.link_status     to confirm a proposal actually resolves
 
 WHY NOT A CHEAPER KEYWORD PASS (tried on 2026-08-09, abandoned)
 The first version skipped the LLM and ranked links by keyword score alone, to spend nothing.
 It proposed `terrapinn.com/about-us`, a news article, and - after tightening - two individual
 SPEAKER PROFILE pages and a speaker lineup. Zero useful results in six.
 
-The reason is not a tuning problem. Keyword scoring cannot distinguish "the page where you
-submit" from "a page about speakers"; that is a semantic judgement, and it is exactly why the
-pipeline has an extraction and consolidation step. Skipping it rebuilt a weaker copy of a tool
-that already existed, which is the specific failure `docs/operations/TOOLING.md` exists to
-prevent.
+Not a tuning problem. Keyword scoring cannot distinguish "the page where you submit" from "a
+page about speakers"; that is a semantic judgement, and it is exactly why the pipeline has an
+extraction step. Skipping it rebuilt a weaker copy of an existing tool - the failure
+`docs/operations/TOOLING.md` exists to prevent.
 
 COST. Uses the OpenRouter/deepseek key, NOT the Gemini key - it cannot touch the grounded
-research quota. Roughly a few LLM calls per site at deepseek prices: cents for all 45. Time
-is the real cost, at up to `per_site_timeout_s` per conference.
+research quota. Cents for all 45. Time is the real cost, up to `per_site_timeout_s` per site.
 
 WHAT IT DOES NOT DO
-Writes nothing back. `SUBMISSION URL` is upstream's field (contract section 3), so the
-output is a CORRECTION offered through the normal defend-or-correct loop - it turns a
-hand-back that says "45 links are broken" into one that says "and here are the replacements
-we found". Attach the CSV to the hand-back.
+Writes nothing back. `SUBMISSION URL` is upstream's field (contract section 3), so the output
+is a CORRECTION offered through the defend-or-correct loop. Attach the CSV to the hand-back.
 
     python scripts/find_replacement_links.py --db cfp_monitor.db --out replacements.csv
     python scripts/find_replacement_links.py --db cfp_monitor.db --limit 5   # try a few first
@@ -50,6 +56,7 @@ from urllib.parse import urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.cfp_monitor.config import Settings                      # noqa: E402
+from src.cfp_monitor.consolidate import _BASIS_PHRASE            # noqa: E402
 from src.cfp_monitor.pipeline import run_urls                    # noqa: E402
 from src.cfp_monitor.fetch import close_fallback_browser         # noqa: E402
 from src.cfp_monitor.scoring import normalize_url                # noqa: E402
@@ -73,6 +80,39 @@ SUBMIT_SIGNAL = ("submit", "call-for", "call_for", "callforpapers", "cfp", "appl
 FORM_HOSTS = ("hsforms.com", "jotform.com", "wufoo.com", "docs.google.com/forms",
               "mirasmart.com", "papercept.net", "sessionize.com", "pretalx.com",
               "easychair.org", "oxfordabstracts.com", "cvent.com")
+
+
+# What the CALL is doing, separate from whether our URL resolves. Conflating the two is how
+# "45 dead links" came to imply 45 broken conferences. An unreachable URL is an OBSERVATION;
+# why it is unreachable is a CLAIM, and a claim needs evidence like any other (contract 2.1).
+#
+# Mapped from the pipeline's own status_basis, so the wording the customer sees is the wording
+# the evidence layer produced - not a second vocabulary invented here.
+CFP_STATE = {
+    "explicit_closed": "Call closed",
+    "explicit_open": "Call open",
+    "explicit_upcoming": "Announced, not yet open",
+    "no_opportunity_found": "No speaking opportunity offered",
+    "inferred_from_live_submission_form": "Call open",
+    "opportunity_signals_no_live_form": "Call page exists, no live form",
+    "insufficient_evidence": "Undetermined",
+    "deadline_after_event_conflict": "Undetermined - page mixes editions",
+    "inferred_open_but_deadline_past": "Undetermined - page looks stale",
+}
+
+
+def cfp_state(res) -> tuple[str, str, str]:
+    """(state, evidence sentence, page it was read on) - our claim about the CALL."""
+    basis = getattr(res, "status_basis", "") or ""
+    state = CFP_STATE.get(basis, "Undetermined")
+    why = _BASIS_PHRASE.get(basis, basis or "no basis recorded")
+    url = ""
+    for e in (getattr(res, "evidence", None) or []):
+        if getattr(e, "field", "") in ("cfp_status", "submission_url", "cfp_close_date"):
+            url = getattr(e, "source_url", "") or ""
+            if url:
+                break
+    return state, why, url
 
 
 def classify(proposed: str) -> tuple[str, str]:
@@ -130,38 +170,50 @@ async def hunt(rows: list[dict], settings: Settings) -> list[dict]:
         name, dead = row["name"], row["submission_url"]
         start_url = start_url_for(row)
         print(f"[{i}/{len(rows)}] {name[:46]}", flush=True)
-        print(f"        dead: {dead[:78]}", flush=True)
-        rec = {"CONFERENCE": name, "EVENT_ID": row["event_id"], "DEAD URL": dead,
-               "START URL": start_url, "PROPOSED URL": "", "VERDICT": "",
-               "WHY": "", "FOUND VIA": "", "HTTP": "", "NOTE": ""}
+        print(f"        unreachable: {dead[:71]}", flush=True)
+        rec = {"CONFERENCE": name, "EVENT_ID": row["event_id"], "UNREACHABLE URL": dead,
+               "START URL": start_url, "LINK STATE": "Unreachable",
+               "OUTCOME": "", "PROPOSED URL": "", "VERDICT": "", "WHY": "",
+               "CFP STATE": "", "EVIDENCE": "", "EVIDENCE URL": "",
+               "FOUND VIA": "", "HTTP": "", "NOTE": ""}
         try:
             res = (await run_urls([start_url], settings))[0]
         except Exception as exc:
             rec["NOTE"] = f"pipeline failed: {type(exc).__name__}: {exc}"[:150]
             results.append(rec); print(f"        -> {rec['NOTE'][:70]}", flush=True); continue
 
+        st, why_ev, ev_url = cfp_state(res)
+        rec["CFP STATE"], rec["EVIDENCE"], rec["EVIDENCE URL"] = st, why_ev, ev_url
+
         found = (res.submission_url.value or "").strip() if res.submission_url else ""
         if not found:
-            rec["NOTE"] = "pipeline found no submission page on the site"
+            rec["OUTCOME"] = "No live page found"
             results.append(rec); print("        -> nothing found", flush=True); continue
         if normalize_url(found) == normalize_url(dead):
-            rec["NOTE"] = "pipeline returned the same dead URL"
+            rec["OUTCOME"] = "No live page found"; rec["NOTE"] = "only the same unreachable URL"
             results.append(rec); print("        -> same dead url", flush=True); continue
 
         # Verify the proposal before offering it. Proposing a second dead link would be
         # worse than proposing nothing.
+        # Only 404/410 disprove a link (contract 5.2) - the SAME rule we apply to citations.
+        # A first version rejected anything >= 400 and silently dropped four good proposals on
+        # a transient 500 and a 405 (Method Not Allowed on HEAD, i.e. the page exists and just
+        # refuses that verb). All four returned 200 minutes later.
         code, _ = link_status(found)
         rec["HTTP"] = code or ""
-        if not code or code >= 400:
-            rec["NOTE"] = f"candidate did not resolve (HTTP {code})"
+        if code in (404, 410):
+            rec["NOTE"] = f"candidate does not exist (HTTP {code})"
             results.append(rec); print(f"        -> candidate dead ({code})", flush=True); continue
 
         verdict, why = classify(found)
         rec["VERDICT"], rec["WHY"] = verdict, why
         if verdict == "REJECT":
-            rec["NOTE"] = f"rejected: {why}"
+            rec["OUTCOME"] = "No live page found"
+            rec["NOTE"] = f"candidate rejected: {why}"
             rec["PROPOSED URL"] = ""
             results.append(rec); print(f"        -> rejected ({why})", flush=True); continue
+        rec["OUTCOME"] = ("Replacement found" if verdict == "CONFIDENT"
+                          else "Candidate needs review")
         rec["PROPOSED URL"] = found
         ev = ""
         for e in (res.evidence or []):
@@ -185,7 +237,7 @@ def main() -> int:
 
     rows = dead_rows(a.db, a.limit)
     if not rows:
-        print("No dead links recorded. Has weekly_verify.py run?")
+        print("No unreachable links recorded. Has weekly_verify.py run?")
         return 0
 
     settings = Settings()
