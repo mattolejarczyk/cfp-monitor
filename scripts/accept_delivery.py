@@ -14,6 +14,7 @@ import argparse
 import csv
 import json
 import re
+from urllib.parse import urlparse
 import sys
 from datetime import date
 from pathlib import Path
@@ -280,6 +281,44 @@ class Gate:
                       for r in self.rows
                       if self.g(r, "FORMAT") and self.g(r, "FORMAT") not in VALID_FORMATS]
         self.add("R12", "FORMAT is In-Person, Virtual, Hybrid or blank", bad_format)
+
+        # R3b - a citation must be the page carrying the sentence, not the site's front door.
+        #
+        # Measured 2026-08-10: DEADLINE_EVIDENCE_URL was identical to MAIN_INFO_URL on 42% of
+        # cited rows. Those are placeholders - the field filled to be non-empty rather than to
+        # record where a deadline was read. CFP deadlines are rarely on a homepage, so such a
+        # citation can never confirm anything: we fetch it, the sentence is not there, and a
+        # CORRECT deadline is labelled unverified forever.
+        #
+        # This is in the GATE rather than left to the prompt on purpose. The same ask was
+        # already sent as a prompt rule for submission URLs ("never output a URL you have not
+        # retrieved") and 45 unreachable links arrived anyway. A request is not a control.
+        #
+        # Only fires when a deadline is actually CLAIMED - a blank deadline needs no citation,
+        # and an honest blank is always acceptable (2.6).
+        placeholder_cite = []
+        for r in self.rows:
+            if not self.g(r, "SUBMISSION DEADLINE"):
+                continue
+            ev, main = self.g(r, "DEADLINE_EVIDENCE_URL"), self.g(r, "MAIN_INFO_URL")
+            if not ev:
+                continue
+            if ev.rstrip("/").lower() == main.rstrip("/").lower():
+                placeholder_cite.append(
+                    f'{self.g(r, "CONFERENCE")[:38]}: evidence URL is the main URL - {ev[:52]}')
+            elif urlparse(ev).path.rstrip("/") in ("", "/"):
+                placeholder_cite.append(
+                    f'{self.g(r, "CONFERENCE")[:38]}: evidence URL is a bare homepage - {ev[:52]}')
+        # ADVISORY, not a rejection - deliberately. The acceptance gate is a TWO-SIDED
+        # instrument (section 8 divides its criteria between upstream's and ours), so adding a
+        # criterion that fails every delivery would judge their work against a standard they
+        # have never agreed to. Same reason the 35-vs-38 column gap is flagged here rather than
+        # patched into the contract unilaterally.
+        #
+        # Promote to self.add() - a hard FAIL - once amendment v1.4 is agreed. Until then this
+        # reports on every run so nobody can claim they were not told.
+        self.note("R3b", "Claimed deadline cites the homepage, not the page carrying it "
+                         "(advisory pending amendment v1.4)", placeholder_cite)
 
         # An ungrounded stub is shippable but must be declared, never silent.
         # R16 - a lifecycle claim is the most consequential finding the research
