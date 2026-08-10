@@ -34,6 +34,10 @@ def main() -> int:
     # Read EVERY per-market seed, not one combined file. Deliveries are now imported one
     # market at a time, so the old single grounding_seed.csv is stale and left most rows
     # showing an unknown market ("?") in the hand-back.
+    # An event can serve several markets - the canonical key deliberately excludes market so
+    # one event stays one record (contract section 10). Show ALL of them; setdefault kept
+    # whichever seed file sorted first, which labelled RSNA "AdditiveMfg" and nothing else.
+    markets_of: dict[str, set] = {}
     market_of: dict[str, str] = {}
     seeds = [Path(a.seed_csv)] if a.seed_csv else []
     if not seeds or not seeds[0].exists():
@@ -46,7 +50,8 @@ def main() -> int:
                 eid = (row.get("EVENT_ID_CANON") or "").strip()
                 mk = (row.get("Market") or "").strip()
                 if eid and mk:
-                    market_of.setdefault(eid, mk)
+                    markets_of.setdefault(eid, set()).add(mk)
+    market_of = {e: ", ".join(sorted(v)) for e, v in markets_of.items()}
 
     store = Store(a.db)
     rows = [dict(r) for r in store.db.execute(
@@ -80,7 +85,31 @@ def main() -> int:
             print(f"  link_checks adds {len(extra)} dead link(s) verify_state did not see")
         dead = sorted(dead + extra, key=lambda r: (r["name"] or ""))
     store2.close()
-    disputes = [r for r in rows if r not in dead]
+    store3 = Store(a.db)
+    # Section B comes from the OUTBOUND GATE, not from verify_state. A row is a dispute only
+    # if a contradiction was earned on its own cited page, carries the sentence, names which
+    # call the date belongs to, and - on a shared submission platform - names the event.
+    # Judged by verify_state alone this document carried 24 disputes on 2026-08-09, of which a
+    # customer's two-row spot check found two wrong; a full re-audit put the false-positive
+    # rate near 90%.
+    ev_ok: dict[str, dict] = {}
+    try:
+        for e in store3.db.execute("""select event_id, source_url, found_quote, detail, call_type
+                                      from evidence
+                                      where verdict='contradicted' and exportable=1"""):
+            ev_ok.setdefault(e[0], {"url": e[1], "quote": e[2], "detail": e[3], "call": e[4]})
+    except Exception:
+        ev_ok = {}
+    if ev_ok:
+        disputes = [r for r in rows if r not in dead and r["event_id"] in ev_ok]
+        blocked = len([r for r in rows if r not in dead]) - len(disputes)
+        print(f"  outbound gate: {len(disputes)} dispute(s) exportable, {blocked} withheld")
+    else:
+        disputes = [r for r in rows if r not in dead]
+        print("  WARNING: no audited evidence found - falling back to verify_state. "
+              "Run scripts/audit_evidence.py before sending this.")
+
+    store3.close()
 
     paths = Counter()
     for r in dead:
@@ -238,13 +267,18 @@ def main() -> int:
       "tells us which deadline we should have been reading.")
     w("")
     for i, r in enumerate(disputes, 1):
-        ours = crawled.get(r["conference_key"], {})
+        e = ev_ok.get(r["event_id"], {})
         w(f"**{i}. {r['name']}**  ({market_of.get(r['event_id'], '?')})")
         w("")
         w(f"- Your claim: **{r['deadline'] or '(none)'}**")
-        w(f"- Our evidence: {(r['verify_detail'] or '').split('  <-')[0]}")
-        if ours.get("url"):
-            w(f"- Page we read: {ours.get('url')}")
+        w(f"- What we found: {e.get('detail') or ''}")
+        if e.get("quote"):
+            w(f"- The sentence, verbatim: \"{e['quote'].strip()}\"")
+        if e.get("call"):
+            w(f"- Which call it refers to: {e['call']}")
+        # The page ACTUALLY read. This used to print our crawl record's START url, which for
+        # AMP was a 404 - we told upstream we read a page that does not exist.
+        w(f"- Read on: {e.get('url') or '(unrecorded)'}")
         w(f"- Your cited source: {r['deadline_evidence_url'] or r['url'] or '(none)'}")
         w("")
 
