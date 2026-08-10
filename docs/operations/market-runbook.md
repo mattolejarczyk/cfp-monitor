@@ -12,6 +12,85 @@
 
 ---
 
+## The map, before the commands
+
+Two principles govern every method choice below. **Cheapest first, escalate only on failure.**
+And **only positive evidence disproves** - silence, a timeout or a block is never a "no".
+
+| # | Step | What it answers | Method |
+|---|---|---|---|
+| 1 | **Preflight** | Worth spending requests on? | local analysis + cheap HTTP |
+| 2 | **Research** | What conferences and calls exist? | grounding: LLM + Google Search |
+| 3 | **Validate** | Did the run lose anything? | output vs input, by name |
+| 4 | **Gate** | Does the file meet the contract? | structure + citation fetches |
+| 5 | **Import** | Load as unverified discovery | normalise, derive the key |
+| 6 | **Verify** | Do the claims survive live pages? | L0 own crawl, L1 link, L2 cited page |
+| 7 | **Second opinion** | Is an unreachable link really gone? | real browser, then CDP |
+| 8 | **Reconcile** | Does the DB still match the delivery? | six invariants |
+| 9 | **Remediate** | Where did the page move to? | full pipeline: crawl + extract |
+| 10 | **Classify** | Is this candidate offerable? | contract rules |
+| 11 | **Audit** | **Can we prove it to someone who disagrees?** | re-read every cited page |
+| 12 | **Hand back** | What must upstream fix? | defend-or-correct |
+| 13 | **Publish** | What the customer sees | derived at display time |
+| 14 | **Watch / Rediscover** | What changed? What is new? | weekly / monthly, scheduled |
+
+**Step 11 is new (2026-08-10) and it exists because every other step validates INPUTS.**
+Nothing asked whether what we were about to SAY was true. A hand-back went out for review
+carrying 24 deadline disputes; a customer spot-checked two by hand and both were wrong. A full
+re-audit put 22 of the 24 in the same bucket. See "The outbound standard" below.
+
+The method escalation, which recurs at steps 6, 7, 9 and 11:
+
+```
+grounding -> crawl4ai (headless) -> Playwright (headed) -> real Chrome via CDP -> manual -> unresolved
+```
+
+Each rung is slower and more capable. `unresolved` is a recorded outcome, never a disproof.
+
+---
+
+## The outbound standard - what may leave the building
+
+We require upstream to cite the exact page carrying a sentence and to quote it. **Until
+2026-08-10 we did not hold ourselves to the same rule**, and disputed their claims using our
+own cached crawls - 15 of 24 disputes were decided by L0/L0s, which fetch nothing at all. One
+rested on a record that said "closed" while holding a close date six months in the future.
+Another named a page we had never opened; it is a soft 404.
+
+A finding may be sent to another party only when **all five** hold:
+
+1. **We fetched the CITED page** - not a fallback, not our cache
+2. **Through the ladder, until it loaded** - escalate rather than substitute a different page
+3. **The page is real content** - soft-404 detection; "page not found" is not a source
+4. **We can quote the sentence and name the URL** - no quote, no dispute
+5. **The finding is internally consistent** - a closed call cannot have a future deadline
+
+Two further rules, both earned the same day:
+
+- **The quote must say WHICH call it refers to** (R10). One event runs abstracts, full papers,
+  case studies, posters and workshops with different deadlines. `"July 6, 2026"` settles
+  nothing; `"Case study deadline: July 6, 2026"` settles it and names the call.
+- **A shared submission platform cannot source an event-specific claim** unless the quote
+  names the event. `ras.papercept.net` hosts many IEEE conferences on one page - we read
+  TMECH/AIM's deadline and attributed it to IROS.
+
+Anything failing the standard is not discarded; it becomes **unverified**, which is honest and
+costs upstream nothing. A verdict says what the page said; **exportable** says whether we may
+put it in front of someone. Conflating those two is how 24 disputes were assembled from what
+were, mostly, regex hits.
+
+```bash
+# step 11, before generating anything that leaves
+./venv/Scripts/python.exe scripts/build_evidence.py --db cfp_monitor.db --delivery <markets dir>
+./venv/Scripts/python.exe scripts/audit_evidence.py --db cfp_monitor.db
+./venv/Scripts/python.exe scripts/make_handback.py --db cfp_monitor.db --replacements <csv> --out <md>
+```
+
+`make_handback.py` reads the gate. If no audited evidence exists it says so loudly and falls
+back to `verify_state` - which is the unsafe path, and the warning is the point.
+
+---
+
 ## 0. Where things live
 
 | | |

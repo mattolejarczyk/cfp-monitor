@@ -69,6 +69,13 @@ input and whether that is still so.
 
 - **One gate.** `scripts/accept_delivery.py` decides whether a delivery is acceptable.
   Never build a second opinion. New contract checks go *into* it.
+- **Hold ourselves to the standard we set for upstream.** We require them to cite the exact
+  page and quote the sentence. On 2026-08-08 we disputed 24 of their deadlines using our own
+  cached crawls - 15 were decided by L0/L0s, which fetch nothing - and a customer found the
+  first two wrong by hand. Before ANY finding goes to another party it must clear
+  `scripts/audit_evidence.py`: fetched from the cited page, through the ladder, real content,
+  quotable, internally consistent, and naming which call the date belongs to (R10).
+- **No quote, no dispute.** A rival value we cannot quote is a regex hit, not evidence.
 - **A mutation needs a reconciliation.** After any import or migration, run
   `scripts/check_invariants.py`. It is not a second gate: the gate judges a DELIVERY against
   the contract, this judges the DATABASE against the delivery. A file can be perfectly
