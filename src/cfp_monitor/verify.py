@@ -46,7 +46,13 @@ def date_variants(d: date) -> list[str]:
     "3/15/26". Matching the DATE TOKEN rather than a whole quoted sentence is what makes
     verification robust to HTML whitespace, cookie banners and re-worded copy.
     """
-    mon, abbr = _MONTHS[d.month - 1], _MONTHS[d.month - 1][:3]
+    mon = _MONTHS[d.month - 1]
+    # Every abbreviation a page might use, not just the three-letter one. September is the
+    # trap: "Sept." is at least as common as "Sep", and %b gives only "Sep" - so a page reading
+    # "Case Study Submission Closes: Friday, Sept. 4, 2026" did not match a claim of 2026-09-04
+    # and the row was recorded unverified. Measured 2026-08-11 while extracting citations.
+    abbrs = {mon[:3]}
+    abbrs |= {"sept"} if d.month == 9 else set()
     out = set()
     # Both bare and zero-padded day numbers. Omitting the padded form caused a real false
     # contradiction: a page reading "December 04, 2026" did not match a claim of 12/4/2026,
@@ -54,7 +60,11 @@ def date_variants(d: date) -> list[str]:
     for day in {str(d.day), f"{d.day:02d}"}:
         out |= {
             f"{mon} {day}, {d.year}", f"{mon} {day} {d.year}", f"{day} {mon} {d.year}",
-            f"{abbr} {day}, {d.year}", f"{abbr} {day} {d.year}", f"{day} {abbr} {d.year}",
+            *[f"{a} {day}, {d.year}" for a in abbrs],
+            *[f"{a} {day} {d.year}" for a in abbrs],
+            *[f"{day} {a} {d.year}" for a in abbrs],
+            *[f"{a}. {day}, {d.year}" for a in abbrs],
+            *[f"{a}. {day} {d.year}" for a in abbrs],
             f"{d.month}/{day}/{d.year}", f"{day}/{d.month}/{d.year}",
             f"{d.month}/{day}/{str(d.year)[2:]}",
         }
