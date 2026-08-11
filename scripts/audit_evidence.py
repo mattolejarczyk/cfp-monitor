@@ -276,6 +276,10 @@ def main() -> int:
                     help="plain HTTP only; skip the browser phase")
     ap.add_argument("--retry-unreadable", action="store_true",
                     help="go straight to the browser for pages already known unreadable")
+    ap.add_argument("--retry", metavar="VERDICT",
+                    help="go straight to the browser for pages with this verdict, e.g. no_quote")
+    ap.add_argument("--only-method", metavar="M",
+                    help="restrict to pages last fetched this way, e.g. http")
     a = ap.parse_args()
 
     con = sqlite3.connect(a.db)
@@ -290,8 +294,15 @@ def main() -> int:
     con.commit()
     where = ["1=1"]
     params: list = []
-    if a.retry_unreadable:
-        where.append("verdict = 'unreadable'")
+    # --retry sends a chosen verdict straight to the browser. `no_quote` matters as much as
+    # `unreadable`: a page that LOADS over plain HTTP but renders its dates in JavaScript looks
+    # identical to a page that simply does not carry the date. The first escalation only
+    # retried failures, so those were never re-read - measured 2 of 6 rescued once they were.
+    retry_verdict = a.retry or ("unreadable" if a.retry_unreadable else None)
+    if retry_verdict:
+        where.append("verdict = ?"); params.append(retry_verdict)
+        if a.only_method:
+            where.append("method = ?"); params.append(a.only_method)
     elif not a.recheck:
         where.append("verdict = 'unchecked'")
     if a.field:
@@ -318,8 +329,8 @@ def main() -> int:
     tally: dict[str, int] = defaultdict(int)
     # --retry-unreadable skips the cheap pass entirely: these pages already failed it once,
     # so re-fetching them over plain HTTP only spends time to learn the same thing.
-    failed: list[str] = list(urls) if a.retry_unreadable else []
-    if a.retry_unreadable:
+    failed: list[str] = list(urls) if retry_verdict else []
+    if retry_verdict:
         urls = []
     now = datetime.now().isoformat(timespec="seconds")
     for i, url in enumerate(urls, 1):

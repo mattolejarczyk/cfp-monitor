@@ -2,7 +2,7 @@
 
 **Audience:** whoever is operating the pipeline, including a session starting cold.
 **Read `pipeline-contract.md` first** — it says *why*. This says *how*.
-**Last executed:** 2026-08-08 (all 8 markets, 406 rows, first full downstream verification).
+**Last executed:** 2026-08-11 (all 8 markets; 4,021 claims audited against their own cited pages).
 
 > **Schema is 38 columns, not the 35 the contract still says.** `FORMAT` was added as 36 and
 > `LIFECYCLE_EVIDENCE_URL` / `LIFECYCLE_QUOTE` as 37-38. `EXPECTED_COLS` in
@@ -371,7 +371,7 @@ cp cfp_monitor.db "cfp_monitor.backup-pre-M-$(date +%Y%m%d-%H%M%S).db"
 
 | Job | When | What it does | Cost |
 |---|---|---|---|
-| **CFP Weekly Verification** | Sunday 01:00 | `run_weekly.bat` -> `weekly_verify.py`: layers 0/1/2 across every market, browser recheck, invariants, digest of what CHANGED | none |
+| **CFP Weekly Verification** | Sunday 01:00 | `run_weekly.bat` -> `weekly_verify.py`: layers 0/1/2 across every market, browser recheck, invariants, digest of what CHANGED. Starts CDP Chrome first. | none |
 | **CFP Monthly Re-Research** | 1st, 02:00 | `run_monthly.ps1` in the upstream area: archives the previous cycle, then a fresh grounded audit of all 8 markets | ~400 grounded requests |
 
 Weekly finds links that died and deadlines that moved. **Only the monthly run finds
@@ -383,6 +383,31 @@ Digest lands in `runs_out\weekly_verify_<stamp>.md`. Email only happens if `CFP_
 
 Both tasks have `StartWhenAvailable` and `AllowStartIfOnBatteries` set. Without those a
 01:00 job on a sleeping or unplugged machine silently never runs.
+
+---
+
+## Reading a page: which rung, and why it matters
+
+Measured across 4,021 claims on 2026-08-10/11:
+
+| Rung | Pages read | When it earns its place |
+|---|---|---|
+| plain HTTP | 1,063 | the cheap default; resolves most claims in seconds |
+| crawl4ai | 2,163 | JS-rendered content plain HTTP returns without |
+| playwright-fallback | 742 | headless gets 403'd; a headed render gets through |
+| cdp | 53 | hard anti-bot sites, via a REAL Chrome on 9222 |
+
+**A page that LOADS is not a page that was READ.** The first escalation only retried pages
+that failed outright, so 1,145 pages that returned HTTP 200 without their date were never
+re-read. Escalating those recovered 2,313 claims. If a claimed value is absent, escalate
+before concluding it is not there.
+
+**Without CDP running, hard anti-bot sites are SKIPPED, not failed.** That is deliberate -
+hammering them from a residential IP gets it flagged. It also means an unattended run without
+Chrome silently under-reports. `run_weekly.bat` now starts one.
+
+**Sample rates do not extrapolate.** A 6-page pilot rescued 2 (33%); across 1,145 pages the
+verified yield was 11%. Use a pilot to prove a method works, never to forecast a number.
 
 ---
 
