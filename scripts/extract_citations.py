@@ -374,20 +374,27 @@ async def llm_pick_sentence(text: str, deadline: str, conference: str,
         return "", "", "wrong-purpose"
 
     d = _parse_date(deadline or "")
-    if d:
-        pairs = month_day_pairs(sentence)
-        if (d.month, d.day) in pairs:
-            pass                       # agrees, whether or not the year is in the sentence
-        elif pairs:
+    if not d:
+        # NO TARGET, NO CITATION. Every check below compares the sentence against this date, so
+        # a deadline we cannot read turns all of them into no-ops and the first plausible
+        # sentence on the page becomes evidence. Found 2026-08-11: upstream sent
+        # SUBMISSION DEADLINE = "The Call for Speakers for All-Energy show floor theatres is
+        # now closed." - prose in a date column - and "Our keynote stage returns for a fifth
+        # year." was accepted as its citation. A guard that only works on well-formed input is
+        # not a guard.
+        return "", "", "unparseable-target"
+
+    pairs = month_day_pairs(sentence)
+    if (d.month, d.day) not in pairs:
+        if pairs:
             # A DIFFERENT date for the thing we asked about: a CONTRADICTION, not an absence,
             # and the most valuable thing this pipeline finds. The sentence comes back so it
             # can be reported; callers gate on status, so it can never become a citation.
             return sentence, "", "no-date"
-        else:
-            # No date at all. RSNA's "all abstracts must be submitted online by the posted
-            # deadlines" is true, verbatim, and settles nothing. Silence, not disagreement -
-            # calling it a contradiction would manufacture a finding out of a vague sentence.
-            return "", "", "undated"
+        # No date at all. RSNA's "all abstracts must be submitted online by the posted
+        # deadlines" is true, verbatim, and settles nothing. Silence, not disagreement -
+        # calling it a contradiction would manufacture a finding out of a vague sentence.
+        return "", "", "undated"
     return sentence, verify_call_label(text, sentence, call) or _ae.call_label(sentence), "ok"
 
 

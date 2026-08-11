@@ -461,3 +461,37 @@ def test_two_calls_at_one_event_are_kept_apart(monkeypatch):
     assert status == "ok"
     assert "2 October" in q
     assert call
+
+
+# --- a deadline we cannot read must not disable the checks below it ---------------------------
+
+BAD_TARGETS = [
+    "The Call for Speakers for All-Energy show floor theatres is now closed.",  # real, 2026-08-11
+    "TBD", "Not Announced", "rolling", "", "   ", "see website",
+]
+
+
+@pytest.mark.parametrize("target", BAD_TARGETS)
+def test_an_unreadable_deadline_yields_no_citation(monkeypatch, target):
+    """Upstream put prose in the date column. Every check below compares the sentence against
+    that date, so it silently became a no-op and an unrelated sentence was accepted as
+    evidence. A guard that only works on well-formed input is not a guard."""
+    page = ("All-Energy Australia 2026. The exhibition floor features 200 companies. "
+            "Our keynote stage returns for a fifth year.")
+    q, _c, status = pick(monkeypatch,
+                         {"sentence": "Our keynote stage returns for a fifth year."},
+                         page=page, deadline=target)
+    assert status == "unparseable-target"
+    assert q == ""
+
+
+def test_the_hole_this_closes_was_real(monkeypatch):
+    """Pins the exact observed failure: verbatim sentence, on the page, nothing to do with any
+    deadline, accepted because the target date could not be parsed."""
+    page = "All-Energy. Our keynote stage returns for a fifth year."
+    _q, _c, status = pick(
+        monkeypatch, {"sentence": "Our keynote stage returns for a fifth year.",
+                      "call": "keynote"},
+        page=page,
+        deadline="The Call for Speakers for All-Energy show floor theatres is now closed.")
+    assert status != "ok", "an unparseable deadline must never produce a citation"
