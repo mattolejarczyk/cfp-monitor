@@ -15,6 +15,7 @@ prize; if it is small, link-following is not worth building.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import csv
 import re
 import sys
@@ -41,15 +42,15 @@ _A = re.compile(r"<a\b[^>]*href\s*=\s*[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", re.I 
 _TAGS = re.compile(r"<[^>]+>")
 
 
-def links_on(url: str) -> list[tuple[str, str]]:
-    """(anchor text, absolute href) for every link on the page, or [] if it cannot be read."""
+def links_plain(url: str) -> list[tuple[str, str]]:
+    """(anchor text, absolute href) over plain HTTP, or [] if the page cannot be read."""
     try:
         req = urllib.request.Request(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
             "Accept": "text/html,application/xhtml+xml"})
         with urllib.request.urlopen(req, timeout=20, context=_ctx()) as resp:
             html = resp.read(900_000).decode("utf-8", "ignore")
-    except (urllib.error.HTTPError, Exception):
+    except Exception:
         return []
     out = []
     for m in _A.finditer(html):
@@ -59,11 +60,54 @@ def links_on(url: str) -> list[tuple[str, str]]:
     return out
 
 
+async def links_browser(urls: list[str]) -> dict[str, list[tuple[str, str]]]:
+    """Same, through the ladder. The rung that can actually see a JS-built menu.
+
+    The plain-HTTP probe measured 4 of 46, and was blind to exactly the pages that blocked us
+    in the first place - a JS-only site serves an empty shell to urllib, menu included. So the
+    first number was a floor, not an answer.
+
+    Uses the fetch layer directly rather than audit_evidence.escalate, because escalate returns
+    TEXT and the whole question here is about hrefs. PageFetch already carries `.links` as
+    classified {href, text} pairs; nothing new has to be parsed.
+    """
+    from crawl4ai import AsyncWebCrawler, BrowserConfig, CacheMode, CrawlerRunConfig
+
+    from src.cfp_monitor.config import Settings
+    from src.cfp_monitor.fetch import fetch_page
+    from src.cfp_monitor.trace import Tracer
+
+    settings = Settings()
+    cfg = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, verbose=False,
+                           remove_consent_popups=settings.remove_consent_popups,
+                           remove_overlay_elements=settings.remove_overlay_elements,
+                           magic=settings.crawl_magic,
+                           page_timeout=settings.primary_page_timeout_s * 1000)
+    tracer = Tracer()
+    out: dict[str, list[tuple[str, str]]] = {}
+    async with AsyncWebCrawler(config=BrowserConfig(headless=True, verbose=False)) as crawler:
+        for i, url in enumerate(urls, 1):
+            try:
+                pf = await asyncio.wait_for(fetch_page(crawler, url, cfg, settings, tracer),
+                                            timeout=settings.per_site_timeout_s)
+            except Exception as exc:
+                print(f"  [{i}/{len(urls)}] {url[:56]} -> {type(exc).__name__}", flush=True)
+                continue
+            found = [(a.get("text", ""), a.get("href", ""))
+                     for a in pf.links.get("internal", []) if a.get("href")]
+            out[url] = found
+            print(f"  [{i}/{len(urls)}] {url[:56]} -> {pf.via} ({len(found)} internal)",
+                  flush=True)
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Size the menu-link opportunity. Writes nothing.")
     ap.add_argument("-i", "--input", required=True)
     ap.add_argument("-c", "--candidates", required=True)
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--plain", action="store_true",
+                    help="plain HTTP only - blind to JS-built menus, reports a floor")
     a = ap.parse_args()
 
     with open(a.input, encoding="utf-8-sig", newline="") as fh:
@@ -82,12 +126,26 @@ def main() -> int:
         targets = targets[:a.limit]
 
     print(f"{len(targets)} still-blank row(s) with a page to look at\n")
-    hits, rows_with = [], 0
+    every = [u for _, urls in targets for u in urls]
+    if a.plain:
+        pages = {u: links_plain(u) for u in every}
+    else:
+        print(f"--- reading {len(every)} page(s) through the ladder ---")
+        pages = asyncio.run(links_browser(every))
+        # Union with plain HTTP. A static site hands urllib every anchor, while a render can
+        # drop links hidden behind a collapsed menu - neither rung dominates the other.
+        for u in every:
+            pages[u] = sorted({(t, h) for t, h in pages.get(u, [])} | set(links_plain(u)))
+        print()
+
+    hits, rows_with, seen_any = [], 0, 0
     for conf, urls in targets:
         tried = {u.rstrip("/") for u in urls}
         found: list[tuple[str, str]] = []
+        if any(pages.get(u) for u in urls):
+            seen_any += 1
         for u in urls:
-            for label, href in links_on(u):
+            for label, href in pages.get(u, []):
                 if not WANTED.search(label):
                     continue
                 # Only count links we are NOT already trying, and stay on the event's own site.
@@ -102,7 +160,9 @@ def main() -> int:
             hits.append((conf, found[:3]))
 
     print(f"{rows_with} of {len(targets)} blank rows advertise a submission link "
-          f"we are not following\n")
+          f"we are not following")
+    print(f"({seen_any} of {len(targets)} rows yielded ANY links at all - the rest could not "
+          f"be read, so they count neither for nor against)\n")
     for conf, found in hits:
         print(f"  {conf[:52]}")
         for label, href in found:

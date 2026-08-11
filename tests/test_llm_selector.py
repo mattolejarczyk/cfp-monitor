@@ -399,3 +399,38 @@ def test_a_notification_date_is_wrong_purpose_not_a_contradiction(monkeypatch):
 ])
 def test_month_day_pairs(text, want):
     assert ec.month_day_pairs(text) == want
+
+
+# --- date renderings seen in the wild -----------------------------------------------------
+# Three separate false contradictions came from formats the matcher did not know: a missing
+# year, a hyphenated US date, and a European day-first date. Every one was exact agreement
+# reported as disagreement. This table is the standing answer - add a row when the next
+# rendering turns up rather than patching the regex and moving on.
+
+@pytest.mark.parametrize("rendering,pair,source", [
+    ("Closes: May 8th",                          (5, 8),   "BSidesLV"),
+    ("Podium Abstract Submissions Due: Monday, September 14", (9, 14), "SLAS"),
+    ("February 11 Technical Paper Abstracts Due", (2, 11),  "CAMX"),
+    ("Deadline October 19th.",                   (10, 19), "JEC World"),
+    ("Case Study Submission Closes: Sept. 4, 2026", (9, 4), "AMP"),
+    ("Opens 6-1-2026 (closes 9-28-2026)",        (9, 28),  "Pittcon, hyphenated"),
+    ("Abstract Submission: 28.9.2026 (firm deadline)", (9, 28), "embedded world, day-first"),
+    ("Submissions close on 2026-08-28 19:59",    (8, 28),  "electronica, ISO"),
+    ("The deadline for paper submission is July 27th, 2026", (7, 27), "Humanoids"),
+    ("Deadline: 1 July 2026",                    (7, 1),   "CCUS, day-first words"),
+])
+def test_real_world_date_renderings(rendering, pair, source):
+    assert pair in ec.month_day_pairs(rendering), f"{source}: {rendering!r}"
+
+
+def test_an_unambiguous_day_first_date_is_not_read_as_a_month():
+    """28.9.2026 cannot mean the 28th month. Reading it as one turned agreement into a
+    contradiction on embedded world."""
+    assert ec.month_day_pairs("28.9.2026") == {(9, 28)}
+
+
+def test_an_ambiguous_numeric_date_is_read_both_ways():
+    """5/8/2026 is 8 May or 5 August depending on the writer. Accepting both loses a
+    contradiction we might have reported; rejecting one invents a contradiction we should
+    not. Those costs are not symmetric."""
+    assert ec.month_day_pairs("5/8/2026") == {(5, 8), (8, 5)}

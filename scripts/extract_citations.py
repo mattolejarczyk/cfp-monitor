@@ -157,9 +157,22 @@ def month_day_pairs(text: str) -> set[tuple[int, int]]:
         out.add((_MON[m.group(2)], int(m.group(1))))
     for m in re.finditer(r"\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b", t):
         out.add((int(m.group(2)), int(m.group(3))))
-    # 9-28-2026 as well as 9/28/2026 - the hyphen form cost us Pittcon.
+    # 9-28-2026 and 9/28/2026 - the hyphen form cost us Pittcon. Also 28.9.2026, which is how
+    # most of the world outside the US writes it: embedded world's page says "Abstract
+    # Submission: 28.9.2026" for a date upstream gives as 2026-09-28, and reading 28 as the
+    # month turned exact agreement into a reported contradiction.
     for m in re.finditer(r"\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})\b", t):
-        out.add((int(m.group(1)), int(m.group(2))))
+        a, b = int(m.group(1)), int(m.group(2))
+        if a > 12:                       # 28.9 - only day-first can be meant
+            out.add((b, a))
+        elif b > 12:                     # 9/28 - only month-first can be meant
+            out.add((a, b))
+        else:
+            # 5/8 is genuinely ambiguous and no amount of staring resolves it. Accept BOTH
+            # readings: the cost is a contradiction we fail to report, against a false one we
+            # send to upstream. Those are not equally bad.
+            out.add((a, b))
+            out.add((b, a))
     return out
 
 
