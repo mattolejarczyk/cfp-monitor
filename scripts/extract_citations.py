@@ -70,7 +70,7 @@ _spec.loader.exec_module(_ae)          # escalate / call_label / readable
 
 from src.cfp_monitor.config import Settings                        # noqa: E402
 from src.cfp_monitor.verify import (                                # noqa: E402
-    _parse_date, fetch_text, find_date, is_homepage,
+    _parse_date, fetch_text, find_date, is_homepage, other_deadline_dates,
 )
 
 SETTINGS = Settings()
@@ -126,6 +126,41 @@ def deep_first(cands: list[str]) -> list[str]:
     Trying every deep candidate before any homepage costs nothing and removes the coin flip.
     """
     return [u for u in cands if not is_homepage(u)] + [u for u in cands if is_homepage(u)]
+
+
+_MON = {"jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
+        "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6, "jul": 7, "july": 7,
+        "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9, "oct": 10, "october": 10,
+        "nov": 11, "november": 11, "dec": 12, "december": 12}
+_MON_RE = "|".join(sorted(_MON, key=len, reverse=True))
+_ORD = r"(?:st|nd|rd|th)?"
+
+
+def month_day_pairs(text: str) -> set[tuple[int, int]]:
+    """Every (month, day) the text mentions, YEAR IGNORED.
+
+    Conference pages write "Closes: May 8th" and "Podium Abstract Submissions Due: Monday,
+    September 14". A human reads the year off the page around it; our date matching demanded
+    the year be in the same sentence, so seven pages that AGREED with upstream were recorded as
+    disagreeing. That is the "Sept." blind spot again one level up - a matcher that only knows
+    the renderings its author happened to think of.
+
+    Ignoring the year is safe HERE because the row is already scoped to one edition: the risk
+    is a page listing last year's date in the same words, which the plausibility window in
+    other_deadline_dates exists to catch downstream.
+    """
+    out: set[tuple[int, int]] = set()
+    t = text.lower()
+    for m in re.finditer(rf"\b({_MON_RE})\.?\s+(\d{{1,2}}){_ORD}\b", t):
+        out.add((_MON[m.group(1)], int(m.group(2))))
+    for m in re.finditer(rf"\b(\d{{1,2}}){_ORD}\s+({_MON_RE})\b", t):
+        out.add((_MON[m.group(2)], int(m.group(1))))
+    for m in re.finditer(r"\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b", t):
+        out.add((int(m.group(2)), int(m.group(3))))
+    # 9-28-2026 as well as 9/28/2026 - the hyphen form cost us Pittcon.
+    for m in re.finditer(r"\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})\b", t):
+        out.add((int(m.group(1)), int(m.group(2))))
+    return out
 
 
 _LABEL_STOP = {"the", "for", "and", "call", "deadline", "submission", "submissions"}
@@ -308,13 +343,29 @@ async def llm_pick_sentence(text: str, deadline: str, conference: str,
     if found is None:
         return "", "", "not-on-page"
     sentence = found
-    d = _parse_date(deadline or "")
-    if d and not find_date(sentence, d):
-        return "", "", "no-date"
+    # PURPOSE BEFORE DATE. NAMM's page says "you will be notified ... by October 30, 2026" - a
+    # real date about a different fact. Testing the date first labelled that a contradiction
+    # with the submission deadline when it is not about submitting at all.
     if _WRONG_PURPOSE.search(sentence):
         # Belt and braces on rule 2. The model is asked to refuse these; if it does not, the
         # regex still catches the ones we can name.
         return "", "", "wrong-purpose"
+
+    d = _parse_date(deadline or "")
+    if d:
+        pairs = month_day_pairs(sentence)
+        if (d.month, d.day) in pairs:
+            pass                       # agrees, whether or not the year is in the sentence
+        elif pairs:
+            # A DIFFERENT date for the thing we asked about: a CONTRADICTION, not an absence,
+            # and the most valuable thing this pipeline finds. The sentence comes back so it
+            # can be reported; callers gate on status, so it can never become a citation.
+            return sentence, "", "no-date"
+        else:
+            # No date at all. RSNA's "all abstracts must be submitted online by the posted
+            # deadlines" is true, verbatim, and settles nothing. Silence, not disagreement -
+            # calling it a contradiction would manufacture a finding out of a vague sentence.
+            return "", "", "undated"
     return sentence, verify_call_label(text, sentence, call) or _ae.call_label(sentence), "ok"
 
 
@@ -365,6 +416,7 @@ async def fill_row(rec: dict, cands: list[str], pages: dict[str, str],
                    use_llm: bool, stats: dict) -> None:
     """Take the first candidate page that yields a usable quote, and record how we got it."""
     tried = 0
+    contra: tuple[str, str] | None = None      # (url, sentence stating a different date)
     for u in deep_first(cands):
         text = pages.get(u)
         if not text:
@@ -376,8 +428,15 @@ async def fill_row(rec: dict, cands: list[str], pages: dict[str, str],
             quote, call, status = await llm_pick_sentence(
                 text, rec["SUBMISSION DEADLINE"], rec["CONFERENCE"], SETTINGS)
             stats[status] = stats.get(status, 0) + 1
-            if quote:
+            # GATE ON STATUS, NOT ON TRUTHINESS. no-date now returns its sentence so the
+            # contradiction can be reported, and `if quote:` would have promoted a sentence
+            # carrying the WRONG date into a citation.
+            if status == "ok" and quote:
                 how = "llm"
+            else:
+                if status == "no-date" and quote and contra is None:
+                    contra = (u, quote)
+                quote, call = "", ""
         # Fall back ONLY when the model did not answer. A considered blank is a result: it
         # means the date is on the page for something other than submitting, which is exactly
         # the judgement we brought it in to make. Re-running the heuristic there would
@@ -397,7 +456,16 @@ async def fill_row(rec: dict, cands: list[str], pages: dict[str, str],
                 # a deeper citation we already hold.
                 rec["NOTE"] = "homepage - no deeper candidate carried the date"
             return
-    if tried:
+    if contra:
+        # Deliberately leaves the citation fields BLANK. A sentence that disagrees with the
+        # claimed date is evidence the date is wrong, not evidence for a new one - taking it as
+        # a citation would silently move a customer-facing deadline on a model's say-so.
+        # It goes back to upstream as a question (contract 2.5: decline rather than guess).
+        url, sentence = contra
+        others = other_deadline_dates(sentence) or ["unclear"]
+        rec["NOTE"] = (f"CONTRADICTION - page states {', '.join(others[:2])}, "
+                       f"not {rec['SUBMISSION DEADLINE']}: \"{sentence[:180]}\" <- {url}")
+    elif tried:
         rec["NOTE"] = ("no sentence on the candidate pages states that submission deadline"
                        if use_llm else "none of the candidate pages state that date")
     else:
@@ -474,7 +542,8 @@ def main() -> int:
         # Worth printing every time. "not-on-page" is the count of sentences a model composed
         # rather than copied - the number that has to stay at zero in what we ship, and the
         # only direct measure we have of whether the substring check is earning its place.
-        order = ["ok", "blank", "wrong-purpose", "not-on-page", "no-date", "unavailable"]
+        order = ["ok", "blank", "undated", "wrong-purpose", "no-date", "not-on-page",
+                 "unavailable"]
         line = "  ".join(f"{k}={stats[k]}" for k in order if k in stats)
         print(f"  model calls: {line}\n")
     for r in out:

@@ -78,9 +78,11 @@ def test_rejects_the_right_date_for_the_wrong_fact(monkeypatch):
     assert q == ""
 
 
-def test_rejects_a_real_sentence_carrying_the_wrong_date(monkeypatch):
+def test_rejects_a_real_sentence_carrying_no_date_at_all(monkeypatch):
+    """A heading is not evidence. It carries no date, so it is silence - distinct from a
+    sentence that names a DIFFERENT date, which is a contradiction worth reporting."""
     q, _c, status = pick(monkeypatch, {"sentence": "CCUS 2026 Abstract Submission."})
-    assert status == "no-date"
+    assert status == "undated"
     assert q == ""
 
 
@@ -284,3 +286,116 @@ def test_landing_pages_count_as_homepages_however_they_are_spelled(url):
 ])
 def test_real_deep_links_are_not_mistaken_for_homepages(url):
     assert ec.is_homepage(url) is False
+
+
+# --- a contradiction is a finding, not a blank -----------------------------------------------
+
+CONTRA_PAGE = ("Call for Abstracts. Abstract submission closes on 15 August 2026. "
+               "Notification of acceptance follows in September.")
+
+
+def test_a_different_date_comes_back_as_a_contradiction(monkeypatch):
+    """The model finds the submission sentence, it is genuinely on the page, and it disagrees
+    with the date upstream claims. That is the finding the audit exists to produce."""
+    _stub(monkeypatch, {"sentence": "Abstract submission closes on 15 August 2026."})
+    rec, stats = _row(), {}
+    asyncio.run(ec.fill_row(rec, ["http://x"], {"http://x": CONTRA_PAGE}, True, stats))
+    assert stats["no-date"] == 1
+    assert "CONTRADICTION" in rec["NOTE"]
+    assert "15 august 2026" in rec["NOTE"].lower()
+
+
+def test_a_contradiction_never_becomes_a_citation(monkeypatch):
+    """The dangerous failure: promoting a wrong-dated sentence into evidence. The citation
+    fields must stay blank so the merge guard keeps what we hold and nothing moves."""
+    _stub(monkeypatch, {"sentence": "Abstract submission closes on 15 August 2026."})
+    rec, stats = _row(), {}
+    asyncio.run(ec.fill_row(rec, ["http://x"], {"http://x": CONTRA_PAGE}, True, stats))
+    assert rec["DEADLINE_EVIDENCE_URL"] == ""
+    assert rec["DEADLINE_QUOTE"] == ""
+    assert rec["IS_PROJECTED"] == "true"
+
+
+def test_a_real_citation_still_wins_over_a_contradiction_on_another_page(monkeypatch):
+    """Two candidates: one disagrees, one confirms. The confirming page must be used."""
+    calls = []
+
+    async def acompletion(**kwargs):
+        calls.append(1)
+        body = kwargs["messages"][1]["content"]
+        sent = ("Abstract submission closes on 15 August 2026."
+                if "closes on 15 August" in body else "Submission deadline: 1 July 2026.")
+        msg = types.SimpleNamespace(content=json.dumps({"sentence": sent}))
+        return types.SimpleNamespace(choices=[types.SimpleNamespace(message=msg)])
+
+    monkeypatch.setitem(sys.modules, "litellm", types.SimpleNamespace(acompletion=acompletion))
+    rec, stats = _row(), {}
+    asyncio.run(ec.fill_row(rec, ["http://e.org/bad", "http://e.org/good"],
+                            {"http://e.org/bad": CONTRA_PAGE, "http://e.org/good": PAGE},
+                            True, stats))
+    assert rec["DEADLINE_EVIDENCE_URL"] == "http://e.org/good"
+    assert rec["NOTE"] == ""
+
+
+# --- year-less dates: the seven false contradictions ------------------------------------------
+
+@pytest.mark.parametrize("sentence,page_extra", [
+    ("Closes: May 8th",                            ""),
+    ("Abstract Deadline May 8 11:59 PM MT",        ""),
+    ("Submissions Due: Monday, May 8",             ""),
+    ("Deadline 8 May.",                            ""),
+    ("Submissions close 5-8-2026.",                ""),
+    ("Submissions close 5/8/2026.",                ""),
+    ("Submissions close 2026-05-08.",              ""),
+])
+def test_a_page_that_omits_the_year_still_agrees(monkeypatch, sentence, page_extra):
+    """Conference pages write "Closes: May 8th" and expect you to read the year off the page.
+    Demanding the year in the same sentence turned seven pages that AGREED with upstream into
+    reported contradictions."""
+    page = f"Call for Papers. {sentence} {page_extra}"
+    _q, _c, status = pick(monkeypatch, {"sentence": sentence}, page=page, deadline="2026-05-08")
+    assert status == "ok"
+
+
+def test_a_genuinely_different_date_is_still_a_contradiction(monkeypatch):
+    page = "Call for Papers. Paper submission deadline: July 27, 2026."
+    q, _c, status = pick(monkeypatch, {"sentence": "Paper submission deadline: July 27, 2026."},
+                         page=page, deadline="2026-07-24")
+    assert status == "no-date"
+    assert q                                   # comes back so it can be reported
+
+
+def test_a_sentence_with_no_date_is_silence_not_disagreement(monkeypatch):
+    """RSNA: true, verbatim, and settles nothing. Calling it a contradiction manufactures a
+    finding out of vagueness."""
+    page = ("Abstracts. All abstracts must be submitted online by the posted deadlines "
+            "in order to be considered.")
+    q, _c, status = pick(monkeypatch,
+                         {"sentence": "All abstracts must be submitted online by the posted "
+                                      "deadlines in order to be considered."},
+                         page=page, deadline="2026-08-05")
+    assert status == "undated"
+    assert q == ""
+
+
+def test_a_notification_date_is_wrong_purpose_not_a_contradiction(monkeypatch):
+    """NAMM. A real date, correctly read, about being notified rather than submitting."""
+    page = ("Bands. You will be notified whether or not your band has been selected "
+            "to perform by October 30, 2026.")
+    _q, _c, status = pick(monkeypatch,
+                          {"sentence": "You will be notified whether or not your band has "
+                                       "been selected to perform by October 30, 2026."},
+                          page=page, deadline="2026-09-16")
+    assert status == "wrong-purpose"
+
+
+@pytest.mark.parametrize("text,want", [
+    ("Closes: May 8th",       {(5, 8)}),
+    ("8 May 2026",            {(5, 8)}),
+    ("Sept. 4, 2026",         {(9, 4)}),
+    ("closes 9-28-2026",      {(9, 28)}),
+    ("2026-09-28",            {(9, 28)}),
+    ("no dates here at all",  set()),
+])
+def test_month_day_pairs(text, want):
+    assert ec.month_day_pairs(text) == want
