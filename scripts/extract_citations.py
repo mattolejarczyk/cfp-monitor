@@ -70,7 +70,7 @@ _spec.loader.exec_module(_ae)          # escalate / call_label / readable
 
 from src.cfp_monitor.config import Settings                        # noqa: E402
 from src.cfp_monitor.verify import (                                # noqa: E402
-    _parse_date, fetch_text, find_date,
+    _parse_date, fetch_text, find_date, is_homepage,
 )
 
 SETTINGS = Settings()
@@ -115,13 +115,6 @@ def locate_verbatim(page: str, sentence: str) -> str | None:
     if hi < len(page) and page[hi] in ".!?":
         hi += 1
     return page[lo:hi].strip()
-
-def is_homepage(url: str) -> bool:
-    """A bare domain root, with nothing identifying a call on it."""
-    from urllib.parse import urlparse
-    p = urlparse(url)
-    return not [s for s in p.path.split("/") if s] and not p.query
-
 
 def deep_first(cands: list[str]) -> list[str]:
     """Deep pages before homepages, upstream's ordering kept inside each group.

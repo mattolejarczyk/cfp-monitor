@@ -86,11 +86,8 @@ def _is_proxy(url: str) -> bool:
     return any(h in u for h in PROXY_HOSTS)
 
 
-def _is_homepage(url: str) -> bool:
-    """A bare domain root - no path segments, no query."""
-    from urllib.parse import urlparse
-    p = urlparse(url or "")
-    return bool(p.netloc) and not [s for s in p.path.split("/") if s] and not p.query
+# One definition, shared with the extractor - see verify.is_homepage for why.
+from src.cfp_monitor.verify import is_homepage as _is_homepage      # noqa: E402
 
 
 def _strict_ok(url: str) -> tuple[bool, str]:

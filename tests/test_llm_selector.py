@@ -263,3 +263,24 @@ def test_falling_back_to_a_homepage_is_recorded_not_hidden(monkeypatch):
                             True, stats))
     assert rec["DEADLINE_EVIDENCE_URL"] == "https://wccus.org/"
     assert "homepage" in rec["NOTE"]
+
+
+@pytest.mark.parametrize("url", [
+    "https://example.org/index.html", "https://example.org/index.php",
+    "https://example.org/Index.HTML", "https://example.org/home",
+    "https://example.org/default.asp", "https://example.org/",
+])
+def test_landing_pages_count_as_homepages_however_they_are_spelled(url):
+    """Upstream strips index/home pages too, but case-sensitively. Our guard must not depend
+    on theirs being exhaustive - whatever arrives has to be classified correctly here, or a
+    landing page slips through as 'deep' and is allowed to replace a real citation."""
+    assert ec.is_homepage(url) is True
+
+
+@pytest.mark.parametrize("url", [
+    "https://example.org/call-for-papers",
+    "https://example.org/index.php?page=call-for-papers",
+    "https://example.org/2026/abstracts",
+])
+def test_real_deep_links_are_not_mistaken_for_homepages(url):
+    assert ec.is_homepage(url) is False

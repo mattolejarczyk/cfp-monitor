@@ -420,6 +420,39 @@ def _same_url(a: str, b: str) -> bool:
     return bool(a) and bool(b) and a.strip().rstrip("/") == b.strip().rstrip("/")
 
 
+# Landing-page filenames. A path is not automatically depth: example.org/index.html is the
+# same page as example.org/, written differently, and R3 cares about what the page IS.
+_ROOT_LEAF = {"index.html", "index.htm", "index.php", "index.asp", "index.aspx",
+              "default.html", "default.htm", "default.asp", "default.aspx",
+              "home", "home.html", "welcome", "main"}
+
+
+def is_homepage(url: str) -> bool:
+    """A site's landing page rather than a page about a specific call.
+
+    LIVES HERE BECAUSE TWO SCRIPTS NEED THE SAME ANSWER. The extractor uses it to order
+    candidates and the merge guard uses it to refuse an R3 inversion; if those two ever
+    disagreed, a URL could be treated as shallow when choosing and deep when merging, which is
+    precisely the hole the guard exists to close. `find_date` was implemented twice in this
+    repo and the copies drifted - once is enough.
+
+    Deliberately a superset of upstream's version. They also strip index/home pages, but their
+    check is case-sensitive and ours must not depend on theirs being exhaustive: our guard has
+    to hold whatever arrives. A query string still counts as depth, because
+    `index.php?page=call-for-papers` is a real deep link.
+    """
+    from urllib.parse import urlparse
+    p = urlparse(url or "")
+    if not p.netloc:
+        return False
+    if p.query:
+        return False
+    segs = [s for s in p.path.split("/") if s]
+    if not segs:
+        return True
+    return len(segs) == 1 and segs[0].lower() in _ROOT_LEAF
+
+
 def no_page_detail(cited: str) -> str:
     """Why nothing could be read -- a missing citation is not a silent citation."""
     if not cited:
