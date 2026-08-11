@@ -116,24 +116,22 @@ def _strict_ok(url: str) -> tuple[bool, str]:
         return False, f"unreachable: {type(e).__name__}"
 
 
-def merge_citations(store, csv_path: str, apply: bool) -> int:
-    """Decide which proposed citations are safe to take. Reports; writes only with apply."""
+def _seed_map(store) -> tuple[dict[str, str], list]:
+    """upstream EVENT_ID -> our canonical id, plus the directories it was read from.
+
+    UPSTREAM'S EVENT_ID IS NOT OURS. We recompute the canonical key on import (contract 5.4)
+    and their files echo back THEIR id, so a direct lookup matches nothing - a merge would
+    report rows accepted and then update zero of them, silently.
+
+    Looks beside the DATABASE before the working directory. The seeds live in the live build's
+    data root while these scripts are usually run from the repo, and a bare relative path found
+    nothing there: the map came back empty, every row failed to resolve, and a run printed five
+    per-row DATA rejections for what was purely a path problem. A config fault must not be able
+    to impersonate a data fault.
+    """
     import csv as _csv
-
-    from src.cfp_monitor.verify import fetch_text, normalize_text
-
-    with open(csv_path, encoding="utf-8-sig", newline="") as fh:
-        proposed = list(_csv.DictReader(fh))
-
-    # UPSTREAM'S EVENT_ID IS NOT OURS. We recompute the canonical key on import (contract 5.4)
-    # and the request CSV echoes back THEIR id, so a direct lookup matches nothing - the merge
-    # would report rows accepted and then update zero of them, silently. Map through the seeds.
-    # Look beside the DATABASE first, not the working directory. The seeds live in the live
-    # build's data root while this script is usually run from the repo, and a bare relative
-    # path found nothing there: the map came back empty, every row failed to resolve, and the
-    # run printed five per-row data rejections for what was purely a path problem. A config
-    # fault must not be able to impersonate a data fault.
     from pathlib import Path as _P
+
     roots, seen = [], set()
     for cand in (_P(getattr(store, "path", "") or ".").resolve().parent, _P.cwd()):
         d = cand / "market_sheets"
@@ -151,6 +149,73 @@ def merge_citations(store, csv_path: str, apply: bool) -> int:
                     canon = (row.get("EVENT_ID_CANON") or "").strip()
                     if up and canon:
                         up_to_canon.setdefault(up, canon)
+    return up_to_canon, roots
+
+
+def retire_deadlines(store, csv_path: str, apply: bool) -> int:
+    """Blank a deadline neither side can source, and say Not Announced instead.
+
+    Separate from the hardcoded RESOLUTIONS list on purpose. That list is a record of one
+    round's decisions and re-running it would re-apply its CORRECTED entries, overwriting
+    deadlines the citation work has since improved - a fix from July silently undoing a
+    verified value from August. Retiring a row must not require replaying history.
+
+    CSV: EVENT_ID, CONFERENCE, REASON. The reason is stored, because "Not Announced" without
+    one is indistinguishable from a row nobody has looked at (contract 2.6).
+    """
+    import csv as _csv
+
+    with open(csv_path, encoding="utf-8-sig", newline="") as fh:
+        rows = list(_csv.DictReader(fh))
+
+    up_to_canon, _roots = _seed_map(store)
+    current = {r["event_id"]: r for r in (dict(x) for x in store.db.execute(
+        "select event_id, deadline, deadline_evidence_url from grounding_facts"))}
+    if not current:
+        print("REFUSING - no rows in grounding_facts. Point --db at the live database.")
+        return 1
+
+    done, missed = [], []
+    for r in rows:
+        raw = (r.get("EVENT_ID") or "").strip()
+        eid = up_to_canon.get(raw, raw)
+        name = (r.get("CONFERENCE") or "")[:46]
+        reason = (r.get("REASON") or "").strip()
+        cur = current.get(eid)
+        if cur is None:
+            missed.append((name, f"cannot place EVENT_ID ({raw[:40]})"))
+            continue
+        done.append((name, cur["deadline"] or "(already blank)", reason))
+        if apply:
+            store.db.execute(
+                "UPDATE grounding_facts SET deadline='', cfp_model='Not Announced',"
+                " verify_state='not_found', verify_detail=? WHERE event_id=?",
+                (f"[retired] {reason}", eid))
+
+    for name, old, reason in done:
+        print(f"  RETIRE  {name:<46} {old} -> Not Announced")
+        print(f"            {reason}")
+    for name, why in missed:
+        print(f"  SKIP    {name:<46} {why}")
+
+    if apply:
+        store.db.commit()
+        print(f"\nretired {len(done)} deadline(s)")
+    else:
+        print(f"\n{len(done)} would be retired - re-run with --apply to write")
+    return 0 if not missed else 1
+
+
+def merge_citations(store, csv_path: str, apply: bool) -> int:
+    """Decide which proposed citations are safe to take. Reports; writes only with apply."""
+    import csv as _csv
+
+    from src.cfp_monitor.verify import fetch_text, normalize_text
+
+    with open(csv_path, encoding="utf-8-sig", newline="") as fh:
+        proposed = list(_csv.DictReader(fh))
+
+    up_to_canon, roots = _seed_map(store)
 
     current = {r["event_id"]: r for r in (dict(x) for x in store.db.execute(
         "select event_id, deadline, deadline_evidence_url, deadline_quote from grounding_facts"))}
@@ -265,7 +330,14 @@ def main() -> int:
     ap.add_argument("--db", default="cfp_monitor.db")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--citations", help="CSV of replacement citations from upstream")
+    ap.add_argument("--retire", help="CSV (EVENT_ID, CONFERENCE, REASON) of deadlines neither "
+                                     "side can source - blanked and set Not Announced")
     a = ap.parse_args()
+
+    if a.retire:
+        store = Store(a.db)
+        rc = retire_deadlines(store, a.retire, a.apply)
+        raise SystemExit(rc)
 
     if a.citations:
         store = Store(a.db)
