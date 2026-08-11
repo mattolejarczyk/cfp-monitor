@@ -70,8 +70,27 @@ RESOLUTIONS = [
 
 
 # --------------------------------------------------------------- merge guard --
+# A grounded model can return the SEARCH TOOL'S redirect rather than the page it found. On the
+# 2026-08-11 pilot, AORN came back as vertexaisearch.cloud.google.com/grounding-api-redirect/...
+# It resolves, and the quote is reachable through it, so it passed every content check - but it
+# is not the event's page. It is a temporary proxy that expires, and it fails R3 outright: the
+# citation must be the page the sentence appears on. Nothing here can catch that by fetching,
+# so it is a structural rule.
+PROXY_HOSTS = ("vertexaisearch.cloud.google.com", "grounding-api-redirect",
+               "webcache.googleusercontent.com", "translate.google.com",
+               "r.jina.ai", "12ft.io", "outlook.safelinks.protection.outlook.com")
+
+
+def _is_proxy(url: str) -> bool:
+    u = (url or "").lower()
+    return any(h in u for h in PROXY_HOSTS)
+
+
 def _strict_ok(url: str) -> tuple[bool, str]:
     """Positive confirmation that a page EXISTS. Deliberately strict.
+
+    Retained for reporting; the merge decision now turns on CONTENT (can we read the page and
+    is the quote on it), which is a stronger test than any status code.
 
     Distinct from the "only 404/410 disprove" rule, which governs whether we may WITHDRAW a
     citation. Those are different questions and using one test for both is how a URL whose
@@ -140,14 +159,31 @@ def merge_citations(store, csv_path: str, apply: bool) -> int:
             skipped.append((name, "returned blank - keeping what we have"))
             continue
 
-        # RULE 2 - it must survive OUR check, not theirs.
-        ok, why = _strict_ok(url)
-        if not ok:
-            rejected.append((name, f"proposed URL did not resolve ({why})"))
+        # A search-tool redirect is not a citation, however well it resolves (R3).
+        if _is_proxy(url):
+            rejected.append((name, "search-redirect URL, not the event's own page"))
             continue
+
+        # RULE 2 - it must survive OUR check, not theirs.
+        #
+        # CLIMB THE LADDER BEFORE REJECTING. Plain HTTP said 403 for amcoe.org on the pilot;
+        # the browser read 16,675 characters of it. Rejecting on the cheap pass alone would
+        # discard citations for being defended against automation rather than for being wrong -
+        # the same error as treating a 403 as a dead link.
         text, _ = fetch_text(url)
         if not text:
-            rejected.append((name, "proposed page could not be read"))
+            try:
+                import asyncio as _aio
+                import importlib.util as _ilu
+                _s = _ilu.spec_from_file_location(
+                    "_ae", Path(__file__).resolve().parent / "audit_evidence.py")
+                _ae = _ilu.module_from_spec(_s)
+                _s.loader.exec_module(_ae)
+                text = _aio.run(_ae.escalate([url])).get(url, ("", ""))[0]
+            except Exception:
+                text = ""
+        if not text:
+            rejected.append((name, "page could not be read, even through the browser"))
             continue
         if normalize_text(quote[:60]) not in normalize_text(text):
             rejected.append((name, "quote is not on the proposed page"))
