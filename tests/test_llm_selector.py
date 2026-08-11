@@ -434,3 +434,30 @@ def test_an_ambiguous_numeric_date_is_read_both_ways():
     contradiction we might have reported; rejecting one invents a contradiction we should
     not. Those costs are not symmetric."""
     assert ec.month_day_pairs("5/8/2026") == {(5, 8), (8, 5)}
+
+
+def test_a_nomination_deadline_is_a_submission_deadline(monkeypatch):
+    """GreenBiz. At some events being nominated IS how you get on the programme - the operator
+    confirmed 2026-08-11 that this is common, not a one-off. Treating it as a different fact
+    left a row nearly eight months wrong."""
+    page = ("Trellis Impact 26 Speaker Nominations. Nomination Deadline: January 23, 2026. "
+            "Due to high submission volume, Trellis will only respond to nominations we are "
+            "interested in pursuing by February 6, 2026.")
+    q, _c, status = pick(monkeypatch, {"sentence": "Nomination Deadline: January 23, 2026."},
+                         page=page, deadline="2026-01-23")
+    assert status == "ok"
+    assert q == "Nomination Deadline: January 23, 2026."
+
+
+def test_two_calls_at_one_event_are_kept_apart(monkeypatch):
+    """ISE. The page lists the ISE call (2 October) and the co-located CEDIA call (7
+    September). Both real. Picking the wrong one reported our correct date as an error."""
+    page = ("ISE 2027 - Call for Presenters Deadline: 2 October "
+            "CEDIA - Call for Presenters Deadline: 7 September")
+    q, call, status = pick(monkeypatch,
+                           {"sentence": "ISE 2027 - Call for Presenters Deadline: 2 October",
+                            "call": "call for presenters"},
+                           page=page, deadline="2026-10-02")
+    assert status == "ok"
+    assert "2 October" in q
+    assert call

@@ -280,9 +280,18 @@ Rules:
    withdrawing, notification, registration, hotels, early-bird pricing - return an empty
    sentence. A date used for a different purpose is not this deadline.
 3. Prefer a sentence that names WHICH call it belongs to (abstract, full paper, case study,
-   poster, workshop). One event runs several with different deadlines.
-4. If no sentence on this page states that submission deadline, return an empty sentence. An
+   poster, workshop). One event runs several with different deadlines, and co-located or
+   partner programmes run their own: a page may show "ISE 2027 - Call for Presenters
+   Deadline: 2 October" and "CEDIA - Call for Presenters Deadline: 7 September" side by side.
+   Both are real. Put the owning call in the "call" field so the two can be told apart.
+4. NOMINATION COUNTS AS SUBMITTING. At some events the way onto the programme is to be
+   nominated rather than to submit through an open call, and "Nomination Deadline: January 23,
+   2026" is then the submission deadline, not a different fact. Treat nominate, apply, propose
+   and enter as submitting.
+5. If no sentence on this page states that submission deadline, return an empty sentence. An
    honest blank is the correct answer and is always acceptable.
+
+6. Do not renumber or skip: answer for the date given, not the nearest date you can find.
 
 Return ONLY JSON: {"sentence": "...", "call": "...", "confident": true|false}"""
 
