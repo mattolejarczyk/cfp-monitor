@@ -220,3 +220,46 @@ def test_a_label_supported_only_far_away_on_the_page_is_dropped(monkeypatch):
     _q, call, _s = pick(monkeypatch, {"sentence": "Submission deadline: 1 July 2026.",
                                       "call": "workshop proposal"}, page=far)
     assert "workshop" not in call
+
+
+# --- depth: R3 runs both ways ---------------------------------------------------------------
+
+@pytest.mark.parametrize("url,expected", [
+    ("https://wccus.org/", True),
+    ("https://wccus.org", True),
+    ("http://example.org//", True),
+    ("https://wccus.org/abstract-submission", False),
+    ("https://wccus.org/?page=cfp", False),
+])
+def test_homepage_detection(url, expected):
+    assert ec.is_homepage(url) is expected
+
+
+def test_deep_candidates_are_tried_before_homepages():
+    cands = ["https://wccus.org/", "https://wccus.org/abstract-submission"]
+    assert ec.deep_first(cands)[0] == "https://wccus.org/abstract-submission"
+
+
+def test_upstream_order_is_kept_within_each_group():
+    cands = ["https://a.org/one", "https://a.org/", "https://a.org/two"]
+    assert ec.deep_first(cands) == ["https://a.org/one", "https://a.org/two", "https://a.org/"]
+
+
+def test_a_deep_page_wins_even_when_the_homepage_also_carries_the_date(monkeypatch):
+    """The coin flip this removes: both pages carry the sentence, only one is a citation."""
+    _stub(monkeypatch, {"sentence": "Submission deadline: 1 July 2026."})
+    rec, stats = _row(), {}
+    pages = {"https://wccus.org/": PAGE, "https://wccus.org/abstract-submission": PAGE}
+    asyncio.run(ec.fill_row(rec, ["https://wccus.org/",
+                                  "https://wccus.org/abstract-submission"], pages, True, stats))
+    assert rec["DEADLINE_EVIDENCE_URL"] == "https://wccus.org/abstract-submission"
+    assert rec["NOTE"] == ""
+
+
+def test_falling_back_to_a_homepage_is_recorded_not_hidden(monkeypatch):
+    _stub(monkeypatch, {"sentence": "Submission deadline: 1 July 2026."})
+    rec, stats = _row(), {}
+    asyncio.run(ec.fill_row(rec, ["https://wccus.org/"], {"https://wccus.org/": PAGE},
+                            True, stats))
+    assert rec["DEADLINE_EVIDENCE_URL"] == "https://wccus.org/"
+    assert "homepage" in rec["NOTE"]

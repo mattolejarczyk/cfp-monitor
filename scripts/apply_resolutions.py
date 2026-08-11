@@ -86,6 +86,13 @@ def _is_proxy(url: str) -> bool:
     return any(h in u for h in PROXY_HOSTS)
 
 
+def _is_homepage(url: str) -> bool:
+    """A bare domain root - no path segments, no query."""
+    from urllib.parse import urlparse
+    p = urlparse(url or "")
+    return bool(p.netloc) and not [s for s in p.path.split("/") if s] and not p.query
+
+
 def _strict_ok(url: str) -> tuple[bool, str]:
     """Positive confirmation that a page EXISTS. Deliberately strict.
 
@@ -184,6 +191,16 @@ def merge_citations(store, csv_path: str, apply: bool) -> int:
         # A search-tool redirect is not a citation, however well it resolves (R3).
         if _is_proxy(url):
             rejected.append((name, "search-redirect URL, not the event's own page"))
+            continue
+
+        # R3 RUNS BOTH WAYS - never trade a deep page for a shallower one. A homepage can carry
+        # the right date in a banner and still be worse evidence than what it would replace,
+        # because it cannot show WHICH call the date belongs to. citation_fixes already refuses
+        # to PROPOSE this; nothing stopped it arriving from upstream instead, and their pilot
+        # shortlist for CCUS included the bare root of the site alongside the abstract page.
+        if _is_homepage(url) and cur.get("deadline_evidence_url") \
+                and not _is_homepage(cur["deadline_evidence_url"]):
+            rejected.append((name, "homepage would replace a deeper citation we already hold"))
             continue
 
         # RULE 2 - it must survive OUR check, not theirs.

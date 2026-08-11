@@ -116,6 +116,25 @@ def locate_verbatim(page: str, sentence: str) -> str | None:
         hi += 1
     return page[lo:hi].strip()
 
+def is_homepage(url: str) -> bool:
+    """A bare domain root, with nothing identifying a call on it."""
+    from urllib.parse import urlparse
+    p = urlparse(url)
+    return not [s for s in p.path.split("/") if s] and not p.query
+
+
+def deep_first(cands: list[str]) -> list[str]:
+    """Deep pages before homepages, upstream's ordering kept inside each group.
+
+    R3 wants the citation to be the page the sentence appears on, and a homepage almost never
+    is - it carries a date in a banner with nothing saying which call it belongs to. Upstream's
+    shortlist for CCUS was the abstract page AND the bare root of the same site; taking the
+    first candidate that happened to yield a quote would have cited whichever we read first.
+    Trying every deep candidate before any homepage costs nothing and removes the coin flip.
+    """
+    return [u for u in cands if not is_homepage(u)] + [u for u in cands if is_homepage(u)]
+
+
 _LABEL_STOP = {"the", "for", "and", "call", "deadline", "submission", "submissions"}
 
 
@@ -353,7 +372,7 @@ async def fill_row(rec: dict, cands: list[str], pages: dict[str, str],
                    use_llm: bool, stats: dict) -> None:
     """Take the first candidate page that yields a usable quote, and record how we got it."""
     tried = 0
-    for u in cands:
+    for u in deep_first(cands):
         text = pages.get(u)
         if not text:
             continue
@@ -379,6 +398,11 @@ async def fill_row(rec: dict, cands: list[str], pages: dict[str, str],
                         "CALL": call, "IS_PROJECTED": "false",
                         "EXTRACTED_FROM": (f"candidate {cands.index(u) + 1} of {len(cands)}"
                                            f"; selected by {how}")})
+            if is_homepage(u):
+                # Say so rather than hide it. The quote is real, but a homepage cannot show
+                # WHICH call the date belongs to, and the merge guard will not let it displace
+                # a deeper citation we already hold.
+                rec["NOTE"] = "homepage - no deeper candidate carried the date"
             return
     if tried:
         rec["NOTE"] = ("no sentence on the candidate pages states that submission deadline"
