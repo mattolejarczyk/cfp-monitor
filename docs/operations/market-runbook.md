@@ -289,6 +289,31 @@ print(len(rows), dict(Counter(r['CONFIDENCE'] for r in rows)))"
 Sanity checks: no `Confirmed` row should be a projection; `Check link` means a dead submission
 URL; blank `CONFIDENCE` should appear only on rows nobody can act on.
 
+### The HTML page Nicolia actually reads
+
+Built in the upstream working area, not this repo. **All three inputs are required** - the two
+evidence flags were optional until 2026-08-11 and omitting them produced a page reading
+"Deadline confirmed 0 / Need to Verify 0 / Submit Link Missing 0". That is not an obviously
+broken page; it is a confident claim that nothing was verified and nothing is broken. The
+builder now refuses rather than allowing it.
+
+```bash
+python build_review_page.py -i ALL_MARKETS_AUDITED_<date>.csv \
+  --dead-links ../handoff-files/dead_submission_links_<date>.csv \
+  --checks deadline_checks_<date>.csv \
+  -o Conference_Review_<date>.html
+```
+
+Expected on the 2026-08-07 delivery: `406 rows; 41 dead links; 74 deadlines confirmed`. If any
+of those three is zero, an input is missing - check before reading anything into the numbers.
+`--no-evidence` exists for layout work only and its output must never be sent.
+
+**The view counts do not sum to the row count, and should not.** They are overlapping lenses,
+not buckets: "Closing this week" is inside "Closing this month" is inside "All open calls",
+while "Deadline confirmed" and "Need to Verify" sit on a different axis entirely. On the
+2026-08-07 delivery 242 of 406 rows match more than one view and one matches six. Every row
+matches at least "Everything", so a row in NO view would be the real defect.
+
 ---
 
 ## 6. Send the result back
