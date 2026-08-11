@@ -23,3 +23,16 @@ results.json
 .DS_Store
 .idea/
 .vscode/
+
+# customer delivery data - THIS REPO IS PUBLIC.
+# Market rows, citations and audits are Nicolia's asset and must never be pushed here. The
+# private upstream repo holds anything that has to be version-controlled. Nothing covered
+# these before, so a single `git add -A` from the repo root was enough to publish a delivery.
+citations_extracted.csv
+citations_*.csv
+candidate_urls*.csv
+*_audited.csv
+*_seed.csv
+runs_out/
+# NOT market_sheets/ wholesale - that folder has its own rule, and held_rows.txt is a record
+# of deliberate decisions that must stay tracked.

@@ -411,6 +411,62 @@ verified yield was 11%. Use a pilot to prove a method works, never to forecast a
 
 ---
 
+## Where an LLM is safe, and where it is not
+
+This is the rule that came out of five rounds of citation pilots, and it generalises past
+citations. The question is never "is the model good enough". It is **can we check the answer
+without trusting the answerer.**
+
+| | Safe | Not safe |
+|---|---|---|
+| What we ask for | a POINTER into text we already hold | a REPORT about something we did not read |
+| Why | the answer is checkable against the source | nothing to check it against |
+| Failure mode | rejected at the gate | reaches the customer looking correct |
+
+Upstream was asked to read a page and report the sentence on it. Ten rows across two pilots
+produced two usable ones - and the bad ones were not obviously bad: real URLs, fluent
+sentences, right dates, on pages that never contained them. Two rounds of prompt tightening
+moved nothing, because the prompt cannot reach the seam. The model knew the fact and was
+guessing where it lived.
+
+The fix was not a better prompt. It was moving the question:
+
+- **We** fetch the page, through the full ladder. That text is real by construction.
+- **The model** is given that text and asked which sentence answers the question.
+- **The code** checks the answer is a literal substring of what we supplied, and re-cuts the
+  quote from the page so what we store is the source's own characters, not the model's echo.
+
+Fabrication stops being something we detect and becomes something that cannot survive.
+`scripts/extract_citations.py:llm_pick_sentence` is the reference implementation;
+`tests/test_llm_selector.py` proves each rejection path by triggering it.
+
+**Three rules that travel with the pattern:**
+
+1. **Verify the whole answer, not the convenient part.** The quote was substring-checked from
+   the start; the CALL label that came back beside it was not, and a wrong label is worse than
+   none because it looks like precision. Anything the model returns that the check does not
+   cover needs its own check - `verify_call_label` requires the page nearby to actually use
+   those words. Where no check is possible, do not ask for the field.
+2. **Distinguish "answered no" from "did not answer".** A considered blank is a result and must
+   stand; falling back to string matching there silently overrules the judgement you paid for.
+   Fall back only on an outage.
+3. **Report the rejection counts every run.** `not-on-page` is the direct measure of whether
+   the guard is earning its place. A number nobody prints is a number nobody notices moving.
+
+**Where this should go next.** These are all semantic judgements currently done with regex, and
+each one has the same shape - we hold the text, so a selection can be checked:
+
+| Now | What it actually needs to decide |
+|---|---|
+| `audit_evidence.call_label()` | which call a quote belongs to |
+| `audit_evidence.page_status()` | whether a page says open, closed, or neither |
+| `verify.other_deadline_dates()` | whether a rival date contradicts ours or is unrelated |
+
+Do not convert these speculatively. Convert one when its error rate is measured and the check
+is written first.
+
+---
+
 ## Before you change anything that DERIVES a value
 
 `clean_city`, `event_id`, `gated_status`, `confidence`, `normalize_cfp_model` - a change here

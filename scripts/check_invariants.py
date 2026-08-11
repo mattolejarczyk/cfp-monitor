@@ -110,18 +110,28 @@ def held_rows(seed_dir: Path) -> dict[str, str]:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Check database integrity invariants.")
     ap.add_argument("--db", default="cfp_monitor.db")
-    ap.add_argument("--seed-dir", default="market_sheets")
+    ap.add_argument("--seed-dir", help="defaults to market_sheets beside the database, "
+                                       "falling back to the working directory")
     a = ap.parse_args()
 
-    db, seed_dir = Path(a.db), Path(a.seed_dir)
+    db = Path(a.db)
     if not db.exists():
         print(f"ERROR: no database at {db.resolve()}")
         return 2
 
+    # Beside the DATABASE before the working directory. The seeds live in the live build's data
+    # root while this is usually run from the repo, so a bare relative default made the tool
+    # refuse from the one place an operator is most likely to invoke it.
+    if a.seed_dir:
+        seed_dir = Path(a.seed_dir)
+    else:
+        beside = db.resolve().parent / "market_sheets"
+        seed_dir = beside if beside.is_dir() else Path("market_sheets")
+
     ids, n_seeds = delivered_ids(seed_dir)
     if not ids:
-        print(f"ERROR: no per-market *_seed.csv found in {seed_dir} - nothing to reconcile "
-              f"against. Refusing to report success.")
+        print(f"ERROR: no per-market *_seed.csv found in {seed_dir.resolve()} - nothing to "
+              f"reconcile against. Refusing to report success.")
         return 2
     held = held_rows(seed_dir)
 

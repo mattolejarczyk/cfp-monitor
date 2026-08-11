@@ -353,6 +353,9 @@ def _only_event(pool: list[dict]) -> "dict | None":
 
 class Store:
     def __init__(self, path: str = ":memory:"):
+        # Kept so callers can find files that live beside the database - the market seeds sit
+        # in the live build's data root, which is not the working directory.
+        self.path = path
         self.db = sqlite3.connect(path)
         self.db.row_factory = sqlite3.Row
         self.db.executescript(_SCHEMA)

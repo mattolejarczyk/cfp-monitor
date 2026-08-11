@@ -19,20 +19,31 @@ the first page carrying a sentence with the claimed date in it. Prefer a sentenc
 names the call (R10), because "July 6, 2026" settles nothing and "Case study deadline: July 6,
 2026" settles it.
 
-WHAT THIS CANNOT DO, AND WHY IT MATTERS
-It guarantees the date is on the page. It does NOT reliably pick WHICH dated sentence is the
-submission deadline, because that is a semantic judgement and this is string matching.
+WHICH SENTENCE, AND WHY THAT NEEDED MORE THAN STRING MATCHING
+Finding the date is easy. Deciding which dated sentence is the SUBMISSION deadline is not.
+CCUS states 1 July 2026 in three places: as a submission deadline, as "the deadline to withdraw
+your presentation", and inside a paragraph about abstract formatting. Five selection strategies
+were tried - first hit, longest, shortest, label-preferring, submission-wording-preferring -
+and each picked a different sentence. Two were verbatim, correctly dated, and about the wrong
+fact. Regex cannot close that gap, because the gap is semantic.
 
-Measured on the 2026-08-11 pilot. CCUS states 1 July 2026 in at least three places: as a
-submission deadline, as "the deadline to withdraw your presentation", and inside a paragraph
-about abstract formatting. Five selection strategies were tried - first hit, longest, shortest,
-label-preferring, and submission-wording-preferring - and each picked a different sentence.
-Two of them were verbatim, contained the right date, and stated the wrong fact.
+So a model picks the sentence, and the pick is checked rather than trusted:
 
-So the guarantee here is narrow and worth stating plainly: **the date is on the page, and the
-quote is verbatim.** Whether the sentence describes the submission deadline still needs a
-human, or an LLM reading the page text we fetched - which cannot fabricate, because the text
-is real and any selection can be checked as a substring of it.
+  we fetch the page  ->  model selects a sentence from THAT text  ->  code proves it is there
+
+`llm_pick_sentence` accepts an answer only if it is a literal substring of the text we supplied,
+and then re-cuts the quote from the page, so what we store is the source's own characters
+rather than the model's echo of them. A paraphrase, a reformatted date, a composed sentence:
+all die at that check. This is the opposite situation to the pilots above - there the model was
+asked to report on a page we did not hold, and nothing could check the answer.
+
+`--no-llm` falls back to string matching. It is free and it still guarantees the date is on the
+page, but it cannot tell a submission deadline from a withdrawal deadline on the same date.
+
+Before copying this pattern elsewhere, read "Where an LLM is safe, and where it is not" in
+docs/operations/market-runbook.md - particularly the part about checking the whole answer. The
+CALL label is the one thing the model returns that the substring check does not cover, and it
+needed a guard of its own.
 
 Emits the same shape the merge guard already accepts, so the output flows straight into
 `apply_resolutions.py --citations`.
@@ -45,6 +56,7 @@ import argparse
 import asyncio
 import csv
 import importlib.util
+import json
 import re
 import sys
 from pathlib import Path
@@ -56,7 +68,79 @@ _spec = importlib.util.spec_from_file_location("_ae", ROOT / "scripts" / "audit_
 _ae = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_ae)          # escalate / call_label / readable
 
-from src.cfp_monitor.verify import _parse_date, fetch_text          # noqa: E402
+from src.cfp_monitor.config import Settings                        # noqa: E402
+from src.cfp_monitor.verify import (                                # noqa: E402
+    _parse_date, fetch_text, find_date,
+)
+
+SETTINGS = Settings()
+
+# Same shape as verify.normalize_text, minus the ordinal rule, but it also returns where each
+# surviving character came from in the original. That map is what lets us answer "yes, this
+# sentence is on the page" and then quote the PAGE rather than the answer.
+_KEEP = re.compile(r"[a-z0-9/\-: ]")
+
+
+def _norm_map(s: str) -> tuple[str, list[int]]:
+    chars: list[str] = []
+    idx: list[int] = []
+    for i, ch in enumerate(s.lower()):
+        c = ch if _KEEP.match(ch) else " "
+        if c == " " and (not chars or chars[-1] == " "):
+            continue
+        chars.append(c)
+        idx.append(i)
+    while chars and chars[-1] == " ":
+        chars.pop(); idx.pop()
+    return "".join(chars), idx
+
+
+def locate_verbatim(page: str, sentence: str) -> str | None:
+    """The page's own characters for `sentence`, or None if it is not there.
+
+    Matching is lenient about case and whitespace - page text arrives with HTML spacing and a
+    model may re-wrap it - but what we KEEP is always sliced out of the page. So a lowercased
+    or re-spaced copy is accepted and then corrected back to the source, and "verbatim" means
+    verbatim no matter what came back. Anything the page does not contain still returns None.
+    """
+    np, idx = _norm_map(page)
+    ns, _ = _norm_map(sentence)
+    if not ns:
+        return None
+    at = np.find(ns)
+    if at < 0:
+        return None
+    lo, hi = idx[at], idx[at + len(ns) - 1] + 1
+    # Carry a closing full stop along; a quote cut just before its period reads as truncated.
+    if hi < len(page) and page[hi] in ".!?":
+        hi += 1
+    return page[lo:hi].strip()
+
+_LABEL_STOP = {"the", "for", "and", "call", "deadline", "submission", "submissions"}
+
+
+def verify_call_label(page: str, quote: str, call: str, window: int = 1500) -> str:
+    """Keep the model's call label only if the page nearby actually uses those words.
+
+    The label is the one thing the model tells us that is NOT in the quote, so the substring
+    check does not cover it - and it is load-bearing. R10 makes a citation call-level: "1 July
+    2026" settles nothing, "late-breaking poster deadline: 1 July 2026" settles it. A wrong
+    label is worse than none, because it looks like precision.
+
+    So it gets the weaker check available: every meaningful word of the label must appear in
+    the page text around the quote. That cannot confirm the label is RIGHT, only that it was
+    read rather than assumed. A label that fails falls back to what the quote itself says.
+    """
+    call = (call or "").strip().lower()
+    if not call:
+        return ""
+    at = page.lower().find(quote.lower()[:60])
+    seg, _ = _norm_map(page[max(0, at - window): at + window] if at >= 0 else page)
+    words = [w for w in re.split(r"[^a-z0-9]+", call) if len(w) > 3 and w not in _LABEL_STOP]
+    if words and all(w in seg for w in words):
+        return call
+    return _ae.call_label(quote)
+
 
 OUT_COLUMNS = ["EVENT_ID", "CONFERENCE", "Market", "SUBMISSION DEADLINE", "PREVIOUS_DEADLINE",
                "DATE_CHANGED", "DEADLINE_EVIDENCE_URL", "DEADLINE_QUOTE", "CALL", "IS_PROJECTED",
@@ -125,6 +209,103 @@ _SUBMIT_VERB = re.compile(
     r"\b(submit|submission|closes?|due|deadline to submit|call for|accepted until)\b", re.I)
 
 
+SELECT_INSTRUCTION = """You are shown the text of ONE web page and a submission deadline date.
+Find the single sentence on that page which states the SUBMISSION deadline for this conference
+- the date by which a speaker, author or entrant must submit.
+
+Rules:
+1. Copy the sentence EXACTLY as it appears in the page text. Do not fix typos, expand
+   abbreviations, reword, or join fragments. It must be a literal substring of the text.
+2. It must contain the date given. If the page states that date only for something else -
+   withdrawing, notification, registration, hotels, early-bird pricing - return an empty
+   sentence. A date used for a different purpose is not this deadline.
+3. Prefer a sentence that names WHICH call it belongs to (abstract, full paper, case study,
+   poster, workshop). One event runs several with different deadlines.
+4. If no sentence on this page states that submission deadline, return an empty sentence. An
+   honest blank is the correct answer and is always acceptable.
+
+Return ONLY JSON: {"sentence": "...", "call": "...", "confident": true|false}"""
+
+
+async def llm_pick_sentence(text: str, deadline: str, conference: str,
+                            settings) -> tuple[str, str, str]:
+    """Ask a model WHICH sentence states the deadline, then check it really is on the page.
+
+    THE SAFETY PROPERTY: the model only ever SELECTS from text we fetched ourselves, and we
+    verify its answer is a literal substring of that text. It cannot invent a sentence - if it
+    tries, the substring check fails and we discard the answer. That is what makes an LLM safe
+    here where it was not safe upstream: upstream was asked to REPORT what a page said, which
+    is unverifiable; this is asked to POINT AT something we already hold.
+
+    Judgement is the part string matching cannot do. Five heuristics were tried on the CCUS
+    page, which carries 1 July 2026 as a submission deadline, as a withdrawal deadline, and
+    inside a formatting paragraph; each picked a different sentence and two were about the
+    wrong thing.
+
+    Returns (quote, call, status). Status separates "the model answered no" from "the model
+    did not answer", because those deserve opposite treatment: a considered blank is a result
+    and must stand, while an outage should fall back to the heuristic.
+    """
+    try:
+        import litellm
+    except Exception:
+        return "", "", "unavailable"
+
+    body = text[:16000]
+    messages = [
+        {"role": "system", "content": SELECT_INSTRUCTION},
+        {"role": "user", "content": "\n".join(
+            [f"CONFERENCE: {conference}", f"DEADLINE: {deadline}", "", "PAGE TEXT:", body,
+             "", "Return ONLY the JSON object."])},
+    ]
+    if settings.llm_proxy_url:
+        kwargs = dict(model="openai/cfp-extract", messages=messages,
+                      api_base=settings.llm_proxy_url.rstrip("/") + "/v1",
+                      api_key=settings.license_key,
+                      extra_headers={"X-Client-Version": settings.client_version},
+                      temperature=0.0, max_tokens=400)
+    else:
+        kwargs = dict(model=settings.llm_provider, messages=messages,
+                      api_key=settings.provider_key(), temperature=0.0, max_tokens=400)
+    try:
+        try:
+            resp = await litellm.acompletion(**kwargs, response_format={"type": "json_object"})
+        except Exception:
+            resp = await litellm.acompletion(**kwargs)
+        raw = resp.choices[0].message.content or ""
+    except Exception:
+        return "", "", "unavailable"
+
+    m = re.search(r"\{.*\}", raw, re.S)
+    if not m:
+        return "", "", "unavailable"
+    try:
+        data = json.loads(m.group(0))
+    except Exception:
+        return "", "", "unavailable"
+    sentence = " ".join((data.get("sentence") or "").split())
+    call = (data.get("call") or "").strip().lower()
+    if not sentence:
+        return "", "", "blank"
+
+    # THE CHECK THAT MAKES THIS SAFE. If a model ever composes a plausible sentence instead of
+    # copying one - the exact failure that cost two upstream pilots - it dies here rather than
+    # reaching a customer. What survives is re-cut from the page, so the stored quote is the
+    # page's characters and not the model's rendering of them.
+    found = locate_verbatim(text, sentence)
+    if found is None:
+        return "", "", "not-on-page"
+    sentence = found
+    d = _parse_date(deadline or "")
+    if d and not find_date(sentence, d):
+        return "", "", "no-date"
+    if _WRONG_PURPOSE.search(sentence):
+        # Belt and braces on rule 2. The model is asked to refuse these; if it does not, the
+        # regex still catches the ones we can name.
+        return "", "", "wrong-purpose"
+    return sentence, verify_call_label(text, sentence, call) or _ae.call_label(sentence), "ok"
+
+
 def best_quote(text: str, deadline: str) -> tuple[str, str]:
     """(quote, call_label). Prefers a sentence that names the call."""
     d = _parse_date(deadline or "")
@@ -168,12 +349,55 @@ def best_quote(text: str, deadline: str) -> tuple[str, str]:
     return q, _ae.call_label(q)
 
 
+async def fill_row(rec: dict, cands: list[str], pages: dict[str, str],
+                   use_llm: bool, stats: dict) -> None:
+    """Take the first candidate page that yields a usable quote, and record how we got it."""
+    tried = 0
+    for u in cands:
+        text = pages.get(u)
+        if not text:
+            continue
+        tried += 1
+        quote = call = how = ""
+        status = "off"
+        if use_llm:
+            quote, call, status = await llm_pick_sentence(
+                text, rec["SUBMISSION DEADLINE"], rec["CONFERENCE"], SETTINGS)
+            stats[status] = stats.get(status, 0) + 1
+            if quote:
+                how = "llm"
+        # Fall back ONLY when the model did not answer. A considered blank is a result: it
+        # means the date is on the page for something other than submitting, which is exactly
+        # the judgement we brought it in to make. Re-running the heuristic there would
+        # reinstate the sentence the model just rejected and quietly overrule it.
+        if not quote and status in ("off", "unavailable"):
+            quote, call = best_quote(text, rec["SUBMISSION DEADLINE"])
+            if quote:
+                how = "heuristic"
+        if quote:
+            rec.update({"DEADLINE_EVIDENCE_URL": u, "DEADLINE_QUOTE": quote,
+                        "CALL": call, "IS_PROJECTED": "false",
+                        "EXTRACTED_FROM": (f"candidate {cands.index(u) + 1} of {len(cands)}"
+                                           f"; selected by {how}")})
+            return
+    if tried:
+        rec["NOTE"] = ("no sentence on the candidate pages states that submission deadline"
+                       if use_llm else "none of the candidate pages state that date")
+    else:
+        rec["NOTE"] = "no candidate page could be read"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Extract citations from candidate URLs.")
     ap.add_argument("-i", "--input", required=True)
     ap.add_argument("-o", "--output", default="citations_extracted.csv")
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--no-llm", action="store_true",
+                    help="string matching only. Faster and free, but cannot tell a submission "
+                         "deadline from a withdrawal deadline on the same date.")
     a = ap.parse_args()
+    use_llm = not a.no_llm
+    stats: dict[str, int] = {}
 
     with open(a.input, encoding="utf-8-sig", newline="") as fh:
         rows = list(csv.DictReader(fh))
@@ -218,21 +442,7 @@ def main() -> int:
             rec["NOTE"] = "no candidate URLs supplied"
             out.append(rec); continue
 
-        tried = 0
-        for u in cands:
-            text = pages.get(u)
-            if not text:
-                continue
-            tried += 1
-            quote, call = best_quote(text, rec["SUBMISSION DEADLINE"])
-            if quote:
-                rec.update({"DEADLINE_EVIDENCE_URL": u, "DEADLINE_QUOTE": quote,
-                            "CALL": call, "IS_PROJECTED": "false",
-                            "EXTRACTED_FROM": f"candidate {cands.index(u) + 1} of {len(cands)}"})
-                break
-        if not rec["DEADLINE_EVIDENCE_URL"]:
-            rec["NOTE"] = ("none of the candidate pages state that date"
-                           if tried else "no candidate page could be read")
+        asyncio.run(fill_row(rec, cands, pages, use_llm, stats))
         out.append(rec)
 
     with open(a.output, "w", newline="", encoding="utf-8") as fh:
@@ -243,6 +453,13 @@ def main() -> int:
     got = [r for r in out if r["DEADLINE_EVIDENCE_URL"]]
     named = [r for r in got if r["CALL"]]
     print(f"\n{len(got)} of {len(out)} extracted; {len(named)} name the call\n")
+    if stats:
+        # Worth printing every time. "not-on-page" is the count of sentences a model composed
+        # rather than copied - the number that has to stay at zero in what we ship, and the
+        # only direct measure we have of whether the substring check is earning its place.
+        order = ["ok", "blank", "wrong-purpose", "not-on-page", "no-date", "unavailable"]
+        line = "  ".join(f"{k}={stats[k]}" for k in order if k in stats)
+        print(f"  model calls: {line}\n")
     for r in out:
         if r["DEADLINE_EVIDENCE_URL"]:
             print(f"  OK   {r['CONFERENCE'][:44]:<44} [{r['CALL'] or 'no label'}]")

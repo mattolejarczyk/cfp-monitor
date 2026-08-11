@@ -124,20 +124,42 @@ def merge_citations(store, csv_path: str, apply: bool) -> int:
     # UPSTREAM'S EVENT_ID IS NOT OURS. We recompute the canonical key on import (contract 5.4)
     # and the request CSV echoes back THEIR id, so a direct lookup matches nothing - the merge
     # would report rows accepted and then update zero of them, silently. Map through the seeds.
+    # Look beside the DATABASE first, not the working directory. The seeds live in the live
+    # build's data root while this script is usually run from the repo, and a bare relative
+    # path found nothing there: the map came back empty, every row failed to resolve, and the
+    # run printed five per-row data rejections for what was purely a path problem. A config
+    # fault must not be able to impersonate a data fault.
     from pathlib import Path as _P
+    roots, seen = [], set()
+    for cand in (_P(getattr(store, "path", "") or ".").resolve().parent, _P.cwd()):
+        d = cand / "market_sheets"
+        if d.is_dir() and d not in seen:
+            seen.add(d); roots.append(d)
+
     up_to_canon: dict[str, str] = {}
-    for seed in sorted(_P("market_sheets").glob("*_seed.csv")):
-        if seed.name == "grounding_seed.csv":
-            continue
-        with open(seed, encoding="utf-8-sig", newline="") as fh:
-            for row in _csv.DictReader(fh):
-                up = (row.get("EVENT_ID") or "").strip()
-                canon = (row.get("EVENT_ID_CANON") or "").strip()
-                if up and canon:
-                    up_to_canon.setdefault(up, canon)
+    for root in roots:
+        for seed in sorted(root.glob("*_seed.csv")):
+            if seed.name == "grounding_seed.csv":
+                continue
+            with open(seed, encoding="utf-8-sig", newline="") as fh:
+                for row in _csv.DictReader(fh):
+                    up = (row.get("EVENT_ID") or "").strip()
+                    canon = (row.get("EVENT_ID_CANON") or "").strip()
+                    if up and canon:
+                        up_to_canon.setdefault(up, canon)
 
     current = {r["event_id"]: r for r in (dict(x) for x in store.db.execute(
         "select event_id, deadline, deadline_evidence_url, deadline_quote from grounding_facts"))}
+
+    # Refuse to grade anything against an empty table. Rejecting every row one by one looks
+    # like upstream sent rubbish; it is indistinguishable, in the output, from the real thing.
+    if not up_to_canon or not current:
+        print("REFUSING TO MERGE - this is a setup problem, not a data problem.\n"
+              f"  id map    : {len(up_to_canon)} entries from {len(roots)} market_sheets dir(s)\n"
+              f"  db rows   : {len(current)} in grounding_facts\n"
+              f"  db opened : {getattr(store, 'path', '?')}\n"
+              "Point --db at the live database; the seeds are read from beside it.")
+        return 1
 
     accepted, rejected, skipped = [], [], []
     for p in proposed:

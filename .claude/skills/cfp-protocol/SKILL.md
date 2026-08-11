@@ -125,6 +125,16 @@ The grounded audit costs money and quota, and quota has been exhausted once alre
 Two identical failures on the same row means stop and inspect the row. Retrying blind spends
 requests and teaches nothing.
 
+**If two rounds of prompt tightening have not moved a number, the prompt is not the problem.**
+Five citation pilots landed on this: a model asked to REPORT what a page said produced fluent,
+correctly dated sentences that were never on the page, and no instruction fixed it. A model
+asked to POINT AT a sentence in text we fetched ourselves can be checked, because the answer
+must be a literal substring of what we supplied.
+
+Ask whether the answer is checkable without trusting the answerer. If it is not, move the
+question until it is - do not write a third prompt rule. Full pattern, its three rules, and
+where it should go next: **"Where an LLM is safe, and where it is not"** in the runbook.
+
 ## Where things live
 
 | | |
