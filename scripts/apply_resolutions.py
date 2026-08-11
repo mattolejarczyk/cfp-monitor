@@ -86,6 +86,26 @@ def _is_proxy(url: str) -> bool:
     return any(h in u for h in PROXY_HOSTS)
 
 
+# A social post is not a citation, for the same reason a search redirect is not: it is not the
+# event's page, and nothing about fetching it reveals the problem. Found 2026-08-11 - five rows
+# in the delivery cited a Facebook page as where the deadline was read, and one pilot row tried
+# to move a date on the strength of "a Facebook post by All Energy Australia". A feed is not
+# stable evidence: the post scrolls away, the page still resolves, and the citation quietly
+# stops supporting anything. R3 wants the page the sentence appears on.
+SOCIAL_HOSTS = {"facebook.com", "m.facebook.com", "fb.com", "twitter.com", "x.com",
+                "instagram.com", "linkedin.com", "threads.net", "t.me", "tiktok.com",
+                "reddit.com", "medium.com", "youtube.com", "youtu.be"}
+
+
+def _is_social(url: str) -> bool:
+    """Exact host match, never a substring: 'x.com' in a URL also matches pretalx.com and
+    interphex.com, which are a legitimate CFP platform and an event's own site. A sloppy LIKE
+    reported eight of these when there are five."""
+    from urllib.parse import urlparse
+    host = urlparse(url or "").netloc.lower()
+    return host.removeprefix("www.") in SOCIAL_HOSTS
+
+
 # One definition, shared with the extractor - see verify.is_homepage for why.
 from src.cfp_monitor.verify import is_homepage as _is_homepage      # noqa: E402
 
@@ -253,6 +273,11 @@ def merge_citations(store, csv_path: str, apply: bool) -> int:
         # A search-tool redirect is not a citation, however well it resolves (R3).
         if _is_proxy(url):
             rejected.append((name, "search-redirect URL, not the event's own page"))
+            continue
+
+        # Nor is a social post - same reason, different surface. See SOCIAL_HOSTS.
+        if _is_social(url):
+            rejected.append((name, "social media page, not the event's own page"))
             continue
 
         # R3 RUNS BOTH WAYS - never trade a deep page for a shallower one. A homepage can carry
