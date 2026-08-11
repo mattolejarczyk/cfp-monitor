@@ -85,7 +85,7 @@ to prevent.
 | `scripts/import_grounding.py` | Import a delivery into `grounding_facts`. |
 | `scripts/repair_delivery.py` | Rebuild a delivery broken by unquoted commas. Refuses to write unless every rebuilt row validates on six independently-shaped fields. **A repaired file still fails the gate** - upstream must fix its writer. |
 | `scripts/join_parts.py` | Join a delivery pasted as numbered chat parts. |
-| `scripts/apply_resolutions.py` | Apply upstream dispute resolutions. |
+| `scripts/apply_resolutions.py` | Apply upstream dispute resolutions. **`--citations <csv>` is the MERGE GUARD** for a citation-repair round: a blank never overwrites a populated field; a proposed citation must pass OUR fetch and have its quote on the page; a failed proposal leaves the old one standing; every accepted change is logged old -> new. Reports by default, writes with `--apply`. |
 | `scripts/make_handback.py` | Generate the hand-back document for upstream. |
 | `scripts/fix_records.py` | Targeted record corrections. |
 | `scripts/rename_markets.py` | Market vocabulary changes. |
