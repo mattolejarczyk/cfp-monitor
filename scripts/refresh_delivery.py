@@ -159,9 +159,15 @@ def main() -> int:
             # anything else an empty column is far more likely to mean "never populated" than
             # "cleared", and clearing the customer's data on that basis is how a refresh
             # becomes a deletion.
+            # An intentional clear is marked as one. Testing cfp_model == "Not Announced" was
+            # too narrow: a call that ran and CLOSED is retired with model "Fixed Deadline" and
+            # status Closed, so its blank was silently skipped and the disproven date stayed in
+            # the customer's file. The retirement marker in verify_detail is the explicit
+            # signal; anything else empty still means "never populated", not "cleared".
+            retired = _norm(f["verify_detail"]).startswith("[retired]")
             if not new and old:
                 if not (col == "SUBMISSION DEADLINE"
-                        and _norm(f["cfp_model"]) == "Not Announced"):
+                        and (retired or _norm(f["cfp_model"]) == "Not Announced")):
                     continue
             # A DATE COLUMN TAKES A DATE OR NOTHING. Our own database holds
             # "Not yet published for 2027" in SUBMISSION DEADLINE for CS MANTECH - the same
@@ -178,7 +184,6 @@ def main() -> int:
             # blanks a deadline neither side can source and sets Not Announced; its
             # verify_state is 'not_found' by design. Withholding it here would silently keep an
             # unsupported date in the customer's file - the exact thing the retirement removed.
-            retired = not new and _norm(f["cfp_model"]) == "Not Announced"
             if (a.only_verified and col == "SUBMISSION DEADLINE" and not retired
                     and _norm(f["verify_state"]) != "verified" and old != new):
                 withheld.append((name, old, new, _norm(f["verify_state"])))

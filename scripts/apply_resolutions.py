@@ -180,8 +180,19 @@ def retire_deadlines(store, csv_path: str, apply: bool) -> int:
     deadlines the citation work has since improved - a fix from July silently undoing a
     verified value from August. Retiring a row must not require replaying history.
 
-    CSV: EVENT_ID, CONFERENCE, REASON. The reason is stored, because "Not Announced" without
-    one is indistinguishable from a row nobody has looked at (contract 2.6).
+    CSV: EVENT_ID, CONFERENCE, REASON, and optionally EVIDENCE_URL + QUOTE + STATUS + MODEL.
+    The reason is stored, because "Not Announced" without one is indistinguishable from a row
+    nobody has looked at (contract 2.6).
+
+    A CLOSED CALL IS NOT AN ABSENT ONE. Added 2026-08-11: MD&M West 2027 runs in February and
+    its proposal portal says "Call for Proposal Application Deadline Has Passed". The event is
+    in the future, the call is over, and a date of 2026-09-01 is not merely unverified - it is
+    DISPROVEN, because a future date cannot be the deadline for a call that has already shut.
+    Recording that as "Not Announced" would be wrong in the other direction. So pass STATUS and
+    MODEL to say what is actually true, and EVIDENCE_URL + QUOTE to prove it.
+
+    Any quote supplied is held to the same standard as a citation: we fetch the page and the
+    quote must be on it. A closure we cannot evidence is just an opinion.
     """
     import csv as _csv
 
@@ -205,15 +216,50 @@ def retire_deadlines(store, csv_path: str, apply: bool) -> int:
         if cur is None:
             missed.append((name, f"cannot place EVENT_ID ({raw[:40]})"))
             continue
-        done.append((name, cur["deadline"] or "(already blank)", reason))
+        url = (r.get("EVIDENCE_URL") or "").strip()
+        quote = (r.get("QUOTE") or "").strip()
+        status = (r.get("STATUS") or "").strip()
+        model = (r.get("MODEL") or "").strip() or "Not Announced"
+
+        # PROVE IT OR DO NOT CLAIM IT. Same bar as a citation - we fetch the page and the quote
+        # must be on it. Skipping this would let "the call is closed" become an assertion
+        # nobody checked, which is the failure we spent three rounds removing from upstream.
+        if quote:
+            from src.cfp_monitor.verify import fetch_text, normalize_text
+            text, _ = fetch_text(url)
+            if not text:
+                try:
+                    import asyncio as _aio
+                    import importlib.util as _ilu2
+                    _sp = _ilu2.spec_from_file_location(
+                        "_ae", Path(__file__).resolve().parent / "audit_evidence.py")
+                    _aem = _ilu2.module_from_spec(_sp)
+                    _sp.loader.exec_module(_aem)
+                    text = _aio.run(_aem.escalate([url])).get(url, ("", ""))[0]
+                except Exception:
+                    text = ""
+            if normalize_text(quote) not in normalize_text(text):
+                missed.append((name, f"closure quote is NOT on {url[:52]} - not retiring"))
+                continue
+
+        done.append((name, cur["deadline"] or "(already blank)", reason,
+                     f"{model}{' / ' + status if status else ''}"
+                     f"{' + evidence' if quote else ''}"))
         if apply:
             store.db.execute(
-                "UPDATE grounding_facts SET deadline='', cfp_model='Not Announced',"
-                " verify_state='not_found', verify_detail=? WHERE event_id=?",
-                (f"[retired] {reason}", eid))
+                "UPDATE grounding_facts SET deadline='', cfp_model=?,"
+                " verify_state=?, verify_detail=?,"
+                " deadline_evidence_url=COALESCE(NULLIF(?,''), deadline_evidence_url),"
+                " deadline_quote=COALESCE(NULLIF(?,''), deadline_quote)"
+                " WHERE event_id=?",
+                (model, "verified" if quote else "not_found",
+                 f"[retired] {reason}", url, quote, eid))
+            if status:
+                store.db.execute("UPDATE grounding_facts SET status=? WHERE event_id=?",
+                                 (status, eid))
 
-    for name, old, reason in done:
-        print(f"  RETIRE  {name:<46} {old} -> Not Announced")
+    for name, old, reason, outcome in done:
+        print(f"  RETIRE  {name:<46} {old} -> {outcome}")
         print(f"            {reason}")
     for name, why in missed:
         print(f"  SKIP    {name:<46} {why}")
