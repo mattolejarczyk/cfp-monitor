@@ -80,6 +80,12 @@ def main() -> int:
                     help="carry a SUBMISSION DEADLINE change only when the row's verify_state "
                          "is 'verified'. Everything else in the database rides along otherwise "
                          "- including upstream claims nothing ever checked.")
+    ap.add_argument("--overrides",
+                    help="CSV of per-ROW corrections the database cannot express, keyed on "
+                         "EVENT_ID + TRACK. For events running several calls under one id: the "
+                         "database holds one row per EVENT_ID, so a second call has nowhere to "
+                         "live. Columns: EVENT_ID, TRACK, REASON, then any delivery column to "
+                         "set. A QUOTE is verified against its URL before being written.")
     ap.add_argument("--exclude", default="",
                     help="comma-separated text; any row whose CONFERENCE contains one of these "
                          "is left completely untouched")
@@ -93,6 +99,26 @@ def main() -> int:
     if not cols:
         print("ERROR: input has no header")
         return 2
+
+    # CHECK WE CAN WRITE BEFORE DOING ANY WORK. Excel holds an exclusive lock on an open
+    # workbook, so --apply did everything, copied a backup, then died on the final write - three
+    # times, leaving three identical stray .bak files and an unchanged output. Worse, piping the
+    # run through grep hid the traceback and the report looked like a success.
+    if a.apply:
+        out_p = Path(a.output)
+        try:
+            if out_p.exists():
+                with open(out_p, "a", encoding="utf-8"):
+                    pass
+            else:
+                out_p.parent.mkdir(parents=True, exist_ok=True)
+                out_p.touch()
+                out_p.unlink()
+        except PermissionError:
+            print(f"REFUSING: cannot write {out_p}\n"
+                  "  It is open in another program - Excel takes an exclusive lock.\n"
+                  "  Close it and run again. Nothing has been changed.")
+            return 2
 
     con = sqlite3.connect(a.db)
     con.row_factory = sqlite3.Row
@@ -137,11 +163,29 @@ def main() -> int:
     rejected_values: list[tuple[str, str]] = []
     withheld: list[tuple[str, str, str, str]] = []
     held: list[str] = []
+    split_reported: list[tuple[str, str, list]] = []
     today = date.today()
     stale_status = 0
 
+    # ONE EVENT_ID, TWO DIFFERENT CALLS - DO NOT GUESS WHICH THE DATABASE MEANS.
+    # MD&M West 2027 appears twice under one EVENT_ID: the SPE MiniTec track (deadline
+    # 2026-09-01, cited to spemedicalplastics.org, still open) and the MedTech Conference track
+    # (2026-07-24, closed). The database holds one row per EVENT_ID, so it physically cannot
+    # represent both - and writing its single value into both rows would have destroyed a live
+    # opportunity while looking like a tidy correction. R10 says identity is call-level; where
+    # the delivery disagrees with itself, the honest move is to touch neither row and say so.
+    split: dict[str, set] = {}
     for r in rows:
         raw = _norm(r.get("EVENT_ID"))
+        split.setdefault(raw, set()).add(_norm(r.get("SUBMISSION DEADLINE")))
+    contested = {k for k, v in split.items() if len(v) > 1}
+
+    for r in rows:
+        raw = _norm(r.get("EVENT_ID"))
+        if raw in contested:
+            if raw not in [c[0] for c in split_reported]:
+                split_reported.append((raw, _norm(r.get("CONFERENCE")), sorted(split[raw])))
+            continue
         f = facts.get(up_to_canon.get(raw, raw))
         if not f:
             unmatched.append(r.get("CONFERENCE", "?"))
@@ -230,6 +274,73 @@ def main() -> int:
         for n, o, w, st in risky:
             print(f"   {n[:42]:<42} {o or '(blank)':<14} -> {w or '(blank)':<14} [{st}]")
         print(f"{'!'*88}")
+
+    # ---- per-row overrides, applied AFTER the database merge -------------------------------
+    # These exist for rows the split guard above deliberately refuses to touch. MD&M West 2027
+    # runs two calls under one EVENT_ID - the MedTech Conference call (closed 24 Jul) and the
+    # SPE MiniTec track (DEADLINE September 1, 2026, live, evidenced at mpd.4spe.org). The
+    # database can hold one of those. The delivery holds both, and this is how the second one
+    # gets a working citation without pretending the database knows about it.
+    applied_over: list[tuple[str, str, str, str]] = []
+    if a.overrides:
+        with open(a.overrides, encoding="utf-8-sig", newline="") as fh:
+            over = list(csv.DictReader(fh))
+        for o in over:
+            eid, track = _norm(o.get("EVENT_ID")), _norm(o.get("TRACK"))
+            reason = _norm(o.get("REASON"))
+            if not reason:
+                print(f"SKIP override for {eid[:40]} - no REASON given")
+                continue
+            targets = [r for r in rows if _norm(r.get("EVENT_ID")) == eid
+                       and (not track or _norm(r.get("TRACK")) == track)]
+            if not targets:
+                print(f"SKIP override - no row matches EVENT_ID={eid[:44]} TRACK={track!r}")
+                continue
+            fields = {k: v for k, v in o.items()
+                      if k not in ("EVENT_ID", "TRACK", "REASON") and _norm(v)}
+            # Same bar as everywhere else: a quote must be on the page we cite for it.
+            q = _norm(fields.get("DEADLINE_QUOTE"))
+            u = _norm(fields.get("DEADLINE_EVIDENCE_URL"))
+            if q:
+                from src.cfp_monitor.verify import fetch_text, normalize_text
+                text, _n = fetch_text(u)
+                if not text:
+                    try:
+                        import asyncio as _aio
+                        _sp = _ilu.spec_from_file_location(
+                            "_ae2", Path(__file__).resolve().parent / "audit_evidence.py")
+                        _aem = _ilu.module_from_spec(_sp)
+                        _sp.loader.exec_module(_aem)
+                        text = _aio.run(_aem.escalate([u])).get(u, ("", ""))[0]
+                    except Exception:
+                        text = ""
+                if normalize_text(q) not in normalize_text(text):
+                    print(f"REJECT override for {eid[:36]} - quote is NOT on {u[:44]}")
+                    continue
+            for r in targets:
+                for k, v in fields.items():
+                    if k in r and _norm(r[k]) != _norm(v):
+                        applied_over.append((_norm(r.get("CONFERENCE"))[:38], k,
+                                             _norm(r[k]), _norm(v)))
+                        if a.apply:
+                            r[k] = _norm(v)
+
+    if applied_over:
+        print(f"\n{len(applied_over)} per-row override(s) applied "
+              f"(rows the database cannot represent):")
+        for n, k, o, w in applied_over:
+            print(f"     {n:<38} {k}")
+            print(f"        {o[:80] or '(blank)'}")
+            print(f"     -> {w[:80] or '(blank)'}")
+
+    if split_reported:
+        print(f"\n{len(split_reported)} EVENT_ID(s) carry MORE THAN ONE deadline in the "
+              f"delivery - left completely untouched:")
+        for eid, name, vals in split_reported:
+            print(f"     {name[:44]:<44} {' | '.join(v or '(blank)' for v in vals)}")
+            print(f"        {eid}")
+        print("   The database holds one row per EVENT_ID and cannot say which call it means.")
+        print("   These are separate calls sharing an id (R10) - upstream needs to split them.")
 
     if held:
         print(f"\n{len(held)} row(s) held out by --exclude, untouched:")

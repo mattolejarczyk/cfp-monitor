@@ -249,8 +249,14 @@ def retire_deadlines(store, csv_path: str, apply: bool) -> int:
             store.db.execute(
                 "UPDATE grounding_facts SET deadline='', cfp_model=?,"
                 " verify_state=?, verify_detail=?,"
+                # THE OLD QUOTE SUPPORTED THE VALUE WE JUST REMOVED, so it always goes -
+                # replaced by the closure quote if one was supplied, cleared otherwise. Keeping
+                # it left CS MANTECH 2027 retired to blank while still carrying "Abstract
+                # submission closes on November 28th, 2025." - which is the 2026 edition's
+                # deadline, on a 2027 row, evidencing a value that no longer exists.
+                # The evidence URL is kept when none is given: it is still the page to watch.
                 " deadline_evidence_url=COALESCE(NULLIF(?,''), deadline_evidence_url),"
-                " deadline_quote=COALESCE(NULLIF(?,''), deadline_quote)"
+                " deadline_quote=?"
                 " WHERE event_id=?",
                 (model, "verified" if quote else "not_found",
                  f"[retired] {reason}", url, quote, eid))
