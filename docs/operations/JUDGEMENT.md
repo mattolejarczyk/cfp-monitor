@@ -164,6 +164,35 @@ these failures produced confident output from a measurement that was not measuri
 
 ---
 
+## 13. The code you tested is not the code that runs on Sunday - 2026-08-12
+
+Wiring weekly discovery, everything passed: 467 tests, both refusal paths, the batch control
+flow exercised with the interpreter calls stubbed. It would not have run.
+
+The scheduled task does not point at the repo. It runs
+`AppData\Local\CFP-Monitor\scripts\run_weekly.bat`, a **file copy**, and that copy had drifted
+32 files behind - still on the pre-reorg layout, still running the old `extract_citations.py`
+and `apply_resolutions.py`, which is to say the old merge gate. Copying the new scripts alone
+would not have helped: live `verify.py` has neither `_parse_date` nor `is_homepage`, so the job
+would have died at import, unattended, at 01:00, with the failure visible only in a log nobody
+opens unless something else goes wrong.
+
+Two further defects in the same wiring, both invisible to every test:
+
+- `%ERRORLEVEL%` inside a parenthesised batch block expands when the block is **parsed**, so
+  the exit code logged for discovery would have been a stale value. Moved to a subroutine.
+- `sys.executable` cannot run upstream's discovery script - it needs `google-genai` and
+  `pandas`, which our venv has no reason to carry. And searching PATH does not fix it: under
+  `uv` the venv shadows `python`, and `python3` here is the WindowsApps stub. Candidates are
+  now proved by import before use, including the `py` launcher.
+
+**The general form:** a green test suite says the code is correct. It says nothing about
+whether that code is the code being executed, by which interpreter, or in which copy of the
+tree. For anything scheduled, verify the deployed artefact, not the source - and run it once
+by hand, reading the log, before trusting the schedule.
+
+---
+
 ## The shape all of these share
 
 Every one is a case where the code was correct when written and the assumption quietly
