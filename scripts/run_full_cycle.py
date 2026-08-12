@@ -149,6 +149,18 @@ def main() -> int:
               "fetches each cited page through the ladder and records what it actually says",
               [PY, "scripts/audit_evidence.py", "--db", a.db], timeout=7200, optional=True)
 
+    # ---- stage 3b: DNS ------------------------------------------------------------------
+    # Runs whether or not --apply, because it writes nothing and costs seconds. Deliberately
+    # BEFORE the page build so the page can withhold links to hosts that have gone away.
+    dead_hosts = out_dir / f"dead_hosts_{stamp}.txt"
+    s3b = stage("3b", "do all cited hosts still exist",
+                "DNS only. A lapsed domain never reaches a server, so the ladder reads it as "
+                "'blocked, not disproven' and nothing else in the pipeline notices",
+                [PY, "scripts/check_dns.py", "-i", a.delivery, "--db", a.db,
+                 "-o", str(dead_hosts)], timeout=600, optional=True)
+    if s3b.rc != 0:
+        s3b.note = "dead hosts found - see above"
+
     # ---- stage 4: refresh the delivery -------------------------------------------------
     cmd = [PY, "scripts/refresh_delivery.py", "-i", a.delivery, "--db", a.db,
            "-o", str(refreshed), "--only-verified"]
@@ -173,7 +185,7 @@ def main() -> int:
               "evidence inputs are REQUIRED - without them the page reports zeros as findings",
               [PY, str(pb.name), "-i", str(src), "--dead-links", str(Path(a.dead_links).resolve()),
                "--checks", str(Path(a.checks).resolve()), "--date", f"{datetime.now():%Y-%m-%d}",
-               "-o", str(page)],
+               "--dead-hosts", str(dead_hosts.resolve()), "-o", str(page)],
               cwd=pb.parent, timeout=1800)
     else:
         print("\n[5] SKIPPED (no --page-builder given)")
@@ -189,9 +201,10 @@ def main() -> int:
     print("=" * 88)
     worst = 0
     for s in stages:
-        mark = "ok  " if s.rc == 0 else "FAIL"
+        mark = "ok  " if s.rc == 0 else ("FIND" if s.key == "3b" else "FAIL")
         worst = max(worst, 0 if s.rc == 0 else 1)
-        print(f"  [{s.key}] {mark}  {s.title:<44} {s.secs:>6.0f}s")
+        print(f"  [{s.key}] {mark}  {s.title:<44} {s.secs:>6.0f}s"
+              + (f"   {s.note}" if s.note else ""))
     if a.apply:
         for label, p in (("refreshed CSV", refreshed), ("customer page", page)):
             print(f"  {label:<16} {'written  ' if p.exists() else 'not built'} {p}")

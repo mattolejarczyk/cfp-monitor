@@ -123,6 +123,24 @@ answer. We were one step from telling upstream their work had failed.
 Eighteen "contradictions" went the same way: thirteen were our own date parser not knowing
 "May 8th", "9-28-2026" and "28.9.2026". Had they been sent, most would have been withdrawn.
 
+## 11. A host that does not resolve is a different failure from a page that will not load
+
+Rule 7 says a 403 or a timeout is "blocked, not disproven". True - and it hid six dead domains
+for weeks, because a lapsed domain also surfaces as a timeout. The request never reaches a
+server, so it looks identical to a site refusing automation.
+
+`scripts/check_dns.py` separates them, costs seconds, and needs no browser. Run it before any
+send. On 2026-08-11 it found 6 of 403 hosts gone, across 15 customer-facing URL fields - links
+a customer clicks and gets nothing.
+
+**And resolving is not being correct.** `ablc.co` resolves, loads, and reads cleanly. It is
+Advanced Body & Laser Center, a medspa, not the Advanced Bioeconomy Leadership Conference. It
+would have passed DNS, HTTP and readability checks. The real site was found by following
+Biofuels Digest's own navigation - **authority, not resemblance**. When replacing a dead link,
+the question is never "does this look like the right name" but "who would know, and what do
+they link to".
+
+
 ---
 
 ## The shape all of these share
