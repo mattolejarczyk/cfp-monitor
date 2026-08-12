@@ -161,6 +161,26 @@ def main() -> int:
     if s3b.rc != 0:
         s3b.note = "dead hosts found - see above"
 
+    # ---- stage 3c: export the verdicts the page reads -----------------------------------
+    # Without this the audit updates the DATABASE and the page keeps showing the previous
+    # run's numbers, because it reads a CSV nothing regenerated. That gap was live on
+    # 2026-08-11: 43 of the 96 rows the page called "Need to Verify" had been verified hours
+    # earlier. Only meaningful after stage 3, so it is skipped when the audit is.
+    checks_path = Path(a.checks)
+    if a.apply and not a.skip_audit:
+        fresh = out_dir / f"deadline_checks_{stamp}.csv"
+        s3c = stage("3c", "export deadline verdicts for the page",
+                    "carries the audit into the file the page reads - the audit alone does not",
+                    [PY, "scripts/export_checks.py", "--db", a.db, "-o", str(fresh)],
+                    timeout=600, optional=True)
+        if s3c.rc == 0 and fresh.exists():
+            checks_path = fresh
+        else:
+            print("    ! keeping the existing checks file - the page will show stale verdicts")
+    else:
+        print("
+[3c] SKIPPED - needs --apply and the audit stage")
+
     # ---- stage 4: refresh the delivery -------------------------------------------------
     cmd = [PY, "scripts/refresh_delivery.py", "-i", a.delivery, "--db", a.db,
            "-o", str(refreshed), "--only-verified"]
@@ -184,7 +204,7 @@ def main() -> int:
         stage("5", "rebuild the customer page",
               "evidence inputs are REQUIRED - without them the page reports zeros as findings",
               [PY, str(pb.name), "-i", str(src), "--dead-links", str(Path(a.dead_links).resolve()),
-               "--checks", str(Path(a.checks).resolve()), "--date", f"{datetime.now():%Y-%m-%d}",
+               "--checks", str(checks_path.resolve()), "--date", f"{datetime.now():%Y-%m-%d}",
                "--dead-hosts", str(dead_hosts.resolve()), "-o", str(page)],
               cwd=pb.parent, timeout=1800)
     else:
