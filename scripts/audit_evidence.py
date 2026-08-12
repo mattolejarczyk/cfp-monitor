@@ -172,6 +172,21 @@ def exportable(verdict: str, quote: str, source_url: str, event_name: str) -> tu
     return 1, ""
 
 
+def real_words(text: str, floor: int = 3) -> int:
+    """Words a human would read, after removing what only looks like text.
+
+    LENGTH IS NOT CONTENT, and the gap between them is large enough to reverse a conclusion.
+    embedded-world.eu/en/conference/call-for-papers returns 4,512 characters and reads as a
+    substantial page by every length test we had. Roughly 4,400 of those characters are one
+    base64 SVG logo. The actual copy is twenty-five words of German saying something went
+    wrong. We measured length, concluded the page was fine but undated, and were about to put
+    the link in front of the customer as "the call page".
+    """
+    t = re.sub(r"data:[^)\s]+", " ", text or "")      # inline SVG / base64 is not reading matter
+    t = re.sub(r"https?://\S+", " ", t)               # nor is a wall of URLs
+    return sum(1 for w in re.split(r"[^A-Za-z]+", t) if len(w) > floor)
+
+
 def readable(text: str) -> tuple[bool, str]:
     if not text:
         return False, "page could not be read"
@@ -181,6 +196,11 @@ def readable(text: str) -> tuple[bool, str]:
     if SOFT_404.search(head):
         m = SOFT_404.search(head)
         return False, f'soft 404 - page says "{m.group(0)}"'
+    # A page can clear every length and status check and still say nothing. Checked AFTER the
+    # soft-404 test so the more specific reason wins when both apply.
+    n = real_words(text)
+    if n < 40:
+        return False, f"page has almost no readable text ({n} words, {len(text)} chars)"
     return True, ""
 
 

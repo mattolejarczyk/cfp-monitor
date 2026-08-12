@@ -141,6 +141,27 @@ the question is never "does this look like the right name" but "who would know, 
 they link to".
 
 
+## 12. Length is not content, and a URL name is not a page
+
+**2026-08-12.** Upstream returned `embedded-world.eu/en/conference/call-for-papers` as a call
+page. It is 4,512 characters, which passes every length and status check we had. About 4,400 of
+those characters are one base64 SVG logo. The actual copy is twenty-five words of German saying
+something went wrong, and the logo belongs to a different company, so the URL redirects.
+
+We got there in two wrong steps, both worth naming:
+
+1. Judged it by the URL. A path called `/call-for-papers` is a claim about a page, not the page.
+2. "Checked" it with a regex over the text and reported zero dates found - without noticing the
+   text was a data URI. The check ran, returned a number, and the number meant nothing.
+
+`audit_evidence.real_words()` now strips inline data URIs and bare URLs before counting words
+longer than three letters, and `readable()` requires 40. Calibrated against measured pages: the
+error page scores 25, the thinnest legitimate page we found scores 136.
+
+**The general form:** when a check returns a number, ask what the number is counting. Both of
+these failures produced confident output from a measurement that was not measuring the thing.
+
+
 ---
 
 ## The shape all of these share
