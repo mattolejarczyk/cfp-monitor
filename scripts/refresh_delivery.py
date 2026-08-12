@@ -13,7 +13,7 @@ So the delivered CSV stays the base. Every column and every row survives untouch
 database owns that field and holds something different.
 
 WHAT PROBLEM IT SOLVES
-The HTML page Nicolia reads is built from the CSV. Corrections land in the database. Between
+The HTML page the customer reads is built from the CSV. Corrections land in the database. Between
 2026-08-07 and 2026-08-11 those diverged: GreenBiz was corrected by eight months, two rows were
 retired, 25 citations were verified - and the page would have shown none of it, because nothing
 carried the database back to the file.

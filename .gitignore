@@ -25,7 +25,7 @@ results.json
 .vscode/
 
 # customer delivery data - THIS REPO IS PUBLIC.
-# Market rows, citations and audits are Nicolia's asset and must never be pushed here. The
+# Market rows, citations and audits are the customer's asset and must never be pushed here. The
 # private upstream repo holds anything that has to be version-controlled. Nothing covered
 # these before, so a single `git add -A` from the repo root was enough to publish a delivery.
 citations_extracted.csv

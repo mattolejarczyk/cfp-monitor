@@ -289,7 +289,7 @@ print(len(rows), dict(Counter(r['CONFIDENCE'] for r in rows)))"
 Sanity checks: no `Confirmed` row should be a projection; `Check link` means a dead submission
 URL; blank `CONFIDENCE` should appear only on rows nobody can act on.
 
-### The HTML page Nicolia actually reads
+### The HTML page the customer actually reads
 
 Built in the upstream working area, not this repo. **All three inputs are required** - the two
 evidence flags were optional until 2026-08-11 and omitting them produced a page reading
