@@ -45,12 +45,17 @@ set "LOG=%LOGDIR%\weekly_%STAMP%.log"
 
 REM ---- CDP Chrome -----------------------------------------------------------
 set "WE_STARTED_CHROME="
+
+REM Resolve Chrome OUTSIDE the block below. Inside one, "!CHROME!" needs delayed expansion
+REM which this script does not enable, so the 32-bit fallback never took effect and the
+REM start line had to hard-code the 64-bit path to work at all.
+set "CHROME=%ProgramFiles%\Google\Chrome\Application\chrome.exe"
+if not exist "%CHROME%" set "CHROME=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
+
 venv\Scripts\python.exe scripts\cdp_ctl.py check >nul 2>&1
 if errorlevel 1 (
   echo Starting CDP Chrome on 9222 >> "%LOG%"
-  set "CHROME=%ProgramFiles%\Google\Chrome\Application\chrome.exe"
-  if not exist "!CHROME!" set "CHROME=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
-  start "" /min "%ProgramFiles%\Google\Chrome\Application\chrome.exe" ^
+  start "" /min "%CHROME%" ^
     --remote-debugging-port=9222 --remote-allow-origins=* ^
     --user-data-dir="%USERPROFILE%\cfp-cdp-profile" ^
     --no-first-run --no-default-browser-check about:blank
@@ -78,21 +83,11 @@ REM proven on the page - so --apply here cannot land an unverified date.
 REM Skipped silently if the key or upstream's script is absent; verification has
 REM already run by this point and must not be lost to a discovery failure.
 REM ---------------------------------------------------------------------------
-set "DISCOVERY=%USERPROFILE%\Desktop\Nicolia-PR-Prime\Markets\extract_candidate_urls.py"
-set "AUDITED=%USERPROFILE%\Desktop\Nicolia-PR-Prime\handoff-files\unconfirmed_citations_20260811.csv"
-if not defined GEMINI_API_KEY (
-  echo Skipping discovery - GEMINI_API_KEY not set >> "%LOG%"
-) else if not exist "%DISCOVERY%" (
-  echo Skipping discovery - upstream script not found at %DISCOVERY% >> "%LOG%"
-) else if not exist "%AUDITED%" (
-  echo Skipping discovery - audit source not found at %AUDITED% >> "%LOG%"
-) else (
-  echo Weekly discovery starting >> "%LOG%"
-  venv\Scripts\python.exe scripts\weekly_discovery.py --db cfp_monitor.db ^
-    --source "%AUDITED%" --out-dir runs_out --max-rows 25 ^
-    --discovery-script "%DISCOVERY%" --run-discovery --apply >> "%LOG%" 2>&1
-  echo Discovery finished with exit code %ERRORLEVEL% >> "%LOG%"
-)
+REM A subroutine, not an if/else block: %ERRORLEVEL% inside a parenthesised block expands
+REM when the block is PARSED, not when it runs, so the exit code logged there would be a
+REM stale value. Calling out avoids that and avoids a goto out of a block.
+call :discovery
+
 
 if defined WE_STARTED_CHROME (
   echo Stopping the CDP Chrome we started >> "%LOG%"
@@ -101,3 +96,43 @@ if defined WE_STARTED_CHROME (
 
 echo Finished with exit code %RC%. Log: %LOG%
 exit /b %RC%
+
+
+REM ---------------------------------------------------------------------------
+REM :discovery
+REM Never changes %RC%. Verification has already run by the time we get here and a
+REM discovery failure must not be reported as a failed weekly sweep.
+REM
+REM The candidate list is REGENERATED from the database every week, never read from a
+REM dated snapshot. A frozen file could only ever hold the 93 rows audited on 2026-08-11,
+REM so a row that goes unconfirmed in October would never enter the queue - and nothing
+REM would report the omission. Verified 2026-08-12: regenerating gives 94 rows and picks
+REM out the same 9 open ones.
+REM ---------------------------------------------------------------------------
+:discovery
+set "DISCOVERY=%USERPROFILE%\Desktop\Nicolia-PR-Prime\Markets\extract_candidate_urls.py"
+set "AUDITED=%LOGDIR%\unconfirmed_%STAMP%.csv"
+
+if not defined GEMINI_API_KEY (
+  echo Skipping discovery - GEMINI_API_KEY not set >> "%LOG%"
+  exit /b 0
+)
+if not exist "%DISCOVERY%" (
+  echo Skipping discovery - upstream script not found at %DISCOVERY% >> "%LOG%"
+  exit /b 0
+)
+
+echo Rebuilding the unconfirmed list from the database >> "%LOG%"
+venv\Scripts\python.exe scripts\unconfirmed_citations.py --db cfp_monitor.db ^
+  --seed-dir market_sheets --out "%AUDITED%" >> "%LOG%" 2>&1
+if not exist "%AUDITED%" (
+  echo Skipping discovery - could not rebuild the unconfirmed list >> "%LOG%"
+  exit /b 0
+)
+
+echo Weekly discovery starting >> "%LOG%"
+venv\Scripts\python.exe scripts\weekly_discovery.py --db cfp_monitor.db ^
+  --source "%AUDITED%" --out-dir "%LOGDIR%" --max-rows 25 ^
+  --discovery-script "%DISCOVERY%" --run-discovery --apply >> "%LOG%" 2>&1
+echo Discovery finished with exit code %ERRORLEVEL% >> "%LOG%"
+exit /b 0
