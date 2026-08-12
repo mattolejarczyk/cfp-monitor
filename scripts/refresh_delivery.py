@@ -70,6 +70,25 @@ def _norm(v) -> str:
     return "" if v is None else str(v).strip()
 
 
+# EVERY WAY WE DELIBERATELY EMPTY A FIELD, IN ONE PLACE.
+# A blank in the database normally means "never populated" and must not overwrite customer
+# data. The exceptions are the paths where we cleared it ON PURPOSE, and each writes a marker
+# into verify_detail. This test has now been too narrow twice: first it checked
+# cfp_model == "Not Announced", which missed a call that ran and CLOSED; then it checked for
+# "[retired]" alone, which missed R1 withdrawals and left four dead 404 links in the delivery
+# while the database said they were gone. A literal in the condition is how that keeps
+# happening, so the markers live here and every writer must add its own.
+CLEAR_MARKERS = ("[retired]", "[R1 withdrawal]")
+
+# Columns a deliberate clear may empty. Everything else keeps the customer value even when
+# the database is blank, because for those a blank means "never populated".
+CLEARABLE = {"SUBMISSION DEADLINE", "DEADLINE_EVIDENCE_URL", "DEADLINE_QUOTE"}
+
+
+def _is_deliberate_clear(verify_detail: str) -> bool:
+    return _norm(verify_detail).startswith(CLEAR_MARKERS)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Merge database corrections into the delivery CSV.")
     ap.add_argument("-i", "--input", required=True, help="the delivered CSV (the base)")
@@ -208,10 +227,17 @@ def main() -> int:
             # status Closed, so its blank was silently skipped and the disproven date stayed in
             # the customer's file. The retirement marker in verify_detail is the explicit
             # signal; anything else empty still means "never populated", not "cleared".
-            retired = _norm(f["verify_detail"]).startswith("[retired]")
+            # WHICH FIELDS A DELIBERATE CLEAR IS ALLOWED TO EMPTY. Scoping this to
+            # SUBMISSION DEADLINE alone was the third miss in the same place: --retire empties
+            # the DEADLINE, but an R1 withdrawal empties the CITATION and keeps the date, so
+            # its blanks were skipped and six rows kept a dead 404 link in the customer file
+            # while the database showed none. The marker says the clear was intentional; this
+            # says which columns that licence covers.
+            retired = _is_deliberate_clear(f["verify_detail"])
             if not new and old:
-                if not (col == "SUBMISSION DEADLINE"
-                        and (retired or _norm(f["cfp_model"]) == "Not Announced")):
+                intentional = retired or (col == "SUBMISSION DEADLINE"
+                                          and _norm(f["cfp_model"]) == "Not Announced")
+                if not (col in CLEARABLE and intentional):
                     continue
             # A DATE COLUMN TAKES A DATE OR NOTHING. Our own database holds
             # "Not yet published for 2027" in SUBMISSION DEADLINE for CS MANTECH - the same

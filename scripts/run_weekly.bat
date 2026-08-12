@@ -65,6 +65,35 @@ echo Weekly verification starting %STAMP%
 venv\Scripts\python.exe scripts\weekly_verify.py --db cfp_monitor.db >> "%LOG%" 2>&1
 set "RC=%ERRORLEVEL%"
 
+REM ---------------------------------------------------------------------------
+REM Weekly DISCOVERY - the only part of this job that spends API quota.
+REM Scoped to rows that are unconfirmed AND still have a future deadline: 9 today,
+REM so ~9 grounded requests a week rather than the ~400 a full re-research costs.
+REM That scoping is what makes it safe to run weekly; the script refuses outright
+REM if more rows qualify than --max-rows, because a spike means a data problem.
+REM Added 2026-08-12: the customer briefing promises new 2027 calls are caught
+REM within a week, and before this the answer was a month.
+REM Anything it finds still has to clear the merge guard - fetched, and the quote
+REM proven on the page - so --apply here cannot land an unverified date.
+REM Skipped silently if the key or upstream's script is absent; verification has
+REM already run by this point and must not be lost to a discovery failure.
+REM ---------------------------------------------------------------------------
+set "DISCOVERY=%USERPROFILE%\Desktop\Nicolia-PR-Prime\Markets\extract_candidate_urls.py"
+set "AUDITED=%USERPROFILE%\Desktop\Nicolia-PR-Prime\handoff-files\unconfirmed_citations_20260811.csv"
+if not defined GEMINI_API_KEY (
+  echo Skipping discovery - GEMINI_API_KEY not set >> "%LOG%"
+) else if not exist "%DISCOVERY%" (
+  echo Skipping discovery - upstream script not found at %DISCOVERY% >> "%LOG%"
+) else if not exist "%AUDITED%" (
+  echo Skipping discovery - audit source not found at %AUDITED% >> "%LOG%"
+) else (
+  echo Weekly discovery starting >> "%LOG%"
+  venv\Scripts\python.exe scripts\weekly_discovery.py --db cfp_monitor.db ^
+    --source "%AUDITED%" --out-dir runs_out --max-rows 25 ^
+    --discovery-script "%DISCOVERY%" --run-discovery --apply >> "%LOG%" 2>&1
+  echo Discovery finished with exit code %ERRORLEVEL% >> "%LOG%"
+)
+
 if defined WE_STARTED_CHROME (
   echo Stopping the CDP Chrome we started >> "%LOG%"
   venv\Scripts\python.exe scripts\cdp_ctl.py stop >> "%LOG%" 2>&1
