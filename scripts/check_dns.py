@@ -52,6 +52,9 @@ def main() -> int:
     ap.add_argument("-i", "--input", help="delivery CSV")
     ap.add_argument("--db", help="also sweep the database")
     ap.add_argument("-o", "--output", help="write the dead hosts here, one per line")
+    ap.add_argument("--also", action="append",
+                    help="another dead-host list to fold in. Repeatable. Use for hosts known "
+                         "dead from earlier runs whose URLs still sit in stored evidence.")
     ap.add_argument("--timeout", type=float, default=5.0)
     a = ap.parse_args()
     if not a.input and not a.db:
@@ -89,10 +92,34 @@ def main() -> int:
     print(f"\n{len(uses)} distinct host(s) to resolve...\n")
     dead = {h: v for h, v in uses.items() if not resolves(h)}
 
+    # THE LIST ACCUMULATES. A host that stopped resolving does not come back, and a URL
+    # recorded against it stays unclickable forever - "Page we checked" keeps pointing at the
+    # page an audit read on the day. Overwriting with today's findings emptied the list the
+    # moment we fixed the live data, which would have let the page offer those dead links
+    # again. Found before the first full run, not after.
+    prior: set[str] = set()
+    if a.output and Path(a.output).exists():
+        prior = {ln.strip().lower() for ln in Path(a.output).read_text(encoding="utf-8").splitlines()
+                 if ln.strip()}
+    for extra in (a.also or []):
+        p = Path(extra)
+        if p.exists():
+            prior |= {ln.strip().lower() for ln in p.read_text(encoding="utf-8").splitlines()
+                      if ln.strip()}
+
+    def _write(found: dict) -> None:
+        if not a.output:
+            return
+        allhosts = sorted(prior | set(found))
+        Path(a.output).write_text("\n".join(allhosts) + ("\n" if allhosts else ""),
+                                  encoding="utf-8")
+        carried = len(allhosts) - len(found)
+        print(f"\nwrote {a.output}  ({len(found)} found now"
+              f"{f', {carried} carried from previous runs' if carried > 0 else ''})")
+
     if not dead:
         print(f"OK - all {len(uses)} hosts resolve.")
-        if a.output:
-            Path(a.output).write_text("", encoding="utf-8")
+        _write({})
         return 0
 
     fields = sum(len(v) for v in dead.values())
@@ -104,9 +131,7 @@ def main() -> int:
     print("\nThese are links a customer clicks and gets nothing. Find the replacement by")
     print("AUTHORITY - the organiser's own site linking to it - not by a name that looks right.")
 
-    if a.output:
-        Path(a.output).write_text("\n".join(sorted(dead)) + "\n", encoding="utf-8")
-        print(f"\nwrote {a.output}")
+    _write(dead)
     return 1
 
 

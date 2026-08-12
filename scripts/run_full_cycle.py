@@ -157,7 +157,10 @@ def main() -> int:
                 "DNS only. A lapsed domain never reaches a server, so the ladder reads it as "
                 "'blocked, not disproven' and nothing else in the pipeline notices",
                 [PY, "scripts/check_dns.py", "-i", a.delivery, "--db", a.db,
-                 "-o", str(dead_hosts)], timeout=600, optional=True)
+                 "-o", str(dead_hosts),
+                 # hosts known dead from earlier runs, whose URLs still sit in stored evidence
+                 "--also", str(out_dir / "dead_hosts_historical.txt")],
+                timeout=600, optional=True)
     if s3b.rc != 0:
         s3b.note = "dead hosts found - see above"
 
