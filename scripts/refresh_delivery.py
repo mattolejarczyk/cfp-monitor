@@ -296,8 +296,13 @@ def main() -> int:
             if not targets:
                 print(f"SKIP override - no row matches EVENT_ID={eid[:44]} TRACK={track!r}")
                 continue
-            fields = {k: v for k, v in o.items()
-                      if k not in ("EVENT_ID", "TRACK", "REASON") and _norm(v)}
+            # Blank in the CSV means "not specified here"; the sentinel means "clear this".
+            # Without it there was no way to remove a value - ABLC kept a DEADLINE_EVIDENCE_URL
+            # pointing at a domain that no longer exists, citing a deadline that is itself
+            # blank. A citation to nothing, for nothing.
+            fields = {k: ("" if _norm(v) == "__CLEAR__" else v) for k, v in o.items()
+                      if k not in ("EVENT_ID", "TRACK", "REASON")
+                      and (_norm(v) or _norm(v) == "__CLEAR__")}
             # Same bar as everywhere else: a quote must be on the page we cite for it.
             q = _norm(fields.get("DEADLINE_QUOTE"))
             u = _norm(fields.get("DEADLINE_EVIDENCE_URL"))
