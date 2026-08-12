@@ -36,3 +36,15 @@ candidate_urls*.csv
 runs_out/
 # NOT market_sheets/ wholesale - that folder has its own rule, and held_rows.txt is a record
 # of deliberate decisions that must stay tracked.
+# Operational inputs that carry delivery rows. These slipped past the rules above on
+# 2026-08-11 and reached four local commits before a pre-push check caught them: the
+# earlier patterns named citations_* and candidate_urls* but not these. Name the SHAPE of
+# the data, not the filenames you happen to have used.
+operator_verified*.csv
+overrides*.csv
+retire_*.csv
+dead_hosts*.txt
+pilot*_out.csv
+pilot*_recovered*.csv
+rerun_*.csv
+menu_followups*.csv
