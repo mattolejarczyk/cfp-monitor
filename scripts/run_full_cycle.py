@@ -178,8 +178,7 @@ def main() -> int:
         else:
             print("    ! keeping the existing checks file - the page will show stale verdicts")
     else:
-        print("
-[3c] SKIPPED - needs --apply and the audit stage")
+        print("\n[3c] SKIPPED - needs --apply and the audit stage")
 
     # ---- stage 4: refresh the delivery -------------------------------------------------
     cmd = [PY, "scripts/refresh_delivery.py", "-i", a.delivery, "--db", a.db,
