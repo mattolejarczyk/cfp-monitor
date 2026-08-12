@@ -298,11 +298,22 @@ broken page; it is a confident claim that nothing was verified and nothing is br
 builder now refuses rather than allowing it.
 
 ```bash
-python build_review_page.py -i ALL_MARKETS_AUDITED_<date>.csv \
-  --dead-links ../handoff-files/dead_submission_links_<date>.csv \
-  --checks deadline_checks_<date>.csv \
-  -o Conference_Review_<date>.html
+uv run python scripts/build_review_page.py -i <Markets>/ALL_MARKETS_AUDITED_<date>.csv \
+  --dead-links <handoff>/dead_submission_links_<date>.csv \
+  --checks <Markets>/deadline_checks_<date>.csv \
+  --dead-hosts <Markets>/dead_hosts_<date>.txt \
+  -o <Markets>/Conference_Review_<date>.html
 ```
+
+**This lives in THIS repo as of 2026-08-12, not in the Markets folder.** It is the one artefact
+the customer actually reads, it ran for months at 615 lines with zero tests, and a dead link
+reached a page that had already been cleared as safe. `tests/test_review_page.py` covers the
+decisions it makes, never the rendering. The Markets copy is gone so the two cannot drift.
+
+**`--dead-links` must be no older than the last link check.** That file is a point-in-time
+export of the `link_checks` table. On 2026-08-12 the page was built from an Aug-8 export while
+the table had known since Aug-9 that a cited page was dead - and the link shipped to the
+customer. If the export is older than `max(checked_at)`, re-export before building.
 
 Expected on the 2026-08-07 delivery: `406 rows; 41 dead links; 74 deadlines confirmed`. If any
 of those three is zero, an input is missing - check before reading anything into the numbers.
