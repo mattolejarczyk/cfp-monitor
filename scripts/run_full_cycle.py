@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import sqlite3
 import subprocess
 import sys
 import time
@@ -107,6 +108,29 @@ def main() -> int:
         for p in problems:
             print(f"  - {p}")
         return 2
+
+    # ---- stage 0b: back up the database BEFORE anything can write to it ------------------
+    # Stages 2 and 3 write in place. The runbook has said "back up, then import" since August
+    # and this script did not do it - the one instruction most worth automating was the one
+    # left to memory. Taken here, before any writer starts, so the copy cannot be torn.
+    restore_hint = ""
+    if a.apply:
+        src = Path(a.db)
+        bak = src.with_name(f"{src.stem}.backup-precycle-{datetime.now():%Y%m%d-%H%M%S}.db")
+        print(f"\n[0b] backing up the database before any stage writes")
+        try:
+            with sqlite3.connect(str(src)) as s_con, sqlite3.connect(str(bak)) as d_con:
+                s_con.backup(d_con)          # safe on a live file, unlike a plain copy
+            n = sqlite3.connect(str(bak)).execute(
+                "select count(*) from grounding_facts").fetchone()[0]
+            print(f"     {bak.name}  ({bak.stat().st_size / 1e6:.1f} MB, {n} rows - readable)")
+            restore_hint = (f'copy /Y "{bak}" "{src}"')
+            print(f"     restore with:  {restore_hint}")
+        except Exception as e:
+            print(f"     REFUSING TO CONTINUE - backup failed: {type(e).__name__}: {e}")
+            return 2
+    else:
+        print("\n[0b] no backup taken - report-only run writes nothing")
 
     stages: list[Stage] = []
 

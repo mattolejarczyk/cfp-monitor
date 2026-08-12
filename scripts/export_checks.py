@@ -66,7 +66,8 @@ def main() -> int:
     # would have tripled the alarm on the customer's page using rows that carry no claim.
     rows = list(con.execute(
         "select e.event_id, e.verdict, e.source_url, e.found_quote, e.quote, e.detail, "
-        "       e.fetched_at "
+        "       e.fetched_at, "
+        "       (e.source_url = g.deadline_evidence_url) as is_current "
         "from evidence e join grounding_facts g on g.event_id = e.event_id "
         "where e.field='deadline' and coalesce(e.verdict,'') <> '' "
         f"  and e.origin = ? "
@@ -79,16 +80,24 @@ def main() -> int:
               "report 0 confirmed, which reads as a finding rather than a missing input.")
         return 2
 
+    def rank(x):
+        # THE CURRENT CITATION WINS OUTRIGHT. The badge answers "did we open the page THIS ROW
+        # cites and find the deadline on it", so evidence against a SUPERSEDED url is history,
+        # not a verdict. Without this, worst-first let a stale 'contradicted' from before a
+        # citation was replaced outrank the fresh 'verified' for the new page - Humanoids,
+        # GreenBiz and World PM would still have read "Disputed" after a full re-audit, which
+        # is the exact thing tonight's run exists to fix.
+        v = (x["verdict"] or "")
+        return (0 if x["is_current"] else 1,
+                PRECEDENCE.index(v) if v in PRECEDENCE else len(PRECEDENCE))
+
     best: dict[str, sqlite3.Row] = {}
     for r in rows:
         cur = best.get(r["event_id"])
         if cur is None:
             best[r["event_id"]] = r
             continue
-        def rank(x):
-            v = (x["verdict"] or "")
-            return PRECEDENCE.index(v) if v in PRECEDENCE else len(PRECEDENCE)
-        # Worse wins; on a tie the more recent reading wins.
+        # Current beats superseded; then worse beats better; then newer beats older.
         if rank(r) < rank(cur) or (rank(r) == rank(cur)
                                    and (r["fetched_at"] or "") > (cur["fetched_at"] or "")):
             best[r["event_id"]] = r
