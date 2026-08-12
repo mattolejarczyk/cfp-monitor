@@ -511,6 +511,28 @@ uv run python tests/test_golden_derivation.py --bless   # synthetic fixture
 
 **Never bless without reading the diff.** Blessing a corruption is how it becomes permanent.
 
+### Identity is frozen. Facts are derived.
+
+`event_id` is on that list, and there is a rule about it that is easy to get backwards.
+
+A canonical key must be **stable and unique. It does not have to be true.** When a value baked
+into a key turns out to be wrong, the fix is *not* to correct the key - that is a rename, and a
+rename breaks every reference at once. The fix is to stop reading meaning out of the key.
+
+That is why `key_year` and `EDITION` are two fields and not one:
+
+| `key_year` | frozen when the row is minted, never recomputed | keeps every key byte-identical |
+| `EDITION` | derived from the conference's `START DATE` | what the customer sees, what L0 compares |
+
+Concretely: 67 rows carry a key year that disagrees with their own start date, and `AWE USA
+2027` will keep the key `2026-awe-usa-long-beach` forever. That is correct and intended.
+`check_invariants.py` check 7 asserts no key has drifted from its `key_year`; check 8 watches
+(without failing) for editions that disagree with the event's name.
+
+Before deciding to "fix" a derived value, ask whether the thing built on it is a fact or an
+identifier. Correct facts. Freeze identifiers and route around them. Amendment v1.4 and
+JUDGEMENT 14 have the full case.
+
 Tests, before any commit:
 
 ```bash

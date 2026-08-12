@@ -193,6 +193,44 @@ by hand, reading the log, before trusting the schedule.
 
 ---
 
+## 14. A key is a name, not a fact - 2026-08-12
+
+`EDITION` is downstream's field under contract section 3, but we had been importing it verbatim
+from upstream and never checking it against anything. 67 of 392 rows carried an edition that
+disagreed with the conference's own start date: `AWE USA 2027` at edition 2026, `analytica 2028`
+at edition 2026.
+
+Cosmetic, except `event_id()` builds the canonical key out of the edition. Two duplicate
+records exist because of it - Decarb Connect North America 2027 and Carbon Capture Technology
+Expo North America 2027 each appear under both a `2026-` and a `2027-` key, same name, same
+city. The same event arriving twice with two different EDITION values became two rows.
+
+**The obvious fix is the dangerous one.** Correcting the edition and re-deriving the keys would
+rewrite 67 canonical keys in one pass, with every test still green. That is 2026-08-08 again.
+
+The right move is to stop reading meaning out of the key. An identifier has to be stable and
+unique; it does not have to be true. So `key_year` freezes at creation and is never recomputed,
+and `EDITION` becomes a derived fact. Nothing moves, the customer sees the right year, and the
+L0 edition guard starts working again.
+
+Two things this taught beyond the fix itself:
+
+- **Check where the truth actually lives before promising a derivation.** The first instinct was
+  "derive it from the conference dates" - but *zero* of the 67 had a crawl record carrying
+  dates. The delivery had been sending `START DATE` all along and we had simply never imported
+  it. The recommendation was wrong for a day because nobody measured the source.
+- **Right 66 times out of 67 is the worst kind of rule.** Reading the year out of the event's
+  name would have worked almost always, and silently corrupted `International Wafer-Level
+  Packaging Conference 2026`, which runs in February 2027 and whose edition was already right.
+  A date is a fact; a name is a label.
+
+**The general form:** when a derived value turns out to be wrong, ask whether the thing built
+on top of it is a *fact* or an *identifier*. Facts should be corrected. Identifiers should be
+frozen and routed around. Correcting an identifier is a rename, and a rename breaks every
+reference to it at once.
+
+---
+
 ## The shape all of these share
 
 Every one is a case where the code was correct when written and the assumption quietly

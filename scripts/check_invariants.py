@@ -53,16 +53,26 @@ class Result:
     def __init__(self) -> None:
         self.rows: list[tuple[str, str, list[str]]] = []
 
-    def add(self, name: str, detail: str, offenders: list[str]) -> None:
-        self.rows.append((name, detail, offenders))
+    def add(self, name: str, detail: str, offenders: list[str], fatal: bool = True) -> None:
+        """fatal=False records a WATCH: reported and counted, but does not fail the run.
+
+        Needed for a condition we have measured, decided to fix, and deliberately sequenced -
+        making it fatal would break the acceptance gate everywhere while the fix waits its
+        turn, and the usual response to that is to stop running the check at all.
+        """
+        self.rows.append((name, detail, offenders, fatal))
 
     @property
     def failed(self) -> int:
-        return sum(1 for _, _, o in self.rows if o)
+        return sum(1 for _, _, o, fatal in self.rows if o and fatal)
+
+    @property
+    def watching(self) -> int:
+        return sum(1 for _, _, o, fatal in self.rows if o and not fatal)
 
     def report(self) -> int:
-        for name, detail, off in self.rows:
-            tag = "FAIL" if off else "ok  "
+        for name, detail, off, fatal in self.rows:
+            tag = ("FAIL" if fatal else "warn") if off else "ok  "
             print(f"  [{tag}] {name:<34} {detail}" + (f"  ({len(off)})" if off else ""))
             for o in off[:12]:
                 print(f"            - {o}")
@@ -72,6 +82,9 @@ class Result:
         if self.failed:
             print(f"RESULT: {self.failed} INVARIANT(S) VIOLATED")
             return 1
+        if self.watching:
+            print(f"RESULT: all invariants hold ({self.watching} watch item(s) - not failures)")
+            return 0
         print("RESULT: all invariants hold")
         return 0
 
@@ -137,8 +150,9 @@ def main() -> int:
 
     con = sqlite3.connect(db)
     con.row_factory = sqlite3.Row
-    rows = list(con.execute("select event_id, name, verify_state, submission_url "
-                            "from grounding_facts"))
+    # select * so checks 7 and 8 can read edition, and key_year once it exists - naming it
+    # explicitly would make the query fail on a database that predates the column
+    rows = list(con.execute("select * from grounding_facts"))
     db_ids = {r["event_id"] for r in rows}
 
     print(f"Invariants - {db.resolve().name}")
@@ -179,6 +193,36 @@ def main() -> int:
     except sqlite3.OperationalError:
         stale = ["link_checks table does not exist - weekly sweep has never run"]
     res.add("6  link check results present", "dead-link picture is populated", stale)
+
+    # 7. THE IDENTITY FREEZE. A canonical key is a name, not a fact: it must be stable and
+    #    unique, it does not have to be true. Once key_year exists, every event_id must still
+    #    carry the year it was minted with - if a key ever starts following the (now derived)
+    #    edition instead, hundreds of keys move at once and every test still passes. That is
+    #    the 2026-08-08 accident exactly. This is the check that would have caught it.
+    #    Skipped silently until the split has been applied.
+    if "key_year" in {c[1] for c in con.execute("pragma table_info(grounding_facts)")}:
+        drifted = []
+        for r in rows:
+            ky = str(r["key_year"] or "").strip()
+            if not ky:
+                drifted.append(f"{r['event_id']} - key_year is blank")
+            elif not (r["event_id"] or "").startswith(f"{ky}-"):
+                drifted.append(f"{r['event_id']} - key_year says {ky}")
+        res.add("7  keys never moved", "event_id still carries the year it was minted with",
+                drifted)
+
+    # 8. A WATCH, not a failure. Counts rows whose edition disagrees with the year in the
+    #    event's own name. 67 of 392 on 2026-08-12; the fix is scripted (fix_edition.py) and
+    #    sequenced behind the live-build sync. Visible and counted beats quietly wrong - but
+    #    failing the gate on it would only teach us to stop running the gate.
+    odd = []
+    for r in rows:
+        m = re.search(r"\b(20\d\d)\b", r["name"] or "")
+        ed = str(r["edition"] or "").strip()
+        if m and ed.isdigit() and m.group(1) != ed:
+            odd.append(f"{r['name'][:44]} - edition {ed}, name says {m.group(1)}")
+    res.add("8  edition matches the name year", "watch: run fix_edition.py to derive from date",
+            odd, fatal=False)
 
     con.close()
     rc = res.report()
