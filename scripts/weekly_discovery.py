@@ -33,6 +33,7 @@ from __future__ import annotations
 import argparse
 import csv
 import importlib.util
+import os
 import shutil
 import sqlite3
 import subprocess
@@ -221,18 +222,27 @@ def main() -> int:
         found.unlink()          # its resume logic refuses to overwrite, so start clean
     print(f"\n--- discovery: {len(rows)} row(s), ~{len(rows)} grounded request(s) ---")
     print(f"    interpreter: {' '.join(interp)}")
+
+    # Upstream's script prints emoji. When its stdout is a CONSOLE that is fine, but when it
+    # is a PIPE - which is exactly what a scheduled job gives it - Python on Windows falls
+    # back to cp1252 and dies on the first print, before a single request is made. Verified
+    # 2026-08-12: UnicodeEncodeError on \U0001f4c2 at "Loading input file".
+    # Not their bug to fix; we are the ones redirecting their output.
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
     rc = subprocess.run([*interp, "-u", str(ds.name), "-i", str(queue.resolve()),
                          "-o", str(found.resolve())],
-                        cwd=str(ds.parent), text=True).returncode
+                        cwd=str(ds.parent), text=True, env=env).returncode
     if rc != 0 or not found.exists():
         print(f"discovery failed (rc={rc}) - nothing to gate")
         return 1
 
     print("\n--- our gate: extract citations from whatever it returned ---")
     extracted = out_dir / f"weekly_discovery_citations_{stamp}.csv"
+    # same encoding trap - this one prints quotes lifted from live pages, so non-ASCII is
+    # the norm rather than the exception
     rc = subprocess.run([sys.executable, str(ROOT / "scripts" / "extract_citations.py"),
                          "-i", str(found), "-o", str(extracted)],
-                        cwd=str(ROOT), text=True).returncode
+                        cwd=str(ROOT), text=True, env=env).returncode
     if rc != 0 or not extracted.exists():
         print(f"extraction failed (rc={rc})")
         return 1
@@ -242,7 +252,7 @@ def main() -> int:
            "--db", a.db, "--citations", str(extracted)]
     if a.apply:
         cmd.append("--apply")
-    subprocess.run(cmd, cwd=str(ROOT), text=True)
+    subprocess.run(cmd, cwd=str(ROOT), text=True, env=env)
 
     print(f"\nqueue     {queue.name}")
     print(f"discovery {found.name}")
