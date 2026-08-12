@@ -74,3 +74,41 @@ def test_the_soft_404_reason_still_wins_when_both_apply():
 def test_the_floor_is_where_we_put_it(n_words, expected):
     page = " ".join(["submission"] * n_words)
     assert ae.readable(page)[0] is expected
+
+
+# --- raw HTML must not be counted as words --------------------------------------------------
+
+RAW_HTML_SHELL = """
+<!doctype html><html><head><style>.a{color:red}.b{margin:0}</style>
+<script>function initialiseApplicationBootstrap(){var configuration={};return configuration;}</script>
+</head><body><div class="container wrapper header navigation">
+<img src="data:image/svg+xml,%3csvg%20viewBox='0 0 10 10'%3e%3cpath%20d='M4'/%3e%3c/svg%3e">
+<span class="error-illustration">Ups! Etwas ist schiefgelaufen.</span>
+</div></body></html>
+"""
+
+
+def test_markup_is_not_content():
+    """Upstream built the same check over requests.get(...).text and counted tag names, class
+    names and script identifiers as words. This shell scored 246 on that counter, over a
+    threshold of 120. A filter that measures markup passes everything, which is worse than no
+    filter because it looks like a control."""
+    # The point is the RATIO: plenty of characters, almost no readable words.
+    assert len(RAW_HTML_SHELL) > 400
+    assert ae.real_words(RAW_HTML_SHELL) < 10
+    assert ae.readable(RAW_HTML_SHELL)[0] is False
+
+
+def test_a_real_page_still_passes_when_given_as_html():
+    html = ("<html><body><h1>Call for Papers</h1><div class='content'><p>" +
+            ("The committee invites original submissions describing research results, "
+             "industrial experience and tooling. Abstracts must reach the programme chair "
+             "through the online system before the published deadline. ") * 3 +
+            "</p></div></body></html>")
+    assert ae.real_words(html) >= 40
+    assert ae.readable(html)[0] is True
+
+
+def test_script_bodies_do_not_inflate_the_count():
+    page = "<script>" + "var someLongVariableName = anotherLongIdentifier; " * 80 + "</script><p>Hi</p>"
+    assert ae.real_words(page) < 10

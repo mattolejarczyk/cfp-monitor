@@ -181,9 +181,18 @@ def real_words(text: str, floor: int = 3) -> int:
     base64 SVG logo. The actual copy is twenty-five words of German saying something went
     wrong. We measured length, concluded the page was fine but undated, and were about to put
     the link in front of the customer as "the call page".
+
+    STRIP TAGS FIRST, and never assume the caller passed extracted text. Ours does; upstream
+    built the same check over `requests.get(...).text` - raw HTML - and every tag name, class,
+    attribute and inline script identifier counted as a word. The error page that scores 0 here
+    scored 246 there, sailing over a threshold of 120. A filter measuring markup passes
+    everything, which is worse than no filter because it looks like a control.
     """
-    t = re.sub(r"data:[^)\s]+", " ", text or "")      # inline SVG / base64 is not reading matter
+    t = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", text or "")   # code is not copy
+    t = re.sub(r"<[^>]+>", " ", t)                    # then the tags themselves
+    t = re.sub(r"data:[^)\s]+", " ", t)               # inline SVG / base64 is not reading matter
     t = re.sub(r"https?://\S+", " ", t)               # nor is a wall of URLs
+    t = re.sub(r"&[a-z]+;", " ", t)                   # nor are HTML entities
     return sum(1 for w in re.split(r"[^A-Za-z]+", t) if len(w) > floor)
 
 
