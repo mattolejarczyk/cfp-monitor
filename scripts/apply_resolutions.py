@@ -278,6 +278,70 @@ def retire_deadlines(store, csv_path: str, apply: bool) -> int:
     return 0 if not missed else 1
 
 
+def withdraw_citations(store, csv_path: str, apply: bool) -> int:
+    """R1 citation-only withdrawal: keep the deadline, drop the evidence for it.
+
+    DISTINCT FROM --retire, AND THE DIFFERENCE MATTERS. Retiring says "no date can be
+    established, show Not Announced". This says "the date may well be right; what we have lost
+    is the ability to prove it". Contract 2.1 - absence of evidence is not disproof - so the
+    date stays and the row becomes projected rather than blank.
+
+    The case it was built for, 2026-08-12: upstream's `page-gone` signal identified rows whose
+    cited page now returns 404, and rows whose site is alive but no longer publishes the date.
+    Neither tells us the deadline is wrong. Blanking those dates would throw away a probably
+    correct value to fix a citation problem.
+
+    CSV: EVENT_ID, CONFERENCE, REASON.
+    """
+    import csv as _csv
+
+    with open(csv_path, encoding="utf-8-sig", newline="") as fh:
+        rows = list(_csv.DictReader(fh))
+
+    up_to_canon, _roots = _seed_map(store)
+    current = {r["event_id"]: r for r in (dict(x) for x in store.db.execute(
+        "select event_id, deadline, deadline_evidence_url, deadline_quote, is_projected "
+        "from grounding_facts"))}
+    if not current or not up_to_canon:
+        print("REFUSING - empty database or no EVENT_ID map. This is a setup problem.")
+        return 1
+
+    done, missed = [], []
+    for r in rows:
+        raw = (r.get("EVENT_ID") or "").strip()
+        eid = up_to_canon.get(raw, raw)
+        name = (r.get("CONFERENCE") or "")[:46]
+        reason = (r.get("REASON") or "").strip()
+        cur = current.get(eid)
+        if cur is None:
+            missed.append((name, f"cannot place EVENT_ID ({raw[:40]})"))
+            continue
+        if not reason:
+            missed.append((name, "no REASON given - refusing to withdraw silently"))
+            continue
+        done.append((name, cur["deadline"] or "(blank)",
+                     (cur["deadline_evidence_url"] or "")[:52], reason))
+        if apply:
+            store.db.execute(
+                "UPDATE grounding_facts SET deadline_evidence_url='', deadline_quote='',"
+                " is_projected='true', verify_state='not_found', verify_detail=?"
+                " WHERE event_id=?", (f"[R1 withdrawal] {reason}", eid))
+
+    for name, dl, url, reason in done:
+        print(f"  WITHDRAW  {name:<46} deadline {dl} KEPT")
+        print(f"              citation dropped: {url or '(none)'}")
+        print(f"              {reason}")
+    for name, why in missed:
+        print(f"  SKIP      {name:<46} {why}")
+
+    if apply:
+        store.db.commit()
+        print(f"\nwithdrew {len(done)} citation(s). Deadlines kept, rows now projected.")
+    else:
+        print(f"\n{len(done)} would be withdrawn - re-run with --apply to write")
+    return 0 if not missed else 1
+
+
 def merge_citations(store, csv_path: str, apply: bool) -> int:
     """Decide which proposed citations are safe to take. Reports; writes only with apply."""
     import csv as _csv
@@ -415,9 +479,17 @@ def main() -> int:
     ap.add_argument("--db", default="cfp_monitor.db")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--citations", help="CSV of replacement citations from upstream")
+    ap.add_argument("--withdraw-citation",
+                    help="CSV (EVENT_ID, CONFERENCE, REASON) - R1: keep the deadline, drop the "
+                         "citation and quote, mark projected. For rows whose cited page is gone "
+                         "or no longer states the date. NOT the same as --retire.")
     ap.add_argument("--retire", help="CSV (EVENT_ID, CONFERENCE, REASON) of deadlines neither "
                                      "side can source - blanked and set Not Announced")
     a = ap.parse_args()
+
+    if a.withdraw_citation:
+        store = Store(a.db)
+        raise SystemExit(withdraw_citations(store, a.withdraw_citation, a.apply))
 
     if a.retire:
         store = Store(a.db)
