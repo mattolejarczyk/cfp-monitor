@@ -338,9 +338,17 @@ def merge_citations(store, csv_path: str, apply: bool) -> int:
         print("\nreport only - re-run with --apply to write")
         return 0
     for eid, n, url, q, changed, newdl, oldurl, olddl in accepted:
+        # RECORD THAT WE VERIFIED IT. Rule 2 above fetched this page and proved the quote is on
+        # it - that IS a verification, and leaving verify_state alone meant the row kept a
+        # stale 'not_found' or 'contradicted' from an earlier audit. Downstream that made
+        # freshly verified rows look unbacked: refresh_delivery flagged Humanoids, Solid
+        # Freeform and GreenBiz as unverified hours after we confirmed them by hand.
         store.db.execute("""update grounding_facts
-                            set deadline_evidence_url=?, deadline_quote=?
-                            where event_id=?""", (url, q, eid))
+                            set deadline_evidence_url=?, deadline_quote=?,
+                                verify_state='verified', verify_detail=?
+                            where event_id=?""",
+                         (url, q, "[merge] quote confirmed on the cited page at merge time",
+                          eid))
         if changed == "yes" and newdl:
             store.db.execute("update grounding_facts set deadline=? where event_id=?",
                              (newdl, eid))
