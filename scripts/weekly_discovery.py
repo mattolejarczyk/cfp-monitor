@@ -97,6 +97,56 @@ def open_rows(db: str, source_csv: Path, today: date) -> tuple[list[dict], list[
     return [r for _, r in keep], cols, why
 
 
+def discovery_python(explicit: str | None) -> list[str]:
+    """An interpreter that can actually run upstream's script. Returns an argv prefix.
+
+    Ours cannot. `extract_candidate_urls.py` imports `google.genai` and `pandas`, and the
+    cfp-monitor venv has neither - it has no reason to, the grounding API is upstream's half
+    of the contract. Running it with sys.executable fails at import, which unattended at 01:00
+    on a Sunday would surface as a traceback nobody reads.
+
+    Searching PATH is not enough either: under `uv` the venv shadows `python`, and on this
+    machine `python3` resolves to the WindowsApps stub. So the `py` launcher and the real
+    install roots are candidates too, and every one is PROVED by import before it is used.
+
+    Refuses rather than guessing, and preflights before anything is spent.
+    """
+    if explicit:
+        cands = [[explicit]]
+    else:
+        cands = [[sys.executable]]
+        for name in ("python", "python3"):
+            found = shutil.which(name)
+            if found:
+                cands.append([found])
+        launcher = shutil.which("py")
+        if launcher:
+            cands.append([launcher, "-3"])
+        # real installs, newest first - the venv/stub problem above means PATH can miss these
+        for root in sorted(Path("C:/").glob("Python3*"), reverse=True):
+            exe = root / "python.exe"
+            if exe.exists():
+                cands.append([str(exe)])
+
+    tried = []
+    for c in cands:
+        if c[0] != "py" and not shutil.which(c[0]) and not Path(c[0]).exists():
+            continue
+        pretty = " ".join(c)
+        if pretty in tried:
+            continue
+        tried.append(pretty)
+        probe = subprocess.run([*c, "-c", "import google.genai, pandas"],
+                               capture_output=True, text=True)
+        if probe.returncode == 0:
+            return c
+    raise SystemExit(
+        "REFUSING: no interpreter found that can run upstream's discovery script.\n"
+        "  It needs google-genai and pandas; ours has neither by design.\n"
+        "  Tried: " + (", ".join(tried) if tried else "nothing") + "\n"
+        "  Pass --discovery-python pointing at one that does.")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Weekly discovery for rows whose call is still shut.")
     ap.add_argument("--db", required=True)
@@ -111,6 +161,9 @@ def main() -> int:
                          "is invoked on the queue; otherwise the queue is only written.")
     ap.add_argument("--run-discovery", action="store_true",
                     help="SPENDS API QUOTA - roughly one grounded request per queued row")
+    ap.add_argument("--discovery-python",
+                    help="interpreter for upstream's script. Ours cannot run it - it needs "
+                         "google-genai and pandas. Auto-detected if omitted.")
     ap.add_argument("--apply", action="store_true",
                     help="merge anything that survives the gate. Reports only without it.")
     a = ap.parse_args()
@@ -162,11 +215,13 @@ def main() -> int:
         return 2
 
     ds = Path(a.discovery_script)
+    interp = discovery_python(a.discovery_python)      # before spending anything
     found = out_dir / f"weekly_discovery_out_{stamp}.csv"
     if found.exists():
         found.unlink()          # its resume logic refuses to overwrite, so start clean
     print(f"\n--- discovery: {len(rows)} row(s), ~{len(rows)} grounded request(s) ---")
-    rc = subprocess.run([sys.executable, "-u", str(ds.name), "-i", str(queue.resolve()),
+    print(f"    interpreter: {' '.join(interp)}")
+    rc = subprocess.run([*interp, "-u", str(ds.name), "-i", str(queue.resolve()),
                          "-o", str(found.resolve())],
                         cwd=str(ds.parent), text=True).returncode
     if rc != 0 or not found.exists():

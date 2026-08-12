@@ -130,9 +130,16 @@ if not exist "%AUDITED%" (
   exit /b 0
 )
 
-echo Weekly discovery starting >> "%LOG%"
+REM REPORT-ONLY, deliberately - no --apply. Discovery runs unattended and writes the gate
+REM result to the digest; a human merges it. The merge guard is strong (it re-fetches and
+REM requires the quote on the page, so it cannot pass an unverified date) but it has never
+REM run unattended, and nine rows a week is small enough that review costs almost nothing.
+REM The customer promise is that a new call is CAUGHT within a week, and a digest on Sunday
+REM applied on Monday keeps that true. Decided 2026-08-12; revisit once this has run clean
+REM for a few weeks.
+echo Weekly discovery starting - REPORT ONLY, merge is a human step >> "%LOG%"
 venv\Scripts\python.exe scripts\weekly_discovery.py --db cfp_monitor.db ^
   --source "%AUDITED%" --out-dir "%LOGDIR%" --max-rows 25 ^
-  --discovery-script "%DISCOVERY%" --run-discovery --apply >> "%LOG%" 2>&1
+  --discovery-script "%DISCOVERY%" --run-discovery >> "%LOG%" 2>&1
 echo Discovery finished with exit code %ERRORLEVEL% >> "%LOG%"
 exit /b 0
