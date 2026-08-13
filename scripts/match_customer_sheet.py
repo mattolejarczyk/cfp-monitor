@@ -242,52 +242,58 @@ def main() -> int:
         r = raw + [""] * (len(header) - len(raw))
         v, td, h, hs = votes[i]
 
-        # ---- certainty first. Each of these is proof on its own. ----
-        hit = None
-        for m in CERTAIN:
-            if m == "unique domain":
-                # THE EXCLUSION IS THE PROOF: this domain belongs to exactly one conference in
-                # our entire database, so a domain match cannot be anything else.
-                if not (h and hs):
-                    continue
-                if len({series(e) for e in hs}) != 1:
-                    continue
-            g, note = collapse(v[m], td)
-            if g:
-                hit = (m, g, note)
-                break
-        if hit:
-            m, g, note = hit
-            why = {"exact URL": f"Their URL is character-for-character ours ({h}).",
-                   "unique domain": f"The domain {h} resolves to exactly one conference in our "
-                                    f"database - no other row could claim it.",
-                   "name+city+date": "Name, city and date all agree - three independent facts."}[m]
-            rows_out.append(r + [g, "100%", f"CERTAIN. {why}{note}"])
-            continue
-
-        # ---- otherwise vote, weighted by measured precision ----
-        tally, who = defaultdict(float), defaultdict(list)
+        # EVALUATE EVERY TEST, ALWAYS. Short-circuiting on the first certainty threw away the
+        # fact that seven other tests also agreed - which is the evidence a reviewer actually
+        # wants, and the only record of how each test performed. Certainty decides the SCORE;
+        # it must not decide what gets reported.
+        tally, who, silent, edition_note = defaultdict(float), defaultdict(list), [], ""
         fired_w = 0.0
         for m, cands in v.items():
-            g, _ = collapse(cands, td)
-            if g:
-                fired_w += weight[m]
-                tally[g] += weight[m]
-                who[g].append(m)
+            if m == "unique domain" and not (h and hs and len({series(e) for e in hs}) == 1):
+                silent.append(m)          # the domain is shared, so it proves nothing here
+                continue
+            g, note = collapse(cands, td)
+            if not g:
+                silent.append(m)
+                continue
+            edition_note = edition_note or note
+            fired_w += weight[m]
+            tally[g] += weight[m]
+            who[g].append(m)
+
         if not tally:
             rows_out.append(r + ["", "0%", "Every test abstained - nothing of ours shares this "
                                            "URL, domain, name, position, city or date."])
             continue
+
         ranked = sorted(tally.items(), key=lambda x: -x[1])
         best, score = ranked[0]
-        # abstention is not disagreement - score purity among tests that actually fired
-        purity = score / fired_w if fired_w else 0
-        depth = min(1.0, len(who[best]) / 4.0)
-        conf = max(3, min(99, int(100 * purity * (0.6 + 0.4 * depth))))
-        just = f"{len(who[best])} test(s) agree: {', '.join(sorted(who[best]))}."
-        if len(ranked) > 1:
-            just += f" Competing: {ranked[1][0]} via {', '.join(sorted(who[ranked[1][0]]))}."
-        rows_out.append(r + [best, f"{conf}%", just])
+        proved = [m for m in CERTAIN if m in who[best]]
+
+        if proved:
+            conf = 100
+            why = {"exact URL": f"their URL is character-for-character ours ({h})",
+                   "unique domain": f"the domain {h} resolves to exactly one conference in our "
+                                    f"database, so no other row could claim it",
+                   "name+city+date": "name, city and date all agree - three independent facts"}
+            head = f"CERTAIN via {proved[0]}: {why[proved[0]]}."
+        else:
+            # abstention is not disagreement - purity among the tests that actually fired
+            purity = score / fired_w if fired_w else 0
+            depth = min(1.0, len(who[best]) / 4.0)
+            conf = max(3, min(99, int(100 * purity * (0.6 + 0.4 * depth))))
+            head = "No single test is conclusive on its own."
+
+        total = len(v)
+        parts = [head,
+                 f"{len(who[best])} of {total} tests agree: {', '.join(sorted(who[best]))}."]
+        for other, _ in ranked[1:]:
+            parts.append(f"Disagreeing: {', '.join(sorted(who[other]))} -> {other}.")
+        if silent:
+            parts.append(f"Silent ({len(silent)}): {', '.join(sorted(silent))}.")
+        if edition_note:
+            parts.append(edition_note.strip())
+        rows_out.append(r + [best, f"{conf}%", " ".join(parts)])
 
     keep = [c for c in header if c.strip() != "EVENT_ID"]
     with open(a.output, "w", newline="", encoding="utf-8-sig") as fh:
