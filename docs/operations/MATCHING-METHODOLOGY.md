@@ -268,6 +268,36 @@ be claimed once.
 That is a textbook **one-to-one assignment** problem, and it is the clearest evidence that the
 field has thought about this harder than we have.
 
+### What the collision turned out to be - 2026-08-13, checked the next day
+
+It was **not** two of our records competing, and **not** a matcher error. Both of the customer's
+rows carried the **same `CONFERENCE URL`**, pointing at the Energy Transition Europe page. We
+hold the two events correctly and separately:
+
+```
+2026-reuters-events-energy-transition-europe-amsterdam   .../energy-transition-europe
+2026-industrial-decarbonisation-europe-amsterdam         .../industry-europe/
+```
+
+Their *Industrial Decarbonisation Europe* row simply has the wrong URL pasted into it. Given
+identical input URLs, one answer is the only correct output - the matcher behaved properly and
+the defect is upstream of it.
+
+**This changes the recommendation below, and the change is the important part.** The instinct
+was to use bipartite matching to *resolve* the collision by awarding the target to the
+best-scoring claimant. That would have been wrong: it would have quietly reassigned a row and
+**concealed a real data error in the source**.
+
+> **A one-to-one violation is a FINDING, not a problem to optimise away.** Build it as a
+> detector that flags both claimants and explains the conflict. Only consider automatic
+> resolution once you have established that collisions in your data are genuinely competition
+> between your own records, rather than corruption in theirs.
+
+The wider lesson: **constraint violations are the cheapest data-quality detector you will ever
+build.** A rule the data ought to satisfy, checked and reported rather than enforced, finds
+errors that no similarity function can see. Here it found a bad cell in a customer spreadsheet
+that had been invisible to everyone, including them.
+
 ## The field, and where to look
 
 It is called **record linkage** (statistics), **entity resolution** (computer science), or
@@ -297,8 +327,15 @@ should count for a lot. This would very likely have prevented *European Hydrogen
 Houston* without any hand-tuning. Combined with Jaro-Winkler (which favours matching prefixes,
 good for conference names), this is "soft TF-IDF", the standard for name matching.
 
-**3. One-to-one assignment.** Max-weight bipartite matching (Hungarian algorithm) over the score
-matrix, so each of their rows claims at most one of ours. **This fixes the collision above.**
+**3. One-to-one assignment - as a DETECTOR first.** The constraint is that each of their rows
+claims at most one of ours, and each of ours is claimed at most once. Check it and **report
+every violation with both claimants and the reason**; do not silently award the target to the
+best score. See the correction above: the first violation we found was a wrong URL in their
+sheet, and automatic resolution would have hidden it.
+
+Max-weight bipartite matching (Hungarian algorithm) is the right machinery *once* you know your
+collisions are genuine competition rather than upstream corruption. Reach for it then, not
+before - and even then, log what it moved.
 
 **4. Blocking.** We compare all 57 x 392 pairs. Fine now; quadratic later. Sorted-neighbourhood,
 canopy clustering, or MinHash/LSH are the standard answers when this becomes many markets x many
@@ -323,5 +360,6 @@ and produces the per-test justification that was specifically wanted - a probabi
 calibration needs to stop resting on self-defined anchors.
 
 **Do take three things now:** the `u`-based weighting (it makes uniqueness general rather than
-special-cased), one-to-one assignment (fixes a live bug), and TF-IDF tokens (removes hand-tuned
+special-cased), the one-to-one **check as a detector** (it has already earned its place by
+finding a bad cell in the customer's own sheet), and TF-IDF tokens (removes hand-tuned
 stopwords).
