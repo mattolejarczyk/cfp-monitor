@@ -250,3 +250,78 @@ read as a finding rather than as nothing-to-say.
 10. Record verdict, agreement, dissent-with-target, and silence - all of it, always.
 11. Verify the output preserves the input exactly: same rows, same order, original cells
     untouched. A reconciliation file that quietly reorders is worse than none.
+
+---
+
+# Addendum: future enhancements from the record-linkage literature
+
+*Recorded 2026-08-13, in answer to "are there expert techniques that would make this world
+class, and is there existing best-in-class work that does exactly this?"*
+
+**Yes - and the literature caught a bug in our output.**
+
+Two of their rows both claim `2026-reuters-events-energy-transition-europe-amsterdam`, each at
+100%: *Energy Transition Europe* and *Industrial Decarbonisation Europe*. Different conferences,
+same Reuters domain, same city, similar dates. Our matcher has no notion that a target can only
+be claimed once.
+
+That is a textbook **one-to-one assignment** problem, and it is the clearest evidence that the
+field has thought about this harder than we have.
+
+## The field, and where to look
+
+It is called **record linkage** (statistics), **entity resolution** (computer science), or
+**data matching**. Two anchors:
+
+- **Fellegi & Sunter (1969), "A Theory for Record Linkage"** - the foundational paper. Still the
+  basis of most production systems.
+- **Peter Christen, *Data Matching* (Springer, 2012)** - the standard textbook, and readable.
+
+## The five techniques worth adding
+
+**1. Fellegi-Sunter m/u weights - the biggest upgrade.** For each field compute `m` = P(agrees |
+true match) and `u` = P(agrees | *not* a match, i.e. the random agreement rate), then weight
+agreement as `log2(m/u)`.
+
+**`u` is precisely what we intuited as "uniqueness is proof", but quantified.** A domain shared
+by six Reuters events has high `u` - it agrees by chance often - so it earns almost no weight.
+`ceraweek.com` has `u` of about 1/392, so agreement is worth an enormous amount. We hand-coded
+that as a special case per row; Fellegi-Sunter derives it for every field automatically, and
+gives you the two decision thresholds (auto-accept / clerical review / reject) that we picked by
+eye.
+
+**2. TF-IDF token weighting instead of a stopword list.** We hard-coded
+`{conference, summit, expo, world...}` as noise. TF-IDF is the principled version: "Hydrogen"
+appears across dozens of our rows so it should count for little; "CERAWeek" appears once so it
+should count for a lot. This would very likely have prevented *European Hydrogen Week ->
+Houston* without any hand-tuning. Combined with Jaro-Winkler (which favours matching prefixes,
+good for conference names), this is "soft TF-IDF", the standard for name matching.
+
+**3. One-to-one assignment.** Max-weight bipartite matching (Hungarian algorithm) over the score
+matrix, so each of their rows claims at most one of ours. **This fixes the collision above.**
+
+**4. Blocking.** We compare all 57 x 392 pairs. Fine now; quadratic later. Sorted-neighbourhood,
+canopy clustering, or MinHash/LSH are the standard answers when this becomes many markets x many
+clients.
+
+**5. A labelled evaluation sample.** We have *no ground truth* - our anchors are self-defined,
+which is why `domain+position` scores 100% tautologically. Hand-labelling 30 random rows would
+give real precision and recall instead of an internally-consistent estimate.
+
+## Existing tools
+
+**Splink** (UK Ministry of Justice, open source) is the one to look at first. Fellegi-Sunter with
+EM parameter estimation, so it learns m/u **without labelled data**, scales to millions, and is
+actively maintained with good documentation. Others: **dedupe** (Python, active-learning based),
+**Zingg** (Spark/ML), **recordlinkage** (Python toolkit). Commercially: Senzing, Tamr, Quantexa.
+
+## Recommendation
+
+**Do not adopt Splink for this job.** At 57 x 392, our matcher is accurate, fully explainable,
+and produces the per-test justification that was specifically wanted - a probabilistic score of
+14.2 bits does not. Reach for Splink if this grows to many clients x many markets, or if
+calibration needs to stop resting on self-defined anchors.
+
+**Do take three things now:** the `u`-based weighting (it makes uniqueness general rather than
+special-cased), one-to-one assignment (fixes a live bug), and TF-IDF tokens (removes hand-tuned
+stopwords).
