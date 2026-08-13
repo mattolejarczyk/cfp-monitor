@@ -86,13 +86,24 @@ def run(cmd: list[str], cwd: Path) -> int:
     return subprocess.run(cmd, cwd=str(cwd)).returncode
 
 
+# Every URL the review page can put in front of the customer. The sweep must cover all of
+# them, not just the one we started with: on 2026-08-12 the page offered 24 dead evidence
+# links and 2 dead event sites, because only submission_url had ever been checked and the
+# page had nothing to consult about the rest.
+CUSTOMER_FACING = ("submission_url", "deadline_evidence_url", "main_info_url", "url")
+
+
 def check_all_submission_links(db: str, use_browser: bool = True) -> list[tuple[str, str, str]]:
-    """Check EVERY submission link, regardless of what the layered verification concluded.
+    """Check EVERY link the customer can click, regardless of what verification concluded.
 
     verify_grounding stops at the first layer that resolves a row, so a conference that
     verifies at L0 ("the page says the call is open") never reaches the L1 link check. On
     2026-08-08 that hid 9 dead links out of 46, including CES 2027 - verified open, submit
     link dead. The customer-facing link is too important to be checked only as a fallback.
+
+    Widened 2026-08-12 from submission_url alone to every field in CUSTOMER_FACING. The
+    review page renders all of them; checking one and rendering four is how we shipped a
+    working-looking link to a page we already knew was gone.
 
     Returns (event_id, name, url) for links confirmed dead. A plain-HTTP 404 is never
     sufficient on its own (contract 5.2), so the browser confirms before anything is recorded.
@@ -105,15 +116,23 @@ def check_all_submission_links(db: str, use_browser: bool = True) -> list[tuple[
     from recheck_dead_links import browser_check                    # noqa: PLC0415
 
     con = _sq.connect(db)
-    rows = [(e, n or e, (u or "").strip()) for e, n, u in con.execute(
-        "select event_id, name, submission_url from grounding_facts")
-        if (u or "").strip().startswith("http")]
+    con.row_factory = _sq.Row
+    rows = []
+    for r in con.execute("select * from grounding_facts"):
+        keys = r.keys()
+        for field in CUSTOMER_FACING:
+            if field not in keys:
+                continue
+            u = (r[field] or "").strip()
+            if u.startswith("http"):
+                rows.append((r["event_id"], r["name"] or r["event_id"], u))
     con.close()
 
     by_url: dict[str, list[tuple[str, str]]] = {}
     for eid, name, url in rows:
         by_url.setdefault(url, []).append((eid, name))
-    print(f"  checking {len(by_url)} distinct submission link(s)")
+    print(f"  checking {len(by_url)} distinct customer-facing link(s) "
+          f"across {len(CUSTOMER_FACING)} field(s)")
 
     suspect = [u for u in by_url if link_status(u)[0] in (404, 410)]
     print(f"  {len(suspect)} returned 404/410 on the fast pass")
