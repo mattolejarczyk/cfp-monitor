@@ -129,6 +129,10 @@ def main() -> int:
     ap.add_argument("--delivery", required=True, help="ALL_MARKETS delivery, for dates and order")
     ap.add_argument("-o", "--output", required=True)
     ap.add_argument("--name-col", default="CONFERENCE")
+    ap.add_argument("--url-col", default="CONFERENCE URL",
+                    help="which column holds the event's own URL. Awards sheets carry no "
+                         "CONFERENCE URL - pass 'SUBMISSION URL' there, and read the caveat in "
+                         "customer-sheet-matching.md before trusting the domain tests.")
     a = ap.parse_args()
 
     canon, start_of, seq = load_ours(a.db, a.delivery, a.market)
@@ -140,13 +144,13 @@ def main() -> int:
         header = next(rdr)
         body = [r for r in rdr if any((c or "").strip() for c in r)]
     I = {(c or "").strip(): i for i, c in enumerate(header)}
-    for need in (a.name_col, "CONFERENCE URL"):
+    for need in (a.name_col, a.url_col):
         if need not in I:
             sys.exit(f"sheet has no {need!r} column - found {sorted(I)}")
     if not any((r + [""] * len(header))[I[a.name_col]].strip() for r in body):
         sys.exit("every name read as blank - refusing to report numbers built on nothing")
 
-    CN, CU = I[a.name_col], I["CONFERENCE URL"]
+    CN, CU = I[a.name_col], I[a.url_col]
     CL, CD = I.get("LOCATION"), I.get("START DATES")
 
     by_host, by_name, by_url = defaultdict(set), defaultdict(set), defaultdict(set)
