@@ -439,10 +439,19 @@ let view='soon', sortK='dl', sortDir=1;
 const mkts=[...new Set(DATA.map(r=>r.m))].sort(); const active=new Set();
 const $=i=>document.getElementById(i);
 
-$('views').innerHTML = VIEWS.map(v=>
- `<button class="view${v.k===view?' on':''}" data-v="${v.k}">
-   <span class="c">${DATA.filter(v.f).length}</span>
-   <span>${v.t}<small>${v.d}</small></span></button>`).join('');
+// COUNTS FOLLOW THE MARKET FILTER. They used to be written once at load from the whole
+// database, so picking Utility left "Need to Verify 81" on screen while the table below showed
+// four rows. The customer spotted it immediately, and it matters because his daily instruction
+// to his team is "get Need to Verify to zero" - which is unusable if the number is not the one
+// in front of them.
+const inMkt = r => !active.size || active.has(r.m);
+function drawViews(){
+  $('views').innerHTML = VIEWS.map(v=>
+   `<button class="view${v.k===view?' on':''}" data-v="${v.k}">
+     <span class="c">${DATA.filter(r=>inMkt(r)&&v.f(r)).length}</span>
+     <span>${v.t}<small>${v.d}</small></span></button>`).join('');
+}
+drawViews();
 $('mk').innerHTML = mkts.map(m=>
   `<button class="chip" data-m="${m}">${m} <span style="opacity:.6">${
     DATA.filter(r=>r.m===m).length}</span></button>`).join('');
@@ -509,7 +518,7 @@ const SUBS=[['Disputed','Disputed',r=>r.chk==='contradicted'],
 function drawSubs(){
   const box=$('subs');
   if(view!=='unconfirmed'){ box.style.display='none'; return; }
-  const base=DATA.filter(VIEWS.find(v=>v.k===view).f);
+  const base=DATA.filter(r=>inMkt(r)&&VIEWS.find(v=>v.k===view).f(r));
   const cur=$('fc').value;
   box.style.display='flex';
   box.innerHTML='<span class="lbl">Which kind</span>'
@@ -585,6 +594,7 @@ function render(){
           : `<a href="${esc(r.ev)}" target="_blank" rel="noopener">Where the deadline was read</a>`):''}
        ${clickable(r.chku)?`<a href="${esc(r.chku)}" target="_blank" rel="noopener">Page we checked</a>`:''}
      </div></td></tr>`).join('');
+  drawViews();
   drawSubs();
   $('none').style.display=rows.length?'none':'block';
   document.querySelectorAll('tr.r').forEach(tr=>tr.onclick=()=>{
