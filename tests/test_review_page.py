@@ -16,6 +16,7 @@ real money.
 from __future__ import annotations
 
 import importlib.util
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -151,6 +152,71 @@ def test_load_dead_links_reads_a_plain_url_list(tmp_path):
 
 def test_no_dead_links_file_means_none_known_not_none_dead():
     assert brp.load_dead_links(None) == set()
+
+
+# ------------------------------------------- reading the LIVE table, not a stale export --
+def _linkdb(tmp_path, rows):
+    p = tmp_path / "l.db"
+    con = sqlite3.connect(p)
+    con.execute("create table link_checks (url text, state text, checked_at text)")
+    con.executemany("insert into link_checks values (?,?,?)", rows)
+    con.commit()
+    con.close()
+    return str(p)
+
+
+def test_dead_links_can_be_read_straight_from_the_database(tmp_path):
+    """The fix for 2026-08-12: a table cannot go stale between export and build."""
+    db = _linkdb(tmp_path, [(DEAD, "dead", "2026-08-09T01:00:00"),
+                            ("https://ok.com/x", "alive", "2026-08-09T01:00:00")])
+    assert brp.load_dead_links(db=db) == {DEAD}
+
+
+def test_database_state_matching_ignores_case(tmp_path):
+    db = _linkdb(tmp_path, [(DEAD, "DEAD", "2026-08-09T01:00:00")])
+    assert brp.load_dead_links(db=db) == {DEAD}
+
+
+def test_a_database_without_link_checks_yields_nothing_rather_than_exploding(tmp_path):
+    p = tmp_path / "empty.db"
+    sqlite3.connect(p).close()
+    assert brp.load_dead_links(db=str(p)) == set()
+
+
+def test_newest_check_reports_when_the_picture_was_last_refreshed(tmp_path):
+    db = _linkdb(tmp_path, [(DEAD, "dead", "2026-08-09T01:00:00"),
+                            ("https://a.com", "alive", "2026-08-11T02:00:00")])
+    assert brp.newest_check(db) == "2026-08-11T02:00:00"
+    empty = tmp_path / "e.db"
+    sqlite3.connect(empty).close()
+    assert brp.newest_check(str(empty)) is None
+
+
+# ------------------------------------------------------ every customer-facing link --
+def test_a_dead_event_site_is_labelled_not_offered_silently():
+    out = brp.build([row(**{"CONFERENCE URL": DEAD})], dead_links={DEAD})
+    assert out[0]["urldead"] is True
+    assert out[0]["dead"] is False and out[0]["evdead"] is False
+
+
+def test_the_three_link_flags_are_independent():
+    """Each says something different: submit page missing, evidence gone, event site down.
+    Collapsing them would send the operator after the wrong fix."""
+    out = brp.build([row(**{"SUBMISSION URL": "https://a.com/s",
+                            "DEADLINE_EVIDENCE_URL": DEAD,
+                            "CONFERENCE URL": "https://a.com/"})], dead_links={DEAD})
+    assert (out[0]["dead"], out[0]["evdead"], out[0]["urldead"]) == (False, True, False)
+
+
+def test_event_site_falls_back_to_main_info_url():
+    out = brp.build([row(**{"MAIN_INFO_URL": DEAD})], dead_links={DEAD})
+    assert out[0]["urldead"] is True and out[0]["url"] == DEAD
+
+
+def test_blank_urls_are_never_flagged_dead():
+    """'' in dead_links must not be reachable - a blank is not a broken link."""
+    out = brp.build([row()], dead_links={DEAD, ""})
+    assert (out[0]["dead"], out[0]["evdead"], out[0]["urldead"]) == (False, False, False)
 
 
 # ------------------------------------------------------------------------ checks --

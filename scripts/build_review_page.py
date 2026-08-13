@@ -31,6 +31,7 @@ import csv
 import json
 import os
 import re
+import sqlite3
 from collections import defaultdict
 
 FIELDS = ['CONFERENCE', 'Market', 'CITY', 'STATE_PROVINCE', 'COUNTRY', 'FORMAT',
@@ -82,13 +83,42 @@ def edition_states(rows, today):
     return state
 
 
-def load_dead_links(path):
+def newest_check(db):
+    """When the link picture was last refreshed, or None if it never was."""
+    con = sqlite3.connect(db)
+    try:
+        row = con.execute('select max(checked_at) from link_checks').fetchone()
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        con.close()
+    return row[0] if row else None
+
+
+def load_dead_links(path=None, db=None):
     """URLs a REAL BROWSER confirmed dead (scripts/recheck_dead_links.py).
 
     Never populate this from a plain-HTTP 404 alone - contract 5.2: 403s, timeouts and
     blocked pages are not disproof, and 5 of the delivery's apparent 404s loaded fine in a
-    browser. Accepts the dead_submission_links CSV or any file with one URL per line.
+    browser.
+
+    PREFER --db. A CSV is a point-in-time export and goes stale silently: on 2026-08-12 the
+    page was built from an Aug-8 export while link_checks had known since Aug-9 that a cited
+    page was dead, and the link shipped to the customer on a row labelled Verified. Reading the
+    table directly removes the failure mode rather than warning about it.
+
+    The CSV path is kept for building a page from an export alone, and main() refuses when it
+    is older than the newest check in the database.
     """
+    if db:
+        con = sqlite3.connect(db)
+        try:
+            return {r[0] for r in con.execute(
+                "select url from link_checks where lower(state)='dead' and url is not null")}
+        except sqlite3.OperationalError:
+            return set()
+        finally:
+            con.close()
     if not path:
         return set()
     dead = set()
@@ -151,7 +181,11 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None):
             'st': st.get((r.get('EVENT_ID') or '').strip(), 'Active'),
             # Flag the link the PAGE actually offers, which prefers CFP_SUBMISSION_URL - not
             # whichever column happened to be tested.
-            'dead': bool((d['CFP_SUBMISSION_URL'] or d['SUBMISSION URL']) in dead_links),
+            # The truthiness guard is load-bearing: '' in dead_links is True, so one blank line
+            # in a dead-links file would flag every row that has no submission URL at all as
+            # "Submit Link Missing". A blank is not a broken link.
+            'dead': bool((d['CFP_SUBMISSION_URL'] or d['SUBMISSION URL']) and
+                         (d['CFP_SUBMISSION_URL'] or d['SUBMISSION URL']) in dead_links),
             # The evidence link needs its OWN flag, checked in ADDITION to the host check in
             # clickable(). A dead host means the event's web presence is gone; a dead page on a
             # live host means the link merely moved, and those need different remedies. Kept
@@ -161,6 +195,12 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None):
             # a working link to a 404 that link_checks had known about for three days.
             'evdead': bool(d['DEADLINE_EVIDENCE_URL'] and
                            d['DEADLINE_EVIDENCE_URL'] in dead_links),
+            # ...and the event site itself. Every customer-facing link gets checked, not just
+            # the one we happened to sweep. Each keeps its own flag because each carries a
+            # different message: the submit page is missing, the evidence page has gone, the
+            # event site is down.
+            'urldead': bool((d['CONFERENCE URL'] or d['MAIN_INFO_URL']) and
+                            (d['CONFERENCE URL'] or d['MAIN_INFO_URL']) in dead_links),
             'chk': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('v', ''),
             'chku': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('u', ''),
             'chkq': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('q', ''),
@@ -534,7 +574,9 @@ function render(){
      ${r.chkq?`<h4>What we found when we checked</h4><p class="quote">${esc(r.chkq)}</p>`:''}
      ${r.trk?`<h4>Tracks</h4><p>${esc(r.trk)}</p>`:''}
      <div class="links">
-       ${clickable(r.url)?`<a href="${esc(r.url)}" target="_blank" rel="noopener">Event site</a>`:''}
+       ${clickable(r.url)?(r.urldead
+          ? `<a href="${esc(r.url)}" target="_blank" rel="noopener" class="dl-dead">Event site (not found)</a>`
+          : `<a href="${esc(r.url)}" target="_blank" rel="noopener">Event site</a>`):''}
        ${(r.sub&&clickable(r.sub))?(r.dead
           ? `<a href="${esc(r.sub)}" target="_blank" rel="noopener" class="dl-dead">Submit page (missing)</a>`
           : `<a href="${esc(r.sub)}" target="_blank" rel="noopener">Submit here</a>`):''}
@@ -570,6 +612,9 @@ def main():
     ap.add_argument('-i', '--input', required=True)
     ap.add_argument('-o', '--output', required=True)
     ap.add_argument('--date', default='2026-08-07')
+    ap.add_argument('--db', help='PREFERRED source for dead links: read link_checks directly, '
+                                 'so the picture cannot be stale. Supplying this satisfies '
+                                 '--dead-links.')
     ap.add_argument('--dead-links', help='URLs a browser confirmed dead; adds the Submit-Link-Missing flag')
     ap.add_argument('--checks', help='deadline verification CSV from audit_evidence.py')
     ap.add_argument('--dead-hosts', help='hosts that no longer resolve, one per line, from '
@@ -586,16 +631,29 @@ def main():
     # question - it is a confident claim that nothing was verified and nothing is broken, which
     # is the opposite of the truth (74, 96 and 41 on the 2026-08-07 delivery). Caught 2026-08-11
     # when a page built for a layout test was read as though the numbers meant something.
-    if not a.no_evidence and not (a.dead_links and a.checks):
-        missing = [f for f, v in (('--dead-links', a.dead_links), ('--checks', a.checks)) if not v]
+    if not a.no_evidence and not ((a.dead_links or a.db) and a.checks):
+        missing = [f for f, v in (('--db or --dead-links', a.dead_links or a.db),
+                                  ('--checks', a.checks)) if not v]
         ap.error(
             f"refusing to build: {' and '.join(missing)} not supplied.\n"
             "  Those flags populate Deadline confirmed / Need to Verify / Submit Link Missing.\n"
             "  Without them the page shows 0 for each, which reads as a result rather than an\n"
             "  omission. Pass both, or --no-evidence if you are only checking layout.")
+
+    # A STALE EXPORT IS WORSE THAN NO EXPORT, because it looks like an answer. On 2026-08-12
+    # this page was built from an Aug-8 dead-link export while the database had known since
+    # Aug-9 that a cited page was dead, and it shipped as a working link on a row labelled
+    # Verified. If the database is available it wins outright; if the operator insists on a
+    # file, it must not predate the newest check.
+    if a.db and a.dead_links:
+        print('--db supplied: reading link_checks directly and IGNORING --dead-links '
+              '(a file cannot go stale if it is not read).')
+    elif a.dead_links and a.db is None:
+        print('note: --dead-links is a point-in-time export. Prefer --db so it cannot go stale.')
+
     with open(a.input, encoding='utf-8-sig', newline='') as h:
         rows = list(csv.DictReader(h))
-    dead = load_dead_links(a.dead_links)
+    dead = load_dead_links(None if a.db else a.dead_links, a.db)
     checks = load_checks(a.checks)
     # Hosts that no longer resolve (scripts/check_dns.py). Distinct from dead_links, which is
     # about a PAGE returning nothing useful; this is about the domain having gone away, so any
