@@ -240,3 +240,32 @@ def test_a_row_with_no_check_gets_a_blank_not_a_guess():
                                        ("Whatever", "Whatever")])
 def test_market_labels_are_humanised_without_losing_unknown_ones(raw, shown):
     assert brp.build([row(Market=raw)])[0]["m"] == shown
+
+
+# --------------------------------------------- counts must follow the market filter --
+# These assert the TEMPLATE, not behaviour, because the counting happens in browser JS that
+# pytest cannot execute. That makes them regression guards rather than proofs: they exist so
+# the 2026-08-12 defect cannot quietly come back in a refactor. The behaviour itself was
+# verified by clicking through a real browser - all markets 406/81/86 versus Utility 54/7/4.
+def test_view_counts_are_computed_through_the_market_filter():
+    """The customer found this live: he picked Utility, the table showed 4 rows, and the chip
+    above still read 81. His team's daily target is "Need to Verify at zero" PER CLIENT, so a
+    whole-database number above a filtered list is worse than no number."""
+    assert "DATA.filter(r=>inMkt(r)&&v.f(r)).length" in brp.PAGE
+    assert "DATA.filter(v.f).length" not in brp.PAGE, "reverted to counting the whole database"
+
+
+def test_the_market_predicate_treats_no_selection_as_everything():
+    assert "const inMkt = r => !active.size || active.has(r.m);" in brp.PAGE
+
+
+def test_counts_are_redrawn_on_every_render_not_once_at_load():
+    """The market click handler already called render(); the counts simply were not redrawn
+    there. If drawViews() leaves the render path, the chips freeze at their load-time values
+    and the bug returns silently."""
+    body = brp.PAGE.split("function render()")[1]
+    assert "drawViews()" in body, "drawViews() is no longer called from render()"
+
+
+def test_sub_chips_respect_the_market_filter_too():
+    assert "const base=DATA.filter(r=>inMkt(r)&&VIEWS.find(v=>v.k===view).f(r));" in brp.PAGE
