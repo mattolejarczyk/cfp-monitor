@@ -233,6 +233,45 @@ read as a finding rather than as nothing-to-say.
 
 ---
 
+## 10a. Before a hypothesis becomes a rule
+
+Added 2026-08-14, after proposing a gate that would have broken 14 correct rows.
+
+A keyword heuristic flagged 14 rows as "asserting a deadline from a quote with no submission
+language". It looked like a defect. It was proposed as a fix. The operator asked how we knew
+those rows were wrong before changing them, and the answer was that we did not - nobody had
+opened the pages. Eleven were verified correct within minutes: the source is a two-column table
+(Speaker Deadlines | Schedule) whose flattened text hides the heading, and the extraction had
+picked the right column all along. The other three used phrasings the keyword list simply did
+not contain.
+
+**The standard:**
+
+> Hypothesise freely. Before a hypothesis becomes a rule: validate it against the actual data,
+> state the population it was derived from, present the metrics, and get sign-off. Re-measure
+> before extending it to a new population.
+
+Three things that make this more than a platitude:
+
+**Mechanical rules generalise; content rules do not.** Stripping whitespace from headers, taking
+the close rather than the open, treating a unique domain as proof - these are about structure,
+and one dataset is enough to find them. Stopword lists, similarity thresholds, scoring weights
+and keyword gates encode what *this particular data* looks like. The failed gate was a content
+rule wearing the costume of a mechanical one, which is how it got past scepticism.
+
+**State the population, every time.** Every threshold in the CFP matcher was calibrated on 47
+anchors from a single market. Reporting "all nine tests scored 97-100% precision" without
+saying "on Utility" presents a property of one dataset as a property of the method. Utility is
+energy and hydrogen; the semiconductor market is IEEE ordinals and digest submissions. Those
+numbers will move.
+
+**Suppression needs a higher bar than flagging.** A rule that downgrades, hides or rejects fails
+SILENTLY - the row simply becomes less useful and looks like caution. A rule that flags or adds
+fails loudly and gets fixed. The proposed gate would have marked 14 correct rows as unconfirmed
+and nobody would ever have noticed. Weight the evidence bar by how visible the failure would be.
+
+---
+
 ## 11. Checklist for the next matching problem
 
 1. List every attribute both sides carry. Sort each into proof / corroboration / weak.
@@ -250,6 +289,9 @@ read as a finding rather than as nothing-to-say.
 10. Record verdict, agreement, dissent-with-target, and silence - all of it, always.
 11. Verify the output preserves the input exactly: same rows, same order, original cells
     untouched. A reconciliation file that quietly reorders is worse than none.
+12. **Before any heuristic becomes a rule, open the pages it flags.** State which population it
+    was measured on, show the metrics, get sign-off, and re-measure on the next population
+    before extending it. See section 10a.
 
 ---
 
