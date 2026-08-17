@@ -112,7 +112,7 @@ to prevent.
 | `scripts/exec_report.py` | Executive summary output. |
 | `scripts/launch_ui.bat` | Desktop UI; starts CDP Chrome and sets `CFP_CDP_URL`. |
 | `scripts/launch_chrome_cdp.bat` | CDP Chrome only, dedicated profile, port 9222. |
-| `scripts/run_scheduled.bat` | Crawl-and-alert scheduled run over a URL list (`examples\urls.txt`). **Not the verification sweep** - see `run_weekly.bat` for that. |
+| `scripts/run_scheduled.bat` | **RETIRED 2026-08-17 - do not use, do not schedule.** Crawl-and-alert run over a fixed URL list (`examples\urls.txt`), from the original single-machine design. Superseded by `run_weekly.bat`. Its URL list never left the shipped placeholder (`pycon.org` / `djangocon.us`), and its line 7 calls `uv run python` - the pattern later banned for stranding a `.venv` in this directory. Left on disk, unscheduled. If you want a scheduled sweep, `run_weekly.bat` is the answer. |
 | `scripts/run_weekly.bat` | Task Scheduler entry point for `weekly_verify.py`. Runs from the LIVE build with its own interpreter. **Starts CDP Chrome** if nothing is on 9222, and stops only a browser it started itself. |
 
 ## Upstream working area

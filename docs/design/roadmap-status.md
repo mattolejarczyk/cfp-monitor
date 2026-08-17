@@ -39,26 +39,27 @@ The local build is a **coherent end-to-end system**: discover → resilient craw
 |---|---|---|
 | **A** | Crawl + extract core | ✅ **Done — hardened 07-07.** crawl4ai primary + Playwright fallback (consent, SPA-button click-through) + **CDP-to-real-Chrome** for hard anti-bot. Added JS-shell recovery, **aggregator/org navigation** (row context → specific event), **HubSpot budget/dedupe fixes** (homepage-name recovery on slow sites), and **IP-protection** (no auto-hit of anti-bot sites without CDP). Quality gate = 0 silent failures. |
 | **B** | Persistence + review | ✅ **Done — hardened 07-07.** SQLite source-of-truth (**degrade-proof**: a failed/thin re-crawl can't wipe good data), run history, change detection, **verification lifecycle** (correction-precedence), rollover. **Full editable 15-column customer sheet in the UI** (per-row edits + NOTES persisted); CSV/JSON export. |
-| **C** | Automation + delivery | 🟡 **Code done, needs activation.** Alerts + weekly report + run-once scheduler built; **CDP-on-by-default** makes unattended runs IP-safe. Needs: SMTP creds, Task Scheduler registration, real URL list. |
+| **C** | Automation + delivery | ✅ **Activated 2026-08-17.** Alerts + weekly report built; **CDP-on-by-default** makes unattended runs IP-safe. SMTP configured and verified with a real send; weekly verification + monthly re-research registered in Task Scheduler. `scripts/run_scheduled.bat` is **RETIRED** (see M6) — superseded by `run_weekly.bat`. |
 | **D** | Extraction quality / eval | 🟡 **Partial.** Coverage harness done; homepage-name recovery improved 07-07. **Deadline extraction data-bounded** (many expos publish none → honest "needs verification"). Model-per-field eval not yet formalized. |
 | **Pre** | Discover *new* conferences | ⬜ **Deferred.** Ingests a fixed/uploaded list; multi-model discovery (Perplexity/GPT/Gemini) is later. |
 
 ## Milestone view (vs the VPS M0–M9)
 - **M0–M4** (discovery/reqs → architecture → POC → MVP dashboard → hardening): ✅ met; local build **surpasses the VPS on crawl reliability** (0 datacenter-IP blocks).
 - **M5 — Presentation / reporting:** ✅ **Done (07-07).** Coverage report (worked/failed + resolution-path breakdown) + the full editable 15-column customer sheet in the UI. This was the open gap.
-- **M6 — Scheduling & alerts:** 🟡 code complete (`scheduler.py`, `alerts.py`, `scripts/run_scheduled.bat`); CDP-on-by-default made it IP-safe; needs activation (below).
-- **M7 — Weekly executive report:** 🟡 `report.py` done; email delivery scaffolded (off until SMTP set).
+- **M6 — Scheduling & alerts:** ✅ **Activated 2026-08-17.** `scheduler.py` / `alerts.py` code complete; CDP-on-by-default made it IP-safe. **CFP Weekly Verification** (Sun 01:00) and **CFP Monthly Re-Research** (1st, 02:00) are registered and running; the weekly digest now emails.
+  **`scripts/run_scheduled.bat` is RETIRED 2026-08-17 — do not schedule it.** It belongs to the original "monitor a fixed URL list on one machine" design and was superseded by `run_weekly.bat`. The evidence: `examples/urls.txt` never left its shipped placeholder state (last commit 2026-07-01, still `pycon.org` / `djangocon.us` plus a "replace these" comment), the .bat has not been touched since the commit that created it (2026-07-04) while `run_weekly.bat` was still being hardened on 2026-08-12, and its line 7 invokes `uv run python` — the exact pattern the runbook and `run_weekly.bat` later banned for stranding a `.venv`. The files are left in place, unscheduled; retire-in-docs only.
+- **M7 — Weekly executive report:** ✅ **Done 2026-08-17.** `report.py` done; SMTP configured (`CFP_SMTP_*` + `CFP_ALERT_TO` as user-level env vars) and **verified end-to-end with a real send** through `alerts.maybe_send_email` from the live build. The Sunday digest emails instead of only writing to `runs_out\`.
 - **M8 — Client portal / multi-user:** 🟡 **advanced 07-07** — the in-app editable customer sheet is the reviewer surface; **Brandable** live pull waits on their side.
 - **M9 — Production hardening:** 🟡 stronger (IP protection, data-integrity guards, 78 tests); deploy/monitoring on the always-on machine still to do.
 
 ## To activate what's built (needs YOU, not more code)
 1. **Run it yourself:** double-click `scripts/launch_chrome_cdp.bat` (once, sign in) for hard sites, then `scripts/launch_ui.bat` → paste/upload URLs → Run. Review/verify in tab 2.
-2. **Schedule it:** put your real URL list in `examples/urls.txt`; register `scripts/run_scheduled.bat` in Windows Task Scheduler (weekly).
-3. **Email alerts:** set `CFP_SMTP_HOST/USER/PASS` + `CFP_ALERT_TO` env vars.
+2. **Schedule it:** ✅ done — `CFP Weekly Verification` (Sun 01:00, `scripts/run_weekly.bat`) and `CFP Monthly Re-Research` (1st, 02:00) are registered. Nothing further to schedule; `run_scheduled.bat` / `examples/urls.txt` are retired, not pending.
+3. **Email alerts:** ✅ done 2026-08-17. `CFP_SMTP_HOST/PORT/USER/PASS` + `CFP_ALERT_TO` are set as **user-level** env vars (`setx`, no admin needed — the tasks run with `LogonType=InteractiveToken` and inherit the user environment). Sender is a dedicated account with its own app password, not a personal mailbox. Note `weekly_verify.py` does **not** read a `.env` file, so these must be real environment variables.
 4. **Always-on:** decide the host for scheduled runs (home always-on box vs hybrid) — the one real tradeoff of the local decision.
 
 ## Roadmap — recommended order
-1. **Activate M6/M7** (steps above) — turns it from tool into hands-off service. *Highest customer value.*
+1. ~~**Activate M6/M7**~~ ✅ **done 2026-08-17** — it is now a hands-off service: the weekly sweep runs unattended and emails its digest. Nothing outstanding.
 2. **Awards as a parallel entity** (deferred until conferences solid — now they are).
 3. **Multi-model discovery** of new conferences (bucket Pre) — expand beyond a fixed list.
 4. **Model/gold-set eval** (bucket D) — formalize which cheap model to trust per field.
