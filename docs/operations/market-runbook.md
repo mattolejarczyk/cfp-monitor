@@ -4,11 +4,27 @@
 **Read `pipeline-contract.md` first** — it says *why*. This says *how*.
 **Last executed:** 2026-08-11 (all 8 markets; 4,021 claims audited against their own cited pages).
 
-> **Schema is 38 columns, not the 35 the contract still says.** `FORMAT` was added as 36 and
-> `LIFECYCLE_EVIDENCE_URL` / `LIFECYCLE_QUOTE` as 37-38. `EXPECTED_COLS` in
-> `accept_delivery.py` is already 38. The contract text lags because it is a JOINT document
-> and amendments **v1.2 and v1.3 are still drafted-but-unsent** in `handoff-files`. Do not
-> edit the contract unilaterally to close the gap - send the amendments.
+> **The gate accepts TWO column widths right now - 38 and 43.**
+>
+> ```
+> 38  through v1.3  FORMAT (v1.2, col 36), LIFECYCLE_EVIDENCE_URL + LIFECYCLE_QUOTE (v1.3 R16)
+> 43  v1.5          + ORGANIZER, SPONSOR_REQUIRED, SPONSOR_URL, SPONSOR_COST, SPONSOR_QUOTE
+> ```
+>
+> Amendments **v1.2, v1.3 and v1.4 were sent and agreed on 2026-08-13**; **v1.5 was agreed
+> 2026-08-14**. Upstream gave no date for the first delivery carrying the v1.5 columns, so both
+> widths pass until one arrives - flipping straight to 43 would reject every delivery made in
+> between.
+>
+> **When a 43-column delivery has been accepted, drop 38 from `ACCEPTED_COLS`.** Leaving both
+> indefinitely means a silent regression to the old shape passes the gate.
+>
+> A count is not a schema: at 43 the gate also asserts the last five columns are those names in
+> that order. 43 columns of the wrong names would otherwise pass check 1, and every later check
+> would then read shifted fields.
+>
+> The contract text still says 35. Do not edit it unilaterally to close the gap - it is a JOINT
+> document and the amendments are the mechanism.
 
 ---
 
