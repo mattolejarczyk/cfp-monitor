@@ -18,26 +18,28 @@ It does not decide. It gathers quotes and says where they came from, because 2.1
 throughout: the absence of a call-for-speakers page is not proof the call is shut. A human reads
 the evidence.
 
-STATUS: USABLE BUT NOISY. NOT FINISHED.
-Fetching and proof are sound - it walks the site through the full ladder and every sentence it
-prints is verified present on the page it names. SNIPPET SELECTION IS NOT. On a nav-heavy site
-it surfaces menu text instead of the sentence that answers the question. Tested against Decarb
-Connect North America, where the answer - "Want to propose a speaker for 2027? Fill in the form
-below!" - is on the page and is still not what gets shown.
+TWO PASSES, RUN BLIND, THEN COMPARED
 
-Five approaches were tried on the selection problem: wider windows, longest-fragment, snippet
-deduplication, common prefix/suffix stripping, and shingle-based chrome detection with page
-deduplication. Each improved it and none solved it, because these pages carry almost no sentence
-punctuation - there are no clause boundaries to find.
+  pass 1  regex   cheap and deterministic. Decides which pages are worth a model call, and
+                  offers a candidate sentence of its own.
+  pass 2  model   reads the pages pass 1 flagged and answers the open question independently.
+                  Its answer must be a literal substring of the page (locate_verbatim) or it
+                  is discarded, so it can choose a wrong sentence but never invent one.
 
-THE RIGHT FIX, when this is picked up: use the LLM selector rather than windowing, exactly as
-extract_citations.py does, and for the reason its docstring already gives - "judgement is the
-part string matching cannot do". Point the model at text we fetched, make it choose the
-sentence, and prove the answer verbatim with locate_verbatim. The regex layer here is good for
-finding WHICH PAGES are worth asking about; it is the wrong tool for deciding which sentence.
+The passes DO NOT SEE EACH OTHER. Showing the model the regex answer and asking "is this
+right?" buys agreement bias, not confirmation - a call spent ratifying our own error.
 
-Until then: read its output as "here are the pages that mention this", not "here is the
-answer".
+Agreement raises confidence. Disagreement is a finding, not noise. A scorecard records which
+pass answered, because that is the only way to know whether the cheap pass earns its place.
+
+FIRST MEASUREMENT, Decarb Connect North America, 2026-08-20:
+    both agreed 0 | disagreed 2 | model only 0 | REGEX ONLY 3
+All three regex-only hits were navigation. On that site the regex pass contributed nothing as
+an opinion and worked perfectly well as triage. One site is not a verdict - but if that pattern
+holds across a few more, demote it to triage and stop reporting its candidates.
+
+Use the disagreements to improve the regex BY HAND, not automatically: once the cheap pass is
+trained on the expensive one, their agreement stops being independent confirmation.
 
     python scripts/investigate_event.py --url https://example.com/ [--name "Event 2027"]
     python scripts/investigate_event.py --db <db> --event-id <id>
@@ -45,7 +47,9 @@ answer".
 from __future__ import annotations
 
 import argparse
+import asyncio
 import importlib.util
+import json
 import os
 import re
 import sqlite3
@@ -61,6 +65,7 @@ _ec = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_ec)
 locate_verbatim = _ec.locate_verbatim
 
+from src.cfp_monitor.config import Settings         # noqa: E402
 from src.cfp_monitor.verify import fetch_text        # noqa: E402
 
 # Paths worth trying, in the order a person would. Cheap: a miss costs one fetch.
@@ -142,6 +147,87 @@ def is_chrome(snippet: str, chrome: set[str], ratio: float = 0.5) -> bool:
     return sum(1 for s in sh if s in chrome) / len(sh) >= ratio
 
 
+ASK = """You are shown the text of ONE page from a conference website.
+
+Decide whether the page shows that the CALL FOR SPEAKERS (or papers, abstracts, presentations)
+is OPEN, CLOSED, or whether the page does not say.
+
+Return ONE sentence COPIED EXACTLY from the page that shows it. Rules:
+- Copy character for character. Do not paraphrase, summarise or join fragments.
+- Ignore navigation menus and link labels. A menu item reading "Speakers" or "Join the
+  Waitlist" says nothing about whether the call is open.
+- A list of who spoke last year is not a call. Neither is a registration or ticket deadline.
+- If the page does not address it, return an empty sentence. That is a valid answer.
+
+Return ONLY JSON: {"sentence": "...", "verdict": "open" | "closed" | "unclear"}"""
+
+
+async def llm_read_page(text: str, conference: str, settings) -> tuple[str, str, str]:
+    """Ask the model what the page says about the call, then prove the answer is on it.
+
+    Its own prompt, deliberately, rather than calling extract_citations. That selector needs a
+    KNOWN DEADLINE and asks "which sentence states this date" - a closed question. This is an
+    open one: "is the call open, and where does it say so". Same guarantee, different question.
+    What IS shared is locate_verbatim, which is the part that must never diverge.
+
+    Returns (quote, verdict, status). `status` separates a considered blank from an outage.
+    """
+    try:
+        import litellm
+    except Exception:
+        return "", "", "unavailable"
+    messages = [{"role": "system", "content": ASK},
+                {"role": "user", "content": "\n".join(
+                    [f"CONFERENCE: {conference}", "", "PAGE TEXT:", text[:16000], "",
+                     "Return ONLY the JSON object."])}]
+    if settings.llm_proxy_url:
+        kw = dict(model="openai/cfp-extract", messages=messages,
+                  api_base=settings.llm_proxy_url.rstrip("/") + "/v1",
+                  api_key=settings.license_key,
+                  extra_headers={"X-Client-Version": settings.client_version},
+                  temperature=0.0, max_tokens=400)
+    else:
+        kw = dict(model=settings.llm_provider, messages=messages,
+                  api_key=settings.provider_key(), temperature=0.0, max_tokens=400)
+    try:
+        try:
+            r = await litellm.acompletion(**kw, response_format={"type": "json_object"})
+        except Exception:
+            r = await litellm.acompletion(**kw)
+        raw = r.choices[0].message.content or ""
+    except Exception:
+        return "", "", "unavailable"
+    m = re.search(r"\{.*\}", raw, re.S)
+    if not m:
+        return "", "", "unavailable"
+    try:
+        d = json.loads(m.group(0))
+    except Exception:
+        return "", "", "unavailable"
+    sent = " ".join((d.get("sentence") or "").split())
+    verdict = (d.get("verdict") or "unclear").strip().lower()
+    if not sent:
+        return "", verdict, "blank"
+    found = locate_verbatim(text, sent)
+    if found is None:
+        return "", verdict, "not-on-page"
+    return found, verdict, "ok"
+
+
+def agrees(a: str, b: str) -> bool:
+    """Do the two passes point at the same thing? Overlap of content words, not equality.
+
+    The passes see the page differently - one windows around a match, the other picks a
+    sentence - so identical strings are not the test. Half the content words in common means
+    they found the same statement.
+    """
+    wa = {w for w in re.findall(r"[a-z0-9]+", a.lower()) if len(w) > 3}
+    wb = {w for w in re.findall(r"[a-z0-9]+", b.lower()) if len(w) > 3}
+    if not wa or not wb:
+        return False
+    return len(wa & wb) / min(len(wa), len(wb)) >= 0.5
+
+
 def probe(url: str):
     try:
         r = fetch_text(url)
@@ -159,6 +245,12 @@ def main() -> int:
     ap.add_argument("--db")
     ap.add_argument("--event-id")
     ap.add_argument("--max-pages", type=int, default=20)
+    ap.add_argument("--max-llm", type=int, default=6,
+                    help="ceiling on model calls per event - a spike means a data "
+                         "problem, not a site with forty speaker pages")
+    ap.add_argument("--no-llm", action="store_true",
+                    help="regex only. Faster and free, but it is the pass that "
+                         "reports navigation as evidence - read the output knowing that.")
     a = ap.parse_args()
 
     url, name = a.url, a.name
@@ -205,44 +297,94 @@ def main() -> int:
             unique[u] = t
     chrome = chrome_phrases(unique)
 
-    findings = {"open": [], "shut": [], "sponsor": [], "deadline": []}
+    # ---- PASS 1: regex. Cheap, deterministic, and it also decides which pages are worth
+    # spending a model call on. It offers a candidate; it does not get the last word.
+    regex_pick: dict[str, tuple[str, str]] = {}          # url -> (snippet, kind)
+    interesting: list[str] = []
+    deadlines: list[tuple[str, str]] = []
     for u, body in unique.items():
-        # EVERY match, not the first. The first is often a menu link that survived stripping;
-        # the sentence that answers the question sits further down.
-        for key, pat in (("open", OPEN_SIG), ("shut", SHUT_SIG), ("sponsor", SPONSOR_REQ)):
+        best = None
+        for kind, pat in (("open", OPEN_SIG), ("shut", SHUT_SIG)):
             for m in list(pat.finditer(body))[:6]:
                 snip = sentence_around(body, m.start())
-                # Prove it against the FULL page, never the stripped copy.
                 if snip and locate_verbatim(raw[u], snip) and not is_chrome(snip, chrome):
-                    findings[key].append((u, snip))
-        for m in list(DEADLINE.finditer(body))[:4]:
-            findings["deadline"].append((u, sentence_around(body, m.start())))
+                    best = best or (snip, kind)
+        if best:
+            regex_pick[u] = best
+        if best or SPONSOR_REQ.search(body) or DEADLINE.search(body):
+            interesting.append(u)
+        for m in list(DEADLINE.finditer(body))[:3]:
+            deadlines.append((u, sentence_around(body, m.start())))
 
-    print(f"\nreached {reached} page(s)\n")
-    for key, title in (("open", "SUGGESTS THE CALL IS OPEN"),
-                       ("shut", "SUGGESTS IT IS CLOSED"),
-                       ("deadline", "A DATE IS STATED"),
-                       ("sponsor", "SPONSORSHIP TIED TO SPEAKING")):
-        seen, shown = set(), 0
-        if not findings[key]:
+    # ---- PASS 2: the model, on the pages pass 1 flagged as worth reading.
+    # DELIBERATELY BLIND TO PASS 1. Showing it the regex answer and asking "is this right?"
+    # buys agreement bias, not confirmation - you spend a call to ratify your own error.
+    llm_pick: dict[str, tuple[str, str, str]] = {}       # url -> (quote, verdict, status)
+    if not a.no_llm and interesting:
+        settings = Settings()
+
+        async def _all():
+            for u in interesting[:a.max_llm]:
+                llm_pick[u] = await llm_read_page(unique[u], name or root, settings)
+
+        asyncio.run(_all())
+
+    # ---- COMPARE. Agreement is confirmation; disagreement is a finding in itself.
+    print(f"\nreached {reached} page(s), {len(unique)} distinct; "
+          f"regex flagged {len(interesting)}, model read {len(llm_pick)}\n")
+
+    agreed = differed = only_llm = only_regex = 0
+    for u in sorted(set(regex_pick) | set(llm_pick)):
+        r_snip, r_kind = regex_pick.get(u, ("", ""))
+        l_quote, l_verdict, l_status = llm_pick.get(u, ("", "", "skipped"))
+        if r_snip and l_quote:
+            same = agrees(r_snip, l_quote)
+            agreed += same
+            differed += not same
+            tag = "BOTH AGREE" if same else "PASSES DISAGREE"
+        elif l_quote:
+            only_llm += 1
+            tag = "MODEL ONLY (regex missed it)"
+        elif r_snip:
+            only_regex += 1
+            tag = "REGEX ONLY (model saw nothing)"
+        else:
             continue
-        print(f"--- {title}")
-        for u, s in findings[key]:
-            k = s[:80]
-            if k in seen or shown >= 4:
-                continue
-            seen.add(k)
-            shown += 1
-            print(f"    \"{s[:190]}\"")
-            print(f"       {u}")
+        print(f"--- {tag}   {u}")
+        if l_quote:
+            print(f"    model  [{l_verdict}] \"{l_quote[:180]}\"")
+        if r_snip:
+            print(f"    regex  [{r_kind}] \"{r_snip[:180]}\"")
         print()
 
-    if not any(findings.values()):
-        print("Nothing found on the usual paths. That is NOT evidence the call is shut (2.1) -"
-              "\nit means this site does not put it where sites usually do.")
+    if deadlines:
+        print("--- A DATE IS STATED")
+        for u, d in deadlines[:4]:
+            print(f"    \"{d[:170]}\"\n       {u}")
+        print()
+
+    # The point of running both: which pass is earning its place.
+    print("--- PASS SCORECARD")
+    print(f"    both agreed        {agreed}")
+    print(f"    passes disagreed   {differed}")
+    print(f"    model only         {only_llm}    regex missed these")
+    print(f"    regex only         {only_regex}    model saw nothing - usually chrome that "
+          f"slipped the filter")
+    blanks = sum(1 for v in llm_pick.values() if v[2] == "blank")
+    out = sum(1 for v in llm_pick.values() if v[2] == "unavailable")
+    if blanks or out:
+        print(f"    model blank {blanks}   model unavailable {out}"
+              f"   (a blank is an answer; an outage is not)")
+    print("\n  Disagreements and model-only rows are the material for improving the regex.")
+    print("  Tune it by hand from those, not automatically: once the cheap pass is trained on")
+    print("  the expensive one, their agreement stops being independent confirmation.")
+
+    if not (regex_pick or llm_pick):
+        print("\nNothing found on the usual paths. That is NOT evidence the call is shut (2.1) -")
+        print("it means this site does not put it where sites usually do.")
     else:
-        print("Every sentence above was verified present on the page it is attributed to.")
-        print("This tool gathers evidence; it does not decide. Read it and judge.")
+        print("\nEvery sentence above was verified present on the page it is attributed to.")
+        print("This gathers evidence; it does not decide. Read it and judge.")
     return 0
 
 
