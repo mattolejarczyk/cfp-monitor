@@ -202,6 +202,12 @@ class GroundingRow:
     source_as_of: str
     deadline_evidence_url: str
     main_info_url: str
+    # v1.5 - defaulted so a pre-v1.5 (38-column) delivery still constructs cleanly.
+    organizer: str = ""
+    sponsor_required: str = "Unknown"
+    sponsor_url: str = ""
+    sponsor_cost: str = ""
+    sponsor_quote: str = ""
     issues: list[str] = field(default_factory=list)
     raw: dict = field(default_factory=dict)
 
@@ -260,6 +266,11 @@ _COL = {
     "quote": "DEADLINE_QUOTE", "projected": "IS_PROJECTED", "as_of": "SOURCE_AS_OF",
     "dl_evidence": "DEADLINE_EVIDENCE_URL", "main_info": "MAIN_INFO_URL",
     "opportunity": "OPPORTUNITY_TYPE",
+    # v1.5. Upstream populates the first four; SPONSOR_QUOTE is ours (R20a) and arrives
+    # blank, so it is read but never allowed to overwrite a quote we extracted.
+    "organizer": "ORGANIZER", "sponsor_required": "SPONSOR_REQUIRED",
+    "sponsor_url": "SPONSOR_URL", "sponsor_cost": "SPONSOR_COST",
+    "sponsor_quote": "SPONSOR_QUOTE",
 }
 
 
@@ -303,6 +314,11 @@ def normalize_rows(raw_rows: Iterable[dict], today: Optional[date] = None
             is_projected=_placeholder(v("projected")),
             source_as_of=_placeholder(v("as_of")),
             deadline_evidence_url=v("dl_evidence"), main_info_url=v("main_info"),
+            organizer=v("organizer"),
+            sponsor_required=v("sponsor_required") or "Unknown",
+            sponsor_url=v("sponsor_url"),
+            sponsor_cost=v("sponsor_cost"),
+            sponsor_quote=v("sponsor_quote"),
             raw=dict(raw),
         )
         key = (row.event_id, row.market.lower())
@@ -374,7 +390,9 @@ def seed_store(store, rows: Iterable[GroundingRow]) -> dict:
             " state_province, country, edition, deadline, submission_url, cfp_model, status,"
             " overview, categories, coordinator_email, deadline_quote, is_projected,"
             " source_as_of, deadline_evidence_url, main_info_url, issues, verify_state,"
-            " imported_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            " imported_at, organizer, sponsor_required, sponsor_url, sponsor_cost,"
+            " sponsor_quote)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
             " ON CONFLICT(event_id) DO UPDATE SET"
             "  conference_key=excluded.conference_key, name=excluded.name, url=excluded.url,"
             "  city=excluded.city, state_province=excluded.state_province,"
@@ -386,13 +404,25 @@ def seed_store(store, rows: Iterable[GroundingRow]) -> dict:
             "  source_as_of=excluded.source_as_of,"
             "  deadline_evidence_url=excluded.deadline_evidence_url,"
             "  main_info_url=excluded.main_info_url, issues=excluded.issues,"
-            "  imported_at=excluded.imported_at",
+            "  imported_at=excluded.imported_at,"
+            "  organizer=excluded.organizer,"
+            "  sponsor_required=excluded.sponsor_required,"
+            "  sponsor_url=excluded.sponsor_url,"
+            "  sponsor_cost=excluded.sponsor_cost,"
+            # SPONSOR_QUOTE IS OURS (R20a) AND UPSTREAM SHIPS IT BLANK.
+            # A plain excluded.sponsor_quote would wipe the quote we extracted on
+            # every re-import. Only a non-empty incoming value may replace it.
+            "  sponsor_quote=CASE WHEN excluded.sponsor_quote != ''"
+            "                     THEN excluded.sponsor_quote"
+            "                     ELSE grounding_facts.sponsor_quote END",
             (row.event_id, key, row.name, row.url, row.city, row.state, row.country,
              row.edition, row.deadline, row.submission_url, row.cfp_model,
              row.grounding_status, row.overview, row.categories, row.coordinator_email,
              row.deadline_quote, row.is_projected, row.source_as_of,
              row.deadline_evidence_url, row.main_info_url, "; ".join(row.issues),
-             "unverified", now))
+             "unverified", now,
+             row.organizer, row.sponsor_required, row.sponsor_url, row.sponsor_cost,
+             row.sponsor_quote))
         stats["updated" if was else "inserted"] += 1
 
         if known:

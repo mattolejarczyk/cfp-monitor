@@ -112,7 +112,14 @@ CREATE TABLE IF NOT EXISTS grounding_facts (
     issues          TEXT,                       -- crawl-free contradictions found at import
     verify_state    TEXT DEFAULT 'unverified',  -- unverified|verified|contradicted|not_found
     verify_detail   TEXT,
-    imported_at     TEXT
+    imported_at     TEXT,
+    -- v1.5. Upstream populates the first four; sponsor_quote is OURS, extracted from
+    -- sponsor_url the same way deadline_quote is (R20a). See the amendment in handoff-files.
+    organizer         TEXT,
+    sponsor_required  TEXT,                     -- Yes|No|Unknown, default Unknown (R18.1)
+    sponsor_url       TEXT,
+    sponsor_cost      TEXT,                     -- free text: tiers, ranges, currency as written
+    sponsor_quote     TEXT
 );
 CREATE TABLE IF NOT EXISTS changes (
     id            INTEGER PRIMARY KEY,
@@ -372,6 +379,14 @@ class Store:
         for col in ("industry", "input_manifest"):
             if col not in run_have:
                 self.db.execute(f"ALTER TABLE runs ADD COLUMN {col} TEXT")
+        # v1.5 columns, on databases created before the amendment. Upstream ships the first
+        # 43-column delivery on 2026-08-26; without these the five new fields pass the
+        # acceptance gate and are then silently discarded on import, which looks like success.
+        gf_have = {r["name"] for r in self.db.execute("PRAGMA table_info(grounding_facts)")}
+        for col in ("organizer", "sponsor_required", "sponsor_url", "sponsor_cost",
+                    "sponsor_quote"):
+            if col not in gf_have:
+                self.db.execute(f"ALTER TABLE grounding_facts ADD COLUMN {col} TEXT")
         # Backfill `edition` for rows stored before the column existed. Pure derivation from
         # dates we already hold - no crawl needed. Only touches NULL editions, so it is
         # idempotent and cheap after the first pass.
