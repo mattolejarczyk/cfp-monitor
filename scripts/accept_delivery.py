@@ -362,10 +362,12 @@ class Gate:
                 if req.lower() not in SPONSOR_VALUES:
                     bad_val.append(f'{self.g(r, "CONFERENCE")[:40]}: SPONSOR_REQUIRED={req!r}')
                 # R18.3 - "Yes" is a claim that costs the customer a decision. Evidence it.
-                if req.lower() == "yes" and not (self.g(r, "SPONSOR_URL")
-                                                 and self.g(r, "SPONSOR_QUOTE")):
+                # ONLY SPONSOR_URL IS REQUIRED OF UPSTREAM. SPONSOR_QUOTE is ours to extract
+                # from that page (R20a), exactly as with DEADLINE_QUOTE, so demanding it here
+                # would reject a delivery for a field we told them to leave blank.
+                if req.lower() == "yes" and not self.g(r, "SPONSOR_URL"):
                     unevidenced_cost.append(f'{self.g(r, "CONFERENCE")[:40]}: sponsorship '
-                                            f'required, but no SPONSOR_URL and SPONSOR_QUOTE')
+                                            f'required, but no SPONSOR_URL to read it on')
                 # A cost with no stated requirement is incoherent - which is it?
                 if self.g(r, "SPONSOR_COST") and req.lower() in ("no", ""):
                     bad_val.append(f'{self.g(r, "CONFERENCE")[:40]}: has a SPONSOR_COST but '

@@ -111,3 +111,29 @@ def test_the_v15_column_names_are_pinned():
 
 def test_both_transition_widths_are_declared():
     assert ad.ACCEPTED_COLS == {38, 43}
+
+
+# ------------------------------------------ ownership: the quote is OURS, not theirs --
+def test_a_sponsor_yes_needs_only_the_URL_from_upstream(tmp_path):
+    """R20a: SPONSOR_QUOTE is extracted by us from the page upstream supplies, exactly as with
+    DEADLINE_QUOTE. Demanding it of upstream would reject a delivery for a column we told them
+    to leave blank - which is how a contract and its gate quietly disagree."""
+    hdr = V13 + ad.V15_COLS
+    row = ["x"] * 38 + ["Reuters Events", "Yes", "https://x.com/sponsorship", "Gold $25,000", ""]
+    row[1] = "Some Conference"
+    g = ad.Gate(write(tmp_path, hdr, [row]), network=False)
+    g.check_structure()
+    g.check_schema_rules()
+    r18b = [r for r in g.results if r[0] == "R18b"]
+    assert r18b, "R18b did not run on a v1.5 delivery"
+    assert r18b[0][3] == [], f"a blank SPONSOR_QUOTE was rejected: {r18b[0][3]}"
+
+
+def test_a_sponsor_yes_without_a_url_is_still_rejected(tmp_path):
+    hdr = V13 + ad.V15_COLS
+    row = ["x"] * 38 + ["", "Yes", "", "", ""]
+    row[1] = "Some Conference"
+    g = ad.Gate(write(tmp_path, hdr, [row]), network=False)
+    g.check_structure()
+    g.check_schema_rules()
+    assert [r for r in g.results if r[0] == "R18b"][0][3], "a Yes with no page should fail"
