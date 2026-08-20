@@ -26,7 +26,16 @@ from src.cfp_monitor.verify import fetch_text, link_status      # noqa: E402
 # 36 since the v1.2 amendment added FORMAT as the last column (2026-08-05).
 # Deliveries still emitting 35 columns predate the amendment and fail check 1,
 # which is intended: upstream must adopt the column, not have it inferred for them.
-EXPECTED_COLS = 38   # +LIFECYCLE_EVIDENCE_URL, +LIFECYCLE_QUOTE (v1.3 R16)
+# TWO SHAPES ARE VALID DURING THE v1.5 TRANSITION.
+#   38  through v1.3 - FORMAT (v1.2), then LIFECYCLE_EVIDENCE_URL and LIFECYCLE_QUOTE (v1.3 R16)
+#   43  v1.5 - appends ORGANIZER and the four SPONSOR_* columns
+# Upstream agreed v1.5 on 2026-08-14 but gave no date for the first delivery carrying it, so
+# both shapes have to pass until one arrives. Flipping straight to 43 would have rejected every
+# delivery made between the agreement and their next run.
+# ONE SHAPE AT A TIME once v1.5 lands: when a 43-column delivery has been accepted, drop 38.
+ACCEPTED_COLS = {38, 43}
+V15_COLS = ["ORGANIZER", "SPONSOR_REQUIRED", "SPONSOR_URL", "SPONSOR_COST", "SPONSOR_QUOTE"]
+SPONSOR_VALUES = {"yes", "no", "unknown", ""}   # blank is read as Unknown (R18.1)
 VALID_FORMATS = {"In-Person", "Virtual", "Hybrid"}
 # Values that mean "not found" dressed up as data. 2.6 requires an honest blank.
 PLACEHOLDERS = {"n/a", "na", "n.a.", "tbd", "tba", "unknown", "none", "null", "various",
@@ -90,12 +99,20 @@ class Gate:
             rdr = csv.reader(fh)
             header = next(rdr)
             bad = []
+            width = len(header)
             for i, row in enumerate(rdr, start=2):
-                if len(row) != EXPECTED_COLS:
+                if len(row) != width:
                     bad.append(f"line {i}: {len(row)} fields ({row[1][:40] if len(row) > 1 else '?'})")
-        if len(header) != EXPECTED_COLS:
-            bad.insert(0, f"header has {len(header)} columns, expected {EXPECTED_COLS}")
-        self.add("1", f"RFC 4180 - every row parses to {EXPECTED_COLS} fields", bad)
+        if width not in ACCEPTED_COLS:
+            bad.insert(0, f"header has {width} columns, expected one of "
+                          f"{sorted(ACCEPTED_COLS)} (38 = through v1.3, 43 = v1.5)")
+        # A COUNT IS NOT A SCHEMA. 43 columns of the wrong names would sail through a length
+        # check and every later check would then read shifted fields - the exact failure the
+        # runbook warns about. Name them.
+        elif width == 43 and [c.strip() for c in header[-5:]] != V15_COLS:
+            bad.insert(0, f"43 columns but the last five are {[c.strip() for c in header[-5:]]}, "
+                          f"expected {V15_COLS} (v1.5, appended in that order)")
+        self.add("1", f"RFC 4180 - every row parses to the header's {width} fields", bad)
         with open(self.path, encoding="utf-8-sig", newline="") as fh:
             self.rows = list(csv.DictReader(fh))
 
@@ -334,6 +351,28 @@ class Gate:
                 unevidenced.append(f'{self.g(r, "CONFERENCE")[:40]}: says the event has ended, '
                                    f'but carries no lifecycle citation')
         self.add("R16", "A discontinuation claim carries its own evidence", unevidenced)
+
+        # ---- R18, v1.5. Skipped entirely on a pre-v1.5 delivery. ----
+        # A cost figure is the most consequential number in this file: it either kills an
+        # opportunity or commits real budget. It gets the same standard as a deadline.
+        if "SPONSOR_REQUIRED" in (self.rows[0].keys() if self.rows else ()):
+            bad_val, unevidenced_cost = [], []
+            for r in self.rows:
+                req = self.g(r, "SPONSOR_REQUIRED")
+                if req.lower() not in SPONSOR_VALUES:
+                    bad_val.append(f'{self.g(r, "CONFERENCE")[:40]}: SPONSOR_REQUIRED={req!r}')
+                # R18.3 - "Yes" is a claim that costs the customer a decision. Evidence it.
+                if req.lower() == "yes" and not (self.g(r, "SPONSOR_URL")
+                                                 and self.g(r, "SPONSOR_QUOTE")):
+                    unevidenced_cost.append(f'{self.g(r, "CONFERENCE")[:40]}: sponsorship '
+                                            f'required, but no SPONSOR_URL and SPONSOR_QUOTE')
+                # A cost with no stated requirement is incoherent - which is it?
+                if self.g(r, "SPONSOR_COST") and req.lower() in ("no", ""):
+                    bad_val.append(f'{self.g(r, "CONFERENCE")[:40]}: has a SPONSOR_COST but '
+                                   f'SPONSOR_REQUIRED={req or "(blank)"!r}')
+            self.add("R18a", "SPONSOR_REQUIRED is Yes, No, Unknown or blank", bad_val)
+            self.add("R18b", "A sponsorship requirement carries its own evidence",
+                     unevidenced_cost)
 
         stubs = [self.g(r, "CONFERENCE")[:40] for r in self.rows
                  if "Audit Exception" in self.g(r, "STATUS DETAILS")]
