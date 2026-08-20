@@ -32,14 +32,30 @@ right?" buys agreement bias, not confirmation - a call spent ratifying our own e
 Agreement raises confidence. Disagreement is a finding, not noise. A scorecard records which
 pass answered, because that is the only way to know whether the cheap pass earns its place.
 
-FIRST MEASUREMENT, Decarb Connect North America, 2026-08-20:
-    both agreed 0 | disagreed 2 | model only 0 | REGEX ONLY 3
-All three regex-only hits were navigation. On that site the regex pass contributed nothing as
-an opinion and worked perfectly well as triage. One site is not a verdict - but if that pattern
-holds across a few more, demote it to triage and stop reporting its candidates.
+MEASUREMENT ACROSS SIX SITES, 2026-08-20 (Decarb Connect, Carbon Capture Tech Expo, embedded
+world, ProMat, International Biomass, PCIM Expo):
+
+    both agreed 7 | disagreed 3 | MODEL ONLY 0 | regex only 5
+
+Read it in two halves. Where the regex pass had an opinion the model shared, it was right 7
+times out of 10 - so it is not worthless as an opinion, which the single-site run suggested.
+But MODEL ONLY IS ZERO: across six sites there was not one page where the model found the
+answer and the regex pass had flagged nothing. Every regex-only hit was still navigation.
+
+So the regex pass is doing its real job - triage - flawlessly, and its candidates are a
+sometimes-right second opinion. Keep both, keep reporting both, and revisit if model-only ever
+becomes non-zero: that is the number that would prove triage is dropping pages on the floor.
 
 Use the disagreements to improve the regex BY HAND, not automatically: once the cheap pass is
 trained on the expensive one, their agreement stops being independent confirmation.
+
+TWO FAILURES THAT ARE NOT "NO FINDINGS", AND ARE REPORTED SEPARATELY
+    dead site        no address returns anything. International Biomass. The row needs a new
+                     URL; the run says nothing about the call.
+    catch-all route  every address returns the SAME page. ProMat. The sections exist but are
+                     behind JavaScript, so walking paths cannot reach them.
+Both look identical to "we read the site and it says nothing" unless you say so out loud, and
+that is exactly the confusion 2.1 exists to prevent.
 
     python scripts/investigate_event.py --url https://example.com/ [--name "Event 2027"]
     python scripts/investigate_event.py --db <db> --event-id <id>
@@ -53,7 +69,9 @@ import json
 import os
 import re
 import sqlite3
+import ssl
 import sys
+import urllib.request
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -228,6 +246,52 @@ def agrees(a: str, b: str) -> bool:
     return len(wa & wb) / min(len(wa), len(wb)) >= 0.5
 
 
+LINK_WORTH = re.compile(
+    r"speak|paper|abstract|call[-_ ]?for|submit|present|programme|program|agenda|session|"
+    r"sponsor|partner|participat|get[-_ ]?involved|cfp", re.I)
+SKIP_LINK = re.compile(r"\.(pdf|jpg|jpeg|png|gif|svg|zip|ics|mp4)($|\?)|mailto:|tel:|"
+                       r"linkedin|twitter|facebook|instagram|youtube", re.I)
+
+
+def discover_links(root: str, limit: int = 14) -> list[str]:
+    """Read the homepage's own links instead of guessing at paths.
+
+    Guessing was the weak link. embedded world reached 3 of 20 guessed paths and PCIM reached
+    1, because real sites use /en/programme/ or /conference/call-for-papers rather than the
+    tidy /speakers/ a guesser tries. The site already lists its own structure in its menu.
+
+    Deliberately a plain HTTP fetch rather than the ladder: we only need hrefs, and the ladder
+    strips tags. Content still goes through the ladder afterwards.
+
+    Returns same-host URLs whose href or anchor text suggests a call, best first.
+    """
+    try:
+        req = urllib.request.Request(root, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        with urllib.request.urlopen(req, timeout=20, context=ssl._create_unverified_context()) as r:
+            html = r.read(900_000).decode("utf-8", "ignore")
+    except Exception:
+        return []
+
+    host = urlparse(root).netloc.lower()
+    scored: dict[str, int] = {}
+    for m in re.finditer(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', html,
+                         re.I | re.S):
+        href, label = m.group(1), re.sub(r"<[^>]+>", " ", m.group(2))
+        if SKIP_LINK.search(href):
+            continue
+        full = urljoin(root, href.strip())
+        if urlparse(full).netloc.lower() != host or full.rstrip("/") == root.rstrip("/"):
+            continue
+        full = full.split("#")[0]
+        # Anchor text is the better signal - a menu reading "Call for Papers" pointing at
+        # /conference/2027/ would be missed by looking at the path alone.
+        score = (2 if LINK_WORTH.search(label) else 0) + (1 if LINK_WORTH.search(href) else 0)
+        if score:
+            scored[full] = max(scored.get(full, 0), score)
+    return [u for u, _ in sorted(scored.items(), key=lambda kv: -kv[1])][:limit]
+
+
 def probe(url: str):
     try:
         r = fetch_text(url)
@@ -279,13 +343,37 @@ def main() -> int:
     # TWO PASSES. Fetch everything first, then strip the chrome, THEN look for evidence.
     # Analysing page by page reported the navigation as a finding on every page, because the
     # menu contains the exact words we search for.
+    # THE SITE'S OWN LINKS BEAT OUR GUESSES. Guessed paths reached 3 of 20 on embedded world
+    # and 1 of 20 on PCIM, because real sites use /en/programme/ and /conference/call-for-papers
+    # rather than the tidy /speakers/ a guesser tries. Fall back to guessing only when the menu
+    # yields nothing - a JavaScript-rendered nav has no hrefs to read.
+    found_links = discover_links(root, limit=a.max_pages)
+    targets = [root + "/"] + found_links
+    if len(found_links) < 3:
+        targets += [urljoin(root + "/", p + "/") for p in PATHS if p]
+    seen_u: set[str] = set()
+
     raw: dict[str, str] = {}
-    for p in PATHS[:a.max_pages]:
-        u = urljoin(root + "/", p + "/") if p else root + "/"
+    for u in targets[:a.max_pages + 1]:
+        if u in seen_u:
+            continue
+        seen_u.add(u)
         flat, _rung = probe(u)
         if flat and len(flat) >= 250:
             raw[u] = flat
     reached = len(raw)
+    how = (f"{len(found_links)} link(s) from the menu"
+           if len(found_links) >= 3 else "guessed paths - the menu gave us nothing to follow")
+
+    # A DEAD SITE AND AN UNINFORMATIVE ONE MUST NOT LOOK THE SAME. Reporting "no findings" for
+    # a domain that no longer resolves reads exactly like "we looked and it says nothing",
+    # which is the confusion 2.1 exists to prevent.
+    if reached == 0:
+        print(f"\nNo page on {root} could be read at all - not one of "
+              f"{len(seen_u)} address(es) returned content.")
+        print("That is a DEAD OR UNREACHABLE SITE, not an event with nothing to say. It tells")
+        print("you nothing about whether the call is open, and the row needs a new URL.")
+        return 0
     # DEDUPLICATE BEFORE MEASURING REPETITION. Many sites serve one page at several paths -
     # /speakers/, /speaker/ and /speak/ were byte-identical here. Counted as three pages, the
     # one sentence that answered the question looked like site-wide furniture and was
@@ -296,6 +384,16 @@ def main() -> int:
         if t not in unique.values():
             unique[u] = t
     chrome = chrome_phrases(unique)
+
+    # CATCH-ALL ROUTING. ProMat returned the SAME page for all 20 addresses - twenty fetches
+    # spent to read one page, and nothing said so. Saying it matters: the answer may exist
+    # behind JavaScript navigation this approach cannot reach, which is a different problem
+    # from the site having no call.
+    if reached >= 4 and len(unique) == 1:
+        print(f"\nAll {reached} addresses returned the SAME page. This site routes everything to "
+              f"one place,\nso walking paths cannot reach its sections - they are probably behind "
+              f"JavaScript.\nWhatever is below is from that single page; absence here proves "
+              f"nothing (2.1).\n")
 
     # ---- PASS 1: regex. Cheap, deterministic, and it also decides which pages are worth
     # spending a model call on. It offers a candidate; it does not get the last word.
@@ -330,7 +428,7 @@ def main() -> int:
         asyncio.run(_all())
 
     # ---- COMPARE. Agreement is confirmation; disagreement is a finding in itself.
-    print(f"\nreached {reached} page(s), {len(unique)} distinct; "
+    print(f"\nreached {reached} page(s) via {how}, {len(unique)} distinct; "
           f"regex flagged {len(interesting)}, model read {len(llm_pick)}\n")
 
     agreed = differed = only_llm = only_regex = 0
