@@ -60,6 +60,11 @@ OWNED = {
     "STATE_PROVINCE":        "state_province",
     "COUNTRY":               "country",
     "EDITION":               "edition",
+    # v1.5 (R20a). SPONSOR_QUOTE is the one sponsor column WE produce - upstream ships it
+    # blank by agreement. Without it here, a quote we extract sits in the database and
+    # never reaches the delivery, so it never reaches the customer page either. The other
+    # four sponsor columns are upstream's and pass through untouched.
+    "SPONSOR_QUOTE":         "sponsor_quote",
 }
 
 # Never written, and each for its own reason - see the module docstring.

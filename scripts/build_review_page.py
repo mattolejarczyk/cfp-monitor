@@ -38,7 +38,9 @@ FIELDS = ['CONFERENCE', 'Market', 'CITY', 'STATE_PROVINCE', 'COUNTRY', 'FORMAT',
           'CONFERENCE DATES', 'START DATE', 'SUBMISSION DEADLINE', 'STATUS',
           'GROUNDING_CONFIDENCE', 'IS_PROJECTED', 'STATUS DETAILS', 'CONFERENCE URL',
           'SUBMISSION URL', 'CFP_SUBMISSION_URL', 'DEADLINE_EVIDENCE_URL',
-          'DEADLINE_QUOTE', 'TRACK', 'OPPORTUNITY_TYPE', 'MAIN_INFO_URL']
+          'DEADLINE_QUOTE', 'TRACK', 'OPPORTUNITY_TYPE', 'MAIN_INFO_URL',
+          'ORGANIZER', 'SPONSOR_REQUIRED', 'SPONSOR_URL', 'SPONSOR_COST',
+          'SPONSOR_QUOTE']
 
 MARKET_LABEL = {'robotics': 'Robotics', 'Robotics': 'Robotics', 'AdditiveMfg': 'Additive Mfg',
                 'ConsumerElectronics': 'Consumer Electronics', 'BioMedTech': 'BioMedTech',
@@ -178,6 +180,13 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None):
             'sub': d['CFP_SUBMISSION_URL'] or d['SUBMISSION URL'],
             'ev': d['DEADLINE_EVIDENCE_URL'],
             'trk': d['TRACK'], 'op': d['OPPORTUNITY_TYPE'],
+            'org': d['ORGANIZER'],
+            # v1.5. ONLY 'Yes' becomes a badge. 'Unknown' is the default on every row
+            # until someone looks, so rendering it would put a meaningless label on
+            # nearly the whole list; and 'No' is the norm, so it is not news either.
+            'spon': d['SPONSOR_REQUIRED'].strip().lower() == 'yes',
+            'sponcost': d['SPONSOR_COST'], 'sponurl': d['SPONSOR_URL'],
+            'sponq': d['SPONSOR_QUOTE'],
             'st': st.get((r.get('EVENT_ID') or '').strip(), 'Active'),
             # Flag the link the PAGE actually offers, which prefers CFP_SUBMISSION_URL - not
             # whichever column happened to be tested.
@@ -554,6 +563,11 @@ function render(){
   $('tb').innerHTML = rows.map((r,i)=>`
    <tr class="r" data-i="${i}">
     <td class="nm">${esc(r.n)}${r.op&&r.op!=='Speaking'?` <span class="b b-up">${r.op}</span>`:''}${
+      // SPONSOR REQUIRED IS A GATE ON THE OPPORTUNITY, NOT A DETAIL. It decides whether the
+      // pitch happens at all, so it belongs in the list where a deadline is - not three
+      // clicks down. The cost rides with it when we have one, because "sponsor required" and
+      // "sponsor required, $25,000" are different decisions.
+      r.spon?` <span class="b b-nv" title="Speaking at this event requires sponsorship. Open the row for the source.">Sponsor required${r.sponcost?' &middot; '+esc(r.sponcost):''}</span>`:''}${
       r.dead?' <span class="b b-dead" title="The submission page returns not-found - confirmed in a real browser">Submit Link Missing</span>':''}</td>
     <td class="mk">${esc(r.m)}</td><td class="mk">${esc(r.loc)||'&mdash;'}</td>
     <td class="mk">${esc(r.f)||'&mdash;'}</td><td class="mk">${esc(r.dates)||'&mdash;'}</td>
@@ -581,6 +595,10 @@ function render(){
         // exactly the standard we hold upstream to.
         : `<h4>Research note <span style="font-weight:400;color:var(--muted)">&mdash; no source page recorded</span></h4><p class="quote">${esc(r.q)}</p>`):''}
      ${r.chkq?`<h4>What we found when we checked</h4><p class="quote">${esc(r.chkq)}</p>`:''}
+     ${r.spon?`<h4>Sponsorship</h4><p>${r.sponcost?'<b>'+esc(r.sponcost)+'</b> &mdash; ':''}speaking at this event requires sponsorship.</p>${
+        r.sponq?`<p class="quote">${esc(r.sponq)}</p>`
+               :`<p style="color:var(--muted)">We have not yet read a sentence on their page confirming this. Treat the figure as unverified until we have.</p>`}`:''}
+     ${r.org?`<h4>Organized by</h4><p>${esc(r.org)}</p>`:''}
      ${r.trk?`<h4>Tracks</h4><p>${esc(r.trk)}</p>`:''}
      <div class="links">
        ${clickable(r.url)?(r.urldead
@@ -593,6 +611,7 @@ function render(){
           ? `<a href="${esc(r.ev)}" target="_blank" rel="noopener" class="dl-dead">Where the deadline was read (page gone)</a>`
           : `<a href="${esc(r.ev)}" target="_blank" rel="noopener">Where the deadline was read</a>`):''}
        ${clickable(r.chku)?`<a href="${esc(r.chku)}" target="_blank" rel="noopener">Page we checked</a>`:''}
+       ${(r.spon&&clickable(r.sponurl))?`<a href="${esc(r.sponurl)}" target="_blank" rel="noopener">Sponsorship page</a>`:''}
      </div></td></tr>`).join('');
   drawViews();
   drawSubs();

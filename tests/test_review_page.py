@@ -269,3 +269,39 @@ def test_counts_are_redrawn_on_every_render_not_once_at_load():
 
 def test_sub_chips_respect_the_market_filter_too():
     assert "const base=DATA.filter(r=>inMkt(r)&&VIEWS.find(v=>v.k===view).f(r));" in brp.PAGE
+
+
+# ------------------------------------------------------------ v1.5 sponsorship --
+def test_only_a_yes_becomes_a_sponsor_flag():
+    """Unknown is the DEFAULT on every row until someone looks, and No is the norm. Rendering
+    either would put a meaningless label on most of the list and teach the customer to ignore
+    the one that matters."""
+    for val, expected in (("Yes", True), ("yes", True), ("No", False),
+                          ("Unknown", False), ("", False)):
+        assert brp.build([row(**{"SPONSOR_REQUIRED": val})])[0]["spon"] is expected, val
+
+
+def test_the_cost_and_page_ride_with_the_flag():
+    out = brp.build([row(**{"SPONSOR_REQUIRED": "Yes", "SPONSOR_COST": "Gold $25,000",
+                            "SPONSOR_URL": "https://ex.com/sponsor",
+                            "SPONSOR_QUOTE": "Speaking slots are reserved for sponsors."})])[0]
+    assert out["sponcost"] == "Gold $25,000"
+    assert out["sponurl"] == "https://ex.com/sponsor"
+    assert out["sponq"] == "Speaking slots are reserved for sponsors."
+
+
+def test_the_organizer_is_carried_through():
+    assert brp.build([row(**{"ORGANIZER": "Reuters Events"})])[0]["org"] == "Reuters Events"
+
+
+def test_a_pre_v15_row_has_no_sponsor_flag():
+    """A 38-column delivery has none of these columns. It must render, not raise."""
+    out = brp.build([row()])[0]
+    assert out["spon"] is False and out["org"] == "" and out["sponq"] == ""
+
+
+def test_a_sponsor_requirement_with_no_quote_says_so_rather_than_going_quiet():
+    """R18.3 - the cost is the most consequential number on the page. If we have not proved it
+    yet the page must SAY that, not present the figure as though it were sourced."""
+    assert "unverified until we have" in brp.PAGE
+    assert "not yet read a sentence" in brp.PAGE
