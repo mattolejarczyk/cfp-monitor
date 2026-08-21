@@ -115,6 +115,34 @@ def _build_reason(res: ConferenceResult) -> str:
     return " ".join(parts)
 
 
+# Cosmetic variations seen across pages of the SAME site: case, dash style, comma /
+# period, spacing, and abbreviated month names. Deterministic aliases, not inference.
+_DASHES = {ord(c): "-" for c in "‐‑‒–—―−"}
+_MONTH_ALIASES = {
+    "jan": "january", "feb": "february", "mar": "march", "apr": "april",
+    "jun": "june", "jul": "july", "aug": "august", "sept": "september",
+    "sep": "september", "oct": "october", "nov": "november", "dec": "december",
+}
+
+
+def _date_key(value: str) -> str:
+    """Canonical COMPARISON key for a crawled date string.
+
+    Purely textual normalization so the SAME dates written differently
+    ("AUGUST 10-13, 2026" vs "Aug. 10 - 13 2026") collapse to one key and stop
+    reading as a multi-edition disagreement.
+
+    It deliberately does NOT parse dates. An unparseable or genuinely different
+    string keeps its own folded key rather than being guessed into a date, so a
+    real disagreement is still reported. Display keeps the original strings.
+    """
+    s = value.translate(_DASHES).casefold()
+    s = re.sub(r"[,.]", " ", s)          # "Aug. 10-13, 2026" -> "aug 10-13 2026"
+    s = re.sub(r"\s*-\s*", "-", s)       # "10 - 13" -> "10-13"
+    s = re.sub(r"\s+", " ", s).strip()
+    return " ".join(_MONTH_ALIASES.get(w, w) for w in s.split(" "))
+
+
 def _fact(field: str, pairs: list[tuple[str, PageExtraction]], get: Callable[[PageExtraction], Optional[str]]) -> Fact:
     """Field-specific evidence: the snippet is the field's OWN value (verbatim from
     the page), never the page's generic opportunity snippet."""
@@ -226,9 +254,17 @@ def consolidate(
     # --- multi-edition caution (feat 10) ---
     # Flag only when pages genuinely DISAGREE on the conference dates (the real
     # ABLC-style ambiguity), not merely because a stray past year is mentioned.
-    date_vals = sorted({(pe.conference_dates or "").strip() for _, pe in pairs if (pe.conference_dates or "").strip()})
+    # Compare on a canonical key (see _date_key), not the raw string: the same dates
+    # written in different cases/dash styles are NOT a disagreement. Raw strings are
+    # kept for display, one per distinct key.
+    by_key: dict[str, str] = {}
+    for _, pe in pairs:
+        raw = (pe.conference_dates or "").strip()
+        if raw:
+            by_key.setdefault(_date_key(raw), raw)
+    date_vals = sorted(by_key.values())
     other_eds = sorted({pe.other_editions.strip() for _, pe in pairs if pe.other_editions and pe.other_editions.strip()})
-    if len(date_vals) >= 2:
+    if len(by_key) >= 2:
         res.possible_multi_edition_site = True
         res.competing_event_mentions = date_vals + [e for e in other_eds if e not in date_vals]
 

@@ -5,6 +5,30 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-08-21
+- **Multi-edition false positive fixed** (`consolidate.py`). The caution compared raw
+  date strings with only `.strip()`, so `AUGUST 10-13, 2026` vs `August 10-13, 2026` -
+  a pure case difference - counted as two values, tripped `len(date_vals) >= 2` and put
+  a customer-facing "Caution: crawled pages disagree on dates" on rows that agreed. New
+  `_date_key()` builds a canonical COMPARISON key (case, dash style, comma/period,
+  spacing, month abbreviations - deterministic aliases only). It deliberately does NOT
+  parse dates: an uninterpretable string keeps its own key rather than being guessed
+  into one, so real disagreements still report. Raw strings are still what gets
+  displayed. 4 tests added in both directions (cosmetic variants collapse; genuinely
+  different dates and uninterpretable strings still flag). 569 green, golden-derivation
+  diff clean.
+- **Two stale brief items retired, measured not assumed.** The daily brief had recycled
+  three "CFP polish" items since ~2026-07-26 from a v3-era TODO block in the (now frozen)
+  cross-project Project Log. Verified against the code: the cosmetic `Submit via :` item
+  was already fixed and regression-tested (`test_consolidate.py`); the date-normalize item
+  was real and is the fix above. The stretch item ("capture explicit CFP open/close dates
+  more aggressively - only Bioprocessing yielded a deadline in the v3 run") is obsolete:
+  measured on the live DB, `conferences.cfp_close_date` is populated on 81/373 rows (21.7%)
+  and `grounding_facts.deadline` on 168/392 (42.9%), so the v3-era premise no longer holds.
+  There is also no `cfp_open_date` COLUMN in `conferences` and no open-date field anywhere
+  in the pipeline contract - the customer deliverable does not include one. Not built. Note
+  the standing rule: the verified count is reported, never targeted.
+
 ## 2026-08-20
 - **Investigator hardened + run across every unconfirmed row.** `investigate_event.py`
   now follows the site's own menu (reads homepage links, follows the promising ones)
