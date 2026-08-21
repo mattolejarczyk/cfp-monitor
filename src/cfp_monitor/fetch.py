@@ -235,12 +235,18 @@ def _will_use_cdp(url: str, settings) -> bool:
     return cdp_reachable(getattr(settings, "cdp_url", None)) and _force_fallback_domain(url)
 
 
-async def _render_with_consent(url: str, settings, tracer):
+async def _render_with_consent(url: str, settings, tracer, prefer_cdp: bool = False):
     """Render `url` in the shared fallback browser, dismiss consent, return
     (html, anchors, status, body_text, use_cdp). Under CDP, reuse the real signed-in context."""
     # CDP (real signed-in Chrome) ONLY for known hard-block domains (e.g. Reuters);
     # everything else uses our own launched browser (faster, proven).
-    use_cdp = _will_use_cdp(url, settings)
+    #
+    # `prefer_cdp` lets a CALLER that has already established the site is blocking us reach for
+    # real Chrome without that domain being on the hard-block list. investigate_event.py uses
+    # it: by the time it asks, it has a 403 in hand and knows the cheap rungs are exhausted.
+    # Default False, so every existing caller behaves exactly as before.
+    use_cdp = (prefer_cdp and cdp_reachable(getattr(settings, "cdp_url", None))) \
+        or _will_use_cdp(url, settings)
     if use_cdp:
         browser = await _get_cdp_browser(settings.cdp_url)
         if browser.contexts:

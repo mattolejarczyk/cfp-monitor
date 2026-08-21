@@ -37,25 +37,41 @@ world, ProMat, International Biomass, PCIM Expo):
 
     both agreed 7 | disagreed 3 | MODEL ONLY 0 | regex only 5
 
-Read it in two halves. Where the regex pass had an opinion the model shared, it was right 7
-times out of 10 - so it is not worthless as an opinion, which the single-site run suggested.
-But MODEL ONLY IS ZERO: across six sites there was not one page where the model found the
-answer and the regex pass had flagged nothing. Every regex-only hit was still navigation.
+Extended to 24 more rows the same day: agreed 16 | disagreed 11 | model only 12 | regex only 7.
 
-So the regex pass is doing its real job - triage - flawlessly, and its candidates are a
-sometimes-right second opinion. Keep both, keep reporting both, and revisit if model-only ever
-becomes non-zero: that is the number that would prove triage is dropping pages on the floor.
+WHAT `model only` DOES NOT MEAN. It was first read here as "pages the model answered and
+triage had missed", and used to argue triage was sound when it came out zero. That reading is
+WRONG, and the error is structural: the model is only ever handed pages the regex ALREADY
+FLAGGED (see `interesting` below). A page triage skips is never read by anyone, so it cannot
+appear in any column of this scorecard. `model only` counts something much narrower - triage
+was right that the page mattered, and then the regex's own candidate sentence was rejected as
+chrome or failed locate_verbatim while the model found a real one.
+
+So the scorecard measures the quality of the regex OPINION, and is structurally blind to the
+quality of the regex TRIAGE. Knowing whether triage drops pages needs an ablation - run the
+model on pages the regex did not flag and see if it finds anything. That has not been done.
+
+What the 30 sites do support: the regex opinion is roughly a coin flip (16 agreed, 11 differed,
+12 times overruled), which is why both passes are still reported rather than one trusted.
 
 Use the disagreements to improve the regex BY HAND, not automatically: once the cheap pass is
 trained on the expensive one, their agreement stops being independent confirmation.
 
-TWO FAILURES THAT ARE NOT "NO FINDINGS", AND ARE REPORTED SEPARATELY
-    dead site        no address returns anything. International Biomass. The row needs a new
-                     URL; the run says nothing about the call.
+FAILURES THAT ARE NOT "NO FINDINGS", AND ARE REPORTED SEPARATELY
+Each looks identical to "we read the site and it says nothing" unless said out loud, which is
+exactly the confusion 2.1 exists to prevent.
+
     catch-all route  every address returns the SAME page. ProMat. The sections exist but are
                      behind JavaScript, so walking paths cannot reach them.
-Both look identical to "we read the site and it says nothing" unless you say so out loud, and
-that is exactly the confusion 2.1 exists to prevent.
+    nothing read     `diagnose_silence` then says WHICH kind of nothing. This used to print one
+                     line - "dead site, the row needs a new URL" - and on 2026-08-20 that line
+                     was WRONG FOR FOUR OF THE FIVE ROWS IT FIRED ON. All five domains
+                     resolved. Two were live sites refusing our fetcher (403), two answered a
+                     plain browser-shaped request perfectly well while our own ladder came back
+                     empty, and exactly one was really gone (404).
+
+A confident wrong label is worse than a failure. It sends someone hunting a replacement URL for
+a site that is fine, and it hides a defect in our fetching behind a data excuse.
 
     python scripts/investigate_event.py --url https://example.com/ [--name "Event 2027"]
     python scripts/investigate_event.py --db <db> --event-id <id>
@@ -68,9 +84,11 @@ import importlib.util
 import json
 import os
 import re
+import socket
 import sqlite3
 import ssl
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
@@ -302,6 +320,98 @@ def probe(url: str):
     return " ".join((t or "").split()), rung
 
 
+BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/128.0 Safari/537.36")
+
+
+def diagnose_silence(root: str, tried: int) -> tuple[str, str]:
+    """Nothing came back. WHICH KIND of nothing? Returns (kind, one-line detail).
+
+    This exists because the single message it replaces - "dead site, the row needs a new URL" -
+    was wrong four times out of five on the 2026-08-20 run. Every one of those five domains
+    resolved. Two were live sites refusing our fetcher, two answered a plain request perfectly
+    well and our own ladder still came back empty, and exactly one was really gone.
+
+    A confident wrong label is worse than a failure: it sends someone hunting for a replacement
+    URL for a site that is fine, and it hides a bug in our own fetching behind a data excuse.
+
+    Rule 5.2 is the line that matters - only a 404 or 410 disproves anything. A 403 is the site
+    declining to talk to us, which says nothing whatever about the event.
+    """
+    host = urlparse(root).netloc
+    try:
+        socket.gethostbyname(host)
+    except Exception:                                                 # noqa: BLE001
+        return "gone", f"{host} does not resolve - the domain itself is not there"
+
+    req = urllib.request.Request(root + "/", headers={"User-Agent": BROWSER_UA})
+    try:
+        with urllib.request.urlopen(req, timeout=25,
+                                    context=ssl._create_unverified_context()) as r:
+            n = len(r.read(400_000))
+        if n > 2000:
+            return "our_bug", (f"a plain browser-shaped request got HTTP {r.status} and "
+                               f"{n:,} bytes - the site is fine and OUR FETCH LADDER FAILED")
+        return "thin", (f"HTTP {r.status} but only {n:,} bytes - probably a shell page that "
+                        f"builds itself in JavaScript")
+    except urllib.error.HTTPError as e:
+        if e.code in (404, 410):
+            return "gone", f"HTTP {e.code} {e.reason} - this URL is genuinely gone (rule 5.2)"
+        if e.code in (401, 403, 429):
+            return "refused", (f"HTTP {e.code} {e.reason} - the site is UP and declining to "
+                               f"talk to us. Says nothing about the event.")
+        return "unknown", f"HTTP {e.code} {e.reason}"
+    except Exception as e:                                            # noqa: BLE001
+        return "unknown", f"{type(e).__name__}: {str(e)[:80]}"
+
+
+class _Quiet:
+    """`_render_with_consent` traces its work; here nobody is listening."""
+
+    def log(self, *a, **k) -> None:
+        pass
+
+
+def render_targets(urls: list[str], cap: int = 8) -> dict[str, str]:
+    """Read these pages in a REAL BROWSER, preferring the signed-in Chrome on :9222.
+
+    The cheap rungs are plain HTTP, and `verify.fetch_text` is explicit that it "deliberately
+    skips the browser" - fast enough to check a date on thousands of URLs, and it yields nothing
+    on a site that blocks robots or builds itself in JavaScript. That is the right trade for
+    verification and the wrong one here, where we are down to a handful of pages that we have
+    already PROVED are alive and are trying to answer a question about one event.
+
+    Called only after `diagnose_silence` says the site is up. Capped, because a browser render
+    is seconds rather than milliseconds and this is the expensive end of the ladder.
+    """
+    from src.cfp_monitor import fetch as _f
+
+    settings = Settings()
+    out: dict[str, str] = {}
+
+    async def _go():
+        try:
+            for u in urls[:cap]:
+                try:
+                    _html, _anchors, status, body, used_cdp = await _f._render_with_consent(
+                        u, settings, _Quiet(), prefer_cdp=True)
+                except Exception:                                     # noqa: BLE001
+                    continue
+                flat = " ".join((body or "").split())
+                if flat and len(flat) >= 250:
+                    out[u] = flat
+                    print(f"    [browser{'/chrome' if used_cdp else ''}] "
+                          f"HTTP {status}, {len(flat):,} chars  {u}")
+        finally:
+            try:
+                await _f.close_fallback_browser()
+            except Exception:                                         # noqa: BLE001
+                pass
+
+    asyncio.run(_go())
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Walk one event's site for call-status evidence.")
     ap.add_argument("--url", help="the event's own site")
@@ -312,6 +422,9 @@ def main() -> int:
     ap.add_argument("--max-llm", type=int, default=6,
                     help="ceiling on model calls per event - a spike means a data "
                          "problem, not a site with forty speaker pages")
+    ap.add_argument("--no-browser", action="store_true",
+                    help="skip the browser retry when the cheap rungs come back empty. "
+                         "Faster, and it will report live-but-unreadable sites as unread.")
     ap.add_argument("--no-llm", action="store_true",
                     help="regex only. Faster and free, but it is the pass that "
                          "reports navigation as evidence - read the output knowing that.")
@@ -369,11 +482,38 @@ def main() -> int:
     # a domain that no longer resolves reads exactly like "we looked and it says nothing",
     # which is the confusion 2.1 exists to prevent.
     if reached == 0:
-        print(f"\nNo page on {root} could be read at all - not one of "
-              f"{len(seen_u)} address(es) returned content.")
-        print("That is a DEAD OR UNREACHABLE SITE, not an event with nothing to say. It tells")
-        print("you nothing about whether the call is open, and the row needs a new URL.")
-        return 0
+        kind, detail = diagnose_silence(root, len(seen_u))
+        print(f"\nNothing was read from {root} - none of {len(seen_u)} address(es) "
+              f"returned content.\nWHY: {detail}\n")
+
+        # The site is ALIVE and the cheap rungs simply cannot read it. That is precisely what
+        # the browser rung is for, and not reaching for it here was leaving four rows out of
+        # five reported as dead when they were merely unreadable BY US.
+        if kind in ("refused", "our_bug", "thin") and not a.no_browser:
+            print("Site is up. Retrying through a real browser (Chrome on :9222 if reachable):")
+            raw = render_targets(targets)
+            reached = len(raw)
+            how = "a real browser after the plain rungs came back empty"
+            if reached:
+                print(f"\n    -> the browser read {reached} page(s) the plain fetch could not.\n")
+
+        if reached == 0:
+            say = {
+                "gone":    ("URL IS DEAD. The row needs a replacement address. This still says\n"
+                            "nothing about whether the call is open - only that we cannot look."),
+                "refused": ("SITE REFUSED US. The page is there; it declined our fetcher. The row\n"
+                            "is fine and does NOT need a new URL - it needs a fetch through real\n"
+                            "Chrome. Rule 5.2: a refusal disproves nothing."),
+                "our_bug": ("OUR DEFECT, NOT THE SITE'S. A plain request reached this page, so the\n"
+                            "fetch ladder is dropping content it should have. Do not change the\n"
+                            "row - fix the fetcher."),
+                "thin":    ("PAGE BUILDS ITSELF IN JAVASCRIPT. There is no text to read without a\n"
+                            "real browser. The row is fine; the reading method is wrong for it."),
+                "unknown": ("REASON UNKNOWN. Treat as 'we could not look', not as evidence "
+                            "about\nthe call."),
+            }[kind]
+            print(say)
+            return 0
     # DEDUPLICATE BEFORE MEASURING REPETITION. Many sites serve one page at several paths -
     # /speakers/, /speaker/ and /speak/ were byte-identical here. Counted as three pages, the
     # one sentence that answered the question looked like site-wide furniture and was
