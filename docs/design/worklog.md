@@ -28,6 +28,15 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
   There is also no `cfp_open_date` COLUMN in `conferences` and no open-date field anywhere
   in the pipeline contract - the customer deliverable does not include one. Not built. Note
   the standing rule: the verified count is reported, never targeted.
+- **Why those items kept coming back (fixed upstream of CFP).** They were being mined from
+  a v3-era TODO block in the cross-project Project Log, which was frozen 2026-08-20. Root
+  cause found in the AgentOS brief engine: its exclusion rules are written with `/` but the
+  note paths come from `path.relative()`, which on Windows uses `\` - so the Archive and
+  dashboard exclusions had never fired on this machine. Fixed in agentos (`9389bbe`), and
+  the three TODO boxes are now ticked with outcomes. Relevance to CFP: a stale doc that
+  onboarding is FORCED to read is worse than no doc - the same reason this worklog and
+  HANDOFF must stay current (see the 2026-08-21 EOD process change: daily wraps now update
+  THIS repo, not a shared cross-project log).
 
 ## 2026-08-20
 - **Investigator hardened + run across every unconfirmed row.** `investigate_event.py`
