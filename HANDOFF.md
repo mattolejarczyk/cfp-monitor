@@ -1,6 +1,9 @@
 # cfp-monitor — Handoff & Single Source of Truth
 
-**Updated 2026-08-01.** This file is the shared reference for **Matt + both Hermes instances**
+**Body last fully revised 2026-08-01.** The running session log through 2026-08-20 lives in
+[`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state (investigator,
+FEW host migration, v1.5 readiness) until these sections are refreshed in a verified session.
+This file is the shared reference for **Matt + both Hermes instances**
 (local dev box and the VPS). It lives in the public repo, so:
 
 - **Read the latest:** `git pull` in your clone, then open this file — never paste long command

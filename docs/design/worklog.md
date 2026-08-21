@@ -5,6 +5,40 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-08-20
+- **Investigator hardened + run across every unconfirmed row.** `investigate_event.py`
+  now follows the site's own menu (reads homepage links, follows the promising ones)
+  instead of guessing paths (`335b4d6`); `diagnose_silence()` separates domain-gone /
+  404 / 403 / JS-shell / our-ladder-failing and retries live sites through a real browser
+  (`a2ff286`). Ran over all 24 unconfirmed rows: 11 returned the call OPEN with a verbatim
+  quote; 5 corroborate deadlines already held (Pittcon, SEMICON China, ISE, DIA, ALD/ALE).
+  3 commits, 565 tests green.
+- **Two of my own claims fell over (kept as lessons).** (1) "model-only = 0" does NOT
+  prove the regex triage is sound - the model only sees pages the regex already flagged,
+  so it measures the regex opinion, not the triage; measuring triage needs an ablation
+  nobody has run. (2) The tool labeled 5 sites "DEAD"; direct probing showed 4 of 5 wrong
+  (two 403 refusals, two answered a plain request while our ladder came back empty, one
+  truly gone). A confident wrong negative is worse than a plain failure.
+- **FEW host migration - fixed.** `fuelethanolworkshop.com` 404s at the root; its own
+  redirect names the successor `2027-few.bbiconferences.com` (same pageId, host only), so
+  every BBI URL can be rewritten mechanically. New citation names the 2027 call and the
+  Feb 12 2027 deadline unaided. Per contract section 3 this is upstream's field - a
+  correction for the hand-back, not a DB edit. `overrides_20260820_few.csv` is local-only.
+- **v1.5 readiness: not ready.** Utility has 0 of 44 rows on all five v1.5 fields (columns
+  exist, no wide delivery landed). Upstream's local `run_market_audit.py` is stale (7 Aug,
+  36 columns, no v1.5) - a Utility run today would spend ~54 grounded requests to produce
+  a file our own gate rejects. No confirmed 43-column delivery date exists on disk.
+
+## 2026-08-17
+- **CFP weekly digest email activated** (M6/M7): `CFP_SMTP_*` + `CFP_ALERT_TO` set as
+  user-level env vars; a real send verified end to end. Traps: `weekly_verify.py` does NOT
+  read a .env file, and user-level `setx` is sufficient (tasks run InteractiveToken).
+
+> Catch-up note (2026-08-21): 2026-08-11 through 2026-08-14 were logged as Obsidian memory
+> notes (Agent Inbox) during that stretch and not mirrored here - see those notes for the
+> evidence-table / outbound-gate / weekly-discovery / customer-sheet-matching detail. This
+> worklog resumes normal per-session updates via the one-step /eod.
+
 ## 2026-07-18
 - **UI: live crawl progress + non-destructive downloads** (`app.py`, `pipeline.py`). `run_urls`
   gained an optional `on_progress(done,total,current)` callback (best-effort); the Run tab shows
