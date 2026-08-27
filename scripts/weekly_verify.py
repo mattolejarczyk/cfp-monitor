@@ -105,8 +105,14 @@ def check_all_submission_links(db: str, use_browser: bool = True) -> list[tuple[
     review page renders all of them; checking one and rendering four is how we shipped a
     working-looking link to a page we already knew was gone.
 
-    Returns (event_id, name, url) for links confirmed dead. A plain-HTTP 404 is never
-    sufficient on its own (contract 5.2), so the browser confirms before anything is recorded.
+    Returns TWO lists of (event_id, name, url): links that went dead SINCE THE LAST RUN, and
+    the standing backlog that was already dead. A plain-HTTP 404 is never sufficient on its own
+    (contract 5.2), so the browser confirms before anything is recorded.
+
+    The split exists because on 2026-08-27 the digest reported 119 dead links of which ZERO
+    were new - all 80 distinct URLs had been in the 2026-08-16 digest too. A weekly report that
+    re-sends the same backlog trains the reader to skip it, which is precisely when a genuinely
+    new failure gets missed.
     """
     import asyncio
     import sqlite3 as _sq
@@ -117,7 +123,14 @@ def check_all_submission_links(db: str, use_browser: bool = True) -> list[tuple[
 
     con = _sq.connect(db)
     con.row_factory = _sq.Row
-    rows = []
+    # url -> {event_id: name}. A DICT, not a list, and this is the whole of the duplicate fix:
+    # one URL commonly sits in several of the four fields of the SAME row (Biomass and Argus
+    # each hold theirs in all four), and appending per field emitted the same event four times.
+    # On 2026-08-27 that turned 80 dead URLs into a 119-line report. The report is about which
+    # EVENT has a broken link, so (event, url) is the unit - the field it came from is
+    # provenance, tracked separately below rather than by repeating the line.
+    by_url: dict[str, dict[str, str]] = {}
+    url_fields: dict[str, set[str]] = {}
     for r in con.execute("select * from grounding_facts"):
         keys = r.keys()
         for field in CUSTOMER_FACING:
@@ -125,27 +138,41 @@ def check_all_submission_links(db: str, use_browser: bool = True) -> list[tuple[
                 continue
             u = (r[field] or "").strip()
             if u.startswith("http"):
-                rows.append((r["event_id"], r["name"] or r["event_id"], u))
+                by_url.setdefault(u, {})[r["event_id"]] = r["name"] or r["event_id"]
+                url_fields.setdefault(u, set()).add(field)
     con.close()
 
-    by_url: dict[str, list[tuple[str, str]]] = {}
-    for eid, name, url in rows:
-        by_url.setdefault(url, []).append((eid, name))
+    def expand(urls) -> list[tuple[str, str, str]]:
+        return [(eid, name, u) for u in urls for eid, name in by_url[u].items()]
+
     print(f"  checking {len(by_url)} distinct customer-facing link(s) "
           f"across {len(CUSTOMER_FACING)} field(s)")
 
-    suspect = [u for u in by_url if link_status(u)[0] in (404, 410)]
+    # Keep the fast-pass status instead of discarding it - it is the difference between
+    # "this URL 404s" and "we have no idea what this URL does", and the history table below
+    # cannot answer the operator's question without it.
+    status: dict[str, int] = {u: link_status(u)[0] for u in by_url}
+    suspect = [u for u in by_url if status[u] in (404, 410)]
     print(f"  {len(suspect)} returned 404/410 on the fast pass")
-    if not suspect:
-        return []
-    if not use_browser:
-        print("  --no-browser: reporting fast-pass results unconfirmed")
-        return [(e, n, u) for u in suspect for e, n in by_url[u]]
 
-    res = asyncio.run(browser_check(suspect))
-    dead = [u for u in suspect if res.get(u, ("", 0, 0))[0] != "ALIVE"]
-    print(f"  {len(dead)} confirmed dead by browser; "
-          f"{len(suspect) - len(dead)} were false 404s (blocked, not dead)")
+    # NOTE the absence of an early return. Until 2026-08-27 a run with no 404s returned before
+    # writing anything, so a week in which every link worked recorded NOTHING - and `last_alive`,
+    # the column that distinguishes "broke recently" from "never worked", was only ever set on
+    # weeks that happened to contain a failure. A clean week is data too.
+    unconfirmed = False
+    if suspect and not use_browser:
+        print("  --no-browser: reporting fast-pass results unconfirmed")
+        dead, unconfirmed = list(suspect), True
+    elif suspect:
+        res = asyncio.run(browser_check(suspect))
+        dead = [u for u in suspect if res.get(u, ("", 0, 0))[0] != "ALIVE"]
+        for u in suspect:                   # the browser's status beats the fast pass
+            if res.get(u) and res[u][1]:
+                status[u] = res[u][1]
+        print(f"  {len(dead)} confirmed dead by browser; "
+              f"{len(suspect) - len(dead)} were false 404s (blocked, not dead)")
+    else:
+        dead = []
 
     # Persist to a SIDE table. grounding_facts.verify_state cannot hold this: a row can have
     # a correctly verified deadline AND a dead submit link (CES 2027 does), and one state
@@ -153,12 +180,46 @@ def check_all_submission_links(db: str, use_browser: bool = True) -> list[tuple[
     con = _sq.connect(db)
     con.execute("""create table if not exists link_checks (
                      url text primary key, state text, checked_at text)""")
+    # HISTORY. Until 2026-08-27 this table was (url, state, checked_at) with url as the primary
+    # key, so every run overwrote the row and the table could not answer the only two questions
+    # anyone actually asks of it: did this break recently, or has it never worked? Of the 80
+    # links reported dead that day, exactly 4 could be shown to have ever served us a quote -
+    # and that came from the evidence table, not from here.
+    have = {r[1] for r in con.execute("pragma table_info(link_checks)")}
+    for col in ("http_status integer", "first_seen text", "last_alive text"):
+        if col.split()[0] not in have:
+            con.execute(f"alter table link_checks add column {col}")
+
+    # Read the PREVIOUS dead set before overwriting it - this is what makes a "new since last
+    # run" section possible. Without it the digest re-sent the same standing backlog every week
+    # and a genuinely new failure was indistinguishable from 80 lines of old news.
+    was_dead = {r[0] for r in con.execute("select url from link_checks where state != 'alive'")}
+
     now = datetime.now().isoformat(timespec="seconds")
-    con.executemany("insert or replace into link_checks values (?,?,?)",
-                    [(u, "dead" if u in set(dead) else "alive", now) for u in by_url])
+    dead_set = set(dead)
+    con.executemany(
+        """insert into link_checks (url, state, checked_at, http_status, first_seen, last_alive)
+           values (:u, :s, :t, :h, :t, case when :s = 'alive' then :t else null end)
+           on conflict(url) do update set
+             state       = excluded.state,
+             checked_at  = excluded.checked_at,
+             http_status = excluded.http_status,
+             first_seen  = coalesce(link_checks.first_seen, excluded.first_seen),
+             last_alive  = case when excluded.state = 'alive' then excluded.checked_at
+                                else link_checks.last_alive end""",
+        [{"u": u, "s": "dead" if u in dead_set else "alive", "t": now,
+          "h": status.get(u)} for u in by_url])
     con.commit()
     con.close()
-    return [(e, n, u) for u in dead for e, n in by_url[u]]
+
+    # An unconfirmed (--no-browser) sweep must not silently reclassify the backlog as new, so
+    # it reports everything as standing rather than inventing a week's worth of news.
+    if unconfirmed:
+        return [], expand(dead)
+    newly = [u for u in dead if u not in was_dead]
+    standing = [u for u in dead if u in was_dead]
+    print(f"  {len(newly)} NEW since the last run, {len(standing)} standing backlog")
+    return expand(newly), expand(standing)
 
 
 def build_digest(before: dict, after: dict, label: dict[str, str], today: date,
@@ -252,7 +313,8 @@ def main() -> int:
     # The browser confirms before anything counts as dead (contract 5.2: only 404/410 disprove,
     # and a plain-HTTP 404 is never sufficient on its own).
     print("\n--- submission links (all rows, independent of verify_state) ---")
-    dead_links = check_all_submission_links(a.db, use_browser=not a.no_browser)
+    new_dead, standing_dead = check_all_submission_links(a.db, use_browser=not a.no_browser)
+    dead_links = new_dead + standing_dead
 
     # Integrity BEFORE reporting. A digest computed over a database that lost rows is a
     # confident answer to the wrong question, so violations lead the digest.
@@ -272,12 +334,28 @@ def main() -> int:
         lines = digest.split("\n")
         digest = "\n".join(lines[:2] + head + lines[2:])
         changed += 1
-    if dead_links:
-        lines = [f"## Dead submission links ({len(dead_links)})",
-                 "Browser-confirmed. A client clicking these reaches nothing.", ""]
-        lines += [f"- **{n}** - {u}" for _, n, u in sorted(dead_links, key=lambda x: x[1])]
-        digest = digest.replace("## Current totals", "\n".join(lines) + "\n\n## Current totals")
-        changed += len(dead_links)
+    # NEW first and STANDING second, because they demand different things of the reader. A new
+    # dead link is this week's news and needs a decision; the backlog needs a hand-back to
+    # upstream, which is not a weekly-email-sized action.
+    if new_dead or standing_dead:
+        lines: list[str] = []
+        if new_dead:
+            lines += [f"## NEW dead links since the last run ({len(new_dead)})",
+                      "**This is the week's actual news.** Browser-confirmed: a client clicking "
+                      "these reaches nothing.", ""]
+            lines += [f"- **{n}** - {u}" for _, n, u in sorted(new_dead, key=lambda x: x[1])]
+            lines += [""]
+        if standing_dead:
+            lines += [f"## Standing backlog - already dead before this run ({len(standing_dead)})",
+                      "Unchanged since last week. These are upstream's fields, so clearing them "
+                      "is a hand-back,",
+                      "not a re-check - re-running the sweep will not move this number.", ""]
+            lines += [f"- **{n}** - {u}" for _, n, u in sorted(standing_dead, key=lambda x: x[1])]
+            lines += [""]
+        digest = digest.replace("## Current totals", "\n".join(lines) + "\n## Current totals")
+        # Only NEW failures count as "issues" for the subject line. Counting the backlog made
+        # every week look equally alarming, which is the same as no signal at all.
+        changed += len(new_dead)
     print("\n" + digest)
 
     out = Path(a.out_dir)
