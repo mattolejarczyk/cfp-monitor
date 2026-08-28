@@ -355,6 +355,26 @@ class Gate:
         # ---- R18, v1.5. Skipped entirely on a pre-v1.5 delivery. ----
         # A cost figure is the most consequential number in this file: it either kills an
         # opportunity or commits real budget. It gets the same standard as a deadline.
+        # SOURCE_AS_OF is load-bearing as of 2026-08-27. Upstream emits SPONSOR_REQUIRED as a
+        # blanket "Unknown" on the first wide delivery, so the ONLY way we can tell a row that
+        # was inspected and had no sponsorship from a row nobody has looked at yet is whether
+        # its SOURCE_AS_OF advanced. Upstream agreed to advance it strictly on rows actually
+        # fetched. A wholesale stamp at export time destroys that distinction silently - the
+        # file would look perfect and we would simply lose the ability to measure coverage.
+        #
+        # ADVISORY, never a rejection. One market legitimately re-researched in a single pass
+        # WOULD share one date, and rejecting that would be wrong. This asks a question.
+        stamps = [self.g(r, "SOURCE_AS_OF") for r in self.rows]
+        seen = [s for s in stamps if s.strip()]
+        if len(seen) >= 20 and len(set(seen)) == 1:
+            self.note("R19b", "Every row carries the SAME SOURCE_AS_OF - was it stamped at "
+                              "export rather than advanced per row?",
+                      [f"all {len(seen)} dated row(s) read {seen[0]!r}. If this delivery "
+                       f"re-researched every row, that is correct and expected. If it was a "
+                       f"structural re-export, SOURCE_AS_OF should have been left as it was - "
+                       f"a uniform stamp erases the inspected/uninspected distinction that "
+                       f"SPONSOR_REQUIRED=Unknown depends on."])
+
         if "SPONSOR_REQUIRED" in (self.rows[0].keys() if self.rows else ()):
             bad_val, unevidenced_cost = [], []
             for r in self.rows:
