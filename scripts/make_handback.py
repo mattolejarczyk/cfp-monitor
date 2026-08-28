@@ -171,6 +171,10 @@ def main() -> int:
     n_rev = sum(1 for r in repl.values() if r.get("VERDICT") == "REVIEW")
     states = Counter(r.get("CFP STATE") or "Undetermined" for r in repl.values())
     n_open = states.get("Call open", 0)
+    # How many links the replacement pass actually ATTEMPTED. It chases submission pages, so a
+    # dead evidence URL or event homepage is never handed to it - and reporting those as "no
+    # live page found" would state a non-search as a search that failed.
+    n_searched = len(repl)
 
     L = []
     w = L.append
@@ -223,14 +227,24 @@ def main() -> int:
     w("**An unreachable link is not a broken conference.** Those are separate facts and we "
       "report them separately:")
     w("")
+    # UNITS. Rows and links are not the same thing - one row can hold the same dead URL in
+    # several fields, and different URLs in others. An earlier draft printed "76 rows" and then
+    # "of which 78 never resolved", which cannot be true of a subset and was simply two
+    # different units stacked in one column.
     w("| | |")
     w("|---|--:|")
-    w(f"| Rows with an unreachable link | {len(dead)} |")
+    w(f"| Events affected | {len(dead)} |")
+    w(f"| Unreachable links listed below | {len(dead_lines)} |")
     w(f"| ...of which we have NEVER seen the address resolve | **{n_never}** |")
     if repl:
+        # "No live page found" must mean WE LOOKED AND FOUND NOTHING. The replacement pass
+        # chases submission pages only, so a dead DEADLINE_EVIDENCE_URL or event homepage was
+        # never handed to it. Counting those as "not found" would repeat the mistake this
+        # document exists to correct: reporting "we did not look" as though it were a finding.
         w(f"| ...for which we found the **current page** | **{n_conf}** |")
         w(f"| ...candidates we are unsure about, not sent | {n_rev} |")
-        w(f"| ...no live page found | {len(dead) - n_conf - n_rev} |")
+        w(f"| ...searched for a current page, none found | {n_searched - n_conf - n_rev} |")
+        w(f"| ...NOT searched - not a submission link | {len(dead_lines) - n_searched} |")
     w("")
     if repl:
         w("And what the CALL is doing, which is the part that matters to the customer. This is "
