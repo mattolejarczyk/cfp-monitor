@@ -70,21 +70,63 @@ def main() -> int:
     # only sees links layer 1 happened to reach - it missed 8 of 45 because those rows resolved
     # at layer 0 and never got as far as the link test.
     store2 = Store(a.db)
+    last_alive: dict[str, str] = {}
     try:
         known_dead = {u for (u,) in store2.db.execute(
             "select url from link_checks where state='dead'")}
+        # Added 2026-08-27. "Never seen alive" and "worked until August" are different asks:
+        # the first says the citation never resolved for us and should probably be withdrawn
+        # under R1; the second is ordinary link rot. Of 80 dead links, 76 were the first kind.
+        last_alive = {u: (d or "")[:10] for u, d in store2.db.execute(
+            "select url, last_alive from link_checks where state='dead' and last_alive is not null")}
     except Exception:
         known_dead = set()
+    # EVERY customer-facing field, not just submission_url. weekly_verify was widened to all
+    # four on 2026-08-12 because the review page renders all four; this matcher was not, and on
+    # 2026-08-27 that silently cut an 80-link hand-back down to 45. The 35 it dropped were rows
+    # whose DEADLINE_EVIDENCE_URL or MAIN_INFO_URL is dead while the submit link still works.
+    #
+    # The comment that used to sit here read "weekly_verify checks EVERY submission link" - true
+    # when written, false for two weeks before anyone noticed. Same shape as clean_city.
+    CUSTOMER_FACING = ("submission_url", "deadline_evidence_url", "main_info_url", "url")
+    dead_field: dict[str, list[str]] = {}
     if known_dead:
-        seen = {r["submission_url"] for r in dead}
-        extra = [dict(r) for r in store2.db.execute(
-            "select * from grounding_facts where submission_url in (%s)"
-            % ",".join("?" * len(known_dead)), tuple(known_dead))
-            if r["submission_url"] not in seen]
+        seen_ids = {r["event_id"] for r in dead}
+        marks = ",".join("?" * len(known_dead))
+        extra = []
+        for r in store2.db.execute("select * from grounding_facts"):
+            hit = [f for f in CUSTOMER_FACING
+                   if f in r.keys() and (r[f] or "").strip() in known_dead]
+            if not hit:
+                continue
+            dead_field[r["event_id"]] = hit
+            if r["event_id"] not in seen_ids:
+                extra.append(dict(r))
         if extra:
-            print(f"  link_checks adds {len(extra)} dead link(s) verify_state did not see")
+            print(f"  link_checks adds {len(extra)} row(s) verify_state did not see "
+                  f"(across {len(CUSTOMER_FACING)} customer-facing field(s))")
         dead = sorted(dead + extra, key=lambda r: (r["name"] or ""))
     store2.close()
+
+    # Build the table ONCE, then derive every number from it. Counting separately produced
+    # "113 of 76" in the first draft, because the count walked (row, field) pairs while the
+    # table walked (row, url) - a URL in four fields counted four times. A reported number is
+    # derived from the thing it describes, never recomputed alongside it.
+    FIELD_LABEL = {"submission_url": "SUBMISSION URL",
+                   "deadline_evidence_url": "DEADLINE_EVIDENCE_URL",
+                   "main_info_url": "MAIN_INFO_URL", "url": "CONFERENCE URL"}
+    dead_lines: list[tuple[str, str, str, str, str]] = []
+    for r in dead:
+        by_link: dict[str, list[str]] = {}
+        for f in (dead_field.get(r["event_id"]) or ["submission_url"]):
+            u = (r[f] or "") if f in r.keys() else (r["submission_url"] or "")
+            if u:
+                by_link.setdefault(u, []).append(FIELD_LABEL.get(f, f))
+        for u, names in sorted(by_link.items()):
+            dead_lines.append(((r["name"] or "").replace("|", "/"),
+                               market_of.get(r["event_id"], "?"), " + ".join(names), u,
+                               last_alive.get(u) or "**never**"))
+    n_never = sum(1 for ln in dead_lines if ln[4] == "**never**")
     store3 = Store(a.db)
     # Section B comes from the OUTBOUND GATE, not from verify_state. A row is a dispute only
     # if a contradiction was earned on its own cited page, carries the sentence, names which
@@ -145,7 +187,8 @@ def main() -> int:
     w("")
     w("| | Count | What it needs |")
     w("|---|--:|---|")
-    w(f"| A. Links that no longer resolve | {len(dead)} | A prompt rule, plus {n_conf} corrections we found for you. |")
+    w(f"| A. Rows with an unreachable customer-facing link | {len(dead)} | "
+      f"A prompt rule, plus {n_conf} corrections we found for you. |")
     w(f"| B. Deadline disputes | {len(disputes)} | Targeted re-check: defend or correct. |")
     w("")
     w("---")
@@ -153,19 +196,37 @@ def main() -> int:
 
     # ---------------- Section A ----------------
 
-    w(f"## Section A - {len(dead)} submission links that no longer resolve")
+    w(f"## Section A - {len(dead)} rows with a customer-facing link that no longer resolves")
     w("")
     w("Each was checked twice: a plain HTTP request, then a **real browser** judging page "
       "content as well as status code, so a soft 404 returning 200 with a \"page not found\" "
       f"body is still caught. **{len(dead)} of {len(dead)} confirmed unreachable, zero false "
-      "positives** - these are not sites blocking us.")
+      "positives** - these are not sites blocking us. A 403 or a timeout is never counted here.")
+    w("")
+    w("**These are not all submission links, and they do not all need the same fix.** The "
+      "`Field(s)` column says which one is broken, because the correct action differs:")
+    w("")
+    w("- **SUBMISSION URL** - the link a client clicks to submit. Needs a working replacement.")
+    w("- **DEADLINE_EVIDENCE_URL** - the citation behind a submission deadline. If it cannot be "
+      "replaced, the correct action is an **R1 withdrawal**: clear the URL and the quote and "
+      "leave `SUBMISSION DEADLINE` untouched. We would rather hold the date as unconfirmed "
+      "than show a citation that does not resolve.")
+    w("- **MAIN_INFO_URL / CONFERENCE URL** - the event's own page, which the customer view "
+      "links to. Needs the current address.")
+    w("")
+    w("**The `Ever seen alive` column matters more than the count.** It reports the last date "
+      "we ourselves read content at that address. Where it says *never*, the URL has not "
+      "resolved on any check we have ever run - so this is not link rot that set in recently, "
+      "and re-sending the same address will not fix it. Those rows most likely need a new "
+      "citation or an R1 withdrawal rather than a retry.")
     w("")
     w("**An unreachable link is not a broken conference.** Those are separate facts and we "
       "report them separately:")
     w("")
     w("| | |")
     w("|---|--:|")
-    w(f"| Links that no longer resolve | {len(dead)} |")
+    w(f"| Rows with an unreachable link | {len(dead)} |")
+    w(f"| ...of which we have NEVER seen the address resolve | **{n_never}** |")
     if repl:
         w(f"| ...for which we found the **current page** | **{n_conf}** |")
         w(f"| ...candidates we are unsure about, not sent | {n_rev} |")
@@ -221,12 +282,12 @@ def main() -> int:
     w("")
     w("### Every link that no longer resolves")
     w("")
-    w("| Conference | Market | Unreachable URL |")
-    w("|---|---|---|")
-    for r in dead:
-        w("| {} | {} | `{}` |".format(
-            (r["name"] or "").replace("|", "/"), market_of.get(r["event_id"], "?"),
-            r["submission_url"] or ""))
+    # Rendered from dead_lines, the same list every count above is derived from, so the table
+    # and the numbers describing it cannot drift apart.
+    w("| Conference | Market | Field(s) | Unreachable URL | Ever seen alive |")
+    w("|---|---|---|---|---|")
+    for name, mk, fields, u, seen in dead_lines:
+        w(f"| {name} | {mk} | {fields} | `{u}` | {seen} |")
     w("")
     w("---")
     w("")
