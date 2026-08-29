@@ -1,8 +1,20 @@
 # cfp-monitor — Handoff & Single Source of Truth
 
-**Body last fully revised 2026-08-01.** The running session log through 2026-08-20 lives in
-[`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state (investigator,
-FEW host migration, v1.5 readiness) until these sections are refreshed in a verified session.
+**Body last fully revised 2026-08-01.** The running session log through 2026-08-28 lives in
+[`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
+sections are refreshed in a verified session.
+
+> **Where the CFP work stands, 2026-08-28.** The v1.5 43-column delivery was expedited from
+> 2 September to today. Phase 1 and Phase 2 are applied and gated; the file is still REJECTED on
+> check 4 (7 rows), check 6 (11) and R11 (7). R8c (12) is OUR false positive - multi-market
+> events legitimately share one `EVENT_ID`, so do not "fix" it in the data. Upstream still owes
+> six organisation-page searches. 63 dead-link occurrences remain, mostly event pages we have no
+> replacement for.
+>
+> **Two joins that matter.** Our canonical `EVENT_ID` does NOT match upstream's (contract 5.4) -
+> any script keyed on it silently matches nothing. Join on the URL being replaced. And a
+> decision must be applied to every customer-facing URL field, not one: the review page renders
+> four.
 This file is the shared reference for **Matt + both Hermes instances**
 (local dev box and the VPS). It lives in the public repo, so:
 

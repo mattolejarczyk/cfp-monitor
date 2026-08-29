@@ -5,6 +5,56 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-08-28
+Long CFP day: the weekly digest was root-caused, the dead-link backlog was drained into an
+actual correction list, and the v1.5 delivery was pulled forward from 2 September to today.
+
+**Weekly verification digest, root-caused.** The 2026-08-27 run emailed 119 dead submission
+links. Every line was TRUE - ten probed independently, all genuine 404s - and the report was
+still close to useless. Three defects, all fixed:
+- 119 lines described only **80 distinct URLs**, because a URL living in several of the four
+  customer-facing fields was emitted once per FIELD. Now keyed by (event, url). 119 -> 82.
+- **Zero of the 80 were new**; all were in the 2026-08-16 digest. The digest now leads with
+  NEW SINCE LAST RUN and follows with the standing backlog, and only new failures count toward
+  the subject-line issue count.
+- `link_checks` was `(url primary key, state, checked_at)`, overwritten every run, so it could
+  not say whether a link broke this week or had never worked. Added `http_status`, `first_seen`,
+  `last_alive`. Answer, once it could be asked: **of 80 dead links, 4 have ever worked. 76 have
+  never resolved on any check we have run.**
+
+**Backlog drained into corrections.** `find_replacement_links` over the dead set produced 15
+CONFIDENT replacements with evidence and **21 calls confirmed OPEN** - moved pages, not ended
+calls. New `find_event_pages.py` chases dead MAIN_INFO_URL / CONFERENCE URL, which the submission
+chaser never touched (38 of 82 links).
+
+**v1.5 expedited.** Live build was 12 files stale with the gate hard-coded to `EXPECTED_COLS =
+38`, so upstream's 43-column file would have been rejected on arrival. Synced, rehearsed the full
+chain on Utility against a DB copy, and added `R19b` - an advisory that fires when 20+ rows share
+one `SOURCE_AS_OF`, because with `SPONSOR_REQUIRED` defaulting to Unknown that stamp is the only
+thing separating "inspected, nothing found" from "never looked at".
+
+Phase 1 (15 replacements + 2 event pages + 51 R1 withdrawals) and Phase 2 (7 REVIEW verdicts,
+4 disputes, 1 org page) applied and gated. Delivery still REJECTED on check 4 (7), check 6 (11),
+R11 (7); R8c (12) is our own false positive.
+
+**Four claims went out unverified today and had to be corrected** - three of them ours:
+- Told upstream the 12 duplicate `EVENT_ID`s were R9 name-drift and to **merge** them. All 11
+  are one event in several markets - same name, distinct markets, zero duplicates inside any
+  per-market file, and contract section 10 says market is excluded from the key precisely so
+  this works. Merging would have deleted real market memberships. Retracted before they acted.
+- Disputed Pittcon 2027's deadline. The page runs **eight** calls; we quoted the Invited Symposia
+  one and upstream's `2026-09-28` matches a live call. **Our dispute was wrong.** Withdrawn.
+- Claimed the rehearsal covered `SPONSOR_QUOTE` extraction before running that step.
+- Reported `mem-save.ps1` missing. `agentos\tools` is HIDDEN; `Test-Path` on the exact path
+  would have said so in one line.
+
+**The characteristic failure of this codebase, named:** a value presented as verified when the
+check either did not run or measured something else. Today it appeared as the "dead site" label
+(wrong for 4 of 5), `link_checks` with no history, the digest that could not tell new from
+standing, "no live page found" counting 38 pages nobody searched for, a relative URL that
+`link_status` could not verify and therefore passed, and a hand-back naming an attachment
+filename frozen three weeks earlier. Six instances, one shape.
+
 ## 2026-08-21
 - **Multi-edition false positive fixed** (`consolidate.py`). The caution compared raw
   date strings with only `.strip()`, so `AUGUST 10-13, 2026` vs `August 10-13, 2026` -
