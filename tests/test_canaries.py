@@ -74,6 +74,20 @@ def test_a_fix_reaches_every_field_carrying_the_url(c):
         f"{c['name']}\n  incident: {c['incident']}\n  found: {got}")
 
 
+@pytest.mark.parametrize("c", _named("expect_check3_applies"), ids=_id)
+def test_v14_check3_scope(c):
+    """Amendment v1.4: check 3 evaluates ACTIVE deadline claims only.
+
+    Mirrors the gate's own two skips - blank deadline, and passed deadline - so a change to
+    either is caught here before it is discovered on 314 rows.
+    """
+    row = c["row"]
+    claimed = bool((row.get("SUBMISSION DEADLINE") or "").strip())
+    applies = claimed and not rules.deadline_has_passed(row, TODAY)
+    assert applies is c["expect_check3_applies"], (
+        f"{c['name']}\n  incident: {c['incident']}")
+
+
 def test_every_canary_names_its_incident():
     """A canary without a story becomes a rule nobody dares delete and nobody understands."""
     for c in CANARIES:

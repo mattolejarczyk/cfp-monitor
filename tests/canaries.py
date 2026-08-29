@@ -116,6 +116,36 @@ CANARIES = [
         "expect_duplicate": True,
     },
     {
+        "name": "check 3 must not fire on a row with no deadline claimed",
+        "incident": "Amendment v1.4, measured 2026-08-29. 108 of 186 check-3 failures (58%) "
+                    "were rows carrying a DEADLINE_QUOTE and evidence URL while SUBMISSION "
+                    "DEADLINE was blank - a citation for a claim the row never makes. The "
+                    "quotes were event dates, calendar strips and site disclaimers.",
+        "row": _row(**{"SUBMISSION DEADLINE": "",
+                       "DEADLINE_EVIDENCE_URL": "https://example.org/",
+                       "DEADLINE_QUOTE": "June 2-3, 2027 - Boston, MA."}),
+        "expect_check3_applies": False,
+    },
+    {
+        "name": "check 3 must not fire on a passed deadline",
+        "incident": "Amendment v1.4, measured 2026-08-29. 50 of 186 (26%). A CFP page comes "
+                    "down once its deadline passes; one of these had passed 317 days earlier.",
+        "row": _row(**{"SUBMISSION DEADLINE": "2026-06-17",
+                       "DEADLINE_EVIDENCE_URL": "https://example.org/cfp",
+                       "DEADLINE_QUOTE": "Abstract deadline June 17, 2026"}),
+        "expect_check3_applies": False,
+    },
+    {
+        "name": "check 3 MUST still fire on a live call with a missing quote",
+        "incident": "2026-08-29. The 28 live calls that remained after both v1.4 exemptions - "
+                    "15% of 186. An exemption that also excuses the case the criterion exists "
+                    "for has removed the criterion rather than scoped it.",
+        "row": _row(**{"SUBMISSION DEADLINE": "2026-09-30",
+                       "DEADLINE_EVIDENCE_URL": "https://example.org/cfp",
+                       "DEADLINE_QUOTE": "Abstract Submissions Deadline: September 30, 2026"}),
+        "expect_check3_applies": True,
+    },
+    {
         "name": "a fix must reach every field carrying the URL",
         "incident": "2026-08-12 and again 2026-08-28. Five rows had SUBMISSION URL cleared "
                     "while CFP_SUBMISSION_URL kept the dead address. The review page renders "

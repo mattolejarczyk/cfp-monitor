@@ -150,6 +150,31 @@ class Gate:
                 continue
             if code == 403:
                 continue                       # blocked-but-trusted; exempt from the quote test
+            # ---- AMENDMENT v1.4: check 3 evaluates ACTIVE deadline claims only ----
+            # Measured 2026-08-29 across all 314 cited rows. Of 186 failures, only 28 were live
+            # calls; the criterion was mostly reporting two things that are not defects:
+            #
+            #   BLANK DEADLINE (108, 58%). The row carries a quote and an evidence URL while
+            #       SUBMISSION DEADLINE is empty - a citation for a claim the row never makes.
+            #       Sampling showed why: the quotes are event dates, calendar strips and site
+            #       disclaimers, not deadline sentences. Where nothing is claimed there is
+            #       nothing to verify, and failing the row teaches nobody anything.
+            #   PASSED DEADLINE (50, 26%). A call-for-papers page is routinely taken down once
+            #       its deadline passes. The quote going missing afterwards is expected decay
+            #       and says nothing about whether the citation was sound when it was made -
+            #       one of these deadlines had passed 317 days earlier.
+            #
+            # Without these, every delivery accumulates check-3 failures purely by ageing, and
+            # a criterion that fails good work for getting older is one people learn to ignore.
+            # Both exemptions were proposed with the measurement behind them and confirmed by
+            # upstream on 2026-08-29. Neither lowers the bar: a LIVE call with a missing quote
+            # still fails, which is the case the criterion exists for.
+            from src.cfp_monitor import rules                       # noqa: PLC0415
+            if not self.g(r, "SUBMISSION DEADLINE").strip():
+                continue                       # v1.4: no claim, so nothing to evidence
+            if rules.deadline_has_passed(r, getattr(self, "today", date.today())):
+                continue                       # v1.4: expected decay, not a defect
+
             quote = self.g(r, "DEADLINE_QUOTE")
             if quote and text and norm(quote) not in norm(text):
                 # Distinguish a PARAPHRASE from an unsupported claim. If the deadline itself
@@ -330,6 +355,22 @@ class Gate:
         #
         # Only fires when a deadline is actually CLAIMED - a blank deadline needs no citation,
         # and an honest blank is always acceptable (2.6).
+        # R3b IS RETIRED BY AMENDMENT v1.4 (2026-08-29). Kept as code, not deleted, because the
+        # reasoning is worth more than the check was.
+        #
+        # R3b tested the SHAPE of a citation - is this URL a homepage - as a proxy for the thing
+        # we actually care about, which is whether the cited page carries the sentence. Criterion
+        # 3 tests that outcome directly. Once check 3 was scoped to active deadline claims, the
+        # proxy stopped adding information and started disagreeing with it: R3b still flagged 29
+        # rows, of which the ones that matter were already in check 3's 28.
+        #
+        # It also produced a wrong instruction. On 2026-08-29 we measured 34 R3b rows and found
+        # 14 whose quote WAS present on the homepage - citations that worked, which a hardened
+        # shape rule would have rejected. Testing the outcome passes those 14 and fails the 20
+        # that deserve it, with nobody editing a row to satisfy a rule.
+        #
+        # Set to True only to measure the shape again; it is not part of the verdict.
+        REPORT_SHAPE_ADVISORY = False
         placeholder_cite = []
         for r in self.rows:
             if not self.g(r, "SUBMISSION DEADLINE"):
@@ -351,8 +392,10 @@ class Gate:
         #
         # Promote to self.add() - a hard FAIL - once amendment v1.4 is agreed. Until then this
         # reports on every run so nobody can claim they were not told.
-        self.note("R3b", "Claimed deadline cites the homepage, not the page carrying it "
-                         "(advisory pending amendment v1.4)", placeholder_cite)
+        if REPORT_SHAPE_ADVISORY:
+            self.note("R3b", "Claimed deadline cites the homepage, not the page carrying it "
+                             "(RETIRED by v1.4 - criterion 3 tests the outcome directly)",
+                      placeholder_cite)
 
         # An ungrounded stub is shippable but must be declared, never silent.
         # R16 - a lifecycle claim is the most consequential finding the research
@@ -465,6 +508,8 @@ class Gate:
         store.close()
 
     def run(self, today: date, db: str = "", market: str = ""):
+        # check_citations needs the date for the v1.4 staleness exemption.
+        self.today = today
         self.check_structure()
         if not self.rows:
             return
