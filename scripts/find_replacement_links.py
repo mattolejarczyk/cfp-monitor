@@ -51,7 +51,7 @@ import csv
 import sqlite3
 import sys
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -189,6 +189,22 @@ async def hunt(rows: list[dict], settings: Settings) -> list[dict]:
         if not found:
             rec["OUTCOME"] = "No live page found"
             results.append(rec); print("        -> nothing found", flush=True); continue
+
+        # ABSOLUTISE BEFORE VERIFYING. The extractor can return a relative href, and on
+        # 2026-08-28 one did: IRPS 2027 was proposed as "/abstract-submission". Upstream caught
+        # it. The verification below silently did not happen - link_status cannot resolve a
+        # relative path, returns something that is not 404/410, and the row passes as though it
+        # had been checked. An unverifiable proposal presented as verified is worse than none.
+        if not found.lower().startswith(("http://", "https://")):
+            joined = urljoin(start_url, found)
+            if not joined.lower().startswith(("http://", "https://")):
+                rec["OUTCOME"] = "No live page found"
+                rec["NOTE"] = f"proposal was not a resolvable URL: {found[:60]!r}"
+                results.append(rec)
+                print(f"        -> unresolvable proposal {found[:40]!r}", flush=True)
+                continue
+            print(f"        (relative {found[:34]!r} -> {joined[:56]})", flush=True)
+            found = joined
         if normalize_url(found) == normalize_url(dead):
             rec["OUTCOME"] = "No live page found"; rec["NOTE"] = "only the same unreachable URL"
             results.append(rec); print("        -> same dead url", flush=True); continue
