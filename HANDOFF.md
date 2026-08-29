@@ -4,12 +4,21 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
-> **Where the CFP work stands, 2026-08-28.** The v1.5 43-column delivery was expedited from
-> 2 September to today. Phase 1 and Phase 2 are applied and gated; the file is still REJECTED on
-> check 4 (7 rows), check 6 (11) and R11 (7). R8c (12) is OUR false positive - multi-market
-> events legitimately share one `EVENT_ID`, so do not "fix" it in the data. Upstream still owes
-> six organisation-page searches. 63 dead-link occurrences remain, mostly event pages we have no
-> replacement for.
+> **Where the CFP work stands, 2026-08-29. THE v1.5 CYCLE IS CLOSED.**
+> `delivery_phase2_remediated_43col.csv` gates **ACCEPTED** with zero failures, five days ahead
+> of the 2 September target. Imported, `check_invariants` passes, 392 rows with no loss, all 51
+> R1 withdrawals landed (zero rows still cite a dead URL), and `SOURCE_AS_OF` came through
+> untouched - every stamp still from the original July/August research passes.
+>
+> **`ACCEPTED_COLS` is now `{43}`.** The two-shape window is closed; a 38-column file fails at
+> check 1. The two transition tests were INVERTED rather than deleted, so the record of why the
+> window existed survives.
+>
+> Open for the next cycle: upstream's six organisation-domain searches (clears most of the
+> remaining 63 dead links), and the **R3b advisory - 34 rows citing a homepage rather than the
+> page carrying the sentence**, now the largest quality gap in the set, pending amendment v1.4.
+> R8c is OUR false positive and is fixed in the gate - multi-market events legitimately share
+> one `EVENT_ID`, so never "fix" it in the data.
 >
 > **Two joins that matter.** Our canonical `EVENT_ID` does NOT match upstream's (contract 5.4) -
 > any script keyed on it silently matches nothing. Join on the URL being replaced. And a

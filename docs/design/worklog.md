@@ -5,6 +5,37 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-08-29
+**The v1.5 cycle closed.** `delivery_phase2_remediated_43col.csv` gates ACCEPTED with zero
+failures, five days ahead of the 2 September backstop. The entry below was written before this
+happened and says the delivery is still rejected - it was, at that moment. This supersedes it.
+
+Getting from rejected to accepted took three things, and only one of them was upstream's:
+- Upstream's remediation script fixed check 6 and R11 correctly, and applied the R2 safeguard we
+  asked for - no `IS_PROJECTED=false` without a live citation.
+- We made three edits rather than round-trip: narrowed the check 4 prose fix from **81 rows to
+  7** (the sweep was replacing accurate text with something FALSE for concluded events - "Google
+  Cloud Next '26 ... has concluded" became "awaiting official announcement"), added SCOPE Summit
+  to the R11 list, and added GreenBiz 27 to the past-deadline list because it is `Fixed
+  Deadline`, not rolling.
+- **The last blocker was our own gate.** R8c compared `EVENT_ID` globally when section 10
+  excludes market from the key precisely so one event stays one record across markets. Fixed to
+  key on (EVENT_ID, Market), guarded both ways. That is the check that produced our "merge them
+  under R9" advice - retracted the day before, cause fixed now.
+
+Imported and reconciled: 392 rows, no loss, invariants hold, zero rows still citing a dead URL,
+`sponsor_required` populated on 391. **`SOURCE_AS_OF` untouched** - every stamp still from the
+original July/August passes, nothing stamped with the import date. The discipline held through
+upstream's export, our propagation fixes, the remediation and the import.
+
+`ACCEPTED_COLS` dropped to `{43}`; the two transition tests were INVERTED rather than deleted so
+the record of why the window existed survives. 595 tests pass.
+
+One correction sent after acceptance: upstream's manifest declared the wrong seven rows as
+ungrounded stubs - they used our check 4 list, because our acceptance note asked them to
+"declare the 7 ungrounded stub rows" without listing them and that was the only list of seven in
+the document. Our ambiguity, their reasonable reading. Reissued with the real seven.
+
 ## 2026-08-28
 Long CFP day: the weekly digest was root-caused, the dead-link backlog was drained into an
 actual correction list, and the v1.5 delivery was pulled forward from 2 September to today.
