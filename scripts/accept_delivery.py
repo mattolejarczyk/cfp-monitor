@@ -211,13 +211,22 @@ class Gate:
                   for r in self.rows if VENUE_HINT.search(self.g(r, "CITY"))]
         self.add("R8b", "CITY holds a city, not a venue", venues)
 
+        # EVENT_ID is unique per (event, MARKET), not globally. Contract section 10: membership
+        # is many-to-many and market is deliberately excluded from the key so one event stays
+        # one record. A combined all-markets file therefore repeats an ID once per market BY
+        # DESIGN - CES 2027 is legitimately a ConsumerElectronics, Robotics and Semiconductor
+        # row - and every per-market delivery still has zero internal duplicates.
+        #
+        # Checking globally made this fire on 12 rows of correct data on 2026-08-27, and we told
+        # upstream to MERGE them under R9. That would have deleted real market memberships. They
+        # had it queued before the retraction reached them.
         seen, dupes = set(), []
         for r in self.rows:
-            eid = self.g(r, "EVENT_ID")
-            if eid in seen:
-                dupes.append(eid)
-            seen.add(eid)
-        self.add("R8c", "EVENT_ID unique per row", dupes)
+            key = (self.g(r, "EVENT_ID"), self.g(r, "Market"))
+            if key in seen:
+                dupes.append(f'{key[0]} (market {key[1] or "?"})')
+            seen.add(key)
+        self.add("R8c", "EVENT_ID unique per row within a market", dupes)
 
         bad_bind = []
         for r in self.rows:
