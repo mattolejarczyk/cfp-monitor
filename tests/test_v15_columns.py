@@ -51,10 +51,16 @@ def check1(path):
 
 
 # --------------------------------------------------------- both shapes are valid --
-def test_the_38_column_delivery_still_passes(tmp_path):
-    """The one upstream ships TODAY. Flipping straight to 43 would reject every delivery
-    made between agreeing v1.5 and shipping it."""
-    assert check1(write(tmp_path, V13, [["x"] * 38])) == []
+def test_the_38_column_delivery_is_now_rejected(tmp_path):
+    """WINDOW CLOSED 2026-08-29. This test previously asserted the opposite.
+
+    38 was accepted alongside 43 from 2026-08-20 so nothing broke while upstream implemented
+    v1.5. That was explicitly temporary - a gate accepting two shapes indefinitely lets a silent
+    regression to the old shape through. The first 43-column delivery was accepted with zero
+    failures on 2026-08-29 and upstream authorised the close, so a 38-column file must now fail
+    at check 1 rather than import and store nothing in columns 39-43.
+    """
+    assert check1(write(tmp_path, V13, [["x"] * 38])), "38 columns must now be rejected"
 
 
 def test_the_43_column_v15_delivery_passes(tmp_path):
@@ -109,8 +115,10 @@ def test_the_v15_column_names_are_pinned():
                            "SPONSOR_QUOTE"]
 
 
-def test_both_transition_widths_are_declared():
-    assert ad.ACCEPTED_COLS == {38, 43}
+def test_only_the_v15_width_is_accepted():
+    """43 is the single accepted shape as of 2026-08-29. If a future change re-opens this to
+    two widths, that should be a deliberate amendment with an end date, not a convenience."""
+    assert ad.ACCEPTED_COLS == {43}
 
 
 # ------------------------------------------ ownership: the quote is OURS, not theirs --

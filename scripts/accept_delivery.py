@@ -33,7 +33,15 @@ from src.cfp_monitor.verify import fetch_text, link_status      # noqa: E402
 # both shapes have to pass until one arrives. Flipping straight to 43 would have rejected every
 # delivery made between the agreement and their next run.
 # ONE SHAPE AT A TIME once v1.5 lands: when a 43-column delivery has been accepted, drop 38.
-ACCEPTED_COLS = {38, 43}
+# 43 ONLY, as of 2026-08-29. The window that also accepted 38 was opened on 2026-08-20 so that
+# nothing broke while upstream implemented v1.5, and it was explicitly temporary: a gate that
+# accepts two shapes indefinitely lets a silent regression to the old shape through, and we said
+# we would close it once the first wide delivery was accepted.
+#
+# delivery_phase2_remediated_43col.csv passed with zero failures on 2026-08-29, five days ahead
+# of the 2 September target, and upstream authorised the close. A 38-column file now fails at
+# check 1 with a clear message rather than importing and silently storing nothing in cols 39-43.
+ACCEPTED_COLS = {43}
 V15_COLS = ["ORGANIZER", "SPONSOR_REQUIRED", "SPONSOR_URL", "SPONSOR_COST", "SPONSOR_QUOTE"]
 SPONSOR_VALUES = {"yes", "no", "unknown", ""}   # blank is read as Unknown (R18.1)
 VALID_FORMATS = {"In-Person", "Virtual", "Hybrid"}
