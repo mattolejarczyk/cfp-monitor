@@ -4,21 +4,33 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
-> **Where the CFP work stands, 2026-08-29. THE v1.5 CYCLE IS CLOSED.**
-> `delivery_phase2_remediated_43col.csv` gates **ACCEPTED** with zero failures, five days ahead
-> of the 2 September target. Imported, `check_invariants` passes, 392 rows with no loss, all 51
-> R1 withdrawals landed (zero rows still cite a dead URL), and `SOURCE_AS_OF` came through
-> untouched - every stamp still from the original July/August research passes.
+> **Where the CFP work stands, end of 2026-08-29.**
 >
-> **`ACCEPTED_COLS` is now `{43}`.** The two-shape window is closed; a 38-column file fails at
-> check 1. The two transition tests were INVERTED rather than deleted, so the record of why the
-> window existed survives.
+> **CURRENT FILE: `delivery_v14_final_43col.csv`.** Earlier files in that folder are superseded;
+> `delivery_r3b_traced_43col.csv` was deleted (it carried 14 wrong withdrawals).
 >
-> Open for the next cycle: upstream's six organisation-domain searches (clears most of the
-> remaining 63 dead links), and the **R3b advisory - 34 rows citing a homepage rather than the
-> page carrying the sentence**, now the largest quality gap in the set, pending amendment v1.4.
-> R8c is OUR false positive and is fixed in the gate - multi-market events legitimately share
-> one `EVENT_ID`, so never "fix" it in the data.
+> **The delivery is NOT accepted.** An earlier ACCEPTED verdict this morning came from gate runs
+> using `--no-network`, which SKIPS criteria 2 and 3 - and the gate printed ACCEPTED anyway.
+> Always gate with the network before declaring anything.
+>
+> On a full networked gate it passes everything except **check 3, at 28 rows** - live calls whose
+> cited page does not carry its quote. That is upstream's active research queue, several with
+> deadlines in early September.
+>
+> **Amendment v1.4 is written and implemented** (`docs/operations/Contract_v1.4_Amendment_Citation_Scope.md`).
+> Criterion 3 now evaluates ACTIVE deadline claims only - blank and passed deadlines exempt -
+> which took the failure from 186 to 28. **R3b is retired**: it tested URL shape as a proxy, and
+> of 34 rows it flagged, 14 had their quote present on the cited homepage.
+>
+> **Three modules now enforce what used to be remembered:** `src/cfp_monitor/rules.py` (business
+> rules as pure functions, each returning a reason), `src/cfp_monitor/sitewalk.py` (one
+> site-walking implementation, was four), and `tests/canaries.py` (one record per real incident).
+> `tests/test_no_reimplemented_crawling.py` fails the build if a fifth crawler appears.
+>
+> **Never "fix" R8c in the data** - multi-market events legitimately share one `EVENT_ID`
+> (section 10); the gate check is per-market and correct.
+>
+> Open: upstream's 28 live calls and six organisation-domain searches. `ACCEPTED_COLS` is `{43}`.
 >
 > **Two joins that matter.** Our canonical `EVENT_ID` does NOT match upstream's (contract 5.4) -
 > any script keyed on it silently matches nothing. Join on the URL being replaced. And a

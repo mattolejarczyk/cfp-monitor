@@ -5,7 +5,52 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
-## 2026-08-29
+## 2026-08-29 (afternoon) - the acceptance was wrong, and v1.4 came out of finding out why
+
+**Supersedes the entry below, which says the cycle closed accepted.** It did not.
+
+**The acceptance came from a partial gate.** Every run had used `--no-network`, which SKIPS
+criteria 2 and 3 - the two that fetch pages - and the gate printed `RESULT: ACCEPTED` anyway. On
+a full networked run, check 3 failed on **183** rows. The gate now needs to say when checks were
+skipped; that fix is still open.
+
+**The 183 were then nearly mishandled twice.** First we assumed they were our own blindness,
+since `fetch_text` deliberately skips the browser - sampled 10, and 9 were genuine. Then an
+automated tracer proposed withdrawing 18 citations; **14 had deadlines that had already passed**,
+one by 317 days. A CFP page comes down after its deadline. That output was discarded.
+
+**Measuring instead of estimating changed the whole picture.** All 314 cited rows re-fetched and
+classified:
+
+    no deadline claimed at all   108  (58%)   a citation for a claim the row never makes
+    deadline already passed       50  (26%)   expected decay
+    genuinely live call           28  (15%)   the real work
+
+We had predicted "most of it is staleness". It is 26%. The dominant category was one neither
+side had considered - rows carrying a `DEADLINE_QUOTE` that is an event date, a calendar strip
+or a site disclaimer, with no deadline to evidence.
+
+**Amendment v1.4** (`docs/operations/Contract_v1.4_Amendment_Citation_Scope.md`) exempts both,
+taking check 3 from 186 to 28, and **retires R3b** - of 34 rows it flagged, 14 had their quote
+present on the cited homepage, so a hardened shape rule would have rejected working citations.
+
+**Three defects recurred in scripts written hours apart**, which produced the day's real output:
+- `src/cfp_monitor/rules.py` - the business rules as pure functions, each returning a reason.
+  `withdrawal_changes` takes `fetched` with NO DEFAULT, so a withdrawal cannot skip the
+  `SOURCE_AS_OF` decision the way ours did.
+- `src/cfp_monitor/sitewalk.py` - one site-walking implementation. There were four, and the same
+  three bugs had been fixed in some copies and not others.
+- `tests/canaries.py` + `test_no_reimplemented_crawling.py` - one record per real incident, and
+  a test that fails the build if a fifth crawler appears.
+
+**Corrections we sent after being wrong:** the "most of it is staleness" prediction; classifying
+136 rows as live calls when blank deadlines were being read as "not yet passed"; and withdrawing
+four rows without advancing `SOURCE_AS_OF` after rendering 11-14 pages of each site - upstream's
+rule was right and ours was not.
+
+Current file: **`delivery_v14_final_43col.csv`**. 622 tests pass.
+
+## 2026-08-29 (morning)
 **The v1.5 cycle closed.** `delivery_phase2_remediated_43col.csv` gates ACCEPTED with zero
 failures, five days ahead of the 2 September backstop. The entry below was written before this
 happened and says the delivery is still rejected - it was, at that moment. This supersedes it.
