@@ -263,7 +263,11 @@ def main() -> int:
             w("")
         w(f"### {n_conf} replacements we are confident in")
         w("")
-        w("Attached: `replacement_links_20260809.csv`. Every URL below was retrieved and "
+        # Name the file we were actually given, not a name frozen when this was written. It said
+    # `replacement_links_20260809.csv` for three weeks, so any later hand-back pointed upstream
+    # at a file that did not exist. Same defect as make_handback's hard-coded counts in August:
+    # a value about the data, written down instead of derived from it.
+    w(f"Attached: `{Path(a.replacements).name}`. Every URL below was retrieved and "
           "verified, and each states how to submit - we discarded candidates that were "
           "homepages, speaker listings or a different call at the same event, because offering "
           "those would waste your time.")
