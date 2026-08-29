@@ -90,19 +90,37 @@ def bound_confidence(current: str, is_projected: bool) -> str:
     return re.sub(r"^\s*Projected\b", "Verified", cur)
 
 
-def withdrawal_changes(row) -> dict:
+def withdrawal_changes(row, *, fetched: bool, today: date) -> dict:
     """Every field an R1 withdrawal touches - as one dict, so no caller can do half of it.
 
     R1: clear the citation URL and the quote, set IS_PROJECTED true, and LEAVE THE SUBMISSION
     DEADLINE ALONE. The confidence label travels with IS_PROJECTED (R11), which is the part
-    that keeps getting forgotten.
+    that kept getting forgotten until it was folded in here.
+
+    `fetched` IS REQUIRED, WITH NO DEFAULT, ON PURPOSE. On 2026-08-29 four rows were withdrawn
+    after rendering 11 to 14 pages of each site, and their SOURCE_AS_OF was left at 2026-08-06 -
+    asserting they had not been looked at in three weeks. `may_advance_source_as_of` already
+    existed and returned the right answer; the caller simply never asked it. Upstream's own rule
+    was correct and ours was not.
+
+    Making the parameter mandatory means a withdrawal cannot be written without deciding whether
+    a page was actually read - the same trick that fixed the confidence binding. The three-way
+    rule both sides agreed:
+
+        fetched, quote found      -> advance the stamp
+        fetched, quote absent     -> ADVANCE - the site was inspected
+        could not read any page   -> do not advance, nothing was inspected
     """
-    return {
+    out = {
         "DEADLINE_EVIDENCE_URL": "",
         "DEADLINE_QUOTE": "",
         "IS_PROJECTED": "true",
         "GROUNDING_CONFIDENCE": bound_confidence(row.get("GROUNDING_CONFIDENCE", ""), True),
     }
+    advance, _why = may_advance_source_as_of(fetch_succeeded=fetched)
+    if advance:
+        out["SOURCE_AS_OF"] = today.isoformat()
+    return out
 
 
 def may_advance_source_as_of(*, fetch_succeeded: bool) -> tuple[bool, str]:

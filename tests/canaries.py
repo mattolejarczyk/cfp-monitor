@@ -77,6 +77,25 @@ CANARIES = [
         "expect_deadline_untouched": True,
     },
     {
+        "name": "a withdrawal after a real inspection MUST advance SOURCE_AS_OF",
+        "incident": "2026-08-29. Four live calls were withdrawn after rendering 11-14 pages of "
+                    "each site, and their stamp was left at 2026-08-06 - asserting they had not "
+                    "been looked at in three weeks. may_advance_source_as_of already returned "
+                    "the right answer; the caller never asked it. Upstream's rule was right and "
+                    "ours was wrong. A later sweep would have repeated the work.",
+        "row": _row(**{"GROUNDING_CONFIDENCE": "Verified (2027)"}),
+        "fetched": True,
+        "expect_stamp_advances": True,
+    },
+    {
+        "name": "a withdrawal with nothing read must NOT advance SOURCE_AS_OF",
+        "incident": "Contract discipline agreed 2026-08-29: a fetch that fails is not an "
+                    "inspection, and stamping it records a look that never happened.",
+        "row": _row(**{"GROUNDING_CONFIDENCE": "Verified (2027)"}),
+        "fetched": False,
+        "expect_stamp_advances": False,
+    },
+    {
         "name": "SOURCE_AS_OF must not advance on a failed fetch",
         "incident": "2026-08-29. Upstream's draft stamped every attempted row, including the "
                     "NOT-FOUND branch. That stamp is the only thing separating 'inspected, "

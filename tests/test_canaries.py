@@ -33,9 +33,29 @@ def test_withdrawal_decision(c):
     assert why, "a decision must come with a reason"
 
 
+@pytest.mark.parametrize("c", _named("expect_stamp_advances"), ids=_id)
+def test_withdrawal_decides_the_stamp(c):
+    """`fetched` is mandatory, so a withdrawal cannot be written without deciding this."""
+    changes = rules.withdrawal_changes(c["row"], fetched=c["fetched"], today=TODAY)
+    advanced = "SOURCE_AS_OF" in changes
+    assert advanced is c["expect_stamp_advances"], (
+        f"{c['name']}\n  incident: {c['incident']}")
+    if advanced:
+        assert changes["SOURCE_AS_OF"] == TODAY.isoformat()
+
+
+def test_withdrawal_changes_refuses_to_guess_whether_a_page_was_read():
+    """No default for `fetched`. The 2026-08-29 miss was a caller not asking the question."""
+    import inspect
+    sig = inspect.signature(rules.withdrawal_changes)
+    p = sig.parameters["fetched"]
+    assert p.default is inspect.Parameter.empty, (
+        "fetched must have no default - a caller has to decide whether a page was read")
+
+
 @pytest.mark.parametrize("c", _named("expect_confidence_after_withdrawal"), ids=_id)
 def test_withdrawal_binds_confidence(c):
-    changes = rules.withdrawal_changes(c["row"])
+    changes = rules.withdrawal_changes(c["row"], fetched=True, today=TODAY)
     assert changes["GROUNDING_CONFIDENCE"] == c["expect_confidence_after_withdrawal"], (
         f"{c['name']}\n  incident: {c['incident']}")
     assert changes["IS_PROJECTED"] == "true"
@@ -43,7 +63,7 @@ def test_withdrawal_binds_confidence(c):
 
 @pytest.mark.parametrize("c", _named("expect_deadline_untouched"), ids=_id)
 def test_withdrawal_leaves_the_deadline(c):
-    changes = rules.withdrawal_changes(c["row"])
+    changes = rules.withdrawal_changes(c["row"], fetched=True, today=TODAY)
     assert "SUBMISSION DEADLINE" not in changes, (
         f"{c['name']}\n  incident: {c['incident']}")
 
