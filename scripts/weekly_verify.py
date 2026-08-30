@@ -93,7 +93,9 @@ def run(cmd: list[str], cwd: Path) -> int:
 CUSTOMER_FACING = ("submission_url", "deadline_evidence_url", "main_info_url", "url")
 
 
-def check_all_submission_links(db: str, use_browser: bool = True) -> list[tuple[str, str, str]]:
+def check_all_submission_links(
+        db: str, use_browser: bool = True
+) -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]]]:
     """Check EVERY link the customer can click, regardless of what verification concluded.
 
     verify_grounding stops at the first layer that resolves a row, so a conference that
