@@ -5,6 +5,44 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-08-29 (evening) - the tracer moved in, and upstream's alignment summary was checked
+
+**The quote tracer is now `scripts/trace_quote_to_page.py`.** One of the six delivery-folder
+scripts was a real capability - "find the page that actually carries this quote, or withdraw the
+citation honestly". The other five apply a named list of rows to a named file on a particular
+day; putting those in `scripts/` would say "run this again", which is false, and is how a tools
+directory stops being trusted.
+
+Moving it forced the refactor. It carried its own crawler, so `test_no_reimplemented_crawling.py`
+would have rejected it. It now uses `sitewalk.plan` and `rank_links` - **the first entry
+`PENDING_MIGRATION` has lost rather than gained** (11 remain). It is the most destructive tool in
+the repo, so the safety is not the script being careful: every decision routes through
+`rules.may_withdraw_citation`, which refuses when no page could be read and when the deadline has
+already passed. Seven tests, two of which read the source: it must call sitewalk rather than
+`urljoin`, and must not contain the 35-character prefix match that could attach a citation to
+whichever page shared an opening phrase. Smoke-tested on ProMat 2027 from the live queue: 10
+pages walked, withdrawn under R1, stamp advanced, dry run wrote nothing. **634 tests green.**
+
+`auto_trace_r3b_high.py` was DELETED from the Markets folder rather than left beside it. A
+superseded file in a working folder gets picked up eventually - that is exactly how
+`delivery_r3b_traced_43col.csv` nearly shipped with 14 wrong withdrawals. It stays in git history.
+
+**Upstream sent an alignment summary and every falsifiable claim in it was checked against the
+files, not agreed to.** All eight hold: 406 x 43; `SOURCE_AS_OF` = 2026-08-29 on exactly 5 rows
+with 401 historical (08-03 x20, 08-05 x54, 08-06 x162, 08-07 x165); `delivery_r3b_traced_43col.csv`
+absent from disk; check-3 categories 108 / 50 / 28; zero blank-deadline rows still carrying a
+citation (230 blanks, 0 cited); `ACCEPTED_COLS = {43}`; v1.4 recorded; R3b retired. Their
+inspection-stamp protocol matches `rules.withdrawal_changes(fetched=...)` exactly.
+
+**Two things to correct back.** Their test count (619) predates the evening work (634), and their
+summary does not mention `sitewalk.py`, `tests/canaries.py`, the enforcement test, the INCOMPLETE
+verdict or the tracer - so they are aligned on data and contract but a day behind on
+architecture. Also **108 and 184 are different populations**: 108 is the blank-deadline slice of
+the 186 check-3 failures, 184 is the total blank-deadline citations cleared across the whole
+file. Nobody should later "reconcile" those and conclude rows went missing.
+
+---
+
 ## 2026-08-29 (afternoon) - the acceptance was wrong, and v1.4 came out of finding out why
 
 **Supersedes the entry below, which says the cycle closed accepted.** It did not.

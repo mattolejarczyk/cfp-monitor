@@ -33,6 +33,19 @@ sections are refreshed in a verified session.
 > **Never "fix" R8c in the data** - multi-market events legitimately share one `EVENT_ID`
 > (section 10); the gate check is per-market and correct.
 >
+> **`scripts/trace_quote_to_page.py`** is the tool for those 28: it walks the event's own site for
+> the cited sentence and either retargets the citation or withdraws it under R1. It refuses to
+> withdraw when no page could be read or the deadline has already passed. **Use `--dry-run` first.**
+>
+> **Upstream is aligned on data and contract as of this evening** - all eight falsifiable claims in
+> their summary were checked against the files and hold. They are a day behind on architecture
+> (they do not yet know about `sitewalk.py`, `canaries.py`, the enforcement test, the INCOMPLETE
+> verdict or the tracer), and their test count of 619 is now 634.
+>
+> **108 and 184 are different populations.** 108 is the blank-deadline slice of the 186 check-3
+> failures; 184 is the total blank-deadline citations cleared across the whole file. Do not
+> reconcile them and conclude rows went missing.
+>
 > Open: upstream's 28 live calls and six organisation-domain searches. `ACCEPTED_COLS` is `{43}`.
 >
 > **Two joins that matter.** Our canonical `EVENT_ID` does NOT match upstream's (contract 5.4) -
