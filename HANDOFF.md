@@ -13,6 +13,9 @@ sections are refreshed in a verified session.
 > using `--no-network`, which SKIPS criteria 2 and 3 - and the gate printed ACCEPTED anyway.
 > Always gate with the network before declaring anything.
 >
+> The gate now reports **INCOMPLETE** rather than ACCEPTED whenever a check was skipped,
+> and exits non-zero - so that specific mistake cannot recur.
+>
 > On a full networked gate it passes everything except **check 3, at 28 rows** - live calls whose
 > cited page does not carry its quote. That is upstream's active research queue, several with
 > deadlines in early September.

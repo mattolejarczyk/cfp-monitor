@@ -11,8 +11,8 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 **The acceptance came from a partial gate.** Every run had used `--no-network`, which SKIPS
 criteria 2 and 3 - the two that fetch pages - and the gate printed `RESULT: ACCEPTED` anyway. On
-a full networked run, check 3 failed on **183** rows. The gate now needs to say when checks were
-skipped; that fix is still open.
+a full networked run, check 3 failed on **183** rows. FIXED the same day: the gate now reports
+INCOMPLETE, never ACCEPTED, when any check was skipped, and exits non-zero.
 
 **The 183 were then nearly mishandled twice.** First we assumed they were our own blindness,
 since `fetch_text` deliberately skips the browser - sampled 10, and 9 were genuine. Then an
