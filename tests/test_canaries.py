@@ -108,6 +108,34 @@ def test_v14_check3_scope(c):
         f"{c['name']}\n  incident: {c['incident']}")
 
 
+@pytest.mark.parametrize("c", _named("expect_bucket"), ids=_id)
+def test_a_report_must_not_claim_success_it_did_not_earn(c):
+    """Leaving `contradicted` is three different events, and calling them all 'recovered'
+    turned our own cleanup into good news. Runs the real digest classifier."""
+    import importlib.util
+    from datetime import date
+    spec = importlib.util.spec_from_file_location(
+        "_wv_canary", ROOT / "scripts" / "weekly_verify.py")
+    wv = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(wv)
+
+    eid = "e1"
+    text, _ = wv.build_digest(
+        {eid: (c["was_state"], "")}, {eid: (c["now_state"], "")}, {eid: "Canary Conf"},
+        date(2026, 8, 30), still_cited={eid} if c["row_still_cited"] else set())
+
+    heading = {"verified_again": "## Verified since last week",
+               "went_quiet": "## Evidence no longer found",
+               "uncited": "## No longer evidenced - citation cleared"}[c["expect_bucket"]]
+    assert heading in text, f"{c['name']}\n  incident: {c['incident']}"
+    for other in set(("verified_again", "went_quiet", "uncited")) - {c["expect_bucket"]}:
+        wrong = {"verified_again": "## Verified since last week",
+                 "went_quiet": "## Evidence no longer found",
+                 "uncited": "## No longer evidenced - citation cleared"}[other]
+        assert wrong not in text, (
+            f"{c['name']} also landed in {other}\n  incident: {c['incident']}")
+
+
 def test_every_canary_names_its_incident():
     """A canary without a story becomes a rule nobody dares delete and nobody understands."""
     for c in CANARIES:
@@ -121,3 +149,11 @@ def test_the_set_covers_the_repeat_offenders():
     names = " ".join(c["name"] for c in CANARIES).lower()
     for shape in ("confidence", "source_as_of", "every field"):
         assert shape in names, f"no canary covers {shape!r}"
+
+
+def test_the_set_covers_reports_that_lie():
+    """Added 2026-08-30. Every canary before that date was about data or rules, which implied
+    our REPORTS had never been the problem. They had been, twice in three days: the gate
+    printed ACCEPTED for skipped criteria, and the digest called 13 of our own edits a
+    recovery. A report is what you act on instead of re-deriving the answer."""
+    assert _named("expect_bucket"), "no canary covers a report claiming unearned success"

@@ -176,4 +176,37 @@ CANARIES = [
         "old_url": "https://gone.example.com/cfp",
         "expect_fields": ["SUBMISSION URL", "CFP_SUBMISSION_URL"],
     },
+
+    # --- reports that claim success when nothing succeeded -------------------------------
+    # The costliest shape we have hit, because a report is what you act on INSTEAD of
+    # re-deriving the answer. Twice in three days: the gate printed ACCEPTED for criteria it
+    # had skipped, and the digest announced 19 recoveries when 4 things recovered. Until
+    # 2026-08-30 every canary here was about data or rules, so this file implied our reports
+    # had never been the problem.
+    {
+        "name": "a cleared citation is NOT a recovery",
+        "incident": "2026-08-30. The digest announced 'Recovered since last week (19)'. 13 were "
+                    "citations we had cleared the day before - with no citation there is "
+                    "nothing left to contradict, so the row falls to not_found mechanically. "
+                    "Our own cleanup was reported back to us as the world improving.",
+        "was_state": "contradicted", "now_state": "not_found", "row_still_cited": False,
+        "expect_bucket": "uncited",
+    },
+    {
+        "name": "a page going quiet is NOT a recovery",
+        "incident": "2026-08-30. 3 of the 19. The row is still cited but the page no longer "
+                    "says anything either way. Contract 2.1: absence is not disproof, so the "
+                    "claim has lost its support rather than gained any.",
+        "was_state": "contradicted", "now_state": "not_found", "row_still_cited": True,
+        "expect_bucket": "went_quiet",
+    },
+    {
+        "name": "a genuine recovery MUST still be reported as one",
+        "incident": "2026-08-30. 4 of the 19 really did verify. The 2026-08-08 inversion - "
+                    "every test asserted the repair FIXED bad input, none that it LEFT GOOD "
+                    "INPUT ALONE - is how 26 cities were corrupted with a green suite. A "
+                    "narrowed report that drops real news has failed the same way.",
+        "was_state": "contradicted", "now_state": "verified", "row_still_cited": True,
+        "expect_bucket": "verified_again",
+    },
 ]

@@ -242,8 +242,130 @@ def check_all_submission_links(
     return expand(newly), expand(standing)
 
 
+# Who owns what, from the contract's ownership boundary. Upstream owns DISCOVERY - the URLs,
+# deadlines and citations. We own VERIFICATION, the gate and this report. There is no direct
+# channel between the two, so anything upstream must act on has to be sent by Matt; saying
+# "upstream" without saying that makes it nobody's job.
+UPSTREAM = "Upstream research - Matt to send"
+OURS = "cfp-monitor (us)"
+NOBODY = "-"
+
+# Every category the digest can print, with the four things a reader needs and could not
+# previously work out: what it MEANS, what to DO, WHO does it, and BY WHEN. Added 2026-08-30
+# after a digest whose headline section ("Recovered since last week") had no definition
+# anywhere, so a reader could not tell a real recovery from our own cleanup.
+GUIDE = {
+    "newly_dead": {
+        "title": "Submission links that have died",
+        "means": "A link that verification had accepted now returns 404 or 410, confirmed by "
+                 "browser and not by plain HTTP alone. A client clicking it today reaches "
+                 "nothing.",
+        "action": "Hand back to upstream for a replacement URL. Do not delete the row - a "
+                  "dead link is not proof the conference is gone (contract 2.1).",
+        "owner": UPSTREAM, "when": "This week. These are customer-visible.",
+        "actionable": True,
+    },
+    "newly_contradicted": {
+        "title": "Deadlines a page now contradicts",
+        "means": "The page we cite now shows a DIFFERENT deadline from the one we hold. One "
+                 "of the two is wrong and we do not yet know which.",
+        "action": "Evidence it before disputing anything: scripts/audit_evidence.py must pass "
+                  "first. No quote, no dispute. Then send the difference to upstream.",
+        "owner": OURS + ", then " + UPSTREAM,
+        "when": "This week. A wrong deadline is worse than a missing one.",
+        "actionable": True,
+    },
+    "verified_again": {
+        "title": "Verified since last week",
+        "means": "A genuine recovery. The page used to contradict our deadline and now "
+                 "supports it.",
+        "action": "None. This is the good news.", "owner": NOBODY, "when": NOBODY,
+        "actionable": False,
+    },
+    "went_quiet": {
+        "title": "Evidence no longer found",
+        "means": "The row is STILL CITED, but the cited page no longer says anything either "
+                 "way. The claim has lost its support without being disproved - absence is "
+                 "not disproof (contract 2.1).",
+        "action": "Watch only. Do not withdraw the citation and do not change the deadline. "
+                  "The monthly re-research re-checks these.",
+        "owner": OURS, "when": "Next monthly re-research (1st, 02:00). Nothing to do now.",
+        # Owned but NOT actionable this week. Counting these as work to do is how the first
+        # draft of this table announced "35 rows need someone to act" directly above three
+        # rows whose own instruction was "nothing to do now".
+        "actionable": False,
+    },
+    "uncited": {
+        "title": "No longer evidenced - citation cleared",
+        "means": "NOT a change in the world. These rows carry no citation any more, so there "
+                 "is nothing left for a page to contradict and they drop to not_found "
+                 "automatically. Clearing citations on our side produces exactly this.",
+        "action": "None. Listed so it is never mistaken for pages getting better.",
+        "owner": NOBODY, "when": NOBODY, "actionable": False,
+    },
+    "new_dead": {
+        "title": "NEW dead links since the last run",
+        "means": "THIS WEEK'S ACTUAL NEWS. These links worked at the last sweep and do not "
+                 "now. Browser-confirmed.",
+        "action": "Hand back to upstream for replacement URLs.",
+        "owner": UPSTREAM, "when": "This week. A client can click these today.",
+        "actionable": True,
+    },
+    "standing_dead": {
+        "title": "Standing backlog - already dead before this run",
+        "means": "Dead at the last sweep and still dead. Not new. These are upstream's "
+                 "fields, so re-running the sweep will never move this number - only a "
+                 "hand-back will. It also falls when a citation is CLEARED rather than fixed: "
+                 "on 2026-08-30 it went 80 to 32 with nothing repaired.",
+        "action": "Batch into the next hand-back. Not a weekly-email-sized action.",
+        "owner": UPSTREAM, "when": "Next hand-back cycle.",
+        "actionable": True,
+    },
+}
+
+
+def _render(key: str, items: list, bullet) -> list[str]:
+    """One section: heading, definition, action, owner, timeframe, then the rows.
+
+    The count in the heading is derived from `items` here at render time. make_handback.py
+    hard-coded its counts in a header string and reported cycle one's numbers to upstream for
+    every cycle after.
+    """
+    g = GUIDE[key]
+    return ([f"## {g['title']} ({len(items)})", "",
+             f"**What this means.** {g['means']}", "",
+             f"- **Action:** {g['action']}",
+             f"- **Owner:** {g['owner']}",
+             f"- **By when:** {g['when']}", ""]
+            + [bullet(i) for i in items] + [""])
+
+
+def _at_a_glance(present: list[tuple[str, int]]) -> list[str]:
+    """The summary a reader acts on. Only categories with rows this week appear."""
+    if not present:
+        return []
+    out = ["## At a glance", "",
+           "| Category | Count | Action | Owner | By when |",
+           "|---|---:|---|---|---|"]
+    for key, n in present:
+        g = GUIDE[key]
+        act = g["action"].split(".")[0] + "."      # the instruction, verbatim, not a verdict
+        out.append(f"| {g['title']} | {n} | {act} | {g['owner']} | {g['when']} |")
+    # `actionable` is DECLARED per category, not inferred from having an owner. "Evidence no
+    # longer found" is owned by us and still needs nothing done this week; inferring from the
+    # owner made the first draft print "35 row(s) need someone to act" immediately above three
+    # rows whose own instruction read "nothing to do now".
+    n_act = sum(n for k, n in present if GUIDE[k]["actionable"])
+    out += ["", (f"**{n_act} row(s) need someone to act.** Everything else is recorded for "
+                 "information only." if n_act else
+                 "**Nothing needs anyone to act this week.** Everything below is recorded for "
+                 "information only."), ""]
+    return out
+
+
 def build_digest(before: dict, after: dict, label: dict[str, str], today: date,
-                 *, still_cited: set[str], open_issues: int = 0) -> tuple[str, int]:
+                 *, still_cited: set[str], new_dead: list = None,
+                 standing_dead: list = None) -> tuple[str, int]:
     """Digest of CHANGES only. A steady-state week should produce a short, boring email.
 
     `open_issues` is the count of standing problems found outside the before/after diff -
@@ -284,47 +406,50 @@ def build_digest(before: dict, after: dict, label: dict[str, str], today: date,
                 (went_quiet if eid in still_cited else uncited).append((name, detail))
     recovered = verified_again
 
+    new_dead = list(new_dead or [])
+    standing_dead = list(standing_dead or [])
+
+    named = lambda x: f"- **{x[0]}** - {x[1]}"                              # noqa: E731
+    plain = lambda x: f"- {x[0]}"                                           # noqa: E731
+    linked = lambda x: f"- **{x[1]}** - {x[2]}"                             # noqa: E731
+
+    buckets = [("new_dead", new_dead, linked), ("newly_dead", newly_dead, named),
+               ("newly_contradicted", newly_contradicted, named),
+               ("went_quiet", went_quiet, plain), ("standing_dead", standing_dead, linked),
+               ("verified_again", recovered, plain), ("uncited", uncited, plain)]
+    present = [(k, len(items)) for k, items, _ in buckets if items]
+
     lines = [f"# Weekly verification - {today.isoformat()}", ""]
-    total = len(newly_dead) + len(newly_contradicted)
-    if not total and not (recovered or went_quiet or uncited):
-        lines += ["No CHANGE since the last sweep - nothing newly broken, nothing recovered."
-                  + (f" {open_issues} standing issue(s) remain open, listed below."
-                     if open_issues else " Nothing outstanding."), ""]
-    if newly_dead:
-        lines += [f"## Submission links that have died ({len(newly_dead)})",
-                  "A client clicking these reaches a 404. Confirmed by browser, not just HTTP.",
-                  ""]
-        lines += [f"- **{n}** - {d}" for n, d in newly_dead] + [""]
-    if newly_contradicted:
-        lines += [f"## Deadlines a page now contradicts ({len(newly_contradicted)})", ""]
-        lines += [f"- **{n}** - {d}" for n, d in newly_contradicted] + [""]
-    if recovered:
-        lines += [f"## Verified since last week ({len(recovered)})",
-                  "Genuine recoveries: the page now supports the deadline it used to "
-                  "contradict.", ""]
-        lines += [f"- {n}" for n, _ in recovered] + [""]
-    if went_quiet:
-        lines += [f"## Evidence no longer found ({len(went_quiet)})",
-                  "These rows are STILL CITED, but the cited page no longer says anything "
-                  "either way.",
-                  "Absence is not disproof (contract 2.1), so this is a watch item and not a "
-                  "recovery -",
-                  "the claim has simply lost its support.", ""]
-        lines += [f"- {n}" for n, _ in went_quiet] + [""]
-    if uncited:
-        lines += [f"## No longer evidenced - citation cleared ({len(uncited)})",
-                  "Not a change in the world. These rows carry no citation any more, so there "
-                  "is nothing",
-                  "left for a page to contradict and they fall to not_found automatically. "
-                  "Clearing citations",
-                  "on our side produces exactly this, and it must never be read as pages "
-                  "getting better.", ""]
-        lines += [f"- {n}" for n, _ in uncited] + [""]
+    total = len(newly_dead) + len(newly_contradicted) + len(new_dead)
+    if not present:
+        lines += ["**Nothing changed and nothing is outstanding.** No link died, no page "
+                  "changed its mind, and no backlog remains. No action from anyone.", ""]
+    else:
+        lines += _at_a_glance(present)
+    for key, items, fmt in buckets:
+        if items:
+            lines += _render(key, items, fmt)
+
+    # The two families count DIFFERENT THINGS, and printing them adjacently without saying so
+    # made the 2026-08-30 digest look self-contradictory: Argus Biofuels and Decarb Connect
+    # North America appeared under both a recovery heading and the dead-link backlog. Both
+    # were right - a multi-URL event can have one link come back and another stay dead - but
+    # nothing on the page let a reader work that out.
+    if (new_dead or standing_dead) and (recovered or went_quiet or uncited
+                                        or newly_contradicted):
+        lines += ["> **Reading the two halves.** The deadline sections are per CONFERENCE and "
+                  "describe what a",
+                  "> page SAYS. The dead-link sections are per CONFERENCE + URL and describe "
+                  "whether a link",
+                  "> RESOLVES. An event with several URLs can legitimately appear in both.", ""]
 
     counts: dict[str, int] = {}
     for state, _ in after.values():
         counts[state or "(blank)"] = counts.get(state or "(blank)", 0) + 1
-    lines += ["## Current totals", ""]
+    lines += ["## Current totals", "",
+              "Where every tracked row stands right now. `not_found` means we could not "
+              "confirm the claim,",
+              "which is a label and never a deletion (contract 2.1).", ""]
     lines += [f"- {k}: {v}" for k, v in sorted(counts.items(), key=lambda kv: -kv[1])]
     return "\n".join(lines) + "\n", total
 
@@ -374,7 +499,6 @@ def main() -> int:
     # and a plain-HTTP 404 is never sufficient on its own).
     print("\n--- submission links (all rows, independent of verify_state) ---")
     new_dead, standing_dead = check_all_submission_links(a.db, use_browser=not a.no_browser)
-    dead_links = new_dead + standing_dead
 
     # Integrity BEFORE reporting. A digest computed over a database that lost rows is a
     # confident answer to the wrong question, so violations lead the digest.
@@ -386,55 +510,21 @@ def main() -> int:
     invariants_ok = inv.returncode == 0
 
     after = snapshot(a.db)
-    digest, changed = build_digest(before, after, label, today,
-                                   still_cited=cited(a.db), open_issues=len(dead_links))
+    # The dead-link lists go IN rather than being spliced into the rendered string afterwards.
+    # That splice is why the summary could not see them: the digest had already been built and
+    # counted before the backlog was appended, so no overview could cover both halves.
+    # `changed` counts NEW failures only - counting the backlog made every week look equally
+    # alarming, which is the same as no signal at all.
+    digest, changed = build_digest(before, after, label, today, still_cited=cited(a.db),
+                                   new_dead=new_dead, standing_dead=standing_dead)
     if not invariants_ok:
         head = ["> **DATABASE INVARIANTS VIOLATED - read this before trusting anything below.**",
                 "> The figures in this digest are computed over a database that failed its",
-                "> integrity checks.", "", "```", inv.stdout.strip(), "```", ""]
+                "> integrity checks. **Owner: cfp-monitor (us). By when: before acting on any",
+                "> number in this report.**", "", "```", inv.stdout.strip(), "```", ""]
         lines = digest.split("\n")
         digest = "\n".join(lines[:2] + head + lines[2:])
         changed += 1
-    # NEW first and STANDING second, because they demand different things of the reader. A new
-    # dead link is this week's news and needs a decision; the backlog needs a hand-back to
-    # upstream, which is not a weekly-email-sized action.
-    if new_dead or standing_dead:
-        lines: list[str] = []
-        if new_dead:
-            lines += [f"## NEW dead links since the last run ({len(new_dead)})",
-                      "**This is the week's actual news.** Browser-confirmed: a client clicking "
-                      "these reaches nothing.", ""]
-            lines += [f"- **{n}** - {u}" for _, n, u in sorted(new_dead, key=lambda x: x[1])]
-            lines += [""]
-        if standing_dead:
-            lines += [f"## Standing backlog - already dead before this run ({len(standing_dead)})",
-                      "Unchanged since last week. These are upstream's fields, so clearing them "
-                      "is a hand-back,",
-                      "not a re-check - re-running the sweep will not move this number.",
-                      "",
-                      "This number falls when a citation is CLEARED as well as when a link is "
-                      "fixed, and those",
-                      "are not the same thing. On 2026-08-30 it went 80 -> 32 with nothing "
-                      "repaired: 49 URLs",
-                      "simply stopped being referenced. `link_checks` keeps them either way.",
-                      ""]
-            lines += [f"- **{n}** - {u}" for _, n, u in sorted(standing_dead, key=lambda x: x[1])]
-            lines += [""]
-        # The two families above count DIFFERENT THINGS and printing them adjacently without
-        # saying so made the 2026-08-30 digest look self-contradictory: Argus Biofuels and
-        # Decarb Connect North America appeared under both "Recovered" and "Standing backlog".
-        # Both were right - a multi-URL event can have one link come back and another stay
-        # dead - but nothing on the page let a reader work that out.
-        lines += ["> **Reading the two halves.** The deadline sections above are per "
-                  "CONFERENCE and describe",
-                  "> what a page says. The dead-link sections are per CONFERENCE + URL and "
-                  "describe whether a",
-                  "> link resolves. An event with several URLs can legitimately appear in "
-                  "both.", ""]
-        digest = digest.replace("## Current totals", "\n".join(lines) + "\n## Current totals")
-        # Only NEW failures count as "issues" for the subject line. Counting the backlog made
-        # every week look equally alarming, which is the same as no signal at all.
-        changed += len(new_dead)
     print("\n" + digest)
 
     out = Path(a.out_dir)
