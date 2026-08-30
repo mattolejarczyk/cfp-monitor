@@ -349,7 +349,9 @@ def _at_a_glance(present: list[tuple[str, int]]) -> list[str]:
            "|---|---:|---|---|---|"]
     for key, n in present:
         g = GUIDE[key]
-        act = g["action"].split(".")[0] + "."      # the instruction, verbatim, not a verdict
+        # First SENTENCE, verbatim - split on ". " and not "." so a filename survives. The
+        # sample cut "scripts/audit_evidence.py must pass first" down to "audit_evidence."
+        act = g["action"].split(". ")[0].rstrip(".") + "."
         out.append(f"| {g['title']} | {n} | {act} | {g['owner']} | {g['when']} |")
     # `actionable` is DECLARED per category, not inferred from having an owner. "Evidence no
     # longer found" is owned by us and still needs nothing done this week; inferring from the

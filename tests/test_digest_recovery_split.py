@@ -123,6 +123,16 @@ def test_every_category_states_a_meaning_an_action_an_owner_and_a_timeframe():
         assert len(g["means"]) > 40, f"{key}: the definition must be a real sentence"
 
 
+def test_the_action_column_does_not_cut_a_filename_in_half():
+    """It split on '.', so 'scripts/audit_evidence.py must pass first' rendered as
+    'Evidence it before disputing anything: scripts/audit_evidence.'"""
+    before = {"e1": ("verified", "")}
+    after = {"e1": ("contradicted", "page now shows a different date")}
+    out = digest(before, after, still_cited={"e1"})
+    assert "audit_evidence.py must pass first." in out
+    assert "audit_evidence. |" not in out
+
+
 def test_watch_only_rows_are_not_counted_as_work():
     """Owned is not the same as actionable. 'Evidence no longer found' belongs to us and needs
     nothing done this week; counting it printed '35 row(s) need someone to act' directly above
