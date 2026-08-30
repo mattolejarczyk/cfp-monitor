@@ -1,5 +1,16 @@
 # cfp-monitor — Roadmap & Status
 
+> **This file tracks MILESTONES AND CAPABILITIES (M1-M7, tracks A/B/C) — what has been built.**
+> For **what runs each week and where the loop is open**, see the operational status page:
+> `handoff-files/CFP_Pipeline_Status.html` (private repo — it names clients, so it does not
+> live here). The two are complementary and neither replaces the other: this one answers
+> "is the product built", that one answers "did the process run, and who owes what".
+>
+> **The dated summaries immediately below are from July 2026 and are NOT current.** The
+> milestone table further down was refreshed 2026-08-17. Everything after that date —
+> the contract amendments, the acceptance gate rework, the rules/canary layer, and the
+> client dimension — is in `HANDOFF.md`, `docs/design/worklog.md` and the status page.
+
 **Date:** 2026-07-09 · Customer: Nicolia / PRIME|PR. Local native-crawl4ai build.
 **Branch:** all work merged + pushed to `main`. **98 offline tests green.**
 

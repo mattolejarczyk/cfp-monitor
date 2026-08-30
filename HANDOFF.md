@@ -177,7 +177,8 @@ Grouped by area; file pointers in parentheses. **98 offline tests green.**
 - Upstream holds *Specification v4.3* (their mechanics). Where it and the contract disagree, **the contract wins** and v4.3 is amended.
 
 **Everything else:**
-- [`docs/design/roadmap-status.md`](docs/design/roadmap-status.md) — status by milestone + capability.
+- [`docs/design/roadmap-status.md`](docs/design/roadmap-status.md) — status by milestone + capability (is the product built). Its July summaries are stale; the milestone table is current to 2026-08-17.
+- `handoff-files/CFP_Pipeline_Status.html` — **the operational one-pager: six macro steps, what is wired under each, and where the loop is open.** Lives in the PRIVATE repo because it names clients. This is the live roadmap for weekly work; regenerate it whenever a step changes state.
 - [`docs/design/worklog.md`](docs/design/worklog.md) — append-only session history.
 - [`docs/design/model-costs.md`](docs/design/model-costs.md) — LLM model + cost reference (DeepSeek vs GPT-5 vs Claude), per-conference economics, the `PROXY_MODEL` switch note.
 - [`docs/operations/windows-desktop-install.md`](docs/operations/windows-desktop-install.md) — canonical licensed Windows install, Desktop shortcut, CDP, update, validation, and recovery runbook.
