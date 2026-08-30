@@ -81,6 +81,24 @@ def names(db: str) -> dict[str, str]:
         con.close()
 
 
+def cited(db: str) -> set[str]:
+    """Event ids that still carry a deadline citation.
+
+    `contradicted` means a page disagrees with our deadline, which requires a cited page to
+    disagree with. Clear the citation and the row necessarily falls to `not_found` - a
+    mechanical consequence of our own edit, not a change in the world. On 2026-08-30 that
+    accounted for 13 of the 19 rows the digest announced as "Recovered", because we had
+    cleared 184 blank-deadline citations the day before.
+    """
+    con = sqlite3.connect(db)
+    try:
+        return {r[0] for r in con.execute(
+            "select event_id from grounding_facts "
+            "where deadline_evidence_url is not null and trim(deadline_evidence_url) != ''")}
+    finally:
+        con.close()
+
+
 def run(cmd: list[str], cwd: Path) -> int:
     print("    $ " + " ".join(cmd[1:]))
     return subprocess.run(cmd, cwd=str(cwd)).returncode
@@ -225,15 +243,32 @@ def check_all_submission_links(
 
 
 def build_digest(before: dict, after: dict, label: dict[str, str], today: date,
-                 open_issues: int = 0) -> tuple[str, int]:
+                 *, still_cited: set[str], open_issues: int = 0) -> tuple[str, int]:
     """Digest of CHANGES only. A steady-state week should produce a short, boring email.
 
     `open_issues` is the count of standing problems found outside the before/after diff -
     today that means dead submission links. Without it the digest printed "Nothing changed"
     directly above a list of 45 dead links, because the diff and the link check run at
     different times and neither knew about the other.
+
+    `still_cited` has NO DEFAULT, for the reason `rules.withdrawal_changes` gives `fetched`
+    none: a default hides a decision the caller must actually make. Leaving contradicted is
+    THREE different events and this is what tells them apart:
+
+        -> verified    a real recovery; the page now supports the claim
+        -> not_found   still cited, but the page went quiet. Absence is not proof of
+                       anything (contract 2.1), so this is a watch item, NOT a win.
+        -> not_found   no longer cited. The transition is forced by our own edit: with no
+                       citation there is nothing left to contradict.
+
+    Until 2026-08-30 all three printed under one "Recovered since last week" heading. That
+    week it read 19 recoveries when 4 rows had actually verified: 13 were citations we had
+    cleared the day before and 3 were pages that went silent. A report that announces our own
+    cleanup as good news is the same defect as the gate printing ACCEPTED on checks it
+    skipped, and it is why the counts below are derived here rather than carried in.
     """
-    newly_dead, newly_contradicted, recovered = [], [], []
+    newly_dead, newly_contradicted = [], []
+    verified_again, went_quiet, uncited = [], [], []
     for eid, (state, detail) in after.items():
         was_state, _ = before.get(eid, ("", ""))
         if state == was_state:
@@ -242,12 +277,16 @@ def build_digest(before: dict, after: dict, label: dict[str, str], today: date,
         if state == "contradicted":
             (newly_dead if DEAD_LINK_MARK in detail else newly_contradicted).append(
                 (name, detail))
-        elif was_state == "contradicted" and state in ("verified", "not_found"):
-            recovered.append((name, detail))
+        elif was_state == "contradicted":
+            if state == "verified":
+                verified_again.append((name, detail))
+            elif state == "not_found":
+                (went_quiet if eid in still_cited else uncited).append((name, detail))
+    recovered = verified_again
 
     lines = [f"# Weekly verification - {today.isoformat()}", ""]
     total = len(newly_dead) + len(newly_contradicted)
-    if not total and not recovered:
+    if not total and not (recovered or went_quiet or uncited):
         lines += ["No CHANGE since the last sweep - nothing newly broken, nothing recovered."
                   + (f" {open_issues} standing issue(s) remain open, listed below."
                      if open_issues else " Nothing outstanding."), ""]
@@ -260,8 +299,27 @@ def build_digest(before: dict, after: dict, label: dict[str, str], today: date,
         lines += [f"## Deadlines a page now contradicts ({len(newly_contradicted)})", ""]
         lines += [f"- **{n}** - {d}" for n, d in newly_contradicted] + [""]
     if recovered:
-        lines += [f"## Recovered since last week ({len(recovered)})", ""]
+        lines += [f"## Verified since last week ({len(recovered)})",
+                  "Genuine recoveries: the page now supports the deadline it used to "
+                  "contradict.", ""]
         lines += [f"- {n}" for n, _ in recovered] + [""]
+    if went_quiet:
+        lines += [f"## Evidence no longer found ({len(went_quiet)})",
+                  "These rows are STILL CITED, but the cited page no longer says anything "
+                  "either way.",
+                  "Absence is not disproof (contract 2.1), so this is a watch item and not a "
+                  "recovery -",
+                  "the claim has simply lost its support.", ""]
+        lines += [f"- {n}" for n, _ in went_quiet] + [""]
+    if uncited:
+        lines += [f"## No longer evidenced - citation cleared ({len(uncited)})",
+                  "Not a change in the world. These rows carry no citation any more, so there "
+                  "is nothing",
+                  "left for a page to contradict and they fall to not_found automatically. "
+                  "Clearing citations",
+                  "on our side produces exactly this, and it must never be read as pages "
+                  "getting better.", ""]
+        lines += [f"- {n}" for n, _ in uncited] + [""]
 
     counts: dict[str, int] = {}
     for state, _ in after.values():
@@ -328,7 +386,8 @@ def main() -> int:
     invariants_ok = inv.returncode == 0
 
     after = snapshot(a.db)
-    digest, changed = build_digest(before, after, label, today, open_issues=len(dead_links))
+    digest, changed = build_digest(before, after, label, today,
+                                   still_cited=cited(a.db), open_issues=len(dead_links))
     if not invariants_ok:
         head = ["> **DATABASE INVARIANTS VIOLATED - read this before trusting anything below.**",
                 "> The figures in this digest are computed over a database that failed its",
@@ -351,9 +410,27 @@ def main() -> int:
             lines += [f"## Standing backlog - already dead before this run ({len(standing_dead)})",
                       "Unchanged since last week. These are upstream's fields, so clearing them "
                       "is a hand-back,",
-                      "not a re-check - re-running the sweep will not move this number.", ""]
+                      "not a re-check - re-running the sweep will not move this number.",
+                      "",
+                      "This number falls when a citation is CLEARED as well as when a link is "
+                      "fixed, and those",
+                      "are not the same thing. On 2026-08-30 it went 80 -> 32 with nothing "
+                      "repaired: 49 URLs",
+                      "simply stopped being referenced. `link_checks` keeps them either way.",
+                      ""]
             lines += [f"- **{n}** - {u}" for _, n, u in sorted(standing_dead, key=lambda x: x[1])]
             lines += [""]
+        # The two families above count DIFFERENT THINGS and printing them adjacently without
+        # saying so made the 2026-08-30 digest look self-contradictory: Argus Biofuels and
+        # Decarb Connect North America appeared under both "Recovered" and "Standing backlog".
+        # Both were right - a multi-URL event can have one link come back and another stay
+        # dead - but nothing on the page let a reader work that out.
+        lines += ["> **Reading the two halves.** The deadline sections above are per "
+                  "CONFERENCE and describe",
+                  "> what a page says. The dead-link sections are per CONFERENCE + URL and "
+                  "describe whether a",
+                  "> link resolves. An event with several URLs can legitimately appear in "
+                  "both.", ""]
         digest = digest.replace("## Current totals", "\n".join(lines) + "\n## Current totals")
         # Only NEW failures count as "issues" for the subject line. Counting the backlog made
         # every week look equally alarming, which is the same as no signal at all.
