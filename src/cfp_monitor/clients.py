@@ -115,9 +115,23 @@ def norm_header(h: str) -> str:
     return re.sub(r"\s+", " ", (h or "").strip()).upper()
 
 
+# A match is only applied automatically when the matcher is CERTAIN. Its three certain tests -
+# exact URL, a domain that resolves to exactly one row in the whole database, and name+city+date
+# agreeing - each return 100 on their own. Anything below that is a vote, and a vote is a
+# suggestion: contract 2.5 says decline rather than guess.
+CERTAIN = 100.0
+# Below this the matcher found nothing worth a human's time, so the row is genuinely absent from
+# the industry list and becomes a promotion candidate. Between the two it goes to review.
+NO_MATCH = 40.0
+
+
 def ensure_schema(con: sqlite3.Connection) -> None:
     """Additive only. Nothing here alters or drops an existing table."""
     con.executescript(SCHEMA)
+    have = {r[1] for r in con.execute("pragma table_info(client_conferences)")}
+    for col in ("match_confidence real", "match_justification text", "matched_at text"):
+        if col.split()[0] not in have:
+            con.execute(f"alter table client_conferences add column {col}")
     con.commit()
 
 
@@ -229,21 +243,75 @@ def load_sheet(con: sqlite3.Connection, client_key: str, path: Path,
             "unmapped_columns": unmapped, "not_yet_matched": unmatched}
 
 
+def apply_matches(con: sqlite3.Connection, client_key: str,
+                  matches: list[dict]) -> dict:
+    """Write matcher results onto the client's rows. Only CERTAIN matches set an event_id.
+
+    `matches` is the matcher's output: their name, an EVENT_ID, a confidence and a
+    justification. Three outcomes, and keeping them distinct is the point:
+
+        100        applied. The matcher's certain tests are definitive on their own.
+        40 to 99   recorded, event_id LEFT NULL, sent to a human. A vote is a suggestion.
+        under 40   the matcher found nothing; the row is genuinely absent from the industry
+                   list, and only these become promotion candidates.
+
+    Collapsing the middle band into either neighbour is the error to avoid. Treated as matched
+    it invents a join; treated as absent it proposes adding a conference we already hold.
+    """
+    now = date.today().isoformat()
+    applied = review = absent = 0
+    for m in matches:
+        name = (m.get("their_name") or "").strip()
+        if not name:
+            continue
+        conf = m.get("confidence")
+        conf = float(conf) if conf is not None else 0.0
+        eid = (m.get("event_id") or "").strip()
+        certain = conf >= CERTAIN and eid
+        con.execute(
+            """update client_conferences
+                 set event_id = case when :certain then :eid else event_id end,
+                     match_method = :method,
+                     match_confidence = :conf,
+                     match_justification = :why,
+                     matched_at = :now
+               where client_key = :k and their_name = :n""",
+            {"certain": 1 if certain else 0, "eid": eid, "conf": conf,
+             "method": "match_customer_sheet" if certain else "",
+             "why": (m.get("justification") or "")[:400], "now": now,
+             "k": client_key, "n": name})
+        if certain:
+            applied += 1
+        elif conf >= NO_MATCH:
+            review += 1
+        else:
+            absent += 1
+    con.commit()
+    return {"applied": applied, "needs_review": review, "no_match": absent}
+
+
 def refresh_candidates(con: sqlite3.Connection, client_key: str, industry: str,
                        subindustry: str = "") -> dict:
-    """Raise a PENDING promotion candidate for every client row the matcher could not place.
+    """Raise a PENDING promotion candidate for each row the matcher looked at and could not place.
 
     Runs AFTER matching, never during load: a row with no `event_id` before the matcher has run
     is simply unexamined, and calling that a candidate manufactures work out of nothing.
 
-    A candidate is a question for Nicolia's team, never an addition. Nothing reaches an industry
-    list without `decision` being set by a person.
+    It also requires the matcher to have RUN on that row (`matched_at` set) and to have found
+    nothing worth reviewing (`match_confidence` under NO_MATCH). A row sitting at 80% is a
+    likely match awaiting a human, not a conference we are missing - proposing it for promotion
+    would ask Nicolia's team to add something we already hold.
+
+    A candidate is a question for them, never an addition. Nothing reaches an industry list
+    without `decision` being set by a person.
     """
     today = date.today().isoformat()
     rows = con.execute(
         "select their_name, their_url from client_conferences where client_key = ? and "
-        "(event_id is null or trim(event_id) = '') and withdrawn_by_customer = 0",
-        (client_key,)).fetchall()
+        "(event_id is null or trim(event_id) = '') and withdrawn_by_customer = 0 "
+        "and matched_at is not null "
+        "and coalesce(match_confidence, 0) < ?",
+        (client_key, NO_MATCH)).fetchall()
     for name, url in rows:
         con.execute(
             """insert into industry_candidates

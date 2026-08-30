@@ -166,22 +166,50 @@ def test_loading_raises_no_candidates_because_nothing_is_matched_yet(db, tmp_pat
     assert "pending_candidates" not in s, "loading must not report a number it cannot know"
 
 
-def test_candidates_come_from_what_the_matcher_could_not_place(db, tmp_path):
-    """The flywheel - and its safety catch. Nothing joins an industry list without a person."""
+def _loaded(db, tmp_path, names):
     clients.upsert_client(db, "arnica", "Arnica", industry="Cybersecurity")
-    clients.load_sheet(db, "arnica",
-                       _sheet(tmp_path / "a.csv", [_row("Black Hat USA"), _row("KubeCon")]),
+    clients.load_sheet(db, "arnica", _sheet(tmp_path / "a.csv", [_row(n) for n in names]),
                        industry="Cybersecurity")
-    db.execute("update client_conferences set event_id = '2026-blackhat-lasvegas' "
-               "where their_name = 'Black Hat USA'")          # the matcher placed this one
-    db.commit()
 
+
+def test_only_a_certain_match_sets_an_event_id(db, tmp_path):
+    """The matcher's certain tests return 100 on their own. Anything below is a weighted vote,
+    and a vote is a suggestion - 2.5 is decline rather than guess."""
+    _loaded(db, tmp_path, ["Black Hat USA", "BSides LV", "KubeCon"])
+    r = clients.apply_matches(db, "arnica", [
+        {"their_name": "Black Hat USA", "event_id": "2026-bh-lv", "confidence": 100.0,
+         "justification": "CERTAIN via exact URL"},
+        {"their_name": "BSides LV", "event_id": "2026-bsides-lv", "confidence": 80.0,
+         "justification": "domain+name"},
+        {"their_name": "KubeCon", "event_id": "", "confidence": 12.0, "justification": ""},
+    ])
+    assert r == {"applied": 1, "needs_review": 1, "no_match": 1}
+    got = dict(db.execute("select their_name, event_id from client_conferences").fetchall())
+    assert got["Black Hat USA"] == "2026-bh-lv"
+    assert not got["BSides LV"], "an 80% vote must NOT be written as a join"
+    assert not got["KubeCon"]
+
+
+def test_a_row_awaiting_review_is_not_proposed_for_promotion(db, tmp_path):
+    """The band that matters. Treated as matched it invents a join; treated as absent it asks
+    Nicolia's team to add a conference we already hold."""
+    _loaded(db, tmp_path, ["BSides LV", "KubeCon"])
+    clients.apply_matches(db, "arnica", [
+        {"their_name": "BSides LV", "event_id": "2026-bsides-lv", "confidence": 80.0,
+         "justification": "domain+name"},
+        {"their_name": "KubeCon", "event_id": "", "confidence": 5.0, "justification": ""},
+    ])
     r = clients.refresh_candidates(db, "arnica", "Cybersecurity")
-    assert r["raised"] == 1 and r["pending"] == 1
-    got = db.execute("select their_name, industry, decision from industry_candidates"
-                     ).fetchall()
+    assert r["raised"] == 1
+    got = db.execute("select their_name, industry, decision from industry_candidates").fetchall()
     assert got == [("KubeCon", "Cybersecurity", None)], "a candidate starts undecided"
     assert db.execute("select count(*) from conference_markets").fetchone()[0] == 1
+
+
+def test_a_row_the_matcher_never_examined_is_not_a_candidate(db, tmp_path):
+    """Unexamined is not the same as absent - the 111-candidate defect, one layer down."""
+    _loaded(db, tmp_path, ["KubeCon"])
+    assert clients.refresh_candidates(db, "arnica", "Cybersecurity")["raised"] == 0
 
 
 def test_a_withdrawn_row_is_not_proposed_for_promotion(db, tmp_path):
@@ -193,9 +221,9 @@ def test_a_withdrawn_row_is_not_proposed_for_promotion(db, tmp_path):
 
 
 def test_refreshing_candidates_twice_does_not_duplicate_them(db, tmp_path):
-    clients.upsert_client(db, "arnica", "Arnica", industry="Cybersecurity")
-    clients.load_sheet(db, "arnica", _sheet(tmp_path / "a.csv", [_row("KubeCon")]),
-                       industry="Cybersecurity")
+    _loaded(db, tmp_path, ["KubeCon"])
+    clients.apply_matches(db, "arnica", [{"their_name": "KubeCon", "event_id": "",
+                                          "confidence": 5.0, "justification": ""}])
     clients.refresh_candidates(db, "arnica", "Cybersecurity")
     clients.refresh_candidates(db, "arnica", "Cybersecurity")
     assert db.execute("select count(*) from industry_candidates").fetchone()[0] == 1
