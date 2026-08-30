@@ -27,6 +27,8 @@ PENDING_MIGRATION = {
     "probe_menu_links.py":       "measures what is behind menu links; predates sitewalk",
     "find_replacement_links.py": "delegates most crawling to pipeline.run_urls already",
     "find_event_pages.py":       "small, same-site check only",
+    # trace_quote_to_page.py was migrated ONTO sitewalk on 2026-08-29 and is
+    # deliberately absent - the first entry this list has lost rather than gained.
     "diagnose_unread.py":        "classifies fetch failures rather than walking a site",
     "recheck_dead_links.py":     "single-URL browser check, no walking",
     "weekly_verify.py":          "calls link_status per URL, no walking",
