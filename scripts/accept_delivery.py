@@ -542,8 +542,38 @@ class Gate:
                 print(f"           - {i}")
             if len(items) > verbose_limit:
                 print(f"           ... and {len(items) - verbose_limit} more")
-        print(f"\n  RESULT: {'ACCEPTED' if ok else 'REJECTED'}\n")
-        return ok
+        # A PARTIAL RUN MUST NEVER PRINT A WORD THAT MEANS "GOOD TO SHIP".
+        #
+        # Until 2026-08-29 a skipped check was excluded from the verdict entirely, so
+        # `--no-network` - which skips criteria 2 and 3, the only two that fetch a page - still
+        # produced RESULT: ACCEPTED. We ran the gate that way repeatedly, told upstream the v1.5
+        # delivery was accepted, and they began treating it as their production master. A full
+        # networked run then failed check 3 on 183 rows.
+        #
+        # The output was not wrong about any single check. It was wrong about the WORD, and the
+        # word is the only part anyone quotes. Three verdicts now:
+        #
+        #   REJECTED    a check failed
+        #   INCOMPLETE  nothing failed, but something was not run - cannot be accepted
+        #   ACCEPTED    every check ran and passed
+        #
+        # INCOMPLETE exits non-zero like REJECTED, because a pipeline step gated on this must
+        # not treat "we did not look" as success either.
+        skipped = [(num, name) for num, name, passed, failures in self.results
+                   if not passed and failures and failures[0].startswith("SKIPPED")]
+        if not ok:
+            verdict = "REJECTED"
+        elif skipped:
+            verdict = f"INCOMPLETE - {len(skipped)} check(s) NOT RUN, so this cannot be accepted"
+        else:
+            verdict = "ACCEPTED"
+        print(f"\n  RESULT: {verdict}")
+        if skipped:
+            for num, name in skipped:
+                print(f"     NOT RUN: {num:<4} {name}")
+            print("     Re-run without --no-network before treating this delivery as accepted.")
+        print()
+        return ok and not skipped
 
 
 def main() -> int:
