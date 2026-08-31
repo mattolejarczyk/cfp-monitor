@@ -29,6 +29,11 @@ Read these three, in order, before writing any code or touching any data:
    failure modes already seen in the wild.
 3. **`docs/operations/TOOLING.md`** - the *what with*. Every script that already exists and
    which stage it belongs to.
+4. **`docs/operations/DECISION-TREE.md`** - the *what follows*. Where a conference sits in its
+   life decides what the customer sees, what we do next, and what it costs. Read it before
+   deciding a row needs research: on 2026-08-11 eleven of ninety-three grounded requests were
+   spent hunting calls for conferences that had already taken place. It is executable
+   (`src/cfp_monitor/lifecycle.py`) - if the two disagree, the document wins.
 
 Then state, in one line, which stage you are working in and which existing tool covers it.
 If none does, say so explicitly before writing anything new.

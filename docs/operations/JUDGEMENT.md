@@ -75,6 +75,15 @@ the same line.
 Anything that depends on today's date - open/closed, days remaining, is-the-event-over - must
 be derived at read time, never stored. Contract 2.2.
 
+**It happened again on 2026-08-31**, which is why this rule now has executable form. The gate
+failed on two rows - SecureWorld New York City and European Biomethane Week - both reading
+`STATUS=Open` with deadlines that had passed within 48 hours. Neither needed research, a fetch,
+or a request. Writing the rule down had not been enough for three weeks, so it is now
+`src/cfp_monitor/lifecycle.py`, specified in **`DECISION-TREE.md`**, and imported by everything
+that needs it rather than reimplemented where it happens to be wanted.
+
+The wider lesson: **a judgement rule that keeps being violated needs code, not emphasis.**
+
 ## 6. Verify the whole answer, not the convenient part
 
 When a model returns several fields, the check usually covers one of them. The citation quote
@@ -230,6 +239,62 @@ frozen and routed around. Correcting an identifier is a rename, and a rename bre
 reference to it at once.
 
 ---
+
+## 15. A number computed before the thing that gives it meaning is an artefact - 2026-08-31
+
+Rule 10 asks *who* produced a number. This asks **when**. Three times in two days a count was
+arithmetically correct, clearly labelled, and meant nothing, because it was computed before the
+step that would have given it meaning:
+
+| Reported | Actually | Why |
+|---|---|---|
+| "111 promotion candidates" | ~27 | Computed at LOAD time, before the matcher had run. Every row had a null `event_id` because nothing had looked yet. |
+| "Recovered since last week (19)" | 4 | Counted rows leaving `contradicted` before asking WHY they left. 13 were citations we had cleared the day before. |
+| "35 row(s) need someone to act" | 32 | Inferred "actionable" from having an owner, above three rows whose own instruction read "nothing to do now". |
+
+**Unexamined is not absent. Left a category is not recovered. Owned is not due.**
+
+The test: for any count, ask *what has to have happened for this number to mean what its label
+says* - and check that it has. In all three cases it had not.
+
+## 16. Never let a report congratulate you on your own edits - 2026-08-31
+
+The nastiest form of rule 15, and worth its own entry because it reads as good news.
+
+On 2026-08-30 the weekly digest announced **19 recoveries**. Thirteen were rows whose citations
+**we had cleared the day before** - with no citation there is nothing left to contradict, so the
+row falls to `not_found` mechanically. The sweep was reporting our own cleanup back to us as the
+world improving. The standing dead-link backlog told the same lie in the same run: 80 to 32, with
+**nothing repaired** - 49 URLs had simply stopped being referenced.
+
+Any report that measures change must be able to say whether the change came from **outside** or
+from **us**. If it cannot, it will eventually tell you things are getting better on a week when
+all you did was tidy up.
+
+## 17. Across a boundary, join on the value, not the key - 2026-08-31
+
+Contract 5.4 says our canonical `EVENT_ID` is not upstream's. `HANDOFF.md` says a script keyed on
+it "silently matches nothing. Join on the URL being replaced."
+
+**Both were written down, and the trap still caught a citation fix on 2026-08-31**: keyed on
+`EVENT_ID`, it corrected **0 of 406** rows and reported success. The only reason it was caught is
+that the script printed how many rows it had touched.
+
+Two conclusions. A documented trap is not a solved trap. And **every bulk edit must print how
+many rows it changed** - a silent zero looks exactly like a clean run.
+
+## 18. Brittle parsing fails confidently, not loudly - 2026-08-31
+
+Checking whether 31 dead links had been handed back, a throwaway regex pulled URLs from a
+markdown table without excluding backticks. Every URL came back with a trailing character, the
+overlap computed as **0 of 31**, and the conclusion would have been "these were never sent."
+
+The truth was **31 of 31**, sent four days earlier and simply unactioned. The next step would
+have been telling upstream to re-do work already sitting with them.
+
+Bad parsing does not throw. It returns a clean, plausible, wrong answer. When a number is
+surprising, **suspect the parsing before believing the finding** - the implausible result is the
+warning, and it is the only one you get.
 
 ## The shape all of these share
 
