@@ -296,6 +296,39 @@ Bad parsing does not throw. It returns a clean, plausible, wrong answer. When a 
 surprising, **suspect the parsing before believing the finding** - the implausible result is the
 warning, and it is the only one you get.
 
+## 19. A check that asks a question is not reporting a finding - 2026-08-31
+
+We told upstream that a uniform `SOURCE_AS_OF` on 113 rows had destroyed the inspected/
+uninspected signal, called it the most important of five findings, and asked them to change
+their process. **They agreed and planned the work. It was wrong.**
+
+That pass was a full re-audit - 59 of 59 Cybersecurity, 54 of 54 Utility, recorded in progress
+ledgers we already had. When every row is genuinely visited, every row genuinely advances, and
+one date is the CORRECT output.
+
+The part that makes this a rule rather than an apology: **our own gate had already said so.**
+`R19b` is a `note`, not a `FAIL`, and its text reads:
+
+> "If this delivery re-researched every row, that is correct and expected. If it was a
+> structural re-export, SOURCE_AS_OF should have been left as it was."
+
+Someone wrote both branches because they knew the ambiguity existed. We read the headline, took
+the branch that looked like a finding, and sent it to another party.
+
+```
+[FAIL]  a conclusion.        act on it.
+[warn]  a conclusion, ranked. act on it in order.
+[note]  a QUESTION.          go and answer it before repeating it.
+```
+
+A note is the check saying *"I cannot tell from here."* Passing one outward as a finding
+launders our uncertainty into someone else's work queue. **Answer it first, from data we already
+hold - which in this case was two files on disk.**
+
+What survived was real and much narrower: 9 rows that failed every retry were stamped as
+though established. Nine, not 113 - and the difference between those two numbers is the
+difference between a process change and a bug fix.
+
 ## The shape all of these share
 
 Every one is a case where the code was correct when written and the assumption quietly
