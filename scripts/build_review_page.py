@@ -34,10 +34,12 @@ import re
 import sqlite3
 import sys
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from src.cfp_monitor import client_view                    # noqa: E402
 
 FIELDS = ['CONFERENCE', 'Market', 'CITY', 'STATE_PROVINCE', 'COUNTRY', 'FORMAT',
           'CONFERENCE DATES', 'START DATE', 'SUBMISSION DEADLINE', 'STATUS',
@@ -331,13 +333,30 @@ a{color:var(--accent)}
 .legend b{color:var(--ink)}
 @media print{header{position:static}.views,.filters,.legend{display:none}
   th{position:static}body{background:#fff}}
+.cvbox{background:#fff;border:1px solid var(--line);border-left:3px solid var(--ink);
+  border-radius:4px;padding:14px 16px;margin:0 0 18px}
+.cvbox h2{font-size:15px;margin:0 0 4px;font-weight:700}
+.cvbox .lede{font-size:13px;color:var(--muted);margin:0 0 10px;max-width:70ch}
+.cvrow{padding:9px 0;border-top:1px solid var(--line)}
+.cvrow:first-of-type{border-top:none}
+.cvrow .nm{font-weight:600;font-size:13.5px}
+.cvrow .ans{font-size:12.5px;color:var(--muted);margin-top:2px;max-width:78ch}
+.cvrow .qt{font-size:12px;color:var(--ink);background:#f6f7f9;border-left:2px solid var(--line);
+  padding:5px 8px;margin-top:5px;border-radius:0 3px 3px 0;max-width:78ch}
+.cvst{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;padding:2px 6px;border-radius:3px;margin-left:6px;vertical-align:1px}
+.s-confirmed{background:#e4efe8;color:#2c6a4d}
+.s-held{background:#f7eeda;color:#8f6317}
+.s-none{background:#eef0f3;color:#5b636d}
+.s-ask{background:#e3edf5;color:#2a5b87}
 </style></head><body>
 <header>
   <h1>Conference &amp; Call-for-Papers Review</h1>
-  <div class="sub">__COUNT__ conferences &middot; 8 markets &middot; data as at __DATE__ &middot;
+  <div class="sub">__COUNT__ conferences &middot; __SCOPE__ &middot; data as at __DATE__ &middot;
     urgency recalculated live against today's date</div>
 </header>
 <div class="wrap">
+__CLIENTVIEW__
 
   <section class="sec">
     <div class="sechd">Market</div>
@@ -643,6 +662,83 @@ render();
 </script></body></html>"""
 
 
+def render_client_view(ctx) -> str:
+    """The two sections that make the page a conversation rather than a report.
+
+    Renders NOTHING when there is no client context, so the shared page is byte-for-byte what
+    it was. A feature that quietly changes the existing output is how a page nobody asked to
+    change ends up in front of a customer.
+    """
+    if not ctx:
+        return ''
+    esc = lambda s: (str(s or '').replace('&', '&amp;').replace('<', '&lt;')      # noqa: E731
+                     .replace('>', '&gt;'))
+    css = {'confirmed': 's-confirmed', 'held, not confirmed': 's-held',
+           'no date announced': 's-none', 'asking you': 's-ask', 'not tracked': 's-ask'}
+    out = []
+
+    answers = ctx['answers']
+    if answers:
+        n = client_view.summary(answers)
+        confirmed = n.get('confirmed', 0)
+        out.append('<div class="cvbox"><h2>You asked, we answered</h2>')
+        out.append(f'<p class="lede">{len(answers)} row(s) you marked '
+                   f'<b>Needs Verification</b>. {confirmed} confirmed on the conference\'s own '
+                   f'page. The rest are answered honestly below - "no date announced" and "we '
+                   f'could not confirm it" are real answers, and we would rather say so than '
+                   f'leave you guessing.</p>')
+        # ROWS THAT NEED SOMETHING FIRST, then the ones with a common answer GROUPED. Repeating
+        # one identical sentence twenty times buries the four rows that differ, which is the
+        # same failure as listing every untouched row in the weekly digest.
+        individual = [r for r in answers if r['state'] != 'no date announced']
+        grouped = [r for r in answers if r['state'] == 'no date announced']
+
+        for r in individual:
+            out.append(f'<div class="cvrow"><span class="nm">{esc(r["name"])}</span>'
+                       f'<span class="cvst {css.get(r["state"], "s-none")}">'
+                       f'{esc(r["state"])}</span>')
+            out.append(f'<div class="ans">{esc(r["answer"])}</div>')
+            if r['quote']:
+                src = (f' &mdash; <a href="{esc(r["url"])}" target="_blank" rel="noopener">'
+                       f'source</a>' if r['url'] else '')
+                out.append(f'<div class="qt">&ldquo;{esc(r["quote"][:260])}&rdquo;{src}</div>')
+            if r['their_deadline'] and r['deadline'] and \
+                    r['their_deadline'] not in r['deadline']:
+                out.append(f'<div class="ans">Your sheet holds '
+                           f'<b>{esc(r["their_deadline"])}</b>. Both can be right when a '
+                           f'conference runs several submission rounds - ours is the next one '
+                           f'still open.</div>')
+            out.append('</div>')
+
+        if grouped:
+            names = ', '.join(esc(r['name']) for r in grouped)
+            out.append(f'<div class="cvrow"><span class="nm">No deadline announced yet</span>'
+                       f'<span class="cvst s-none">{len(grouped)}</span>'
+                       f'<div class="ans">These conferences have not published a submission '
+                       f'deadline. That is a fact about them, not a gap in our checking - we '
+                       f'look every week and each will appear above the moment one is '
+                       f'published.</div>'
+                       f'<div class="ans" style="margin-top:6px">{names}</div></div>')
+        out.append('</div>')
+
+    changed = ctx['changed']
+    if changed:
+        out.append('<div class="cvbox"><h2>Changed since you last edited</h2>')
+        out.append(f'<p class="lede">{len(changed)} of your conferences moved on our side '
+                   f'since {esc(ctx["since"])}. Nothing here changes your sheet - it is ours '
+                   f'to tell you, yours to decide about.</p>')
+        for c in changed[:25]:
+            out.append(f'<div class="cvrow"><span class="nm">{esc(c["name"])}</span>'
+                       f'<div class="ans">Deadline now '
+                       f'<b>{esc(c["deadline"] or "not announced")}</b>'
+                       f' &middot; checked {esc(c["when"])}</div></div>')
+        if len(changed) > 25:
+            out.append(f'<div class="cvrow"><div class="ans">'
+                       f'&hellip; and {len(changed) - 25} more.</div></div>')
+        out.append('</div>')
+    return '\n'.join(out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-i', '--input', required=True)
@@ -656,6 +752,12 @@ def main():
     ap.add_argument('--dead-hosts', help='hosts that no longer resolve, one per line, from '
                                          'scripts/check_dns.py. Links to these are withheld '
                                          'rather than offered to the customer.')
+    ap.add_argument('--client', help='client key (e.g. arnica). Scopes the page to that '
+                                     'client\'s conferences and adds "You asked, we answered" '
+                                     'plus "Changed since you last edited". Without it the page '
+                                     'is the full shared list, as before.')
+    ap.add_argument('--client-since', default='',
+                    help='ISO date of their last snapshot; defaults to 14 days ago')
     ap.add_argument('--no-evidence', action='store_true',
                     help='build WITHOUT dead-links/checks. Layout testing only - the resulting '
                          'page understates the work and must never be sent.')
@@ -689,6 +791,55 @@ def main():
 
     with open(a.input, encoding='utf-8-sig', newline='') as h:
         rows = list(csv.DictReader(h))
+
+    # SCOPE FIRST, before anything is computed. A client sees only their own conferences, and
+    # filtering after the fact would leave the counts, the urgency banner and the market chips
+    # all describing rows this client cannot see. Two clients in one industry must never see
+    # each other exist (backend design, 2026-08-07, section 10a).
+    client_ctx = None
+    if a.client:
+        if not a.db:
+            raise SystemExit('ERROR: --client needs --db - the client layer lives there.')
+        con = sqlite3.connect(a.db)
+        con.row_factory = sqlite3.Row
+        cl = con.execute('select name, industry from clients where client_key = ?',
+                         (a.client,)).fetchone()
+        if not cl:
+            raise SystemExit(f'ERROR: no client {a.client!r} in the database.')
+        theirs = {r[0] for r in con.execute(
+            'select event_id from client_conferences where client_key = ? '
+            'and event_id is not null and trim(event_id) != "" '
+            'and withdrawn_by_customer = 0', (a.client,))}
+        # Their EVENT_IDs are OURS (the client layer stores canonical ids); the delivery's are
+        # upstream's. Translate, or every row fails to match and the page silently comes out
+        # empty - which looks exactly like a client who tracks nothing.
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        import scripts.apply_resolutions as _ar
+
+        class _S:
+            path = a.db
+        up_to_canon, _roots = _ar._seed_map(_S())
+        before = len(rows)
+        rows = [r for r in rows
+                if up_to_canon.get((r.get('EVENT_ID') or '').strip(),
+                                   (r.get('EVENT_ID') or '').strip()) in theirs]
+        if not rows:
+            raise SystemExit(
+                f'ERROR: scoping to {a.client!r} left NO rows of {before}. That is a join '
+                f'failure, not a client who tracks nothing - check the EVENT_ID map.')
+        since = a.client_since or (date.fromisoformat(a.date)
+                                   - timedelta(days=14)).isoformat()
+        client_ctx = {
+            'key': a.client, 'name': cl['name'], 'industry': cl['industry'],
+            'answers': client_view.answered(con, a.client, date.fromisoformat(a.date)),
+            'changed': client_view.changed_for_client(con, a.client, since),
+            'since': since,
+        }
+        con.close()
+        print(f"scoped to {cl['name']}: {len(rows)} of {before} row(s); "
+              f"{len(client_ctx['answers'])} verification request(s), "
+              f"{len(client_ctx['changed'])} change(s) since {since}")
+
     dead = load_dead_links(None if a.db else a.dead_links, a.db)
     checks = load_checks(a.checks)
     # Hosts that no longer resolve (scripts/check_dns.py). Distinct from dead_links, which is
@@ -716,6 +867,9 @@ def main():
                 .replace('__URGENT_DAYS__', str(lifecycle.URGENT_DAYS))
                 .replace('__SOON_DAYS__', str(lifecycle.SOON_DAYS))
                 .replace('__COUNT__', str(len(data)))
+                .replace('__SCOPE__', (f"{client_ctx['name']} &middot; {client_ctx['industry']}"
+                                       if client_ctx else '8 markets'))
+                .replace('__CLIENTVIEW__', render_client_view(client_ctx))
                 .replace('__DATE__', a.date))
     os.makedirs(os.path.dirname(os.path.abspath(a.output)), exist_ok=True)
     with open(a.output, 'w', encoding='utf-8', newline='\n') as h:
