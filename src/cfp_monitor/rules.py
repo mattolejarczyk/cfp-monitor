@@ -44,6 +44,43 @@ def deadline_has_passed(row, today: date) -> bool:
     return bool(d and d < today)
 
 
+# R22. Hosts that can never evidence a deadline, whatever they happen to say.
+#
+# The crawler has known this since July - `aggregator.py` and `sitewalk.py` both refuse to treat
+# these as an event's authoritative site. Nothing carried that knowledge across to CITATIONS, so
+# we went on accepting as evidence a host we would not accept as a source. On 2026-08-31 a
+# customer-flagged row turned out to cite `facebook.com/InfoSecWorld/` for a submission deadline.
+#
+# A social post is not the organiser speaking on the record: it is unversioned, editable, often
+# written by someone else, and routinely deleted. A shortener is worse - it hides the destination
+# entirely, so the citation does not even name what it points at.
+INADMISSIBLE_HOSTS = (
+    "facebook.com", "fb.com", "twitter.com", "x.com", "linkedin.com", "instagram.com",
+    "youtube.com", "youtu.be", "tiktok.com", "threads.net", "mastodon.social",
+    "infosec.exchange", "bsky.app", "reddit.com", "medium.com",
+    "bit.ly", "t.co", "tinyurl.com", "lnkd.in", "ow.ly", "buff.ly", "hubs.ly",
+)
+
+
+def citation_source_admissible(url: str) -> tuple[bool, str]:
+    """R22: may this URL evidence a deadline at all, before we ask what it says?
+
+    This is a question about the SOURCE, not about the page's current content, and that
+    distinction is what lets it apply to a passed deadline. "The page came down after the
+    deadline" excuses a missing quote; nothing excuses citing a Facebook post.
+    """
+    u = (url or "").strip().lower()
+    if not u:
+        return True, "no citation to judge"
+    host = u.split("//", 1)[-1].split("/", 1)[0].split("@")[-1].split(":")[0]
+    host = host[4:] if host.startswith("www.") else host
+    for bad in INADMISSIBLE_HOSTS:
+        if host == bad or host.endswith("." + bad):
+            return False, (f"{host} cannot evidence a deadline (R22) - a social post or "
+                           f"shortener is not the organiser on the record")
+    return True, f"{host} is an admissible source"
+
+
 def may_withdraw_citation(row, *, quote_found: bool, pages_read: int,
                           today: date) -> tuple[bool, str]:
     """May we clear this row's citation because we could not find its quote?
@@ -58,7 +95,16 @@ def may_withdraw_citation(row, *, quote_found: bool, pages_read: int,
        expected and says nothing about whether the citation was sound when it was made. On
        2026-08-29 this described 14 of 18 proposed withdrawals - one deadline 317 days old.
        Withdrawing those picks the harsher reading with no evidence for it.
+
+    ONE WAY THE ANSWER IS YES REGARDLESS: an inadmissible source (R22). Reason 3 excuses a
+    missing quote because the PAGE changed; it says nothing when the objection is to the host
+    itself. A Facebook page could not evidence a deadline the day it was cited, and the deadline
+    passing does not make it better. This path is deliberately narrow - it fires on the host
+    only, never on what the page says.
     """
+    ok, why = citation_source_admissible(row.get("DEADLINE_EVIDENCE_URL", ""))
+    if not ok:
+        return True, why
     if quote_found:
         return False, "the quote was found - nothing to withdraw"
     if pages_read == 0:
@@ -71,6 +117,61 @@ def may_withdraw_citation(row, *, quote_found: bool, pages_read: int,
                        f"deadline is expected, and does not show the citation was ever wrong")
     return True, (f"the call is still open and the quote is not on the cited page after reading "
                   f"{pages_read} page(s)")
+
+
+def next_actionable_deadline(rounds, today: date) -> tuple[str | None, str, list[str]]:
+    """R23: which of several submission rounds goes in SUBMISSION DEADLINE.
+
+    Conferences increasingly run tiered rounds. The Nineteenth International Conference on
+    Climate Change runs three:
+
+        Early     launch to 19 June 2026
+        Regular   20 June to 19 October 2026
+        Late      20 October to 20 December 2026
+
+    On 2026-08-31 the customer held 19 October and we held 20 December, and BOTH WERE RIGHT -
+    they had recorded the Regular close and we the Late one. Neither side was wrong and no
+    amount of re-verification would have resolved it, because the disagreement was never about
+    the facts.
+
+    THE RULE: `SUBMISSION DEADLINE` carries the NEXT round a person can still act on - the
+    earliest round whose close is not yet past. That is the only one that answers "what do I do
+    now". Showing the last round instead implies more runway than exists; showing the first
+    implies the opportunity is gone when it is not.
+
+    Every other round is still recorded, because a passed round explains what was missed and a
+    later round is the fallback if the next one is missed too.
+
+    `rounds` is a sequence of (label, close_date) - dates as `date` or ISO string. Returns
+    (chosen_iso_or_None, reason, notes) where `notes` describes every round, in order, for the
+    notes field. Nothing is discarded.
+    """
+    parsed = []
+    for label, close in rounds or []:
+        d = close if isinstance(close, date) else parse_date(close)
+        if d:
+            parsed.append((str(label).strip() or "round", d))
+    parsed.sort(key=lambda x: x[1])
+
+    notes = [f"{lab}: closes {d.isoformat()}"
+             + (" (passed)" if d < today else "" if d != min((x[1] for x in parsed
+                                                              if x[1] >= today), default=None)
+                else " <- next actionable")
+             for lab, d in parsed]
+
+    upcoming = [(lab, d) for lab, d in parsed if d >= today]
+    if not upcoming:
+        if not parsed:
+            return None, "no dated rounds given", notes
+        lab, d = parsed[-1]
+        return d.isoformat(), (f"every round has closed; showing the last ({lab}, "
+                               f"{d.isoformat()}) so the row states what was missed"), notes
+    lab, d = upcoming[0]
+    behind = len(parsed) - len(upcoming)
+    return d.isoformat(), (f"next actionable round is {lab}, closing {d.isoformat()}"
+                           + (f"; {behind} earlier round(s) already passed" if behind else "")
+                           + (f"; {len(upcoming) - 1} later round(s) remain as fallback"
+                              if len(upcoming) > 1 else "")), notes
 
 
 def bound_confidence(current: str, is_projected: bool) -> str:
