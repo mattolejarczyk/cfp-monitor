@@ -39,14 +39,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.cfp_monitor import client_view                    # noqa: E402
-
-FIELDS = ['CONFERENCE', 'Market', 'CITY', 'STATE_PROVINCE', 'COUNTRY', 'FORMAT',
+FIELDS =['CONFERENCE', 'Market', 'CITY', 'STATE_PROVINCE', 'COUNTRY', 'FORMAT',
           'CONFERENCE DATES', 'START DATE', 'SUBMISSION DEADLINE', 'STATUS',
           'GROUNDING_CONFIDENCE', 'IS_PROJECTED', 'STATUS DETAILS', 'CONFERENCE URL',
           'SUBMISSION URL', 'CFP_SUBMISSION_URL', 'DEADLINE_EVIDENCE_URL',
           'DEADLINE_QUOTE', 'TRACK', 'OPPORTUNITY_TYPE', 'MAIN_INFO_URL',
-          'ORGANIZER', 'SPONSOR_REQUIRED', 'SPONSOR_URL', 'SPONSOR_COST',
+          'ORGANIZER', 'SPONSOR_REQUIRED', 'SPONSOR_URL', 'SPONSOR_COST', 'SOURCE_AS_OF',
           'SPONSOR_QUOTE']
 
 MARKET_LABEL = {'robotics': 'Robotics', 'Robotics': 'Robotics', 'AdditiveMfg': 'Additive Mfg',
@@ -193,6 +191,10 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None):
             'sponcost': d['SPONSOR_COST'], 'sponurl': d['SPONSOR_URL'],
             'sponq': d['SPONSOR_QUOTE'],
             'st': st.get((r.get('EVENT_ID') or '').strip(), 'Active'),
+            # When WE last inspected this row at source. Drives the 'Updated since' view -
+            # the answer to 'what has moved since I last looked', which is the question a
+            # weekly reader actually has.
+            'asof': d['SOURCE_AS_OF'],
             # Flag the link the PAGE actually offers, which prefers CFP_SUBMISSION_URL - not
             # whichever column happened to be tested.
             # The truthiness guard is load-bearing: '' in dead_links is True, so one blank line
@@ -356,7 +358,6 @@ a{color:var(--accent)}
     urgency recalculated live against today's date</div>
 </header>
 <div class="wrap">
-__CLIENTVIEW__
 
   <section class="sec">
     <div class="sechd">Market</div>
@@ -388,6 +389,8 @@ __CLIENTVIEW__
       <option value="Disputed">Disputed</option>
       <option value="NotOnPage">Not on page</option>
       <option value="NoCheck">Could not check</option></select></div>
+      <div class="fg"><label>Updated since</label>
+        <input type="date" id="fsince" value="__SINCE__"></div>
     </div>
     <div class="key" id="key"></div>
   </section>
@@ -439,6 +442,9 @@ const DATA = __DATA__;
 const DEAD_HOSTS = __DEADHOSTS__;
 const today = new Date(); today.setHours(0,0,0,0);
 const URGENT_DAYS = __URGENT_DAYS__, SOON_DAYS = __SOON_DAYS__;
+// Mutable: the date box rewrites it and every count recomputes. Declared with `let` on
+// purpose - a const here would make the box decorative.
+let SINCE = '__SINCE__';
 const days = s => { if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(s||'')) return null;
   const p=s.split('-'); const d=new Date(+p[0],+p[1]-1,+p[2]); d.setHours(0,0,0,0);
   return Math.round((d-today)/864e5); };
@@ -461,6 +467,12 @@ const VIEWS = [
   f:r=>r.s==='Open'&&r.sd!==null&&r.sd>=0&&r.sd<=120},
  {k:'open', t:'All open calls', d:'accepting now', f:r=>r.s==='Open'},
  {k:'watching', t:'Awaiting next', d:'hunting next date', f:r=>r.st==='Watching'},
+ // WHAT HAS MOVED SINCE I LAST LOOKED. The question a weekly reader actually has, and until
+ // now the page could not answer it - every view described the CURRENT state and none
+ // described a CHANGE. `asof` is the date we last inspected the row at source, so this is
+ // "rows we have been back to", which is the honest version: we cannot claim the conference
+ // changed, only that we checked it again and this is what it says now.
+ {k:'recent', t:'Updated since', d:'we re-checked these', f:r=>r.asof && r.asof >= SINCE},
  {k:'checked', t:'Deadline confirmed', d:'we read it on their page', f:r=>r.chk==='verified'},
  // "we could not confirm" put the doubt on us and left the reader guessing what to do about
  // it. "the cited page doesn't back the date" says what is actually true and points at the
@@ -470,7 +482,13 @@ const VIEWS = [
  {k:'broken', t:'Submit Link Missing', d:'the page is not found', f:r=>r.dead},
  {k:'all', t:'Everything', d:'full list', f:r=>true},
 ];
-let view='soon', sortK='dl', sortDir=1;
+// "Closing this month" is the right landing view when something IS closing this month. On a
+// per-client page it often is not - Arnica had none - and the page then opened on "Nothing
+// matches those filters", which reads as a broken product rather than a quiet month.
+// So: land on the intended view when it has rows, otherwise the first view that does, and
+// "Everything" as the floor. A page must never open empty.
+let view='soon';
+let sortK='dl', sortDir=1;
 const mkts=[...new Set(DATA.map(r=>r.m))].sort(); const active=new Set();
 const $=i=>document.getElementById(i);
 
@@ -480,6 +498,17 @@ const $=i=>document.getElementById(i);
 // to his team is "get Need to Verify to zero" - which is unusable if the number is not the one
 // in front of them.
 const inMkt = r => !active.size || active.has(r.m);
+
+// Correct the landing view now that inMkt exists, and count THROUGH it for the same reason the
+// chips do. "Closing this month" is right when something is closing this month; on a
+// per-client page it often is not - Arnica had none - and the page then opened on "Nothing
+// matches those filters", which reads as a broken product rather than a quiet month.
+// Everything is the floor: a page must never open empty.
+for (const k of ['soon','urgent','open','recent','watching','all']) {
+  const v = VIEWS.find(x=>x.k===k);
+  if (v && DATA.filter(r=>inMkt(r)&&v.f(r)).length) { view = k; break; }
+  if (k === 'all') view = 'all';
+}
 function drawViews(){
   $('views').innerHTML = VIEWS.map(v=>
    `<button class="view${v.k===view?' on':''}" data-v="${v.k}">
@@ -656,87 +685,14 @@ $('mk').onclick=e=>{const b=e.target.closest('[data-m]'); if(!b)return;
   const m=b.dataset.m; active.has(m)?active.delete(m):active.add(m);
   b.classList.toggle('on'); render();};
 ['q','fs','ff','fc','fe'].forEach(i=>$(i).oninput=render);
+// The date box drives SINCE, so the "Updated since" count changes with it rather than being
+// fixed at build time. Falls back to the built-in default when cleared - an empty box would
+// otherwise make every row match and the view would silently become "everything".
+$('fsince').oninput=()=>{ SINCE = $('fsince').value || '__SINCE__'; render(); };
 document.querySelectorAll('th').forEach(th=>th.onclick=()=>{
   const k=th.dataset.k; sortDir = (k===sortK)? -sortDir : 1; sortK=k; render();});
 render();
 </script></body></html>"""
-
-
-def render_client_view(ctx) -> str:
-    """The two sections that make the page a conversation rather than a report.
-
-    Renders NOTHING when there is no client context, so the shared page is byte-for-byte what
-    it was. A feature that quietly changes the existing output is how a page nobody asked to
-    change ends up in front of a customer.
-    """
-    if not ctx:
-        return ''
-    esc = lambda s: (str(s or '').replace('&', '&amp;').replace('<', '&lt;')      # noqa: E731
-                     .replace('>', '&gt;'))
-    css = {'confirmed': 's-confirmed', 'held, not confirmed': 's-held',
-           'no date announced': 's-none', 'asking you': 's-ask', 'not tracked': 's-ask'}
-    out = []
-
-    answers = ctx['answers']
-    if answers:
-        n = client_view.summary(answers)
-        confirmed = n.get('confirmed', 0)
-        out.append('<div class="cvbox"><h2>You asked, we answered</h2>')
-        out.append(f'<p class="lede">{len(answers)} row(s) you marked '
-                   f'<b>Needs Verification</b>. {confirmed} confirmed on the conference\'s own '
-                   f'page. The rest are answered honestly below - "no date announced" and "we '
-                   f'could not confirm it" are real answers, and we would rather say so than '
-                   f'leave you guessing.</p>')
-        # ROWS THAT NEED SOMETHING FIRST, then the ones with a common answer GROUPED. Repeating
-        # one identical sentence twenty times buries the four rows that differ, which is the
-        # same failure as listing every untouched row in the weekly digest.
-        individual = [r for r in answers if r['state'] != 'no date announced']
-        grouped = [r for r in answers if r['state'] == 'no date announced']
-
-        for r in individual:
-            out.append(f'<div class="cvrow"><span class="nm">{esc(r["name"])}</span>'
-                       f'<span class="cvst {css.get(r["state"], "s-none")}">'
-                       f'{esc(r["state"])}</span>')
-            out.append(f'<div class="ans">{esc(r["answer"])}</div>')
-            if r['quote']:
-                src = (f' &mdash; <a href="{esc(r["url"])}" target="_blank" rel="noopener">'
-                       f'source</a>' if r['url'] else '')
-                out.append(f'<div class="qt">&ldquo;{esc(r["quote"][:260])}&rdquo;{src}</div>')
-            if r['their_deadline'] and r['deadline'] and \
-                    r['their_deadline'] not in r['deadline']:
-                out.append(f'<div class="ans">Your sheet holds '
-                           f'<b>{esc(r["their_deadline"])}</b>. Both can be right when a '
-                           f'conference runs several submission rounds - ours is the next one '
-                           f'still open.</div>')
-            out.append('</div>')
-
-        if grouped:
-            names = ', '.join(esc(r['name']) for r in grouped)
-            out.append(f'<div class="cvrow"><span class="nm">No deadline announced yet</span>'
-                       f'<span class="cvst s-none">{len(grouped)}</span>'
-                       f'<div class="ans">These conferences have not published a submission '
-                       f'deadline. That is a fact about them, not a gap in our checking - we '
-                       f'look every week and each will appear above the moment one is '
-                       f'published.</div>'
-                       f'<div class="ans" style="margin-top:6px">{names}</div></div>')
-        out.append('</div>')
-
-    changed = ctx['changed']
-    if changed:
-        out.append('<div class="cvbox"><h2>Changed since you last edited</h2>')
-        out.append(f'<p class="lede">{len(changed)} of your conferences moved on our side '
-                   f'since {esc(ctx["since"])}. Nothing here changes your sheet - it is ours '
-                   f'to tell you, yours to decide about.</p>')
-        for c in changed[:25]:
-            out.append(f'<div class="cvrow"><span class="nm">{esc(c["name"])}</span>'
-                       f'<div class="ans">Deadline now '
-                       f'<b>{esc(c["deadline"] or "not announced")}</b>'
-                       f' &middot; checked {esc(c["when"])}</div></div>')
-        if len(changed) > 25:
-            out.append(f'<div class="cvrow"><div class="ans">'
-                       f'&hellip; and {len(changed) - 25} more.</div></div>')
-        out.append('</div>')
-    return '\n'.join(out)
 
 
 def main():
@@ -752,12 +708,17 @@ def main():
     ap.add_argument('--dead-hosts', help='hosts that no longer resolve, one per line, from '
                                          'scripts/check_dns.py. Links to these are withheld '
                                          'rather than offered to the customer.')
-    ap.add_argument('--client', help='client key (e.g. arnica). Scopes the page to that '
-                                     'client\'s conferences and adds "You asked, we answered" '
-                                     'plus "Changed since you last edited". Without it the page '
-                                     'is the full shared list, as before.')
+    ap.add_argument('--markets', default='',
+                    help='comma-separated markets to include, e.g. Cybersecurity,Utility. '
+                         'The market CHIPS still work inside whatever is included - this sets '
+                         'what the page is ABOUT, the chips filter within it.')
+    ap.add_argument('--client', help='client key (e.g. arnica). Scopes to one client\'s '
+                                     'conferences. Kept for the platform, where isolation is '
+                                     'per client; for a page, --markets is usually what you '
+                                     'want.')
     ap.add_argument('--client-since', default='',
-                    help='ISO date of their last snapshot; defaults to 14 days ago')
+                    help='ISO date the "Updated since" view starts from; defaults to a week '
+                         'back. The reader can move it on the page.')
     ap.add_argument('--no-evidence', action='store_true',
                     help='build WITHOUT dead-links/checks. Layout testing only - the resulting '
                          'page understates the work and must never be sent.')
@@ -791,6 +752,25 @@ def main():
 
     with open(a.input, encoding='utf-8-sig', newline='') as h:
         rows = list(csv.DictReader(h))
+
+    # MARKET SCOPE. Which markets the page is ABOUT. The chips still filter within it, so a
+    # two-market page keeps both chips and a reader can still narrow to one - the scope decides
+    # what exists, the chips decide what is shown.
+    scope_label = '8 markets'
+    if a.markets:
+        want = {m.strip() for m in a.markets.split(',') if m.strip()}
+        unknown = want - set(MARKET_LABEL) - set(MARKET_LABEL.values())
+        if unknown:
+            raise SystemExit(f'ERROR: unknown market(s) {sorted(unknown)}. '
+                             f'Known: {sorted(set(MARKET_LABEL.values()))}')
+        before = len(rows)
+        rows = [r for r in rows if (r.get('Market') or '').strip() in want
+                or MARKET_LABEL.get((r.get('Market') or '').strip()) in want]
+        if not rows:
+            raise SystemExit(f'ERROR: {sorted(want)} matched NO rows of {before}. That is a '
+                             f'naming mismatch, not an empty market.')
+        scope_label = ' + '.join(sorted(MARKET_LABEL.get(m, m) for m in want))
+        print(f'scoped to {scope_label}: {len(rows)} of {before} row(s)')
 
     # SCOPE FIRST, before anything is computed. A client sees only their own conferences, and
     # filtering after the fact would leave the counts, the urgency banner and the market chips
@@ -827,18 +807,15 @@ def main():
             raise SystemExit(
                 f'ERROR: scoping to {a.client!r} left NO rows of {before}. That is a join '
                 f'failure, not a client who tracks nothing - check the EVENT_ID map.')
-        since = a.client_since or (date.fromisoformat(a.date)
-                                   - timedelta(days=14)).isoformat()
-        client_ctx = {
-            'key': a.client, 'name': cl['name'], 'industry': cl['industry'],
-            'answers': client_view.answered(con, a.client, date.fromisoformat(a.date)),
-            'changed': client_view.changed_for_client(con, a.client, since),
-            'since': since,
-        }
+        # DEFAULT FOR THE "UPDATED SINCE" VIEW. A week, because that is the rhythm the customer
+        # reads on. It is only a default - the date box on the page moves it, and the count
+        # recomputes in the browser.
+        since = a.client_since or (date.fromisoformat(a.date) - timedelta(days=7)).isoformat()
+        client_ctx = {'key': a.client, 'name': cl['name'], 'industry': cl['industry'],
+                      'since': since}
         con.close()
         print(f"scoped to {cl['name']}: {len(rows)} of {before} row(s); "
-              f"{len(client_ctx['answers'])} verification request(s), "
-              f"{len(client_ctx['changed'])} change(s) since {since}")
+              f"'updated since' defaults to {since}")
 
     dead = load_dead_links(None if a.db else a.dead_links, a.db)
     checks = load_checks(a.checks)
@@ -868,8 +845,10 @@ def main():
                 .replace('__SOON_DAYS__', str(lifecycle.SOON_DAYS))
                 .replace('__COUNT__', str(len(data)))
                 .replace('__SCOPE__', (f"{client_ctx['name']} &middot; {client_ctx['industry']}"
-                                       if client_ctx else '8 markets'))
-                .replace('__CLIENTVIEW__', render_client_view(client_ctx))
+                                       if client_ctx else scope_label))
+                .replace('__SINCE__', (client_ctx['since'] if client_ctx else
+                                       (date.fromisoformat(a.date)
+                                        - timedelta(days=7)).isoformat()))
                 .replace('__DATE__', a.date))
     os.makedirs(os.path.dirname(os.path.abspath(a.output)), exist_ok=True)
     with open(a.output, 'w', encoding='utf-8', newline='\n') as h:
