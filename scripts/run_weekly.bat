@@ -67,7 +67,16 @@ if errorlevel 1 (
 set "CFP_CDP_URL=http://localhost:9222"
 
 echo Weekly verification starting %STAMP%
-venv\Scripts\python.exe scripts\weekly_verify.py --db cfp_monitor.db >> "%LOG%" 2>&1
+REM --delivery enables the citation-agreement invariant (check 9). Skipped without it, and a
+REM skipped check must never read as a passed one: the database and the delivery drifted on
+REM 176 rows for two days in August because nothing compared them.
+set "DELIVERY=%USERPROFILE%\Desktop\Nicolia-PR-Prime\Markets\delivery_v15_edition_43col.csv"
+if exist "%DELIVERY%" (
+  venv\Scripts\python.exe scripts\weekly_verify.py --db cfp_monitor.db --delivery "%DELIVERY%" >> "%LOG%" 2>&1
+) else (
+  echo WARNING: delivery not found at %DELIVERY% - citation-agreement check will be SKIPPED >> "%LOG%"
+  venv\Scripts\python.exe scripts\weekly_verify.py --db cfp_monitor.db >> "%LOG%" 2>&1
+)
 set "RC=%ERRORLEVEL%"
 
 REM ---------------------------------------------------------------------------

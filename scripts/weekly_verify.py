@@ -495,6 +495,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Weekly re-verification sweep (no API calls).")
     ap.add_argument("--db", default="cfp_monitor.db")
     ap.add_argument("--seed-dir", default="market_sheets")
+    ap.add_argument("--delivery", default="", help="the current delivery CSV. Enables the "
+                                                   "citation-agreement invariant, which is "
+                                                   "SKIPPED without it")
     ap.add_argument("--out-dir", default="runs_out")
     ap.add_argument("--layers", default="012")
     ap.add_argument("--no-browser", action="store_true",
@@ -540,9 +543,14 @@ def main() -> int:
     # Integrity BEFORE reporting. A digest computed over a database that lost rows is a
     # confident answer to the wrong question, so violations lead the digest.
     print("\n--- database invariants ---")
-    inv = subprocess.run([py, "scripts/check_invariants.py", "--db", a.db,
-                          "--seed-dir", a.seed_dir], cwd=str(cwd),
-                         capture_output=True, text=True)
+    # --delivery enables check 9, which compares CITATIONS between the database and the
+    # delivery. Without it the check is SKIPPED, and a skipped check must never read like a
+    # passed one - the two stores drifted on 176 rows for two days in August precisely because
+    # nothing compared them. Given a path, the weekly job asks the question every Sunday.
+    inv_cmd = [py, "scripts/check_invariants.py", "--db", a.db, "--seed-dir", a.seed_dir]
+    if a.delivery:
+        inv_cmd += ["--delivery", a.delivery]
+    inv = subprocess.run(inv_cmd, cwd=str(cwd), capture_output=True, text=True)
     print(inv.stdout.rstrip())
     invariants_ok = inv.returncode == 0
 

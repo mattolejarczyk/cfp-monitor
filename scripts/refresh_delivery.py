@@ -43,6 +43,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.cfp_monitor import rules                       # noqa: E402
 from src.cfp_monitor.verify import _parse_date          # noqa: E402
 
 # delivery column -> grounding_facts column. ONLY fields our pipeline is the authority for.
@@ -267,6 +268,26 @@ def main() -> int:
                 changes.append((name, col, old, new, _norm(f["verify_state"])))
                 if a.apply:
                     r[col] = new
+                # R11: GROUNDING_CONFIDENCE and IS_PROJECTED must agree, and this script owns
+                # only one of them. `IS_PROJECTED` is in OWNED; `GROUNDING_CONFIDENCE` has no
+                # database column at all, so before 2026-08-31 this wrote half a bound pair and
+                # could not write the other half - guaranteeing an R11 failure every time the
+                # projection flag moved. It did, on 4 rows, and only the gate caught it.
+                #
+                # rules.bound_confidence exists for exactly this and says so in its own
+                # docstring: "Call this WHENEVER IS_PROJECTED changes. Not calling it is the
+                # single most repeated defect in this codebase." This script was not calling it.
+                #
+                # The confidence is DERIVED from the value we just wrote, never copied from the
+                # database - there is nothing there to copy.
+                if col == "IS_PROJECTED" and "GROUNDING_CONFIDENCE" in r:
+                    was = _norm(r["GROUNDING_CONFIDENCE"])
+                    now = rules.bound_confidence(was, new.strip().lower() == "true")
+                    if now != was:
+                        changes.append((name, "GROUNDING_CONFIDENCE", was, now,
+                                        "bound to IS_PROJECTED (R11)"))
+                        if a.apply:
+                            r["GROUNDING_CONFIDENCE"] = now
         # A status that contradicts its own date, reported not fixed - STATUS is upstream's.
         d = _parse_date(_norm(r.get("SUBMISSION DEADLINE")))
         if d and d < today and _norm(r.get("STATUS")) in ("Open", "Upcoming"):

@@ -89,6 +89,62 @@ class Result:
         return 0
 
 
+def citation_drift(db: str, delivery: Path) -> list[str]:
+    """Do the DATABASE and the DELIVERY agree about citations?
+
+    THE FAILURE THIS EXISTS FOR. On 2026-08-29, 184 citations were cleared from the delivery
+    under amendment v1.4 - a citation for a deadline the row does not claim cannot evidence
+    anything. The database was never part of that edit. It kept 179 of them, and NOTHING
+    COMPARED THE TWO. They disagreed silently for two days.
+
+    That is not merely untidy. `refresh_delivery.py` carries database values into the delivery,
+    so the next routine refresh would have written all 176 back and quietly undone v1.4. It was
+    caught on 2026-08-31 only because a dry run happened to be read before applying.
+
+    Row presence has been checked since the beginning; CONTENT never was. This closes that,
+    for the one field where the two stores have already been proven to drift.
+
+    Not fatal on purpose: a drift here means the two stores disagree, which needs a person to
+    decide WHICH is right. Failing the run would block the acceptance gate everywhere while
+    that decision waits, and the usual response to that is to stop running the check.
+    """
+    if not delivery.exists():
+        return []
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import scripts.apply_resolutions as _ar                          # noqa: PLC0415
+
+    class _S:
+        path = db
+    up_to_canon, _roots = _ar._seed_map(_S())
+    if not up_to_canon:
+        return ["no EVENT_ID map available, so the two stores cannot be compared - "
+                "this check did NOT run"]
+
+    con = sqlite3.connect(db)
+    con.row_factory = sqlite3.Row
+    facts = {r["event_id"]: r for r in con.execute(
+        "select event_id, deadline, deadline_evidence_url, deadline_quote "
+        "from grounding_facts")}
+    con.close()
+
+    out = []
+    with open(delivery, encoding="utf-8-sig", newline="") as fh:
+        for r in csv.DictReader(fh):
+            raw = (r.get("EVENT_ID") or "").strip()
+            f = facts.get(up_to_canon.get(raw, raw))
+            if not f:
+                continue
+            d_url = (r.get("DEADLINE_EVIDENCE_URL") or "").strip()
+            f_url = (f["deadline_evidence_url"] or "").strip()
+            if d_url != f_url:
+                name = (r.get("CONFERENCE") or raw)[:44]
+                which = ("delivery blank, database holds one" if not d_url
+                         else "database blank, delivery holds one" if not f_url
+                         else "they cite DIFFERENT pages")
+                out.append(f"{name}: {which}")
+    return out
+
+
 def delivered_ids(seed_dir: Path) -> tuple[set[str], int]:
     """Canonical ids across every per-market seed. The stale combined grounding_seed.csv is
     skipped - it holds several markets and predates one-market-per-file imports."""
@@ -123,6 +179,10 @@ def held_rows(seed_dir: Path) -> dict[str, str]:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Check database integrity invariants.")
     ap.add_argument("--db", default="cfp_monitor.db")
+    ap.add_argument("--delivery", help="the current delivery CSV. Enables check 9, which "
+                                       "compares CITATIONS between the database and the "
+                                       "delivery - the two stores drifted on 176 rows in "
+                                       "August and nothing noticed")
     ap.add_argument("--seed-dir", help="defaults to market_sheets beside the database, "
                                        "falling back to the working directory")
     a = ap.parse_args()
@@ -224,7 +284,22 @@ def main() -> int:
     res.add("8  edition matches the name year", "watch: run fix_edition.py to derive from date",
             odd, fatal=False)
 
+    # 9 - CONTENT agreement, not just row presence. Everything above asks whether the right
+    # ROWS are here; this asks whether the two stores say the same thing about one of them.
     con.close()
+    if a.delivery:
+        drift = citation_drift(a.db, Path(a.delivery))
+        res.add("9  citations agree with the delivery",
+                "watch: the database and the delivery disagree about a cited page",
+                drift, fatal=False)
+    else:
+        print("  [skip ] 9  citations agree with the delivery   "
+              "pass --delivery to run this")
+        print("            Row presence was checked above; CONTENT was not. The two stores "
+              "drifted")
+        print("            silently for two days in August because nothing compared them.")
+
+    con = sqlite3.connect(a.db)
     rc = res.report()
     if held:
         print("\nDeclared holds (present in the DB by decision, not by accident):")
