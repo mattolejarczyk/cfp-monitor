@@ -34,10 +34,10 @@ IGNORED = ("LATEST UPDATE",)
 
 KEY = "CONFERENCE"
 
-# Urgency bands, in the same order the customer page uses them. The point of the bands is that
-# they decide how loudly silence is reported, not how the row is displayed.
-URGENT_DAYS = 7
-SOON_DAYS = 30
+# The bands come from lifecycle, not a second copy. They were duplicated here for a day, which
+# is one edit away from this report and the customer page disagreeing about what "closing this
+# week" means - and nothing would have failed, it would just have been quietly inconsistent.
+from .lifecycle import SOON_DAYS, URGENT_DAYS      # noqa: E402,F401
 
 
 def read(path: Path) -> dict[str, dict]:

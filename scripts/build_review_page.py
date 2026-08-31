@@ -419,6 +419,7 @@ a{color:var(--accent)}
 const DATA = __DATA__;
 const DEAD_HOSTS = __DEADHOSTS__;
 const today = new Date(); today.setHours(0,0,0,0);
+const URGENT_DAYS = __URGENT_DAYS__, SOON_DAYS = __SOON_DAYS__;
 const days = s => { if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(s||'')) return null;
   const p=s.split('-'); const d=new Date(+p[0],+p[1]-1,+p[2]); d.setHours(0,0,0,0);
   return Math.round((d-today)/864e5); };
@@ -433,10 +434,10 @@ DATA.forEach(r=>{ r.dd = days(r.dl); r.sd = days(r.start);
 });
 
 const VIEWS = [
- {k:'urgent', t:'Closing this week', d:'7 days or less',
-  f:r=>r.dd!==null&&r.dd>=0&&r.dd<=7},
- {k:'soon', t:'Closing this month', d:'30 days or less',
-  f:r=>r.dd!==null&&r.dd>=0&&r.dd<=30},
+ {k:'urgent', t:'Closing this week', d:URGENT_DAYS+' days or less',
+  f:r=>r.dd!==null&&r.dd>=0&&r.dd<=URGENT_DAYS},
+ {k:'soon', t:'Closing this month', d:SOON_DAYS+' days or less',
+  f:r=>r.dd!==null&&r.dd>=0&&r.dd<=SOON_DAYS},
  {k:'openevent', t:'Event soon, open', d:'event within 4 months',
   f:r=>r.s==='Open'&&r.sd!==null&&r.sd>=0&&r.sd<=120},
  {k:'open', t:'All open calls', d:'accepting now', f:r=>r.s==='Open'},
@@ -518,8 +519,8 @@ function chkCell(r){
 function dlCell(r){
   if(!r.dl) return '<span style="color:var(--muted)">not announced</span>';
   let b='';
-  if(r.dd!==null&&r.dd>=0&&r.dd<=7) b=`<span class="days b b-urg">${r.dd}d left</span>`;
-  else if(r.dd!==null&&r.dd>=0&&r.dd<=30) b=`<span class="days b b-soon">${r.dd}d left</span>`;
+  if(r.dd!==null&&r.dd>=0&&r.dd<=URGENT_DAYS) b=`<span class="days b b-urg">${r.dd}d left</span>`;
+  else if(r.dd!==null&&r.dd>=0&&r.dd<=SOON_DAYS) b=`<span class="days b b-soon">${r.dd}d left</span>`;
   else if(r.dd!==null&&r.dd<0) b=`<span class="days" style="color:var(--muted)">passed</span>`;
   return `<span class="dl">${r.dl}${b}</span>`;
 }
@@ -564,8 +565,8 @@ function render(){
   });
   $('n').textContent=rows.length;
   $('ctx').textContent = view==='all'?'':'in "'+VIEWS.find(v=>v.k===view).t.toLowerCase()+'"';
-  const urg=rows.filter(r=>r.dd!==null&&r.dd>=0&&r.dd<=7).length;
-  $('hint').innerHTML = urg?`<span class="b b-urg">${urg} closing within 7 days</span>`:'';
+  const urg=rows.filter(r=>r.dd!==null&&r.dd>=0&&r.dd<=URGENT_DAYS).length;
+  $('hint').innerHTML = urg?`<span class="b b-urg">${urg} closing within ${URGENT_DAYS} days</span>`:'';
   $('tb').innerHTML = rows.map((r,i)=>`
    <tr class="r" data-i="${i}">
     <td class="nm">${esc(r.n)}${r.op&&r.op!=='Speaking'?` <span class="b b-up">${r.op}</span>`:''}${
@@ -705,8 +706,15 @@ def main():
         len(data), n_dead, n_chk))
     if dead and not n_dead:
         raise SystemExit('ERROR: dead-link file supplied but nothing matched - check the column')
+    # The bands are INJECTED from lifecycle rather than written into the JS. The page must
+    # compute days in the BROWSER - it has to run on the reader's clock, not on the clock of
+    # whoever built the file - but the THRESHOLDS are policy and belong in one place. Left
+    # hard-coded here, a change to lifecycle's bands would silently disagree with this page and
+    # nothing would fail; the two would just quietly mean different things by "closing soon".
     page = (PAGE.replace('__DATA__', json.dumps(data, ensure_ascii=False))
                 .replace('__DEADHOSTS__', json.dumps(dead_hosts, ensure_ascii=False))
+                .replace('__URGENT_DAYS__', str(lifecycle.URGENT_DAYS))
+                .replace('__SOON_DAYS__', str(lifecycle.SOON_DAYS))
                 .replace('__COUNT__', str(len(data)))
                 .replace('__DATE__', a.date))
     os.makedirs(os.path.dirname(os.path.abspath(a.output)), exist_ok=True)
