@@ -32,7 +32,11 @@ import json
 import os
 import re
 import sqlite3
+import sys
 from collections import defaultdict
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 FIELDS = ['CONFERENCE', 'Market', 'CITY', 'STATE_PROVINCE', 'COUNTRY', 'FORMAT',
           'CONFERENCE DATES', 'START DATE', 'SUBMISSION DEADLINE', 'STATUS',
@@ -58,31 +62,11 @@ DEFUNCT = re.compile(
 ROTATION = re.compile(r'cycle dictates|rotat|alternat|moves to|held instead in', re.I)
 
 
-def edition_states(rows, today):
-    """R13 - derived, never stored. Group by EVENT_ID first: rows sharing one
-    EVENT_ID are ONE edition in several markets, not several editions."""
-    editions = defaultdict(list)
-    for r in rows:
-        editions[(r.get('EVENT_ID') or '').strip()].append(r)
-    series = defaultdict(set)
-    for eid in editions:
-        p = eid.split('-', 1)
-        series[p[1] if len(p) == 2 and re.fullmatch(r'(19|20)\d{2}', p[0]) else eid].add(eid)
-
-    state = {}
-    for _, eids in series.items():
-        latest = max(eids, key=lambda e: e.split('-', 1)[0]
-                     if re.fullmatch(r'(19|20)\d{2}', e.split('-', 1)[0]) else '0')
-        for eid in eids:
-            rs = editions[eid]
-            blob = ' '.join(f"{r.get('STATUS DETAILS','')} {r.get('NOTES','')}" for r in rs)
-            defunct = bool(DEFUNCT.search(blob)) and not ROTATION.search(blob)
-            start = (rs[0].get('START DATE') or '').strip()
-            ran = bool(re.fullmatch(r'\d{4}-\d{2}-\d{2}', start)) and start < today
-            state[eid] = ('Archived' if eid != latest else
-                          'Discontinued' if defunct else
-                          'Watching' if ran else 'Active')
-    return state
+# R13 lives in src/cfp_monitor/lifecycle.py as of 2026-08-31. It was correct here, but living
+# inside the page builder meant the gate, the weekly job and the client reconciliation could not
+# ask the question - so STATUS went on being read from the file, and went stale. One
+# implementation, imported by everything that needs it.
+from src.cfp_monitor.lifecycle import edition_states       # noqa: E402,F401
 
 
 def newest_check(db):
