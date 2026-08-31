@@ -112,6 +112,51 @@ def test_prose_in_the_deadline_field_asks_for_a_human_not_a_guess():
     assert "not a date" in a.why and "R23" in a.why
 
 
+# ------------------------------------------------- when derived should REPLACE stored
+
+def test_a_dated_passed_deadline_overrides_the_file():
+    """The 2026-08-31 gate failures. A date is unambiguous and the file is frozen."""
+    a = A(_row(start="2026-11-01", deadline="2026-08-29"))
+    ok, why = a.overrides("Open")
+    assert ok is True and "dated deadline settles it" in why
+
+
+def test_an_event_that_already_ran_cannot_be_open():
+    a = A(_row(start="2026-01-01"), state="Watching")
+    ok, why = a.overrides("Open")
+    assert ok is True and "cannot be open" in why
+
+
+def test_a_blank_deadline_does_NOT_override_a_stored_closed():
+    """Found by the review list before it shipped. 26 rows read STATUS=Closed with no deadline
+    recorded. Somebody established that; deriving 'Upcoming' from the absence of a date would
+    replace a finding with an inference. Contract 2.1 cuts both ways."""
+    a = A(_row(start="2026-11-01", deadline=""))
+    assert a.customer_status == "Upcoming"
+    ok, why = a.overrides("Closed")
+    assert ok is False
+    assert "inference from absence" in why and "2.1 cuts both ways" in why
+
+
+def test_two_true_answers_are_a_presentation_choice_not_a_correction():
+    """For an edition that has run, 'Closed' (the call is shut) and 'Upcoming' (watching for
+    the next) are both correct. 65 rows sat in this state."""
+    a = A(_row(start="2026-01-01"), state="Watching")
+    ok, why = a.overrides("Closed")
+    assert ok is False and "both true" in why
+
+
+def test_an_empty_stored_status_is_simply_filled():
+    a = A(_row(start="2026-11-01", deadline="2026-09-20"))
+    ok, _why = a.overrides("")
+    assert ok is True
+
+
+def test_agreement_is_not_an_override():
+    a = A(_row(start="2026-11-01", deadline="2026-09-20"))
+    assert a.overrides("Open") == (False, "they agree")
+
+
 # ------------------------------------------------------- structural
 
 def test_every_assessment_gives_a_reason():

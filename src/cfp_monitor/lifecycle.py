@@ -62,13 +62,54 @@ class Assessment:
 
     @property
     def customer_status(self) -> str:
-        """What the customer's STATUS column should say. DERIVED - never read from the file."""
+        """What the customer's STATUS column would say if derived from dates alone."""
         if self.edition_state == "Discontinued":
             return "Closed"
         if self.edition_state in ("Watching", "Archived"):
             return "Upcoming"
         return {"Open": "Open", "Closing": "Open", "Closed": "Closed",
                 "Not announced": "Upcoming", "Not applicable": "Upcoming"}[self.call_state]
+
+    def overrides(self, stored: str) -> tuple[bool, str]:
+        """Should the derived status REPLACE what the file already says?
+
+        Deriving beats storing only where the derivation is better informed. It is not
+        automatically better, and assuming otherwise nearly shipped a 126-row change on
+        2026-08-31 of which most were not corrections at all.
+
+        DERIVATION WINS when a date proves the stored value wrong. Dates are unambiguous and
+        the file is frozen: a deadline that has passed, or an event that has already run,
+        settles it.
+
+        DERIVATION LOSES when it is reasoning from ABSENCE. A blank deadline does not mean the
+        call has not opened - it equally means the call is shut and there is no date to record.
+        Twenty-six rows read `STATUS=Closed` with no deadline: somebody established that, and
+        overwriting it with "Upcoming" would replace a finding with an inference. Contract 2.1
+        cuts both ways.
+
+        DERIVATION ALSO LOSES when both answers are true and it is only a question of framing.
+        For an edition that has already run, "Closed" (the call is shut) and "Upcoming" (we are
+        watching for the next one) are both correct; that is a presentation choice for the
+        customer page, not a data correction.
+        """
+        stored = (stored or "").strip()
+        derived = self.customer_status
+        if not stored:
+            return True, "the file says nothing, so the derived value is all we have"
+        if derived == stored:
+            return False, "they agree"
+
+        if self.call_state in ("Closed", "Open", "Closing"):
+            return True, (f"a dated deadline settles it - {self.why[:96]}")
+        if self.edition_state in ("Watching", "Archived") and stored == "Open":
+            return True, ("the event has already run, so the call cannot be open whatever the "
+                          "file says")
+        if self.call_state == "Not announced":
+            return False, (f"no deadline is recorded, so this is an inference from absence. "
+                           f"The file's {stored!r} may be a finding somebody established - "
+                           f"2.1 cuts both ways")
+        return False, (f"{stored!r} and {derived!r} are both true; which to show is a "
+                       f"presentation choice, not a correction")
 
 
 def _iso(v) -> date | None:
