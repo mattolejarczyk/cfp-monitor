@@ -101,9 +101,18 @@ class Assessment:
 
         if self.call_state in ("Closed", "Open", "Closing"):
             return True, (f"a dated deadline settles it - {self.why[:96]}")
-        if self.edition_state in ("Watching", "Archived") and stored == "Open":
-            return True, ("the event has already run, so the call cannot be open whatever the "
-                          "file says")
+        if self.edition_state == "Watching" and stored == "Open":
+            return True, ("this row's own START DATE is in the past, so the call cannot be "
+                          "open whatever the file says")
+        # ARCHIVED IS DELIBERATELY NOT AN OVERRIDE, though it is tempting. "Archived" is not a
+        # fact about this row - it is inferred from a SIBLING row existing with a later year in
+        # its EVENT_ID. On 2026-08-31 that inference was wrong: Decarb Connect North America
+        # 2027 appears twice with the same name, track, opportunity and START DATE of
+        # 2027-02-09, keyed `2026-...` and `2027-...`. One prefix is simply wrong, and the
+        # mis-keyed row was being read as a superseded edition of a conference that has not
+        # happened yet. Judgement rule 14: a key is a name, not a fact.
+        #
+        # Only a DATE ON THIS ROW justifies overwriting what the file says.
         if self.call_state == "Not announced":
             return False, (f"no deadline is recorded, so this is an inference from absence. "
                            f"The file's {stored!r} may be a finding somebody established - "

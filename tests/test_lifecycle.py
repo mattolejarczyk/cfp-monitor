@@ -125,6 +125,22 @@ def test_an_event_that_already_ran_cannot_be_open():
     a = A(_row(start="2026-01-01"), state="Watching")
     ok, why = a.overrides("Open")
     assert ok is True and "cannot be open" in why
+    assert "own START DATE" in why, "the justification must be a date on THIS row"
+
+
+def test_archived_alone_never_overrides_the_file():
+    """Archived is inferred from a SIBLING row existing with a later year in its EVENT_ID -
+    it is not a fact about this row. On 2026-08-31 that inference was wrong: Decarb Connect
+    North America 2027 appears twice with the same name, track and START DATE of 2027-02-09,
+    keyed 2026-... and 2027-.... One prefix is simply wrong, and the mis-keyed row was being
+    read as a superseded edition of a conference that has not happened yet.
+
+    Judgement rule 14: a key is a name, not a fact."""
+    a = A(_row(start="2027-02-09", deadline=""), state="Archived")
+    assert a.customer_status == "Upcoming"
+    ok, why = a.overrides("Open")
+    assert ok is False, "a sibling row's key must not rewrite this row's status"
+    assert "absence" in why or "both true" in why
 
 
 def test_a_blank_deadline_does_NOT_override_a_stored_closed():

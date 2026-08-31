@@ -34,6 +34,7 @@ import re
 import sqlite3
 import sys
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -66,6 +67,7 @@ ROTATION = re.compile(r'cycle dictates|rotat|alternat|moves to|held instead in',
 # inside the page builder meant the gate, the weekly job and the client reconciliation could not
 # ask the question - so STATUS went on being read from the file, and went stale. One
 # implementation, imported by everything that needs it.
+from src.cfp_monitor import lifecycle                      # noqa: E402
 from src.cfp_monitor.lifecycle import edition_states       # noqa: E402,F401
 
 
@@ -148,9 +150,26 @@ def load_checks(path):
 
 def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None):
     st = edition_states(rows, today)
+    _today = date.fromisoformat(today) if isinstance(today, str) else today
     out = []
+    corrected = 0
     for r in rows:
         d = {k: (r.get(k) or '').strip() for k in FIELDS}
+        # STATUS is upstream's field and we have never written it - it is neither OWNED nor
+        # PROTECTED in refresh_delivery. So we do not EDIT it; we DERIVE what to display, which
+        # is what the 2026-08-07 backend design said all along ("conference status stays
+        # DERIVED"). Writing nine corrected cells into a stored field would be undone by the
+        # next delivery; deriving is permanent and cannot regress.
+        #
+        # It only replaces the stored value where the derivation is BETTER INFORMED - a dated
+        # deadline, or an event that has already run while the file still says Open. Reasoning
+        # from a blank deadline, or choosing between two true words, leaves the file alone.
+        # On 2026-08-31 that was 9 rows of 126 disagreements.
+        a = lifecycle.assess(r, st.get((r.get('EVENT_ID') or '').strip(), 'Active'), _today)
+        use, _why = a.overrides(d['STATUS'])
+        if use:
+            d['STATUS'] = a.customer_status
+            corrected += 1
         d['Market'] = MARKET_LABEL.get(d['Market'], d['Market'])
         loc = ', '.join(x for x in (d['CITY'], d['STATE_PROVINCE'], d['COUNTRY']) if x)
         conf = d['GROUNDING_CONFIDENCE'].split(' (')[0] or ''
@@ -198,6 +217,9 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None):
             'chku': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('u', ''),
             'chkq': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('q', ''),
         })
+    if corrected:
+        print(f"  {corrected} row(s) shown with a DERIVED status - the file's value was "
+              f"contradicted by a date")
     return out
 
 
