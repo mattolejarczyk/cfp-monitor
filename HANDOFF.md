@@ -19,6 +19,18 @@ sections are refreshed in a verified session.
 > free verification sweep sees fresh research. `scripts/run_end_to_end.ps1` chains the whole
 > loop and **stops at the gate** - a delivery that is not ACCEPTED is never imported.
 >
+> **The sponsorship fields cannot fill yet, and it is not a research gap.** Upstream's audit
+> script emits **36 columns against the agreed 43** - it never picked up v1.3 (lifecycle) or v1.5
+> (organizer, sponsorship). A fresh 113-row run on 2026-08-31 was rejected by the gate at check 1.
+> They agreed the same day and are updating the export. **Do not tell anyone these fields will
+> populate on the next run** - that claim was made twice and was wrong both times.
+>
+> **Amendment v1.7** (`docs/operations/Contract_v1.7_Amendment_Additive_Sponsorship.md`), agreed
+> in principle 2026-08-31: downstream may fill `SPONSOR_*` **only where upstream left it Unknown
+> or blank**, marked as ours, never overwriting. The blank is the boundary, so an upstream row can
+> only gain. `ORGANIZER` stays theirs alone. **Implementation is deliberately blocked on the
+> 43-column export** - building against a schema that is not emitted is how the last gap formed.
+>
 > **Amendment v1.6** (`docs/operations/Contract_v1.6_Amendment_Deadline_Rounds_And_Sources.md`):
 > **R23** - the deadline shown is the NEXT round a person can act on, because conferences run
 > tiered rounds and one date cannot hold three. **R22** - a social post or link shortener can
