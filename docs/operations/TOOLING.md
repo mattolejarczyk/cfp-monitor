@@ -145,7 +145,14 @@ Their master list, which a real person maintains by hand. Run in this order.
 | `scripts/load_client_sheet.py` | Loads a snapshot into `clients` / `client_conferences`. | Counts the shared tables before and after and **refuses if any moved**. |
 | `scripts/match_customer_sheet.py` | Establishes WHICH of our rows a customer row denotes. | See its own entry above. |
 | `scripts/apply_client_match.py` | Writes matcher results back. **Only 100% sets an `event_id`.** | Three outcomes kept apart: certain, needs-a-human (40-99), and genuinely absent. The middle band treated as matched invents a join; treated as absent it proposes adding a conference we already hold. |
+| `scripts/resolve_client_matches.py` | Settles the matcher's middle band (40-99%) where evidence settles it, and refuses where it does not. | The matcher's own certain test with the date requirement dropped - name plus city, **exactly one candidate**. The date is what was silent on these rows, because a customer tracks the edition they care about while we have moved on. Its two refusals mean different things: **zero** candidates is a coverage gap (usually a regional edition we do not carry), **several** is a question only the customer can answer. |
 | `scripts/diff_client_sheet.py` | What they changed since last week, and what they have not touched that is closing soon. | Needs two snapshots. The first run is the baseline, not a failure. |
+
+## Keeping this index honest
+
+| Tool | What it does | Notes |
+|---|---|---|
+| `scripts/doc_sweep.py` | **Checks the docs against the system they describe.** Every tool is in this index, every contract amendment is referenced somewhere a session reads, the scheduled jobs match what Task Scheduler holds, and no doc names a script that no longer exists. `--strict` exits non-zero, so it can gate. | Written 2026-08-31 after a hand sweep found the runbook AND the protocol skill both still describing a monthly re-research a day after it changed, this index missing ten entries, and an amendment nothing referenced. None was found by remembering. It **cannot** tell you whether prose is still wise - only whether it still matches the system. Two checks were deliberately removed for crying wolf; precision is the point, because a noisy report stops being read. |
 
 ## Upstream working area
 

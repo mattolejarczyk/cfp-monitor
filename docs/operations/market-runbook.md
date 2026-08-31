@@ -423,12 +423,23 @@ cp cfp_monitor.db "cfp_monitor.backup-pre-M-$(date +%Y%m%d-%H%M%S).db"
 
 | Job | When | What it does | Cost |
 |---|---|---|---|
-| **CFP Weekly Re-Research** | **Saturday 02:00** | `run_monthly.ps1` in the upstream area (name kept; the schedule changed): archives the previous cycle, then a fresh grounded audit of all 8 markets | ~400 grounded requests |
+| **CFP Weekly Re-Research (live markets)** | Saturday 02:00 | `run_monthly.ps1 -Markets Cybersecurity,Utility`: archives the previous cycle, then a fresh grounded audit | ~120 requests |
+| **CFP Monthly Re-Research (prospect markets)** | every 4th Wednesday 02:00 | the same script over the other six markets | ~280 requests |
 | **CFP Weekly Verification** | Sunday 01:00 | `run_weekly.bat` -> `weekly_verify.py`: layers 0/1/2 across every market, browser recheck, invariants, digest of what CHANGED. Starts CDP Chrome first. | none |
 
-**Changed 2026-08-31: re-research moved from monthly to weekly**, by decision, with the cost
-accepted (`handoff-files/Cadence_Change_20260831.md`). It runs SATURDAY so Sunday's free
-verification sweep sees fresh research rather than last week's.
+**Split by whether a market has a customer (2026-08-31).** Only Cybersecurity (Arnica) and
+Utility (Utility Global) have one; the other six are speculative coverage and do not earn weekly
+quota. That roughly halved the weekly spend, and the half kept is the half with a customer
+behind it. Recorded in `handoff-files/Cadence_Change_20260831.md`.
+
+**The three jobs are on three different days on purpose.** Runtime is HOURS - see below - and
+two audits spawning browsers against one database is a corruption risk, not a scheduling
+detail.
+
+**Budget for hours, not minutes.** The audit's cost preview reported API pacing alone until
+2026-08-31 and said "about 15.7 min" for a Cybersecurity run measured at 3.7 min/row - out by
+roughly 12x. Browser dead-link confirmation dominates: a real browser opens per suspect URL at a
+25-second timeout. The preview now prints a realistic range alongside the pacing figure.
 
 Verification finds links that died and deadlines that moved. **Only re-research finds
 conferences we do not track.** The old split existed because ~400 requests a week is what

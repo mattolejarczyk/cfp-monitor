@@ -153,14 +153,22 @@ where it should go next: **"Where an LLM is safe, and where it is not"** in the 
 
 | Job | When | Cost |
 |---|---|---|
-| CFP Weekly Re-Research | **Saturday 02:00** | ~400 grounded requests |
+| CFP Weekly Re-Research (live markets) | Saturday 02:00 | ~120 requests - **Cybersecurity + Utility only** |
+| CFP Monthly Re-Research (prospect markets) | every 4th Wednesday 02:00 | ~280 requests - the other six |
 | CFP Weekly Verification | Sunday 01:00 | none - no LLM calls |
 
-**Re-research moved from monthly to weekly on 2026-08-31**, cost accepted by decision. It runs
-Saturday so Sunday's free sweep sees fresh research. Verification re-checks what is loaded;
-only re-research DISCOVERS anything new. Before running an audit by hand, check whether the
-scheduled job already covers it - quota was exhausted once already, and the circuit breaker
-exits 3 and resumes rather than burning the key down.
+**Research is split by whether a market has a customer** (2026-08-31). Only Cybersecurity
+(Arnica) and Utility (Utility Global) have one, so only those earn weekly quota; the other six
+are speculative coverage and run every four weeks. The two research jobs are deliberately on
+different days: **runtime is hours, and two audits against one database must never overlap.**
+
+Verification re-checks what is loaded; only re-research DISCOVERS anything new. Before running
+an audit by hand, check whether the scheduled job already covers it - quota was exhausted once
+already, and the circuit breaker exits 3 and resumes rather than burning the key down.
+
+**Budget for hours, not minutes.** The audit's own preview used to report API pacing alone and
+said "about 15.7 min" for a run averaging 3.7 min/row. Browser dead-link confirmation dominates:
+a real browser opens per suspect URL at a 25s timeout.
 
 **Scope research with `DECISION-TREE.md`, not by re-auditing everything.** It names the rows
 that would actually learn something - 229 of 406 on 2026-08-31, with the rest free or nothing.
