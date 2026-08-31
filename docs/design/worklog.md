@@ -5,6 +5,57 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-08-30 - the customer's own sheet enters the system
+
+**The weekly digest was reporting our own cleanup as good news.** First scheduled run under the
+NEW-vs-STANDING split fired clean, and its headline read "Recovered since last week (19)".
+Measured: **4** rows actually verified. Of the other 16, **13 were citations we cleared on
+08-29** - a row with no citation has nothing left to contradict, so it drops to not_found
+mechanically. Same shape as the gate printing ACCEPTED for skipped checks; second occurrence in
+three days. `build_digest` now splits the three cases and `still_cited` has no default.
+
+"Standing backlog 80 -> 32" was likewise not 48 repairs: 49 URLs stopped being referenced when we
+cleared their citations. **Zero were fixed.**
+
+**The digest now reads like a report** - every category states what it MEANS, the ACTION, the
+OWNER and the TIMEFRAME, with an At-a-glance table. The first draft printed "35 row(s) need
+someone to act" above three rows reading "nothing to do now", because actionable was INFERRED
+from having an owner. Owned and due-now differ; it is declared per category now. Real answer: 32.
+
+**Canaries generalised to cover reports that lie.** Every entry before today was about data or
+rules, implying our reports had never been the problem. 17 canaries now.
+
+**The customer sheet layer.** Two client sheets (Utility Global, Arnica) snapshotted, hashed and
+loaded. What they contain that changes the design: `STATUS DETAILS` is a dated field-research
+log; **41 rows marked "Needs Verification"** aimed at us; call windows with timezones where we
+hold one date; sponsorship hand-typed into the deadline column. **`LOGIN` and `PW` columns
+exist** - empty today, but the snapshot rewrites rather than copies so they can never reach a
+git repo.
+
+**Layer 2 - the client dimension.** The database had no client concept at all. `conferences`
+columns are single-valued and shared, so two cybersecurity clients tracking Black Hat would
+overwrite each other. Three additive tables: `clients`, `client_conferences`,
+`industry_candidates`. **`conferences.status_details` is 349/373 filled with OUR crawl text** and
+looks exactly like the customer's column - importing theirs would have destroyed it.
+
+**Same defect a third time:** first load reported 111 promotion candidates, every row, because
+nothing had been matched yet. Candidates now require the matcher to have run and found nothing.
+
+**Matcher applied** - 80 of 111 joined at 100%, 21 need a human, 10 are genuinely absent. Only
+certainty sets an `event_id`. The middle band is region and edition variants. My earlier crude
+"27 missing" was wrong; the real number is **10**.
+
+**The 31 standing dead links were already sent** - 2026-08-27, unactioned. A regex that did not
+exclude backticks first said "0 of 31 sent"; the truth is 31 of 31. The digest still cannot tell
+"needs sending" from "sent, awaiting upstream".
+
+**Customer deliverables:** `Conference Review 2026-08-30.html` (406 rows, 29 fields, sponsor and
+organizer wired) and `Customer_Facing_Schema_20260830.md` for their UI/UX developer, superseding
+the 38-column list in `Backend_Data_Design_20260807.md`. The v1.5 sponsor fields are **empty by
+design** and populate on the 2026-09-01 re-research.
+
+---
+
 ## 2026-08-29 (evening) - the tracer moved in, and upstream's alignment summary was checked
 
 **The quote tracer is now `scripts/trace_quote_to_page.py`.** One of the six delivery-folder

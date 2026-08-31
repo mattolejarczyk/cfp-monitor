@@ -4,7 +4,36 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
-> **Where the CFP work stands, end of 2026-08-29.**
+> **Where the CFP work stands, end of 2026-08-30.**
+>
+> **The customer's own sheet is now in the system.** Two clients loaded - Utility Global (58 rows,
+> Utility) and Arnica (53, Cybersecurity) - into three additive tables: `clients`,
+> `client_conferences`, `industry_candidates`. **Per-client values never go on `conferences`**:
+> its columns are shared and single-valued, and `status_details` is 349/373 filled with OUR crawl
+> text that looks exactly like the customer's column of the same name.
+>
+> Matcher applied: **80 of 111 rows joined at 100%**, 21 need a human decision (region and edition
+> variants), 10 are genuinely absent and are pending promotion candidates. Only certainty sets an
+> `event_id`.
+>
+> **41 rows are marked "Needs Verification" by the customer** - 18 Utility Global, 23 Arnica. A
+> work queue aimed at us that nothing had ever read. Ownership and plan are the open question.
+>
+> **The weekly digest now reads as a report** - definitions, actions, owners, timeframes - after
+> its "Recovered since last week (19)" turned out to be 4 real recoveries and 13 of our own
+> cleared citations. Three canaries now cover reports that claim unearned success.
+>
+> **The 31 standing dead links were already sent to upstream on 2026-08-27 and are unactioned.**
+> The digest cannot yet tell "needs sending" from "sent, awaiting upstream" and will repeat the
+> instruction every Sunday.
+>
+> Customer deliverables for the 2026-09-02 meeting live in `handoff-files`:
+> `Conference Review 2026-08-30.html` and `Customer_Facing_Schema_20260830.md`. The v1.5 sponsor
+> fields are **empty by design** until the 2026-09-01 re-research.
+>
+> ---
+>
+> **Where the CFP work stood, end of 2026-08-29.**
 >
 > **CURRENT FILE: `delivery_v14_final_43col.csv`.** Earlier files in that folder are superseded;
 > `delivery_r3b_traced_43col.csv` was deleted (it carried 14 wrong withdrawals).
