@@ -153,12 +153,17 @@ where it should go next: **"Where an LLM is safe, and where it is not"** in the 
 
 | Job | When | Cost |
 |---|---|---|
+| CFP Weekly Re-Research | **Saturday 02:00** | ~400 grounded requests |
 | CFP Weekly Verification | Sunday 01:00 | none - no LLM calls |
-| CFP Monthly Re-Research | 1st, 02:00 | ~400 grounded requests |
 
-Weekly re-checks what is loaded; only the monthly run DISCOVERS anything new. Before running
-an audit by hand, check whether the scheduled job already covers it - quota was exhausted
-once already.
+**Re-research moved from monthly to weekly on 2026-08-31**, cost accepted by decision. It runs
+Saturday so Sunday's free sweep sees fresh research. Verification re-checks what is loaded;
+only re-research DISCOVERS anything new. Before running an audit by hand, check whether the
+scheduled job already covers it - quota was exhausted once already, and the circuit breaker
+exits 3 and resumes rather than burning the key down.
+
+**Scope research with `DECISION-TREE.md`, not by re-auditing everything.** It names the rows
+that would actually learn something - 229 of 406 on 2026-08-31, with the rest free or nothing.
 
 **Paths are machine-specific and deliberately not recorded here.** Read the local
 `CLAUDE.md` for the actual locations on this machine.

@@ -423,12 +423,26 @@ cp cfp_monitor.db "cfp_monitor.backup-pre-M-$(date +%Y%m%d-%H%M%S).db"
 
 | Job | When | What it does | Cost |
 |---|---|---|---|
+| **CFP Weekly Re-Research** | **Saturday 02:00** | `run_monthly.ps1` in the upstream area (name kept; the schedule changed): archives the previous cycle, then a fresh grounded audit of all 8 markets | ~400 grounded requests |
 | **CFP Weekly Verification** | Sunday 01:00 | `run_weekly.bat` -> `weekly_verify.py`: layers 0/1/2 across every market, browser recheck, invariants, digest of what CHANGED. Starts CDP Chrome first. | none |
-| **CFP Monthly Re-Research** | 1st, 02:00 | `run_monthly.ps1` in the upstream area: archives the previous cycle, then a fresh grounded audit of all 8 markets | ~400 grounded requests |
 
-Weekly finds links that died and deadlines that moved. **Only the monthly run finds
-conferences we do not track**, which is why the split exists - weekly re-research would be
-~400 requests a week and that is what exhausted quota on 2026-08-04.
+**Changed 2026-08-31: re-research moved from monthly to weekly**, by decision, with the cost
+accepted (`handoff-files/Cadence_Change_20260831.md`). It runs SATURDAY so Sunday's free
+verification sweep sees fresh research rather than last week's.
+
+Verification finds links that died and deadlines that moved. **Only re-research finds
+conferences we do not track.** The old split existed because ~400 requests a week is what
+exhausted quota on 2026-08-04, so watch for exit code 3 - the audit's circuit breaker stops
+itself and resumes next run.
+
+**Scope it with the decision tree rather than re-auditing blindly.** `DECISION-TREE.md` names
+which rows would actually learn something: on 2026-08-31 that was 229 of 406, and the other 177
+were free work or nothing at all. A scoped weekly run is cheaper than the monthly one it
+replaced.
+
+**One runner does the whole chain:** `scripts/run_end_to_end.ps1` - preflight, invariants,
+research, gate, import, verify, client sheets, publish. Report-only by default. **The gate
+decides**: a delivery that is not ACCEPTED is never imported and the run stops there.
 
 Digest lands in `runs_out\weekly_verify_<stamp>.md`. Email only happens if `CFP_SMTP_*` and
 `CFP_ALERT_TO` are set; otherwise it is written to disk and nothing is lost.

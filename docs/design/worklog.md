@@ -5,6 +5,57 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-08-31 - the rules got teeth, and a nineteen-day-old warning finally reached someone
+
+**Two new contract rules, both from the customer's own queue.** Working the four answerable
+"Needs Verification" rows produced amendment v1.6:
+
+- **R23** - `SUBMISSION DEADLINE` is the **next round a person can still act on**. The
+  Nineteenth International Conference on Climate Change runs three rounds; the customer held
+  19 October (Regular close) and we held 20 December (Late close) and **both were right**. Our
+  schema could not express three deadlines. Showing the last implies runway that does not
+  exist; showing the first implies the chance is gone.
+- **R22** - a **social post or link shortener can never evidence a deadline**. `aggregator.py`
+  and `sitewalk.py` have refused to treat those hosts as authoritative since July; nothing
+  carried that across to citations. Applied to the delivery it flagged **four** rows, not the
+  two the customer noticed.
+
+**Two citations fixed.** DEF CON 34 retargeted from `openssf.org` (a third party writing about
+the call) to DEF CON's own page, which carries the sentence verbatim. InfoSec World withdrawn
+under R1 - cited to Facebook, and six pages of their own site carry no replacement.
+
+**The decision tree.** `src/cfp_monitor/lifecycle.py`, specified in **`DECISION-TREE.md`**,
+answers what follows from where a conference sits in its life: what the customer sees, what WE
+do next, what it costs, and why. `edition_states` MOVED there from the page builder, where it
+had been correct but invisible to the gate and the weekly job - which is why `STATUS` went on
+being read from the file and went stale.
+
+**Status is now derived.** 126 rows disagreed with the file. Only **8** were corrections:
+deriving beats storing only where a **date on the row** proves the stored value wrong, never
+when reasoning from a blank field, and never when both words are true. Reviewing that list
+caught two flaws in my own tree before it shipped.
+
+**The edition fix, nineteen days late.** `check_invariants.py` had printed "run fix_edition.py
+(71)" every Sunday since 2026-08-12 - into the log, unread. **67 rows corrected**, every
+`event_id` byte-identical (the tool freezes `key_year` and derives only `edition`). The warning
+is now 5, all rows with no date to derive from. Two duplicate records existed because a wrong
+edition fed `event_id`; their editions are fixed, the duplicate keys are a separate decision.
+
+**Integrity warnings now reach the digest** with an owner and a deadline. Detection was never
+the gap - the check was right every week. A warning with no owner is furniture.
+
+**Cadence changed**: re-research moved monthly to weekly, Saturday 02:00, so Sunday's free sweep
+sees fresh research. `run_end_to_end.ps1` chains the whole loop; **the gate decides** and stops
+the run when a delivery is not ACCEPTED - proven, because it stopped.
+
+**JUDGEMENT gained rules 15-18**, all dated today or yesterday: a number computed before the
+thing that gives it meaning; never let a report congratulate you on your own edits; across a
+boundary join on the value not the key; brittle parsing fails confidently, not loudly.
+
+754 tests.
+
+---
+
 ## 2026-08-30 - the customer's own sheet enters the system
 
 **The weekly digest was reporting our own cleanup as good news.** First scheduled run under the

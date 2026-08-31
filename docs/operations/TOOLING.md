@@ -119,6 +119,34 @@ to prevent.
 | `scripts/run_scheduled.bat` | **RETIRED 2026-08-17 - do not use, do not schedule.** Crawl-and-alert run over a fixed URL list (`examples\urls.txt`), from the original single-machine design. Superseded by `run_weekly.bat`. Its URL list never left the shipped placeholder (`pycon.org` / `djangocon.us`), and its line 7 calls `uv run python` - the pattern later banned for stranding a `.venv` in this directory. Left on disk, unscheduled. If you want a scheduled sweep, `run_weekly.bat` is the answer. |
 | `scripts/run_weekly.bat` | Task Scheduler entry point for `weekly_verify.py`. Runs from the LIVE build with its own interpreter. **Starts CDP Chrome** if nothing is on 9222, and stops only a browser it started itself. |
 
+| `scripts/run_end_to_end.ps1` | **The whole chain in the one order that is correct**: preflight, invariants, research, gate, import, verify, client sheets, publish. Report-only by default, so it doubles as a status check. | Exists because `run_monthly.ps1` ends by printing "NEXT, BY HAND: gate each market, then import and verify" - and that is where the cycle stalled. **The gate decides**: a delivery that is not ACCEPTED is never imported and the run stops. Stage 6 (customer sheets) still needs a human to export them. |
+
+## The rules layer - decisions, not scripts
+
+These are libraries, not commands. Everything that has to make the same judgement calls them
+rather than re-deriving; that is what stops a rule drifting between the gate, the weekly job and
+the customer page.
+
+| Module | What it decides | Notes |
+|---|---|---|
+| `src/cfp_monitor/rules.py` | May we withdraw this citation? Is this source admissible (R22)? Which round is THE deadline (R23)? May the stamp advance? Is this link dead? | Pure functions, each returning a REASON, never a bare bool. `withdrawal_changes` takes `fetched` with **no default** so a caller cannot skip the decision - that omission cost four rows on 2026-08-29. |
+| `src/cfp_monitor/lifecycle.py` | Where a conference sits in its life, and what follows: edition state (R13), call state, urgency, what WE do next and what it costs. | **Specified in `DECISION-TREE.md`** - if the two disagree, the doc wins. `overrides(stored)` decides whether a derived value may replace the file's: only a DATE ON THE ROW qualifies, never an inference from absence or a choice between two true words. |
+| `src/cfp_monitor/sitewalk.py` | Which links on a page are worth following. | One site-walker, was four. Relevance **ranks, never filters** - a filter throws away the thing you were looking for and leaves no trace. |
+| `src/cfp_monitor/clients.py` | The client layer: which conferences a client tracks, and their own status against each. | Per-client values live here and **never** on `conferences`, whose columns are shared and single-valued. `conferences.status_details` is 349/373 filled with OUR crawl text under the same name as theirs. |
+| `src/cfp_monitor/sheet_diff.py` | What the customer changed week over week, and where their silence costs something. | Only customer-owned fields count as them acting; a deadline we corrected is us. Untouched rows are COUNTED, not listed - except where the deadline is inside 30 days and nothing is settled. |
+
+## The customer's own sheet
+
+Their master list, which a real person maintains by hand. Run in this order.
+
+| Tool | What it does | Notes |
+|---|---|---|
+| `scripts/snapshot_customer_sheet.py` | **Stage 0.** An immutable, hashed weekly copy. | Nothing else may run first - every later question is about CHANGE and needs last week's copy. **Credential columns are never written**: both sheets carry `LOGIN` and `PW`, and this job copies into a git repo. Refuses anything that does not parse as a customer sheet, since a sign-in redirect would otherwise read next week as the customer deleting their list. |
+| `scripts/load_client_sheet.py` | Loads a snapshot into `clients` / `client_conferences`. | Counts the shared tables before and after and **refuses if any moved**. |
+| `scripts/match_customer_sheet.py` | Establishes WHICH of our rows a customer row denotes. | See its own entry above. |
+| `scripts/apply_client_match.py` | Writes matcher results back. **Only 100% sets an `event_id`.** | Three outcomes kept apart: certain, needs-a-human (40-99), and genuinely absent. The middle band treated as matched invents a join; treated as absent it proposes adding a conference we already hold. |
+| `scripts/diff_client_sheet.py` | What they changed since last week, and what they have not touched that is closing soon. | Needs two snapshots. The first run is the baseline, not a failure. |
+
 ## Upstream working area
 
 Not in this repo, but part of the same pipeline. Path is machine-specific; see the local `CLAUDE.md`.

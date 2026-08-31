@@ -4,7 +4,36 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
-> **Where the CFP work stands, end of 2026-08-30.**
+> **Where the CFP work stands, end of 2026-08-31.**
+>
+> **Read `docs/operations/DECISION-TREE.md` before deciding a row needs research.** It is the
+> executable specification of what follows from a conference's timing - what the customer sees,
+> what we do, what it costs. `src/cfp_monitor/lifecycle.py` is the same thing in code; if they
+> disagree, the doc wins.
+>
+> **`STATUS` is DERIVED at display time, never read from the file.** 126 rows disagreed with the
+> stored value; only 8 were corrections. Deriving beats storing **only where a date on the row
+> proves the stored value wrong** - never from a blank field, never between two true words.
+>
+> **Cadence changed:** re-research is now **weekly, Saturday 02:00** (was monthly), so Sunday's
+> free verification sweep sees fresh research. `scripts/run_end_to_end.ps1` chains the whole
+> loop and **stops at the gate** - a delivery that is not ACCEPTED is never imported.
+>
+> **Amendment v1.6** (`docs/operations/Contract_v1.6_Amendment_Deadline_Rounds_And_Sources.md`):
+> **R23** - the deadline shown is the NEXT round a person can act on, because conferences run
+> tiered rounds and one date cannot hold three. **R22** - a social post or link shortener can
+> never evidence a deadline, and may be withdrawn even on a passed deadline.
+>
+> **67 editions corrected** with every `event_id` byte-identical. That warning had printed every
+> Sunday since 2026-08-12 into a log nobody reads; **integrity warnings now reach the digest**
+> with an owner and a deadline.
+>
+> Still blocking, and both upstream's: **27 check-3 citations** (the gate returns REJECTED and
+> nothing downstream runs) and **31 dead links** handed back 2026-08-27, unactioned.
+>
+> ---
+>
+> **Where the CFP work stood, end of 2026-08-30.**
 >
 > **The customer's own sheet is now in the system.** Two clients loaded - Utility Global (58 rows,
 > Utility) and Arnica (53, Cybersecurity) - into three additive tables: `clients`,
