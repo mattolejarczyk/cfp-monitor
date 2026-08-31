@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import csv
 import os
+import re
 import sqlite3
 import subprocess
 import sys
@@ -311,6 +312,21 @@ GUIDE = {
         "owner": UPSTREAM, "when": "This week. A client can click these today.",
         "actionable": True,
     },
+    "invariant_watch": {
+        "title": "Database watch items",
+        "means": "An integrity check that is NOT failing but is drifting - the database is "
+                 "internally consistent, and something in it is quietly getting worse. Each "
+                 "one names the tool that fixes it.",
+        "action": "Run the tool the check names. These do not resolve on their own and no "
+                  "amount of re-verifying moves them.",
+        "owner": OURS, "when": "This week.",
+        # Actionable, and it is the reason this category exists at all. `check_invariants.py`
+        # printed "run fix_edition.py (71)" every Sunday from 2026-08-12 and it reached the LOG
+        # and never the DIGEST - so it was seen by nobody for nineteen weeks' worth of Sundays
+        # while 67 rows carried the wrong edition. Detection was never the gap. A warning with
+        # no owner and no due date is not a finding, it is furniture.
+        "actionable": True,
+    },
     "standing_dead": {
         "title": "Standing backlog - already dead before this run",
         "means": "Dead at the last sweep and still dead. Not new. These are upstream's "
@@ -365,9 +381,26 @@ def _at_a_glance(present: list[tuple[str, int]]) -> list[str]:
     return out
 
 
+def parse_invariant_warnings(stdout: str) -> list[tuple[str, str]]:
+    """Pull the `[warn]` lines out of check_invariants.py output.
+
+    A warning is not a failure, so the script exits 0 and the digest never saw it. That is how
+    "run fix_edition.py (71)" went unread from 2026-08-12 to 2026-08-31 while 67 rows carried an
+    edition stamped with the year the research ran instead of the year the conference happens.
+    """
+    out = []
+    for line in (stdout or "").splitlines():
+        m = re.match(r"\s*\[warn\]\s+(\S+)\s+(.+?)\s{2,}(.+?)\s*(?:\((\d+)\))?\s*$", line)
+        if m:
+            _num, name, hint, count = m.groups()
+            label = f"{name.strip()}" + (f" - {count} row(s)" if count else "")
+            out.append((label, hint.strip()))
+    return out
+
+
 def build_digest(before: dict, after: dict, label: dict[str, str], today: date,
                  *, still_cited: set[str], new_dead: list = None,
-                 standing_dead: list = None) -> tuple[str, int]:
+                 standing_dead: list = None, invariant_warnings: list = None) -> tuple[str, int]:
     """Digest of CHANGES only. A steady-state week should produce a short, boring email.
 
     `open_issues` is the count of standing problems found outside the before/after diff -
@@ -410,6 +443,7 @@ def build_digest(before: dict, after: dict, label: dict[str, str], today: date,
 
     new_dead = list(new_dead or [])
     standing_dead = list(standing_dead or [])
+    invariant_warnings = list(invariant_warnings or [])
 
     named = lambda x: f"- **{x[0]}** - {x[1]}"                              # noqa: E731
     plain = lambda x: f"- {x[0]}"                                           # noqa: E731
@@ -417,6 +451,7 @@ def build_digest(before: dict, after: dict, label: dict[str, str], today: date,
 
     buckets = [("new_dead", new_dead, linked), ("newly_dead", newly_dead, named),
                ("newly_contradicted", newly_contradicted, named),
+               ("invariant_watch", invariant_warnings, named),
                ("went_quiet", went_quiet, plain), ("standing_dead", standing_dead, linked),
                ("verified_again", recovered, plain), ("uncited", uncited, plain)]
     present = [(k, len(items)) for k, items, _ in buckets if items]
@@ -517,8 +552,12 @@ def main() -> int:
     # counted before the backlog was appended, so no overview could cover both halves.
     # `changed` counts NEW failures only - counting the backlog made every week look equally
     # alarming, which is the same as no signal at all.
+    warnings = parse_invariant_warnings(inv.stdout)
+    if warnings:
+        print(f"  {len(warnings)} invariant WATCH item(s) - these now reach the digest")
     digest, changed = build_digest(before, after, label, today, still_cited=cited(a.db),
-                                   new_dead=new_dead, standing_dead=standing_dead)
+                                   new_dead=new_dead, standing_dead=standing_dead,
+                                   invariant_warnings=warnings)
     if not invariants_ok:
         head = ["> **DATABASE INVARIANTS VIOLATED - read this before trusting anything below.**",
                 "> The figures in this digest are computed over a database that failed its",
