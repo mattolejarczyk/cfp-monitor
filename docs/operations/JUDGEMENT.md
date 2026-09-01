@@ -364,6 +364,56 @@ One more piece worth copying: when a flagged URL answers with a real page, R22b 
 that quietly rejects deliveries for months is exactly how R22 sat unenforced from v1.6 until
 someone tripped over it.
 
+## 21. The gate ranks by rule; the customer ranks by what they can still act on - 2026-09-01
+
+A full day of citation remediation ran row by row, correctly, against the wrong queue. Every
+fix was sound. Almost none of it mattered.
+
+Checked afterwards against `client_conferences`, **22 of the repaired rows had already been
+verified or actioned by Nicolia's team.** World Future Energy Summit was `Submitted` - the form
+already filed for the end client. it-sa: submitted. ADIPEC: `Client Declined`.
+
+Two were not merely wasted:
+
+- **ESF MENA was queued to be marked `Closed` as a discontinued event.** The customer holds an
+  **acceptance** to it and is weighing a **$12,500 sponsorship**. Their note says so.
+- **Horizons Asia was queued for a discontinuation note** with their submission already in.
+
+Downgrading a row to `Projected` tells a customer their own verified, acted-on entry is
+unevidenced. The gate cannot see any of this, and nothing was missing from the data: the client
+layer has carried `status`, `speaker_abstracts_submitted`, `submission_date_verified` and
+`priority` since 2026-08-30. What was missing was the habit of reading it.
+
+The orders are close to inverted:
+
+    gate      structure, citations, quotes, labels        - correctness of the FILE
+    customer  can I still act on this, did I already      - usefulness of the ROW
+
+**The most actionable thing found all day was not a gate failure.** H2 MEET: the customer is
+`Drafting Abstract` at `High` priority against a deadline of 08/31/2026, which has passed. Our
+row correctly holds 2026-09-30 - the second round, under R23. They are drafting to a dead date
+and we hold the live one. No check fires on that, because the file is right.
+
+`scripts/customer_context.py` buckets rows LIVE / TRACKED / MOOT / UNTRACKED, and the
+cfp-protocol skill now requires running it before remediating a row or working a queue.
+
+**Their fields stay theirs.** `status`, `status_details`, `NOTES`, `priority` are the customer's
+under contract section 3. Read them to choose the work and to catch contradictions; never write
+them.
+
+### A footnote that is its own rule
+
+Comparing the two sides, the first attempt joined `client_conferences.event_id` to the
+delivery's `EVENT_ID` and reported **zero disagreements** - a clean, wrong answer. Those ids
+belong to different systems (contract 5.4); the join matched nothing at all. That is rule 17,
+repeated the same day it was written, in the very analysis meant to widen the context.
+
+Re-joined on the conference name: 11 agree, **5 disagree**, two of them live - Troopers, `High`
+priority for Arnica, where we hold a 2026 deadline that has passed and they track 2027.
+
+**A join across a boundary that returns zero should be read as a broken join until proven
+otherwise.** Zero findings and no matches look identical in the output.
+
 ## The shape all of these share
 
 Every one is a case where the code was correct when written and the assumption quietly

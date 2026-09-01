@@ -38,6 +38,39 @@ Read these three, in order, before writing any code or touching any data:
 Then state, in one line, which stage you are working in and which existing tool covers it.
 If none does, say so explicitly before writing anything new.
 
+## Then ask what the CUSTOMER has already done - before repairing any row
+
+**Run `scripts/customer_context.py --names "<conference>" ...` before remediating a row, and
+before deciding a queue of rows is worth working.** It is read-only and takes a second.
+
+The gate ranks work by rule violation. The customer ranks it by what they can still act on.
+Those orders are close to inverted, and the gate cannot see the difference:
+
+| their state | what a citation fix is worth |
+|---|---|
+| `Info Needed`, `Drafting Abstract` | **the product** - they are working to this deadline now |
+| our status disagrees with theirs | **stop** - a contradiction is about to ship |
+| `Submitted`, `Accepted`, `Client Declined` | tidy-up - the deadline no longer bites |
+| not on any client sheet | industry coverage; nobody is acting on it |
+
+**The day this cost.** On 2026-09-01 a full day of citation remediation ran row by row without
+reading the client layer once. Afterwards, 22 of the repaired rows had already been verified or
+acted on by Nicolia's team - World Future Energy Summit was `Submitted`, the form already filed
+for the end client; it-sa already submitted; ADIPEC `Client Declined`.
+
+Two were worse than wasted. **ESF MENA was queued to be marked `Closed` as a discontinued event
+while the customer holds an ACCEPTANCE to it and is weighing a $12,500 sponsorship.** Horizons
+Asia was queued for a discontinuation note with their submission already in. Downgrading a row
+to `Projected` tells a customer their own verified, acted-on entry is unevidenced.
+
+The client layer has carried `submission_date_verified`, `speaker_abstracts_submitted`,
+`withdrawn_by_customer`, `status` and `priority` since 2026-08-30. Nothing was missing except
+the habit of reading it.
+
+**Their fields are theirs.** `status`, `status_details`, `NOTES` and `priority` belong to the
+customer under contract section 3. Read them to decide what is worth doing and to catch
+contradictions; never write them, and never propose "correcting" them.
+
 ## The failure this skill exists to prevent
 
 On 2026-08-05/06 a session rebuilt a delivery validator that duplicated eight checks already
