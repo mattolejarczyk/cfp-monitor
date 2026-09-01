@@ -139,37 +139,18 @@ def _strict_ok(url: str) -> tuple[bool, str]:
 def _seed_map(store) -> tuple[dict[str, str], list]:
     """upstream EVENT_ID -> our canonical id, plus the directories it was read from.
 
-    UPSTREAM'S EVENT_ID IS NOT OURS. We recompute the canonical key on import (contract 5.4)
-    and their files echo back THEIR id, so a direct lookup matches nothing - a merge would
-    report rows accepted and then update zero of them, silently.
+    THE IMPLEMENTATION MOVED to `src/cfp_monitor/identity.py` on 2026-09-01. This stays as a
+    thin delegate because five scripts import it by this private name through a sys.path hack
+    (`import scripts.apply_resolutions as _ar; _ar._seed_map(...)`), and changing all of them in
+    the same commit as moving the logic would put a mechanical edit and a behavioural one in one
+    diff.
 
-    Looks beside the DATABASE before the working directory. The seeds live in the live build's
-    data root while these scripts are usually run from the repo, and a bare relative path found
-    nothing there: the map came back empty, every row failed to resolve, and a run printed five
-    per-row DATA rejections for what was purely a path problem. A config fault must not be able
-    to impersonate a data fault.
+    New code should call `identity.seed_map(db_path)` directly. Translation across the id
+    boundary belongs in the rules layer, not in a script that five other scripts reach into.
     """
-    import csv as _csv
-    from pathlib import Path as _P
+    from src.cfp_monitor import identity                    # noqa: PLC0415
 
-    roots, seen = [], set()
-    for cand in (_P(getattr(store, "path", "") or ".").resolve().parent, _P.cwd()):
-        d = cand / "market_sheets"
-        if d.is_dir() and d not in seen:
-            seen.add(d); roots.append(d)
-
-    up_to_canon: dict[str, str] = {}
-    for root in roots:
-        for seed in sorted(root.glob("*_seed.csv")):
-            if seed.name == "grounding_seed.csv":
-                continue
-            with open(seed, encoding="utf-8-sig", newline="") as fh:
-                for row in _csv.DictReader(fh):
-                    up = (row.get("EVENT_ID") or "").strip()
-                    canon = (row.get("EVENT_ID_CANON") or "").strip()
-                    if up and canon:
-                        up_to_canon.setdefault(up, canon)
-    return up_to_canon, roots
+    return identity.seed_map(getattr(store, "path", "") or ".")
 
 
 def retire_deadlines(store, csv_path: str, apply: bool) -> int:
