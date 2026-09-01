@@ -492,7 +492,23 @@ class Gate:
         # submission URL matters too, because that one is handed to the customer to click.
         # SecureWorld Seattle shipped with a form POST address in both URL fields, logged
         # `alive` on the strength of an HTTP 405.
-        not_pages = []
+        # THE SHAPE IS A REASON TO LOOK, NOT A VERDICT.
+        #
+        # R22 rejects on a FACT: facebook.com is not the organiser on the record, and no fetch
+        # can change that. This is a regex over a path - an inference, and a delivery must not
+        # be rejected on one. The asymmetry decides it. A false negative ships a bad URL, which
+        # the note surfaces and a fetch catches. A false positive rejects the delivery, someone
+        # "fixes" a working submission link, and a page carrying the deadline we need is gone
+        # with nothing left to show it was ever right.
+        #
+        # This project has paid for that lesson twice: 14 of 18 proposed withdrawals on
+        # 2026-08-29 were wrong, and the relevance scorer ranked headshots as call pages. Zero
+        # false positives across 1,897 URLs is encouraging, not proof - it is precision measured
+        # on the only data we have.
+        #
+        # So: the shape flags a candidate, and the PAGE decides. With no network we can only
+        # report the suspicion.
+        suspect = []
         for r in self.rows:
             for col in ("DEADLINE_EVIDENCE_URL", "LIFECYCLE_EVIDENCE_URL", "SPONSOR_URL",
                         "CFP_SUBMISSION_URL", "SUBMISSION URL", "MAIN_INFO_URL"):
@@ -501,8 +517,31 @@ class Gate:
                     continue
                 ok, why = rules.url_is_a_page(u)
                 if not ok:
-                    not_pages.append(f'{self.g(r, "CONFERENCE")[:36]}: {col} - {why}')
-        self.add("R22b", "URLs point at a page, not a form endpoint or an API", not_pages)
+                    suspect.append((self.g(r, "CONFERENCE")[:36], col, u, why))
+
+        if not suspect:
+            self.add("R22b", "URLs point at a page, not a form endpoint or an API", [])
+        elif not self.network:
+            self.note("R22b", "URL shape suggests a form endpoint - unverified, needs a fetch",
+                      [f"{n}: {c} - {w}" for n, c, _u, w in suspect])
+        else:
+            confirmed, cleared = [], []
+            for name, col, u, why in suspect:
+                code, _note = link_status(u)
+                # 405 is the signature: the endpoint exists and refuses to be read. A 2xx that
+                # returns a real page means the pattern over-reached, and we say so out loud
+                # rather than quietly passing it.
+                if code in (405, 400, 415, 501):
+                    confirmed.append(f"{name}: {col} - {why}; HTTP {code} on a GET")
+                elif code in (404, 410):
+                    confirmed.append(f"{name}: {col} - {why}; HTTP {code}")
+                else:
+                    cleared.append(f"{name}: {col} - shape looked like an endpoint but the URL "
+                                   f"answered HTTP {code} - PATTERN TOO BROAD, review it")
+            self.add("R22b", "URLs point at a page, not a form endpoint or an API", confirmed)
+            if cleared:
+                self.note("R22b?", "Shape flagged these but the page answered - the rule, not "
+                                   "the row, is what needs looking at", cleared)
 
         stubs = [self.g(r, "CONFERENCE")[:40] for r in self.rows
                  if "Audit Exception" in self.g(r, "STATUS DETAILS")]

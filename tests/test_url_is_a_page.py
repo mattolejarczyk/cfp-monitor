@@ -109,6 +109,33 @@ def test_the_gate_reports_it_as_its_own_check():
     assert 'self.add("R22b"' in src
     assert "rules.url_is_a_page" in src
     # It must cover the customer-facing submission URL, not only evidence columns.
-    i = src.index('self.add("R22b"')
-    block = src[max(0, i - 1400):i]
+    i = src.index("suspect = []")
+    block = src[i:i + 900]
     assert "SUBMISSION URL" in block and "CFP_SUBMISSION_URL" in block
+
+
+def test_the_shape_alone_never_rejects_a_delivery():
+    """R22 rejects on a fact - facebook.com is not the organiser, and no fetch changes that.
+    R22b is a regex over a path. A delivery must not be rejected on an inference.
+
+    The asymmetry is the argument. A false negative ships a bad URL, which the note surfaces
+    and a fetch catches. A false positive rejects the delivery, someone 'fixes' a working
+    submission link, and the page carrying the deadline is gone with nothing to show it was
+    ever right. Fourteen of eighteen proposed withdrawals on 2026-08-29 were that mistake.
+    """
+    src = (ROOT / "scripts" / "accept_delivery.py").read_text(encoding="utf-8")
+    i = src.index("suspect = []")
+    block = src[i:i + 2600]
+    assert "self.note(" in block, "with no page fetched, a shape match must be advisory only"
+    assert "not self.network" in block, "the offline path must be the advisory one"
+    assert "link_status(u)" in block, "with network available, the PAGE must decide"
+
+
+def test_an_over_broad_pattern_is_reported_against_itself():
+    """If a flagged URL answers with a real page, the finding is about the RULE, not the row.
+    Saying so out loud is what stops a bad pattern quietly rejecting deliveries for months -
+    which is how R22 went unenforced and how the scorer kept ranking headshots."""
+    src = (ROOT / "scripts" / "accept_delivery.py").read_text(encoding="utf-8")
+    assert "PATTERN TOO BROAD" in src
+    i = src.index("suspect = []")
+    assert "cleared" in src[i:i + 2600]
