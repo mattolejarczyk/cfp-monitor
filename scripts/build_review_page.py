@@ -45,7 +45,13 @@ FIELDS =['CONFERENCE', 'Market', 'CITY', 'STATE_PROVINCE', 'COUNTRY', 'FORMAT',
           'SUBMISSION URL', 'CFP_SUBMISSION_URL', 'DEADLINE_EVIDENCE_URL',
           'DEADLINE_QUOTE', 'TRACK', 'OPPORTUNITY_TYPE', 'MAIN_INFO_URL',
           'ORGANIZER', 'SPONSOR_REQUIRED', 'SPONSOR_URL', 'SPONSOR_COST', 'SOURCE_AS_OF',
-          'SPONSOR_QUOTE']
+          'SPONSOR_QUOTE',
+          # THIS LIST IS A WHITELIST, and `build` reads every row through it - a column absent
+          # here is silently empty downstream no matter what the delivery holds. Adding the
+          # render without adding these two produced exactly that on 2026-09-01: the page
+          # carried `"lq": ""` for ESF MENA while the delivery held the organiser's sentence.
+          # `d.get(col, '')` looked defensive and was the thing hiding it.
+          'LIFECYCLE_QUOTE', 'LIFECYCLE_EVIDENCE_URL']
 
 MARKET_LABEL = {'robotics': 'Robotics', 'Robotics': 'Robotics', 'AdditiveMfg': 'Additive Mfg',
                 'ConsumerElectronics': 'Consumer Electronics', 'BioMedTech': 'BioMedTech',
@@ -179,6 +185,14 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None):
             'dl': d['SUBMISSION DEADLINE'], 's': d['STATUS'], 'c': conf,
             'proj': d['IS_PROJECTED'] == 'true',
             'det': d['STATUS DETAILS'], 'q': d['DEADLINE_QUOTE'],
+            # R16 evidence. Until 2026-09-01 this page read NEITHER field, so a discontinuation -
+            # the claim a customer most needs to believe, because it removes a conference from
+            # their list - arrived as bare prose while the organiser's own sentence sat unused in
+            # the delivery. ESF MENA is the case that found it: the row carries europetro.com's
+            # "we have taken the decision not to hold ESF MENA as a standalone event in 2026",
+            # and the customer, holding an ACCEPTANCE to it and a $12,500 sponsorship decision,
+            # could not see it. An amendment was spent making upstream evidence these claims.
+            'lq': d['LIFECYCLE_QUOTE'], 'lev': d['LIFECYCLE_EVIDENCE_URL'],
             'url': d['CONFERENCE URL'] or d['MAIN_INFO_URL'],
             'sub': d['CFP_SUBMISSION_URL'] or d['SUBMISSION URL'],
             'ev': d['DEADLINE_EVIDENCE_URL'],
@@ -649,6 +663,7 @@ function render(){
         // similar. Useful to read, wrong to present as something we read off a page, and it is
         // exactly the standard we hold upstream to.
         : `<h4>Research note <span style="font-weight:400;color:var(--muted)">&mdash; no source page recorded</span></h4><p class="quote">${esc(r.q)}</p>`):''}
+     ${r.lq?`<h4>Why this is no longer running${r.lev?` &mdash; <a href="${esc(r.lev)}" target="_blank" rel="noopener">from the organiser</a>`:' <span style="font-weight:400;color:var(--muted)">&mdash; no source page recorded</span>'}</h4><p class="quote">${esc(r.lq)}</p>`:''}
      ${r.chkq?`<h4>What we found when we checked</h4><p class="quote">${esc(r.chkq)}</p>`:''}
      ${r.spon?`<h4>Sponsorship</h4><p>${r.sponcost?'<b>'+esc(r.sponcost)+'</b> &mdash; ':''}speaking at this event requires sponsorship.</p>${
         r.sponq?`<p class="quote">${esc(r.sponq)}</p>`
