@@ -482,6 +482,28 @@ class Gate:
                     bad_source.append(f'{self.g(r, "CONFERENCE")[:36]}: {col} - {why}')
         self.add("R22", "Citations come from an admissible source", bad_source)
 
+        # A URL a person cannot open. SEPARATE FROM R22 ON PURPOSE - R22 asks who is speaking,
+        # this asks whether there is anything to read. Keeping them apart is what stops the
+        # obvious-looking fix of banning `hsforms.com`, which would have deleted the working
+        # submission links for Climate Week NYC and three Decarb Connect events to catch one
+        # broken endpoint on a different subdomain.
+        #
+        # Evidence columns are the worse case - an endpoint cannot carry a quote - but a
+        # submission URL matters too, because that one is handed to the customer to click.
+        # SecureWorld Seattle shipped with a form POST address in both URL fields, logged
+        # `alive` on the strength of an HTTP 405.
+        not_pages = []
+        for r in self.rows:
+            for col in ("DEADLINE_EVIDENCE_URL", "LIFECYCLE_EVIDENCE_URL", "SPONSOR_URL",
+                        "CFP_SUBMISSION_URL", "SUBMISSION URL", "MAIN_INFO_URL"):
+                u = self.g(r, col)
+                if not u.startswith("http"):
+                    continue
+                ok, why = rules.url_is_a_page(u)
+                if not ok:
+                    not_pages.append(f'{self.g(r, "CONFERENCE")[:36]}: {col} - {why}')
+        self.add("R22b", "URLs point at a page, not a form endpoint or an API", not_pages)
+
         stubs = [self.g(r, "CONFERENCE")[:40] for r in self.rows
                  if "Audit Exception" in self.g(r, "STATUS DETAILS")]
         if stubs:

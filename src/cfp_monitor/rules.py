@@ -81,6 +81,45 @@ def citation_source_admissible(url: str) -> tuple[bool, str]:
     return True, f"{host} is an admissible source"
 
 
+# Machine endpoints: the address a form POSTs to, or an API a script calls. Not a page.
+#
+# DELIBERATELY NARROW. The temptation on 2026-09-01 was to ban `hsforms.com` outright, the way
+# R22 bans facebook.com. The delivery says why that would have been wrong: we hold EIGHT
+# HubSpot links across FOUR conferences - Climate Week NYC and three Decarb Connect events -
+# and every one is a real, fillable form on `share.hsforms.com` that carries the submission
+# details we need. A host ban would have deleted four working submission links to catch one
+# broken one. The broken one was `forms.hsforms.com/submissions/v3/public/submit/...`, which
+# differs by PATH, not by host.
+#
+# So this matches the shape of an endpoint, never a brand. `/submit` on its own is not here:
+# `/call-for-papers/submit` is a perfectly ordinary page.
+_NOT_A_PAGE_PATH = re.compile(
+    r"/submissions/v\d+/|/formsnext/|/wp-json/|/graphql|/cgi-bin/|admin-ajax\.php"
+    r"|/api/|/rest/v\d+/|\.(?:json|xml)(?:$|\?)", re.I)
+
+
+def url_is_a_page(url: str) -> tuple[bool, str]:
+    """Can a person open this URL and read something, or is it a machine endpoint?
+
+    A DIFFERENT QUESTION FROM R22, and kept separate on purpose. R22 asks *who is speaking* - a
+    social post is not the organiser on the record, however well-written. This asks *is there
+    anything to read at all*. Merging them would blur what R22 means and, worse, invite banning
+    whole form platforms whose pages are exactly where deadlines live.
+
+    Status codes do not answer it either. `forms.hsforms.com/submissions/v3/public/submit/...`
+    answered HTTP 405 and was logged as `alive`, because the endpoint really does exist - it
+    just has nothing on it for a human. That row shipped to the customer as a submission link.
+    """
+    u = (url or "").strip()
+    if not u:
+        return True, "no url to judge"
+    m = _NOT_A_PAGE_PATH.search(u)
+    if m:
+        return False, (f"{m.group(0)!r} makes this a machine endpoint, not a page a person "
+                       f"can open")
+    return True, "looks like a readable page"
+
+
 def may_withdraw_citation(row, *, quote_found: bool, pages_read: int,
                           today: date) -> tuple[bool, str]:
     """May we clear this row's citation because we could not find its quote?
