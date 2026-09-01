@@ -12,6 +12,21 @@ found: withdraw under R1 through `rules.withdrawal_changes`, which keeps the dea
 IS_PROJECTED, downgrades the confidence label and decides the SOURCE_AS_OF stamp - all four,
 because doing three of them was a defect twice on 2026-08-29.
 
+WHAT IT IS NOT FOR: A PARAPHRASE
+This retargets or withdraws. It has no re-extract path, so a quote that IS on the page in
+slightly different characters gets withdrawn when it should be recut. On 2026-08-31 it
+withdrew the Nineteenth International Conference on Climate Change, whose stored quote read
+`Late, 20 October (26) to 20 December (26).` while the page carries the same row of a table as
+`Late<tab><tab>20 October (26) to 20 December (26)`. The rounds table is genuinely there; our
+copy of it had been reformatted.
+
+    withdrawal      no evidence exists
+    re-extraction   evidence exists and our copy of it is wrong  ->  extract_citations.py
+
+Send a paraphrase here and a sound citation is lost. Check which problem you have first: the
+acceptance gate distinguishes them, reporting "paraphrase, date IS on page" separately from
+"quote and date both absent".
+
 WHAT IT WILL NOT DO
 `rules.may_withdraw_citation` refuses to withdraw when no page could be read, and when the
 deadline has already passed. A call-for-papers page is routinely taken down after its deadline;
@@ -148,6 +163,20 @@ async def main() -> int:
                   f"{r['SUBMISSION DEADLINE'] or '(none)'}")
             deep, pages, how = await trace(r["DEADLINE_EVIDENCE_URL"], r["DEADLINE_QUOTE"],
                                            settings, a.max_pages)
+            # R22 BEFORE the page content, on BOTH paths. Until 2026-08-31 this script asked
+            # `may_withdraw_citation` - which enforces R22 - only when the quote was NOT found.
+            # Finding it short-circuited straight to "traced", so an inadmissible host was
+            # CONFIRMED for carrying the sentence. On the first real run that retained
+            # `facebook.com/ACTExpo/` as evidence for a submission deadline, which is precisely
+            # what R22 exists to forbid.
+            #
+            # A social post is not the organiser on the record whether or not the sentence is
+            # on it. What the page says was never the question.
+            if deep:
+                ok, why22 = rules.citation_source_admissible(deep)
+                if not ok:
+                    deep = None
+                    print(f"    REFUSED the page carrying the quote - {why22}")
             if deep:
                 traced += 1
                 df.at[idx, "DEADLINE_EVIDENCE_URL"] = deep

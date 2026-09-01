@@ -86,6 +86,38 @@ def test_it_uses_sitewalk_rather_than_its_own_crawler():
     assert "urljoin" not in src, "URL joining belongs in sitewalk"
 
 
+def test_r22_is_enforced_when_the_quote_IS_found_not_only_when_it_is_not():
+    """Until 2026-08-31 this script consulted may_withdraw_citation - which enforces R22 - only
+    on the failure path. Finding the quote short-circuited straight to 'traced', so an
+    inadmissible host was CONFIRMED for carrying the sentence.
+
+    On the first real run that kept facebook.com/ACTExpo/ as evidence for a submission
+    deadline. A social post is not the organiser on the record whether or not the sentence is
+    on it; what the page says was never the question."""
+    src = (ROOT / "scripts" / "trace_quote_to_page.py").read_text(encoding="utf-8")
+    assert "rules.citation_source_admissible(deep)" in src
+    assert "REFUSED the page carrying the quote" in src
+    # The check must sit BEFORE the row is counted as traced.
+    assert src.index("citation_source_admissible(deep)") < src.index("traced += 1")
+
+
+def test_a_paraphrase_is_not_the_same_problem_as_a_missing_quote():
+    """This script retargets or withdraws. It has no RE-EXTRACT path, so a quote that exists on
+    the page in slightly different characters gets withdrawn when it should be recut.
+
+    On 2026-08-31 it withdrew the Nineteenth International Conference on Climate Change, whose
+    stored quote read 'Late, 20 October (26) to 20 December (26).' while the page carries
+    'Late<tab><tab>20 October (26) to 20 December (26)' - tabs rendered as a comma and a period
+    appended. The rounds table is genuinely there; our copy of it was reformatted.
+
+    Withdrawal is for 'no evidence exists'. Re-extraction is for 'evidence exists and our copy
+    is wrong'. Sending a paraphrase here loses a sound citation."""
+    doc = (ROOT / "scripts" / "trace_quote_to_page.py").read_text(encoding="utf-8")
+    assert "extract_citations" in doc, (
+        "the docstring must point at the tool that handles paraphrases, or this script will "
+        "keep being pointed at rows it cannot fix")
+
+
 def test_no_partial_quote_matching():
     """An earlier version accepted a 35-character prefix, which can attach a citation to the
     wrong page - worse than none, because it looks verified."""
