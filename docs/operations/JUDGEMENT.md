@@ -6,6 +6,29 @@ every one of them cost us real time or nearly reached a customer.
 
 Each rule is here because it was learned the hard way. The date is when.
 
+## This file is capped at 21 rules, and a new one has to be paid for
+
+**Growth here was free, so it happened.** Two rules were added on 2026-09-01 alone, on a day
+whose defining failure was that rules already written down did not fire. More prose lowers the
+odds that any given line is retrieved at the moment it matters - so adding to this file is not
+a neutral act, and past a point it is a harmful one.
+
+Before adding a rule, answer two questions in order:
+
+1. **Can this be a test instead?** A guard that fails the build fires at the moment of the
+   mistake. A rule fires only if someone re-reads the right paragraph at the right minute.
+   `tests/test_identity_join.py` and `tests/test_no_reimplemented_crawling.py` are what this
+   looks like, and both caught real duplication the day they were written.
+2. **Which existing rule does this replace or merge into?** If none, the file grows, and you
+   should be able to say why this one earns that.
+
+A rule that has become executable stays here as **a short entry and a pointer** to its test -
+the history is worth keeping, the full paragraph is not. **Rule 17 is the worked example**: it
+was the longest rule in the file, it is now `src/cfp_monitor/identity.py` plus a guard, and what
+remains is the one part that is still judgement rather than code.
+
+Today's two additions (20, 21) were paid for by that conversion. The file is at its cap.
+
 ---
 
 ## 1. If the EVENT is over, stop looking for its call
@@ -273,15 +296,16 @@ all you did was tidy up.
 
 ## 17. Across a boundary, join on the value, not the key - 2026-08-31
 
-Contract 5.4 says our canonical `EVENT_ID` is not upstream's. `HANDOFF.md` says a script keyed on
-it "silently matches nothing. Join on the URL being replaced."
+**NOW EXECUTABLE - `src/cfp_monitor/identity.py`, guarded by `tests/test_identity_join.py`.**
 
-**Both were written down, and the trap still caught a citation fix on 2026-08-31**: keyed on
-`EVENT_ID`, it corrected **0 of 406** rows and reported success. The only reason it was caught is
-that the script printed how many rows it had touched.
+Keyed on `EVENT_ID`, a citation fix corrected **0 of 406** rows and reported success
+(2026-08-31); the same trap then took a client-sheet join to 43 of 111 and produced a written
+"finding" recommending we abandon the correct key (2026-09-01). Both were documented in advance,
+in two places. The translation now lives in one function and a test fails the build without it.
 
-Two conclusions. A documented trap is not a solved trap. And **every bulk edit must print how
-many rows it changed** - a silent zero looks exactly like a clean run.
+The half that is still judgement: **every bulk edit must print how many rows it changed.** A
+silent zero looks exactly like a clean run, and that print is the only reason the 0-of-406 was
+ever noticed.
 
 ## 18. Brittle parsing fails confidently, not loudly - 2026-08-31
 

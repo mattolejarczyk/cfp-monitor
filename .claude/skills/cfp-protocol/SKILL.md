@@ -38,6 +38,29 @@ Read these three, in order, before writing any code or touching any data:
 Then state, in one line, which stage you are working in and which existing tool covers it.
 If none does, say so explicitly before writing anything new.
 
+## Cite the decision BEFORE you write the line
+
+Reading the documents at the start of a session does not stop a mistake four hours later, at
+the moment one specific line gets written. On 2026-09-01 three rules that were already written
+down were broken anyway, by someone who had read the file that day.
+
+**So: before writing code that joins records, exports a sheet, fetches a cited page, or touches
+a customer field - name the decision that governs it and where it is written.** One line. If
+you cannot cite it, you have not looked, and that is the signal to stop.
+
+The answers to the four that keep biting, so the check costs seconds:
+
+| About to... | The decision | Where |
+|---|---|---|
+| **join anything to a delivery row** | The delivery's `EVENT_ID` is UPSTREAM's, not ours. Cross it with `identity.to_canonical` / `index_by_canonical`, never by direct comparison. An empty seed map returns zero findings that read as agreement - `identity.assert_mapped` refuses it. | contract 5.4 · `customer-sheet-matching.md` gotchas · `src/cfp_monitor/identity.py` |
+| **export a customer sheet** | `/export?format=csv&gid=` through an authenticated browser. **Never `/gviz/tq?tqx=out:csv`** - it types each column and silently drops non-conforming text. It blanked eight sponsorship figures and five free-text dates, and the diff reported them as customer edits. | `customer-sheet-matching.md` §1 |
+| **decide a row needs work** | Ask what the customer has already done: `scripts/customer_context.py --names ...`. LIVE beats a gate failure; MOOT means the deadline no longer bites; a contradiction means stop. | `CUSTOMER-SIGNAL.md` · contract 3 |
+| **write anything a customer owns** | `STATUS`, `STATUS DETAILS`, `NOTES`, `PRIORITY` are theirs. Read them; never write them; never propose "correcting" their pipeline state. | contract 3 |
+
+Four of these are enforced by `tests/test_identity_join.py`. **A guard that fails the build beats
+a rule you must remember** - so when a rule here is broken twice, the next move is a test, not a
+longer paragraph.
+
 ## Then ask what the CUSTOMER has already done - before repairing any row
 
 **Run `scripts/customer_context.py --names "<conference>" ...` before remediating a row, and
