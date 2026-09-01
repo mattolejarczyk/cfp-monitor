@@ -329,6 +329,41 @@ What survived was real and much narrower: 9 rows that failed every retry were st
 though established. Nine, not 113 - and the difference between those two numbers is the
 difference between a process change and a bug fix.
 
+## 20. A rule may reject on a fact; an inference may only ask someone to look - 2026-09-01
+
+Two checks were added to the gate on the same day. Both are about bad URLs. Only one of them
+is allowed to reject a delivery, and the difference is what the check KNOWS.
+
+**R22 rejects.** `facebook.com` is not the organiser on the record. That is settled before any
+page is fetched, and no fetch can change it. On the first run it found 8 rows - 7 of which were
+sailing through the quote check, because the quote genuinely was on the Facebook page.
+
+**R22b was written to reject, and that was wrong.** It matches a regex against a URL path to
+guess that something is a form endpoint rather than a page. That is an inference. It was
+corrected the same day to be advisory offline, and to fail only once the URL has actually been
+fetched and answered 405.
+
+The asymmetry is the whole argument, and it is worth applying beyond URLs:
+
+    a false negative   ships something bad, which the note surfaces and a later check catches
+    a false positive   REJECTS, someone "fixes" a working value, and the thing we needed is
+                       gone with nothing left to show it was ever right
+
+We had just refused to ban `hsforms.com` precisely to protect four conferences' working
+submission links - and then built a mechanism that could have deleted them anyway. **Arguing a
+principle and violating it one commit later is easy, because the second commit feels like
+tightening.**
+
+"Zero false positives across 1,897 URLs" was the tempting justification. It is precision
+measured on the only data we have, which is not the same as being right - the same reasoning
+that produced 14 wrong withdrawals out of 18 (rule 3) and a link scorer that ranked headshots
+as call pages.
+
+One more piece worth copying: when a flagged URL answers with a real page, R22b reports
+`PATTERN TOO BROAD, review it` - a finding against **the rule**, not the row. A bad pattern
+that quietly rejects deliveries for months is exactly how R22 sat unenforced from v1.6 until
+someone tripped over it.
+
 ## The shape all of these share
 
 Every one is a case where the code was correct when written and the assumption quietly
