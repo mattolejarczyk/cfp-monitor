@@ -154,7 +154,7 @@ def load_checks(path):
     return out
 
 
-def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None):
+def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=None):
     st = edition_states(rows, today)
     _today = date.fromisoformat(today) if isinstance(today, str) else today
     out = []
@@ -193,6 +193,12 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None):
             # and the customer, holding an ACCEPTANCE to it and a $12,500 sponsorship decision,
             # could not see it. An amendment was spent making upstream evidence these claims.
             'lq': d['LIFECYCLE_QUOTE'], 'lev': d['LIFECYCLE_EVIDENCE_URL'],
+            # Where our record and the customer's sheet disagree. Keyed on the delivery's own
+            # EVENT_ID because the CALLER has already crossed the id boundary through
+            # identity.to_canonical - this is a plain lookup, and deliberately so. Every time
+            # that translation has been done at the point of use instead, it has been done
+            # wrong (contract 5.4, JUDGEMENT rule 17).
+            'rec': (recon or {}).get((r.get('EVENT_ID') or '').strip(), []),
             'url': d['CONFERENCE URL'] or d['MAIN_INFO_URL'],
             'sub': d['CFP_SUBMISSION_URL'] or d['SUBMISSION URL'],
             'ev': d['DEADLINE_EVIDENCE_URL'],
@@ -494,6 +500,8 @@ const VIEWS = [
  // fine and simply does not mention the deadline.
  {k:'unconfirmed', t:'Need to Verify', d:"cited page doesn't back the date", f:r=>r.chk==='contradicted'||r.chk==='no_quote'||r.chk==='unreadable'},
  {k:'broken', t:'Submit Link Missing', d:'the page is not found', f:r=>r.dead},
+ {k:'reconcile', t:'Check against your sheet', d:'our record and yours differ',
+  f:r=>r.rec && r.rec.length},
  {k:'all', t:'Everything', d:'full list', f:r=>true},
 ];
 // "Closing this month" is the right landing view when something IS closing this month. On a
@@ -663,6 +671,12 @@ function render(){
         // similar. Useful to read, wrong to present as something we read off a page, and it is
         // exactly the standard we hold upstream to.
         : `<h4>Research note <span style="font-weight:400;color:var(--muted)">&mdash; no source page recorded</span></h4><p class="quote">${esc(r.q)}</p>`):''}
+     ${r.rec&&r.rec.length?`<h4>Check against your sheet</h4>${r.rec.map(x=>
+        `<p><b>${esc(x.cat)}</b>${x.acted?' <span style="color:var(--muted)">&mdash; you have already actioned this row</span>':''}<br>
+         ${esc(x.detail)}<br>
+         <span style="color:var(--muted)">your sheet:</span> ${esc(x.theirs)||'&mdash;'}
+         ${x.ours?`<br><span style="color:var(--muted)">our record:</span> ${esc(x.ours)}`:''}
+         ${x.ours_wrong?'<br><b>Ours looks like the wrong one here</b> &mdash; we will correct it.':''}</p>`).join('')}`:''}
      ${r.lq?`<h4>Why this is no longer running${r.lev?` &mdash; <a href="${esc(r.lev)}" target="_blank" rel="noopener">from the organiser</a>`:' <span style="font-weight:400;color:var(--muted)">&mdash; no source page recorded</span>'}</h4><p class="quote">${esc(r.lq)}</p>`:''}
      ${r.chkq?`<h4>What we found when we checked</h4><p class="quote">${esc(r.chkq)}</p>`:''}
      ${r.spon?`<h4>Sponsorship</h4><p>${r.sponcost?'<b>'+esc(r.sponcost)+'</b> &mdash; ':''}speaking at this event requires sponsorship.</p>${
@@ -734,6 +748,9 @@ def main():
     ap.add_argument('--client-since', default='',
                     help='ISO date the "Updated since" view starts from; defaults to a week '
                          'back. The reader can move it on the page.')
+    ap.add_argument('--reconcile', action='store_true',
+                    help='compare our record against the customer sheets in the database and '
+                         'add the "Check against your sheet" view. Needs --db.')
     ap.add_argument('--no-evidence', action='store_true',
                     help='build WITHOUT dead-links/checks. Layout testing only - the resulting '
                          'page understates the work and must never be sent.')
@@ -842,7 +859,48 @@ def main():
         with open(a.dead_hosts, encoding='utf-8') as h:
             dead_hosts = [ln.strip().lower() for ln in h if ln.strip()]
         print(f'{len(dead_hosts)} host(s) that no longer resolve - links to them withheld')
-    data = build(rows, a.date, dead, checks)
+    # ---- reconcile against the customer's own sheets ------------------------------------
+    # The id crossing happens HERE, once, through identity - not inside build(). Contract 5.4:
+    # the delivery carries UPSTREAM's EVENT_ID, the client layer carries OURS.
+    #
+    # THE VIEW IS CALLED "Check against your sheet", NOT "sheet errors". Each item is a
+    # disagreement between two records, and on the data this was first built against we are the
+    # wrong side twice - a 2025 deadline where their sheet holds 2026, and a passed date for
+    # Troopers where they hold 2027. A customer handed a list of their own mistakes, most of
+    # which are not theirs, stops reading it. `ours_wrong` says so on the row itself.
+    #
+    # THIS RATIONALE LIVES IN PYTHON, NOT IN THE JS TEMPLATE. The first version put it in a
+    # `//` comment inside the view list, which shipped it into the customer-facing HTML - so
+    # anyone opening view-source read our internal reasoning about which rows we had got wrong.
+    # Python comments do not reach the page; template comments do.
+    recon = {}
+    if a.reconcile:
+        if not a.db:
+            raise SystemExit('ERROR: --reconcile needs --db - the client layer lives there.')
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from src.cfp_monitor import identity, sheet_reconcile   # noqa: PLC0415
+
+        up_to_canon, roots = identity.seed_map(a.db)
+        # A path fault produces an empty map, every row falls through untranslated, and the
+        # result is zero findings - indistinguishable from two records that agree.
+        identity.assert_mapped(up_to_canon, roots)
+        by_canon = identity.index_by_canonical(rows, up_to_canon)
+        con = sqlite3.connect(a.db)
+        con.row_factory = sqlite3.Row
+        client_rows = [dict(x) for x in con.execute('select * from client_conferences')]
+        items = sheet_reconcile.reconcile(client_rows, by_canon, date.fromisoformat(a.date))
+        n_cov = 0
+        for it in items:
+            row = by_canon.get(it['eid']) if it['eid'] else None
+            if it['kind'] == 'coverage' or row is None:
+                n_cov += 1
+                continue
+            recon.setdefault((row.get('EVENT_ID') or '').strip(), []).append(it)
+        n_conf = sum(len(v) for v in recon.values())
+        print(f'reconciled against {len(client_rows)} customer row(s): {n_conf} disagreement(s) '
+              f'on {len(recon)} row(s); {n_cov} of their rows not joined to ours')
+
+    data = build(rows, a.date, dead, checks, recon)
     n_dead = sum(1 for d in data if d['dead'])
     n_chk = sum(1 for d in data if d['chk'] == 'verified')
     print('{} row(s); {} dead link(s); {} deadline(s) confirmed on the cited page'.format(

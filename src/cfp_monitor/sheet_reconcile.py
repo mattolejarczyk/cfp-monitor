@@ -126,7 +126,7 @@ def reconcile(client_rows, our_by_event_id, today: date) -> list[dict]:
 
         if not eid or ours is None:
             cause, what = why_unmatched(c.get("match_confidence"))
-            out.append({"client": ck, "name": name, "kind": "coverage",
+            out.append({"client": ck, "name": name, "eid": eid, "kind": "coverage",
                         "cat": cause, "detail": what,
                         "theirs": (c.get("status") or ""), "ours": "",
                         "ours_wrong": False, "acted": acted})
@@ -137,7 +137,7 @@ def reconcile(client_rows, our_by_event_id, today: date) -> list[dict]:
         if td and od and td != od:
             # If ours has already passed and theirs has not, ours is the stale one.
             ours_wrong = od < today <= td
-            out.append({"client": ck, "name": name, "kind": "conflict",
+            out.append({"client": ck, "name": name, "eid": eid, "kind": "conflict",
                         "cat": "deadline conflict",
                         "detail": ("our date has passed and theirs has not - likely ours"
                                    if ours_wrong else
@@ -149,7 +149,7 @@ def reconcile(client_rows, our_by_event_id, today: date) -> list[dict]:
         for col in ("their_submission_url", "their_url"):
             why = url_year_conflict(c.get(col), ours.get("EDITION"))
             if why:
-                out.append({"client": ck, "name": name, "kind": "conflict",
+                out.append({"client": ck, "name": name, "eid": eid, "kind": "conflict",
                             "cat": "link points at another edition", "detail": why,
                             "theirs": (c.get(col) or "").strip(), "ours": "",
                             "ours_wrong": False, "acted": acted})
