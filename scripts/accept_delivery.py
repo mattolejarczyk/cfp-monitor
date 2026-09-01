@@ -456,6 +456,32 @@ class Gate:
             self.add("R18b", "A sponsorship requirement carries its own evidence",
                      unevidenced_cost)
 
+        # R22 - who is speaking, asked before what the page says.
+        #
+        # THIS BELONGS HERE, OFFLINE, RATHER THAN INSIDE CHECK 3. R22 is a question about the
+        # SOURCE, so it needs no fetch, and folding it into the quote check would have made it
+        # invisible in the one case that matters: a row whose quote IS on the Facebook page
+        # passes check 3, and the violation never surfaces. ACT Expo 2027 was only caught on
+        # 2026-09-01 because it happened to fail check 3 for an unrelated reason - its
+        # facebook.com/ACTExpo/ citation had been sitting in a delivery labelled Verified since
+        # the rule was agreed in v1.6. Being here also means it still runs under --no-network.
+        #
+        # EVERY EVIDENCE COLUMN, not just the deadline. A discontinuation or a sponsorship
+        # requirement cited to a social post is the same defect; until today `rules` was only
+        # ever asked about DEADLINE_EVIDENCE_URL.
+        from src.cfp_monitor import rules                   # noqa: PLC0415
+
+        bad_source = []
+        for r in self.rows:
+            for col in ("DEADLINE_EVIDENCE_URL", "LIFECYCLE_EVIDENCE_URL", "SPONSOR_URL"):
+                u = self.g(r, col)
+                if not u:
+                    continue
+                ok, why = rules.citation_source_admissible(u)
+                if not ok:
+                    bad_source.append(f'{self.g(r, "CONFERENCE")[:36]}: {col} - {why}')
+        self.add("R22", "Citations come from an admissible source", bad_source)
+
         stubs = [self.g(r, "CONFERENCE")[:40] for r in self.rows
                  if "Audit Exception" in self.g(r, "STATUS DETAILS")]
         if stubs:
