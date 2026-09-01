@@ -19,28 +19,31 @@ blank, its `match_confidence` says WHY, and the three causes need different acti
 That third group is the only one that means "not in our database", and it is much smaller than
 the raw unmatched count suggests.
 
-WHICH JOIN TO PASS IN - MEASURED, NOT ASSUMED (2026-09-01)
-`reconcile` takes a dict of OUR rows keyed however the caller chooses. That is deliberate,
-because the obvious key does not work. Measured over 111 client rows against the 406-row
-delivery:
+HOW TO KEY `our_rows` - THE ANSWER WAS ALREADY WRITTEN DOWN
 
-    client_conferences.event_id -> conferences.event_id     43 of 111 resolve
-    conference name, 26-char prefix                         38 of 111
-    HOST of their URL                                       97 of 111      <- use this
+    delivery EVENT_ID  --_seed_map-->  our canonical id  ==  client_conferences.event_id
 
-The matcher's own `event_id` is the worst of the three. It addresses our DATABASE, where only
-81 of 373 rows carry a deadline at all, and 44 of the 87 ids it wrote are not in that table -
-while the customer-facing record is the DELIVERY, which uses UPSTREAM's ids (contract 5.4).
-Two id spaces, neither of them the customer's.
+    87 of 87 matched client rows resolve. Zero fail.
 
-So join on the value, not the key (JUDGEMENT rule 17). The host of their URL is the value both
-sides actually share. It is not unique on its own - one host can carry several editions - so a
-caller must disambiguate within a host before calling this, and passing a bare host->row map
-will silently compare against whichever edition happened to be first.
+`scripts/apply_resolutions._seed_map(store)` returns that mapping, and `build_review_page.py`
+and `export_checks.py` both already use it. `docs/operations/customer-sheet-matching.md` states
+it plainly: "The delivery's EVENT_ID column is UPSTREAM's, not ours (contract 5.4). The matcher
+maps through the seed map to our canonical id. Never copy that column straight across."
 
-Passing the event_id map "because it is the official one" produced 55 rows labelled
-"match not promoted" on data where only 24 client rows are genuinely unmatched. That number was
-measuring the join, not the coverage - the same failure as the name-prefix attempt it replaced.
+A caller MUST map through it. Without that step the delivery's ids and the matcher's ids are two
+different namespaces and nothing lines up.
+
+WHAT NOT TO CONCLUDE FROM A BAD MEASUREMENT (2026-09-01)
+A first version of this docstring recorded, as measured fact, that the matcher's own event_id
+was the WORST of three joins - 43 of 111, against a name prefix at 38 and a URL host at 97 -
+and recommended the URL host. Every number was real and the conclusion was wrong: the 43 came
+from joining to the `conferences` TABLE instead of the delivery, and skipping the seed map. The
+correct join scores 87 of 87.
+
+The failure worth remembering is not the arithmetic. It is that the mechanism was documented,
+the doc was not read, and the resulting numbers were persuasive enough to be written down as a
+finding about the system. **A measurement can be arithmetically perfect and still be measuring
+your own mistake** - and a confident table of three options is exactly how that gets believed.
 """
 from __future__ import annotations
 

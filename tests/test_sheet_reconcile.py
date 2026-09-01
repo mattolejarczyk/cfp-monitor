@@ -97,6 +97,19 @@ def test_agreement_produces_nothing():
     assert got == []
 
 
+def test_the_docstring_names_the_seed_map_as_the_join():
+    """The join is documented in customer-sheet-matching.md and implemented in
+    `apply_resolutions._seed_map`: delivery EVENT_ID -> our canonical id -> client event_id,
+    87 of 87. A caller who skips it compares two different id namespaces and gets nothing.
+
+    This is asserted because the first version of the docstring recommended the WRONG join,
+    on real numbers, after not reading the doc."""
+    doc = sr.__doc__
+    assert "_seed_map" in doc
+    assert "87 of 87" in doc
+    assert "customer-sheet-matching.md" in doc
+
+
 def test_a_bad_date_does_not_crash_the_report():
     ours = {"SUBMISSION DEADLINE": "2026-13-45", "EDITION": "2027"}
     sr.reconcile([{"client_key": "u", "their_name": "X", "event_id": "e1",
