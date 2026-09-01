@@ -105,8 +105,73 @@ def rank_links(anchors, base_url: str) -> list[tuple[int, str, str]]:
     return out
 
 
+def origin(url: str) -> str:
+    """Scheme and host, no path. `https://www.secureworld.io/events` -> `https://www.secureworld.io`."""
+    p = urlparse(url)
+    return f"{p.scheme}://{p.netloc}" if p.scheme and p.netloc else ""
+
+
+def sitemaps_from_robots(robots_text: str, base_url: str) -> list[str]:
+    """The sitemaps a site names for itself in robots.txt.
+
+    Asking beats guessing: `events.secureworld.io/robots.txt` names two sitemaps totalling
+    11,237 URLs, one of which is the real speaker-submissions page that five separately guessed
+    paths all missed.
+    """
+    out = []
+    for line in (robots_text or "").splitlines():
+        if line.lower().startswith("sitemap:"):
+            u = line.split(":", 1)[1].strip()
+            if u.startswith("http"):
+                out.append(u)
+            elif u:
+                out.append(urljoin(origin(base_url) + "/", u.lstrip("/")))
+    return out
+
+
+def sitemap_candidates(base_url: str) -> list[str]:
+    """Conventional sitemap locations, for a site whose robots.txt names none.
+
+    These ARE guesses, but of a different kind from `fallback_urls`: a sitemap path is a
+    published convention with one right answer, and a wrong guess returns something that does
+    not parse as XML rather than a plausible-looking page. Guessing a CONTENT path is what
+    produced five soft 404s that each looked like a find.
+    """
+    o = origin(base_url)
+    if not o:
+        return []
+    return [urljoin(o + "/", p) for p in
+            ("sitemap.xml", "sitemap_index.xml", "sitemap-index.xml", "wp-sitemap.xml",
+             "sitemap/sitemap.xml")]
+
+
+def parse_sitemap(xml_text: str) -> tuple[list[str], bool]:
+    """Return (urls, is_index). An index points at more sitemaps rather than at pages.
+
+    Namespaced tags are why this matches on the tag's SUFFIX: sitemaps declare
+    `xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"`, so ElementTree reports
+    `{...}loc` rather than `loc`.
+    """
+    from xml.etree import ElementTree as ET
+    if not (xml_text or "").strip().startswith("<"):
+        return [], False
+    try:
+        root = ET.fromstring(xml_text.encode("utf-8", "ignore"))
+    except ET.ParseError:
+        return [], False
+    locs = [e.text.strip() for e in root.iter()
+            if e.tag.endswith("loc") and (e.text or "").strip()]
+    return locs, root.tag.endswith("sitemapindex")
+
+
 def fallback_urls(base_url: str) -> list[str]:
-    """Guessed paths. The LAST resort, only when a page exposed no internal links at all."""
+    """Guessed paths. The LAST resort, only when a page exposed no internal links at all.
+
+    A guess here can return HTTP 200 and still be nothing - on 2026-08-31 five of these shapes
+    resolved to soft 404s across three SecureWorld hosts, and because each one answered, the
+    pipeline believed it had found a call page. Prefer `sitemaps_from_robots` /
+    `sitemap_candidates`: a site's own index is authority, a guessed path is resemblance.
+    """
     p = urlparse(base_url)
     origin = f"{p.scheme}://{p.netloc}"
     return [urljoin(origin + "/", s + "/") for s in FALLBACK_PATHS]
