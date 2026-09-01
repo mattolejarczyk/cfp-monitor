@@ -5,6 +5,50 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-08-31 (late) - a listing scrape wearing a deadline, and asking sites for their own index
+
+**Eight SecureWorld rows store a conference date in `SUBMISSION DEADLINE`.** One reads as due
+tomorrow. The rows cite `secureworld.io/events`, a listing of conferences and the dates they are
+held, and the stored quote is two consecutive listing rows scraped together - the FIRST date
+became the deadline, the SECOND became `START DATE`. The second is right; the first is the
+previous edition's event date. The events page contains no deadline vocabulary at all. Written
+up as `handoff-files/Defect_SecureWorld_Listing_Dates_20260831.md`; the deadline is upstream's
+field and R1 never touches a deadline value, so nothing was changed here.
+
+**Found while checking, not while assuming.** Four rows were classified "paraphrase" by the gate
+and sent to `extract_citations` - the right tool this time. Two recut cleanly (Climate Change,
+Hydrogen Technology Expo NA) and are the only changes we would take. The three SecureWorld
+results came back as strings like `'Threat Defense 2026 2026-09-01'`, which are **not on the
+page** - composed from our own fields rather than copied. Fetching each page before applying
+anything is what caught it. Nothing was applied.
+
+**Why the deadline came from a listing: five guessed CFP URLs, all soft 404s.** Across three
+SecureWorld hosts, every candidate call-for-speakers URL returns HTTP 200 with a "page not
+found" body, so a status-code check calls them alive. All five have the shape
+`sitewalk.FALLBACK_PATHS` invents. The site's own sitemap - named in `robots.txt`, 11,237 URLs -
+holds the real page, `www.secureworld.io/speaker-submissions`, which all five near-missed on host
+or path. It is a redirect stub with no dates, so **SecureWorld publishes no deadline** and the
+honest value is blank.
+
+**`sitewalk` gains sitemap discovery**: `origin`, `sitemaps_from_robots`, `sitemap_candidates`,
+`parse_sitemap`. New read-only `scripts/check_urls_against_site.py` answers three questions per
+site - is a cited URL one the site publishes or one we invented, does the site publish a call
+page we are not using, does the cited page return content or a soft 404. It proposes nothing: a
+URL existing is not proof it carries the claim.
+
+**No sitemap step exists anywhere in the joint process** - not in the contract, the runbook or
+the tooling index. Proposed to upstream as two process changes: (A) a quote with no deadline
+vocabulary is not admissible for `SUBMISSION DEADLINE` unless the cited URL is itself a call
+page - this flags exactly the eight SecureWorld rows and nothing else; (B) check candidate URLs
+against the site's sitemap before citing them. Discovery is upstream's side, verification ours.
+
+**The new script's own tests caught two defects in it before use.** `relevance()` scores on the
+path, so headshots under `/hubfs/speakers/` ranked as call pages until `NOT_A_PAGE` was applied
+to sitemap URLs; and a bare length threshold called a genuine three-sentence CFP page a shell,
+which would have pushed someone to abandon a sound citation. 805 tests pass.
+
+---
+
 ## 2026-08-31 - the rules got teeth, and a nineteen-day-old warning finally reached someone
 
 **Two new contract rules, both from the customer's own queue.** Working the four answerable

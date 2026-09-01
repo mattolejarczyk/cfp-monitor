@@ -6,6 +6,28 @@ sections are refreshed in a verified session.
 
 > **Where the CFP work stands, end of 2026-08-31.**
 >
+> **OPEN, HIGH: eight SecureWorld rows hold a conference date in `SUBMISSION DEADLINE`** - one
+> reads as due tomorrow. They cite an events LISTING; the stored quote is two consecutive rows of
+> it, and the first date became the deadline while the second (correctly) became `START DATE`.
+> SecureWorld publishes no deadline at all - its real speaker page is a redirect stub. Sent as
+> `handoff-files/Defect_SecureWorld_Listing_Dates_20260831.md`. **Upstream's field: do not blank
+> it here** - R1 deliberately never touches a deadline value.
+>
+> **A date is not a deadline unless something says so.** Proposed as a gate check: a quote with
+> no deadline vocabulary is inadmissible for `SUBMISSION DEADLINE` unless the cited URL is itself
+> a call page. On the current delivery this flags exactly those eight rows and nothing else.
+>
+> **Ask a site for its own index before trusting a URL.** Five guessed call-for-speakers URLs
+> across three SecureWorld hosts all return HTTP 200 with "page not found" bodies - invisible to
+> a status-code check. `scripts/check_urls_against_site.py` (read-only) checks a cited URL
+> against robots.txt, the sitemap and the homepage nav. **No sitemap step exists anywhere in the
+> joint process**; discovery is upstream's side, verification ours.
+>
+> **`extract_citations` can return a quote that is not on the page.** Three of five came back
+> composed from our own fields (`'Threat Defense 2026 2026-09-01'`). Fetch and test every
+> extracted quote before applying it. Two recut cleanly and are the only pending changes:
+> Climate Change and Hydrogen Technology Expo NA.
+>
 > **Read `docs/operations/DECISION-TREE.md` before deciding a row needs research.** It is the
 > executable specification of what follows from a conference's timing - what the customer sees,
 > what we do, what it costs. `src/cfp_monitor/lifecycle.py` is the same thing in code; if they
