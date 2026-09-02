@@ -313,13 +313,47 @@ evidence flags were optional until 2026-08-11 and omitting them produced a page 
 broken page; it is a confident claim that nothing was verified and nothing is broken. The
 builder now refuses rather than allowing it.
 
+**THE EVIDENCE PASS COMES FIRST, AND IT IS TWO STEPS.** `audit_evidence.py` re-reads the cited
+pages and writes verdicts to the DATABASE; `export_checks.py` turns those into the CSV the page
+reads. Skipping the second means the audit refreshes everything and the page still shows the old
+numbers - measured once at 43 of 96 rows still labelled "Need to Verify" hours after they had
+been verified. Cost: about 1.3s per page, no LLM and no API spend.
+
 ```bash
-uv run python scripts/build_review_page.py -i <Markets>/ALL_MARKETS_AUDITED_<date>.csv \
-  --dead-links <handoff>/dead_submission_links_<date>.csv \
-  --checks <Markets>/deadline_checks_<date>.csv \
-  --dead-hosts <Markets>/dead_hosts_<date>.txt \
-  -o <Markets>/Conference_Review_<date>.html
+# 1. re-read the cited pages (writes to the DB)         ~5-10 min, no API cost
+python scripts/audit_evidence.py --db <db> --field deadline --recheck
+
+# 2. turn those verdicts into the CSV the page reads    THE STEP THAT GETS MISSED
+python scripts/export_checks.py --db <db> -o <runs_out>/checks_<date>.csv
+
+# 3a. the two live markets - what Nicolia's customers actually track
+python scripts/build_review_page.py -i <Markets>/<current delivery>.csv \
+  --date <today> --db <db> \
+  --checks <runs_out>/checks_<date>.csv \
+  --dead-hosts <runs_out>/hosts_final.txt \
+  --markets "Cybersecurity,Utility" --reconcile \
+  -o "<out>/Conference Review <date> - Live Markets.html"
+
+# 3b. all eight markets - same command without --markets
+python scripts/build_review_page.py -i <Markets>/<current delivery>.csv \
+  --date <today> --db <db> \
+  --checks <runs_out>/checks_<date>.csv \
+  --dead-hosts <runs_out>/hosts_final.txt --reconcile \
+  -o "<out>/Conference Review <date> - All Markets.html"
 ```
+
+**Two pages, both with the market chips.** The scope decides what exists; the chips still filter
+within it, so the two-market page can narrow to one. `--reconcile` adds the "Check against your
+sheet" view and needs `--db`; it crosses the id boundary through `identity` once, in the caller.
+
+**The finished pages go beside the previous ones the customer has been sent** - the
+`Nicolia-PR-Prime` folder, named `Conference Review <date> - <scope>.html`. Building into a temp
+folder and stopping there has happened; a deliverable in a session scratchpad does not survive
+the session.
+
+**Verify before sending**, because string-matching the HTML is not the same as looking at it.
+On 2026-09-01 a `//` comment in the view list shipped our internal reasoning about which rows WE
+had got wrong into a customer-facing page - caught by opening it, not by a grep.
 
 **This lives in THIS repo as of 2026-08-12, not in the Markets folder.** It is the one artefact
 the customer actually reads, it ran for months at 615 lines with zero tests, and a dead link
