@@ -4,7 +4,45 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
-> **Where the CFP work stands, end of 2026-08-31.**
+> **Where the CFP work stands, end of 2026-09-01.**
+>
+> **Two check-3 rows and the manifest stub section from ACCEPTED.** Current files:
+> `delivery_v23_check4_43col.csv` and `audit_cybersecurity_utility_43col_r10_20260901.csv`.
+> Both remaining rows are upstream's: H2 MEET needs the rounds-table subpage (its date is
+> **locked to 2026-09-30 under 2.4** - Nicolia verified it himself via cell history, so do not
+> re-derive it), and Global Energy Show needs a person at a CAPTCHA. **We do not bypass
+> CAPTCHAs.**
+>
+> **RUN `scripts/customer_context.py` BEFORE REMEDIATING ANY ROW.** On 2026-09-01, 22 rows were
+> repaired that the customer had already verified or acted on, and two were about to ship as
+> contradictions - ESF MENA queued as discontinued while they hold an acceptance and a $12,500
+> sponsorship decision. The data has been in `client_conferences` since 08-30. The gate ranks by
+> rule; the customer ranks by what they can still act on, and those orders are near-inverted.
+>
+> **Cross the id boundary with `identity.to_canonical`, never by comparing EVENT_IDs.** The
+> delivery carries upstream's ids, the client layer carries ours (contract 5.4). The documented
+> join scores **87 of 87**; a join to the `conferences` table scores 43 and looks like a finding.
+> `identity.assert_mapped` refuses an empty map - a path fault otherwise returns zero findings
+> that read as two records agreeing.
+>
+> **Export a customer sheet with `/export?format=csv`, NEVER `/gviz/tq?tqx=out:csv`.** gviz types
+> each column and silently drops non-conforming text - it blanked eight sponsorship deadlines
+> including ESF MENA's $12,500, and the diff reported them as customer edits.
+>
+> **Four defect classes in one day were one cause:** a row fixed downstream, regenerated broken
+> by the next research pass. `preserve_repaired_citation` is now in the generator, ordered after
+> the R22 filter so it cannot rescue an inadmissible citation.
+>
+> **Open, and worth doing next: seven rows marked `Verified` with nothing to verify** - blank
+> deadline, sometimes no evidence URL at all. R2 only fires on a *date* and R11 reads
+> `false` + `Verified` as agreeing, so the gate cannot see it. Past the threshold for a check.
+>
+> **Also open:** six scripts still parse the seed map themselves (debt that may shrink, never
+> grow); 18 client rows unmatched; and the operator's next ask - surface the customer's own
+> `status` / `speaker_abstracts_submitted` as filter chips on the HTML, the same way
+> "Check against your sheet" was wired.
+
+> **Where the CFP work stood, end of 2026-08-31.**
 >
 > **OPEN, HIGH: eight SecureWorld rows hold a conference date in `SUBMISSION DEADLINE`** - one
 > reads as due tomorrow. They cite an events LISTING; the stored quote is two consecutive rows of

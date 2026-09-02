@@ -5,6 +5,61 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-01 - the day's own failure pattern became build-failing tests
+
+**Four gate checks closed; two check-3 rows and the manifest stub section from ACCEPTED.**
+Current files: `delivery_v23_check4_43col.csv`, `audit_cybersecurity_utility_43col_r10_20260901.csv`.
+
+**The operator's call, and it was right: repeated mistakes on things already solved.** Three
+rules broken today were written down in files read the same day - the gviz export ban, the
+EVENT_ID join, and reading the client layer before remediating. The diagnosis: **zero of the
+day's errors were caught by documentation.** Several were caught by tests; the rest by the
+operator. Docs are read at session start; failures happen four hours later at one specific line.
+
+Four changes, all committed:
+
+- **Guards as tests** (`tests/test_identity_join.py`) - fails the build on a re-parsed seed map,
+  the gviz endpoint, writing a customer-owned field, or the client layer going unread. **Found
+  six more scripts with their own seed parser on its first run.**
+- **`src/cfp_monitor/identity.py`** owns the id boundary. `apply_resolutions._seed_map` is a thin
+  delegate, verified byte-identical at 394 entries. `assert_mapped` refuses an empty map, because
+  a path fault otherwise yields zero findings that read as agreement.
+- **The protocol asks for a citation, not a read** - name the governing decision before writing
+  the line, with the four that keep biting tabulated *with* their answers.
+- **The docs have a budget** (`tests/test_docs_stay_small.py`) - 21 rules, no line headroom.
+  Adding one must answer "can this be a test instead". Rule 17 was converted to pay for it.
+
+**Read the customer's sheet before repairing a row.** 22 of the rows repaired today had already
+been verified or acted on by Nicolia's team, and two were about to ship as contradictions - ESF
+MENA queued as discontinued while they hold an acceptance and a $12,500 sponsorship decision.
+`scripts/customer_context.py` buckets rows LIVE / TRACKED / MOOT / UNTRACKED and the protocol
+requires it. The gate ranks by rule; the customer ranks by what they can still act on.
+
+**One root cause behind four defect classes.** A row fixed downstream, regenerated broken by the
+next research pass - InfoSec World's citation, all twelve dead links (twelve of twelve back in
+the audit, zero in both), SecureWorld's listing dates, five prose rows. **Check 2 closed by a
+merge, not research.** A `preserve_repaired_citation` guard is now in the generator, ordered
+after the R22 filter so it cannot rescue an inadmissible citation.
+
+**R22 enforced in the gate**, offline, across all three evidence columns - 8 rows on its first
+run, 7 of them *passing* the quote check. **R22b added**: a machine endpoint is not a page.
+Deliberately a path test, not a host ban - eight legitimate `share.hsforms.com` form pages across
+four conferences would have been deleted to catch one endpoint. Advisory offline, failing only
+once fetched, because a regex is an inference and a delivery is not rejected on one.
+
+**The customer page now shows lifecycle evidence.** It read neither `LIFECYCLE_QUOTE` nor
+`LIFECYCLE_EVIDENCE_URL`, so 13 rows carried discontinuation evidence no customer could see. New
+**"Check against your sheet"** view carries 12 disagreements - not called sheet errors, because
+we are the wrong side twice and those rows say so.
+
+**Customer snapshots are diffable for the first time** - a second snapshot, byte-identical to
+08-30. The gviz endpoint is lossy and banned: it blanked eight sponsorship deadlines including
+ESF MENA's $12,500 and the diff read them as customer edits.
+
+**Six client matches promoted by human review, not eleven** - SecureWorld Expo is a series row,
+and four others are editions or successors missing from our lists. **Six conferences discovered**
+that Arnica marked `Info Needed`; ACCEPTED first run, zero inadmissible citations.
+
 ## 2026-08-31 (late) - a listing scrape wearing a deadline, and asking sites for their own index
 
 **Eight SecureWorld rows store a conference date in `SUBMISSION DEADLINE`.** One reads as due
