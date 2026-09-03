@@ -25,7 +25,7 @@ what we already carry so it hunts the unannounced 2027 cycles instead.
 |---|---|---|
 | 1 | Plan | done 2026-09-03 |
 | 2 | Seed list | done 2026-09-03 - `Markets/Awards_seed_20260903.csv` |
-| 3 | Schema + gate + row context | in progress |
+| 3 | Schema + gate + row context | row context and DUP_OF done; schema awaits the v1.8 amendment |
 | 4 | Discovery run | not started |
 | 5 | Gate + reconcile | not started |
 | 6 | Customer deliverable (awards page, separate from conferences) | not started |
@@ -85,6 +85,27 @@ fastcompany.com x4, rsaconference.com x3. One crawl of an operator can yield sev
 award records, including ones we do not carry.
 
 ## Stage 3 - the work
+
+State as of 2026-09-03:
+
+| item | state |
+|---|---|
+| 1. Row context in the grounding prompt | **done**, guarded by `Markets/test_grounding_context.py` |
+| 4. Honour `DUP_OF` | **done**, guarded by `Markets/test_dup_skip.py` |
+| 2/3. Window columns + gate | **drafted**, blocked on the v1.8 amendment being agreed |
+| 5. `AWARD` / `CONFERENCE` rename | deferred as debt - the seed works without it |
+
+The amendment is `handoff-files/Contract_v1.8_Amendment_Awards_Window.md`. It proposes
+`SUBMISSION_OPENS` and `ANNOUNCEMENT_DATE` (43 -> 45 columns) plus rule R24, and notes
+that **`ORGANIZER` from v1.5 already carries the operating body**, so the operator needs
+no new column. Not sent - Matt reviews and sends.
+
+While drafting it, a fix fell out: the final check in `Markets/test_preserve_guard.py`
+was malformed and could not fail. It read only the FIRST assignment in the guard, asked
+whether "DEADLINE" appeared in "DEADLINE_EVIDENCE_URL" - always true - and printed the
+answer instead of asserting it. It printed False on every run for a guard that was
+correct. It now collects every assignment target and asserts the deadline is not among
+them.
 
 ### 1. Row context in the grounding prompt (highest value)
 
