@@ -107,6 +107,39 @@ answer instead of asserting it. It printed False on every run for a guard that w
 correct. It now collects every assignment target and asserts the deadline is not among
 them.
 
+### 0. The separation boundary between awards and conferences
+
+Decided 2026-09-03, on the operator's instruction that the two must not intertwine.
+
+**Separate - the QUESTION.** `_CONFERENCE_RULES` and `_AWARDS_RULES` are two constants
+in `run_market_audit.py`, neither referencing the other, dispatched on the row's own
+`OPPORTUNITY_TYPE`. Awards ask about an entry window, a cycle, entry categories and the
+award's own page. Conferences ask about a call for papers, a venue and a format. Data is
+separate throughout: own seed, own output file, own tables (see below).
+
+**Shared - the ENGINE.** Retries, rate limiting, quota handling, R22 admissibility,
+dead-link confirmation, and the prompt's safety scaffolding: the identity lines, the
+unverified prior record, and rule 0.
+
+**Why the engine is not also split.** A second copy of the retry and citation machinery
+is the parallel-validator failure the protocol forbids - one gate, never a second
+opinion. Two implementations of browser dead-link confirmation already exist across the
+upstream/downstream boundary (`browser_confirm_dead` says so in its own docstring) and
+that is already a maintenance hazard. A third would be worse.
+
+Rule 0 decided it. It is the anti-echo guard. Two copies, one of them strengthened
+later, IS the confused-codebase bug - silently, in the safety-critical text. So it is
+shared, and `Markets/test_prompt_separation.py` asserts the two prompts contain
+byte-identical rule 0. Drift is a build failure, not a discovery.
+
+**Proof the conference path did not move:** the conference prompt was captured for three
+row shapes before the split and compared after - byte-identical at 5909, 5633 and 5680
+characters. A row with no `OPPORTUNITY_TYPE`, which is every conference market file that
+exists, takes exactly the path it always took. Pinned by the same test.
+
+**If full separation is later wanted**, split the shared engine into an importable
+module first. Do not copy it.
+
 ### 1. Row context in the grounding prompt (highest value)
 
 `build_grounding_prompt` in `run_market_audit.py` passes **five** fields:
