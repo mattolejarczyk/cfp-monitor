@@ -4,6 +4,59 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **Where the work stands, end of 2026-09-03. AWARDS is now a second module.**
+>
+> **DECIDE FIRST TOMORROW - this repo is public and already carries client detail.** Not a new
+> exposure and not fixable per-file: `Nicolia` appears in 10 tracked markdown files, `Arnica` and
+> `Utility Global` in 7 each, `ESF MENA` and the $12,500 sponsorship figure in 6 - including
+> `HANDOFF.md`, `worklog.md`, `JUDGEMENT.md`, `customer-sheet-matching.md` and the protocol
+> skill. Nothing was pushed to `cfp-monitor` on 09-03 pending one coherent decision. `Markets`
+> and `handoff-files` were pushed as usual.
+>
+> **Awards, stages 1-3 of 7 done.** Plan and full reasoning: [`docs/design/awards-plan.md`](docs/design/awards-plan.md).
+> Seed: `Markets/Awards_seed_20260903.csv`, 135 rows, **127 to research** after 8 `DUP_OF`.
+>
+> **The premise: 135 award rows, TWO live deadlines.** Awards is a discovery job, not a
+> verification job. The existing rows are a known-name set.
+>
+> **Operator decisions taken 09-03:**
+> 1. The awards file still targets **this week** for the customer.
+> 2. **Confirm the Cyber Defense date conflict FIRST tomorrow, before warning anyone.** Three
+>    seed rows, one operator, two dates: a fresh quote says **2026-09-04**, two other rows say
+>    2026-09-18. If the earlier date is right it has already passed by the time this is read.
+> 3. Public-repo redaction - superseded by the finding above; one decision, not per-file.
+> 4. **Stage 4 (127 rows, 3.0-4.4h) HOLDS until Gemini answers on v1.8.** Do not spend it early.
+>
+> **Upstream is Gemini** - designer and contract signer, cannot execute on this machine, so the
+> operator runs things and couriers both ways. `handoff-files/Upstream_Request_v1.8_20260903.md`
+> is drafted and **not sent**: it asks for a machine-readable keyed reply, lists every factual
+> claim with how to check it, and deliberately puts one untested finding up to be contradicted.
+>
+> **Awards and conferences ask SEPARATE questions and share ONE engine.** Two rule constants in
+> `run_market_audit.py`, dispatched on `OPPORTUNITY_TYPE`; a row without that column takes the
+> conference path unchanged (proved byte-identical). The engine is shared on purpose - a second
+> copy of the retry and citation machinery is the parallel-validator failure. Rule 0, the
+> anti-echo guard, is asserted byte-identical in both prompts by `Markets/test_prompt_separation.py`.
+>
+> **`run_market_audit.py` imports NOTHING from this repo.** Retrieval is one Gemini call per row
+> with the `google_search` tool; the crawl4ai/playwright/cdp ladder is downstream's only. An
+> earlier claim that the crawl layer was "already awards-aware" was wrong - it came from greps,
+> not from reading `audit_conference()`.
+>
+> **Awards need their own tables.** `conferences` has **no `opportunity_type` column**, so an
+> award imported today is indistinguishable from a conference. Proposed: `awards` and
+> `client_awards`; `clients` / `industries` / `link_checks` are already generic. Undecided:
+> `evidence` and `grounding_facts` key on `event_id`, `changes` on `conference_id`.
+>
+> **Untested hypothesis, sent to Gemini rather than acted on:** in `audit_conference` the record
+> is seeded from the input row and most fields fall back to it when the model omits a key, while
+> `SUBMISSION DATE VERIFIED` and `SOURCE_AS_OF` are stamped with the run date unconditionally.
+> That may be the mechanism behind the seven rows marked `Verified` with nothing to verify.
+>
+> **Also open:** the 10-row pilot left 2 stub rows from server-side 504s - needs `--redo-stubs`.
+> The model renamed 4 of 10 rows and `EVENT_ID` derives from the name; the awards prompt now
+> forbids it, but the risk is general. Awards `AWARD`/`CONFERENCE` column rename deferred as debt.
+
 > **Where the CFP work stands, end of 2026-09-01.**
 >
 > **Two check-3 rows and the manifest stub section from ACCEPTED.** Current files:

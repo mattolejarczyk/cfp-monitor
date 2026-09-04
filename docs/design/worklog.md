@@ -5,6 +5,51 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-03 - awards module started; the architecture claim I made was wrong
+
+**Stages 1-3 of 7 done.** `scripts/build_awards_seed.py` -> `Markets/Awards_seed_20260903.csv`,
+135 rows, 127 to research after 8 are labelled `DUP_OF`. Customer layer verified byte-identical
+against both source sheets: 675 values, 0 mismatches.
+
+**The premise inverts the obvious approach.** 135 award rows carry TWO live deadlines between
+them. Awards is a DISCOVERY job; re-verifying the rest mostly returns "closed", which is
+accurate and nearly worthless to the client.
+
+**I claimed the crawl layer was already awards-aware. It is not ours.** That came from grep hits
+in `discovery.py`, `extraction.py`, `fetch.py`, `grounding.py`. Reading `audit_conference()`
+properly: `run_market_audit.py` imports NOTHING from this repo. Retrieval is one Gemini call per
+row with the `google_search` tool - the model searches, we never crawl to discover. The
+crawl4ai/playwright/cdp ladder is downstream's and the generator never touches it. **A grep is
+not an architecture review; say which one you did.**
+
+**Row context.** `build_grounding_prompt` passed five fields and dropped the baseline
+`SUBMISSION URL` and `SUBMISSION DEADLINE`, so the model re-derived what we already held and we
+compared its answer to a baseline it had never seen. Rule 0 now labels the prior record
+unverified and forbids copying it into any output field. **10-row pilot: zero rows echoed the
+baseline without a fresh quote.** It did rename 4 of 10 rows, and `EVENT_ID` derives from the
+name - the awards prompt now forbids renaming.
+
+**Awards and conferences ask separate questions, share one engine.** Two rule constants, neither
+referencing the other, dispatched on `OPPORTUNITY_TYPE`; a row without it takes the conference
+path. Conference prompt captured before the split and byte-identical after (5909/5633/5680).
+The engine stays shared because a second copy of the retry and citation machinery is the
+parallel-validator failure. `Markets/test_prompt_separation.py` asserts rule 0 is byte-identical
+in both prompts. Full reasoning in `docs/design/awards-plan.md`.
+
+**pandas `nan` is truthy, so `(v or '').strip()` guards nothing.** It killed the first pilot on
+all ten rows, and a quieter second instance rendered the literal text `nan` into the prompt
+without crashing. Both now route through one `cell()` helper. **The test missed it because it
+passed a dict of strings while the run passes a Series** - it now drives the real seed through
+pandas.
+
+**Awards need their own tables.** `conferences` has no `opportunity_type` column at all, so an
+award imported today is indistinguishable from a conference.
+
+**Contract v1.8 drafted** (`handoff-files/`): `SUBMISSION_OPENS` + `ANNOUNCEMENT_DATE`, 43 -> 45,
+rule R24. `ORGANIZER` from v1.5 already carries the operating body.
+
+---
+
 ## 2026-09-01 - the day's own failure pattern became build-failing tests
 
 **Four gate checks closed; two check-3 rows and the manifest stub section from ACCEPTED.**
