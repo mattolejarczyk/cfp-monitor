@@ -6,7 +6,7 @@
 #
 # Format:  <event_id>  # <reason>
 
-2026-aes-convention-new-york  # Dropped from the 2026-08-07 delivery with no reason declared (breaches R7). Present in the previous delivery and in the audit input. Question sent to upstream 2026-08-08; held pending their answer.
+2026-aes-convention-new-york  # RESOLVED 2026-09-05 - withdrawn deliberately by upstream, superseded by AES Show 2026 Nashville (161st Convention). Kept as a declared hold rather than deleted so the trail survives; it must never be promoted. Original reason: dropped from the 2026-08-07 delivery with no declared reason (breached R7); question sent 2026-08-08, answered 2026-09-05. AES relocated its 2026 US convention from New York to Nashville; the New York listing was an aggregator artifact from historical precedent and AES's New York head office. Our own record agrees: the New York row carries no evidence URL and verify_state not_found, the Nashville row is verified, and only the Nashville row has ever appeared in a delivery.
 
 # NOTE ON LOCATION. The generated *_seed.csv files live only in the live build and are
 # disposable - they are rebuilt on every import. THIS file is different: it records a
