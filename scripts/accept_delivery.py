@@ -41,8 +41,19 @@ from src.cfp_monitor.verify import fetch_text, link_status      # noqa: E402
 # delivery_phase2_remediated_43col.csv passed with zero failures on 2026-08-29, five days ahead
 # of the 2 September target, and upstream authorised the close. A 38-column file now fails at
 # check 1 with a clear message rather than importing and silently storing nothing in cols 39-43.
-ACCEPTED_COLS = {43}
+#
+# TWO SHAPES AGAIN, from 2026-09-05, for the v2.1 awards window (R26).
+#   43  v1.5 - ends with the five sponsorship columns
+#   45  v2.1 - appends SUBMISSION_OPENS and ANNOUNCEMENT_DATE after them
+# Same transition as v1.5 and for the same reason: Bioeconomy Batch 1 was cleared under 43
+# and may land mid-change, so flipping straight to 45 would reject a delivery that was
+# authorised. CLOSE IT THE SAME WAY: when a 45-column delivery has been accepted, drop 43.
+ACCEPTED_COLS = {43, 45}
 V15_COLS = ["ORGANIZER", "SPONSOR_REQUIRED", "SPONSOR_URL", "SPONSOR_COST", "SPONSOR_QUOTE"]
+# v2.1 (R26). Appended AFTER the sponsorship block, so the v1.5 columns stay at 39-43 and
+# stop being the last five. Anything checking "the last five" silently breaks at 45 columns -
+# which is what this file did until 2026-09-05.
+V21_COLS = ["SUBMISSION_OPENS", "ANNOUNCEMENT_DATE"]
 SPONSOR_VALUES = {"yes", "no", "unknown", ""}   # blank is read as Unknown (R18.1)
 VALID_FORMATS = {"In-Person", "Virtual", "Hybrid"}
 # Values that mean "not found" dressed up as data. 2.6 requires an honest blank.
@@ -113,13 +124,24 @@ class Gate:
                     bad.append(f"line {i}: {len(row)} fields ({row[1][:40] if len(row) > 1 else '?'})")
         if width not in ACCEPTED_COLS:
             bad.insert(0, f"header has {width} columns, expected one of "
-                          f"{sorted(ACCEPTED_COLS)} (38 = through v1.3, 43 = v1.5)")
+                          f"{sorted(ACCEPTED_COLS)} (43 = v1.5, 45 = v2.1 awards window)")
         # A COUNT IS NOT A SCHEMA. 43 columns of the wrong names would sail through a length
         # check and every later check would then read shifted fields - the exact failure the
         # runbook warns about. Name them.
-        elif width == 43 and [c.strip() for c in header[-5:]] != V15_COLS:
-            bad.insert(0, f"43 columns but the last five are {[c.strip() for c in header[-5:]]}, "
-                          f"expected {V15_COLS} (v1.5, appended in that order)")
+        #
+        # BY POSITION, NOT "the last five". The v1.5 block sits at columns 39-43 and stopped
+        # being last when v2.1 appended two more. A [-5:] check reads
+        # SPONSOR_URL..ANNOUNCEMENT_DATE on a 45-column file and rejects a correct delivery.
+        else:
+            got_v15 = [c.strip() for c in header[38:43]]
+            if got_v15 != V15_COLS:
+                bad.insert(0, f"{width} columns but positions 39-43 are {got_v15}, "
+                              f"expected {V15_COLS} (v1.5, in that order)")
+            if width == 45:
+                got_v21 = [c.strip() for c in header[43:45]]
+                if got_v21 != V21_COLS:
+                    bad.insert(0, f"45 columns but positions 44-45 are {got_v21}, "
+                                  f"expected {V21_COLS} (v2.1 R26, appended in that order)")
         self.add("1", f"RFC 4180 - every row parses to the header's {width} fields", bad)
         with open(self.path, encoding="utf-8-sig", newline="") as fh:
             self.rows = list(csv.DictReader(fh))

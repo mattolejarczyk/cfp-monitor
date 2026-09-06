@@ -115,10 +115,22 @@ def test_the_v15_column_names_are_pinned():
                            "SPONSOR_QUOTE"]
 
 
-def test_only_the_v15_width_is_accepted():
-    """43 is the single accepted shape as of 2026-08-29. If a future change re-opens this to
-    two widths, that should be a deliberate amendment with an end date, not a convenience."""
-    assert ad.ACCEPTED_COLS == {43}
+def test_the_accepted_widths_are_a_deliberate_amendment():
+    """43 was the single accepted shape from 2026-08-29. This test demanded that any
+    re-widening be a deliberate amendment with an end date rather than a convenience, and
+    on 2026-09-05 it failed for exactly that reason - contract v2.1 (R26) appended
+    SUBMISSION_OPENS and ANNOUNCEMENT_DATE, agreed by both sides the same day.
+
+    So it moves rather than being deleted, and it keeps the same demand: two widths are a
+    TRANSITION, not a standing state. The close condition is written beside ACCEPTED_COLS -
+    drop 43 once a 45-column delivery has been accepted. Deliberately no automatic expiry:
+    a gate that narrows itself on a date could reject a delivery nobody was expecting.
+    """
+    assert ad.ACCEPTED_COLS == {43, 45}, (
+        "widening this set again needs an agreed amendment and a written close condition")
+    src = (ROOT / "scripts" / "accept_delivery.py").read_text(encoding="utf-8")
+    assert "when a 45-column delivery has been accepted, drop 43" in src.lower(), (
+        "the transition must carry its own close condition, as the v1.5 one did")
 
 
 # ------------------------------------------ ownership: the quote is OURS, not theirs --
