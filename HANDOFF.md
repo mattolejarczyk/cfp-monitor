@@ -4,7 +4,50 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
-> **Where the work stands, end of 2026-09-03. AWARDS is now a second module.**
+> **Where the work stands, end of 2026-09-05. ONE CONTRACT, and the awards run is in flight.**
+>
+> **The contract is `Joint_Pipeline_Contract_v2.0.1_CONSOLIDATED_20260905.md` plus
+> `Contract_v2.1_Amendment_Renumbering_And_Awards_Window.md`, both in `handoff-files`, both
+> adopted by upstream 2026-09-05.** Nothing else in that folder is in force - see its new
+> `README.md`, which names the two current documents out of 106 and stamps the rest. A
+> parallel session's v1.9 consolidation was rejected before sending: it dropped **34 numbered
+> sub-rules**, including R23.3, the only new obligation R23 places on upstream.
+>
+> **SCHEMA IS NOW 45 COLUMNS (R26).** `SUBMISSION_OPENS` and `ANNOUNCEMENT_DATE` appended.
+> The gate accepts `{43, 45}` as a transition - drop 43 once a 45-column delivery is accepted.
+> **The v1.5 sponsorship block is no longer last**, so anything checking "the last five
+> columns" is wrong; check positions 39-43. That bug was live in the gate this morning.
+> `Markets/test_schema_agrees_with_gate.py` now compares the two repos, which nothing did.
+>
+> **AWARDS RUN IN FLIGHT.** 127 rows started 19:13 on 2026-09-05, roughly 1.3 min/row,
+> expected around 21:58. Output `Markets/Awards_20260905_out.csv`. **The 09-03 pilot output is
+> schema-stale at 43 columns - do not merge the two files.**
+>
+> **Rule numbers moved.** The v1.4 identity rules are now **R24/R25**; v1.5 sponsorship keeps
+> R18/R19. Which set moved was decided by grep - every code reference is to sponsorship.
+>
+> **`NOTES` is the customer's.** Tiered rounds and a contested `ORGANIZER` both go in
+> `STATUS DETAILS`. v2.0 got this wrong and upstream was about to act on it.
+>
+> **Next action: stage 6, the awards customer page.** A preview from the seed proves the
+> renderer accepts awards data but is not sendable - every label says conference, and the
+> awards columns render blank because they are absent from `build_review_page.FIELDS`, the
+> documented trap in that file's own comment. Needs its own field list and vocabulary, and one
+> genuinely new filter chip - **"opening soon"** - which has no conference equivalent and is
+> the reason the module exists.
+>
+> **Upstream owes:** Bioeconomy Batch 1, and two AES Europe rows in the next Consumer
+> Electronics delivery. Nothing owed to them.
+>
+> **Worth one line next time:** upstream said "upcoming awards research will build against the
+> 45-column schema", but awards research is ours. Possible duplicate spend.
+>
+> **Deferred:** a secret gist for the contract (upstream cannot fetch `handoff-files` - it is
+> private; `cfp-monitor` is public, verified by anonymous fetch); and a JUDGEMENT rule that
+> **an absence or a total requires a count, never a truncated list** - I asserted "no code
+> references the identity rules" from a `head -30` that happened to show all 30.
+
+> **Where the work stood, end of 2026-09-03. AWARDS is now a second module.**
 >
 > **DECIDE FIRST TOMORROW - this repo is public and already carries client detail.** Not a new
 > exposure and not fixable per-file: `Nicolia` appears in 10 tracked markdown files, `Arnica` and

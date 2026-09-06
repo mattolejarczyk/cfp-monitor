@@ -5,6 +5,46 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-05 - one contract at last, and a bug at the seam between two repos
+
+**Both sides now run from one text: v2.0.1 plus amendment v2.1**, adopted the same day over
+four round trips. The agreement had been spread across nine documents, several of whose own
+headers still read DRAFT while their rules were live and gated.
+
+**A parallel session's consolidation (v1.9) was reviewed and rejected before sending.** It
+declared the v1.6 amendment "could not be located" and reconstructed R22/R23 from secondary
+sources - the file is in this repo at `docs/operations/`. Measured across all eight sources:
+**v1.9 dropped 34 numbered sub-rules; the rebuild dropped none.** The costly ones were R22.3
+(withdraw an inadmissible citation even past deadline), R23.3 (**every round is recorded** -
+the only new obligation R23 places on upstream) and R23.4.
+
+**What closed with upstream:** v1.5 confirmed as agreed; the R18/R19 collision renumbered to
+R24/R25, with which set moved decided by grep (every code reference is to sponsorship, none to
+identity); the awards window taking **R26** rather than R24 to avoid recreating the collision;
+row counts reconciled by running `check_invariants` rather than accepting the explanation; and
+a four-week-old R7 breach (AES Convention) retired.
+
+**Our error, found by upstream acting on it:** v2.0 said tiered rounds live "in the row's
+notes", carried out of v1.6's wording while contradicting v2.0's own section 3. `NOTES` is the
+customer's. Corrected to `STATUS DETAILS` in v2.0.1 before any delivery wrote there.
+
+**Schema 43 -> 45 (R26).** `SUBMISSION_OPENS`, `ANNOUNCEMENT_DATE`. The gate verified the
+sponsorship block with `header[-5:]`; the generator placed it at 39-43. Both correct until v2.1
+appended two columns, at which point the block stopped being last and the gate would have
+rejected a correct delivery. **Nothing compared the two - they live in different repos with no
+shared package.** Now checked by position, and `Markets/test_schema_agrees_with_gate.py` is the
+comparison.
+
+**`handoff-files/README.md`.** 106 documents, nothing said which were the rules.
+`Joint_Pipeline_Contract_for_Upstream.md` - no version, no date, 35 columns, Spec v4.3 - reads
+as current to anyone not told otherwise. Every superseded contract now carries a STATUS banner,
+because the index only protects a reader who finds the index.
+
+**Repo visibility established rather than assumed:** `cfp-monitor` is public, `cfp-handoff-files`
+is private. So the contract cannot be fetched by URL and is still couriered.
+
+---
+
 ## 2026-09-03 - awards module started; the architecture claim I made was wrong
 
 **Stages 1-3 of 7 done.** `scripts/build_awards_seed.py` -> `Markets/Awards_seed_20260903.csv`,
