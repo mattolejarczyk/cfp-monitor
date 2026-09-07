@@ -4,7 +4,40 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
-> **Where the work stands, end of 2026-09-05. ONE CONTRACT, and the awards run is in flight.**
+> **Where the work stands, end of 2026-09-06. Awards is at stage 6 of 7 and blocked on upstream.**
+>
+> **THE AWARDS DELIVERY IS `Markets/Awards_20260905_out.csv`** - 127 rows, 45 columns, through a
+> full networked gate. Everything passes except:
+>
+>     [FAIL] 2    14 dead links, NONE withdrawable  -> contract question, sent
+>     [FAIL] 3     5 quote failures                 -> need a human, not another pass
+>     [NOTE] STUB 10 ungrounded stubs               -> declared in the manifest
+>
+> **Two documents drafted and NOT SENT:** `handoff-files/Manifest_Awards_Batch1_20260906.md`
+> (R7) and `handoff-files/Criterion2_Passed_Deadline_Exemption_20260906.md`.
+>
+> **Criterion 2 needs the exemption criterion 3 already has.** All 14 dead pages belong to rows
+> whose deadline has passed - an entry page comes down once its window closes. v1.4 gave
+> criterion 3 that exemption on the same reasoning, measured at 84% of its failures. **Do not
+> auto-withdraw these**: that was tried 2026-08-29 and 14 of 18 would have been wrong.
+>
+> **`NOTES` IS THE CUSTOMER'S AND WE WERE OVERWRITING IT.** Zero of 96 joined conference rows
+> preserved their text. Fixed at source; the awards file is repaired; upstream has agreed to
+> stop emitting it. **`ORGANIZER` was empty on every row since v1.5 created it** because no
+> prompt asked - the organiser was going into `NOTES` instead. Fills on future runs only.
+>
+> **Two of our own gate checks were wrong, not the data.** Criterion 4 matched a bare "active"
+> and failed rows saying "no active cycle"; 6b assumed a deadline precedes its event, which is
+> false for an award closing entries during its own ceremony week. Both fixed, both guarded.
+>
+> **Stage 6 is built.** `build_review_page.py --kind awards` - own vocabulary, own chips
+> ("Opening soon" is the one that matters), shared renderer. **The page cannot be sent yet**:
+> the rows are not imported, so there is no evidence pass and those views read "not yet
+> checked". Import is gated on acceptance, which is blocked on the above.
+>
+> **Next action: send the two documents.** Everything left needs upstream's answer.
+
+> **Where the work stood, end of 2026-09-05. ONE CONTRACT, and the awards run is in flight.**
 >
 > **The contract is `Joint_Pipeline_Contract_v2.0.1_CONSOLIDATED_20260905.md` plus
 > `Contract_v2.1_Amendment_Renumbering_And_Awards_Window.md`, both in `handoff-files`, both

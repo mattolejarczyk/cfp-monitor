@@ -5,6 +5,43 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-06 - awards through the gate, and the checks that were wrong
+
+**Stages 5 and 6.** The first awards delivery went through a full networked gate. Of five
+failing checks on the first run, **two were our own checks being wrong rather than the data**.
+
+**Criterion 4 matched a bare "active"** with a single negation guard, and fired on rows
+reading *"No active 2026 cycle was found"* and *"have not been active since"* - three false
+positives from four hits, and never awards-specific: any conference row saying "no active
+call" failed the same way. **6b is a conference assumption** - an award's late-entry window
+legitimately closes during the ceremony week, quoted verbatim on three rows. Awards exempted.
+
+**We were overwriting the customer's `NOTES`.** Section 3 assigns it to them. Joining through
+`identity.to_canonical`: the conference delivery preserved their text on **zero of 96** joined
+rows; the awards delivery replaced 65 and deleted 8. Theirs are decision notes ("CISO track is
+invite-only"); ours were descriptions of the event.
+
+**And the cause underneath it: `ORGANIZER` was empty on 406 of 406 conference rows since v1.5
+created it on 2026-08-14** - the prompt never asked for it, so the organiser went into `NOTES`
+instead. 278 of 406 conference notes name an organiser and every one has `ORGANIZER` blank.
+**No 46th column**: 68% belongs in `ORGANIZER`, 31% in `LOCATION`, the rest in `STATUS DETAILS`.
+
+**R16 guard in the generator, label only.** R22 acts on a fact; this acts on an inference, so
+it moves `STATUS` and never the prose - suppressing a sentence would delete a finding that may
+be true for want of a citation. A first attempt made the pattern tighter than the gate's and
+missed *"appear to have been discontinued"*; patterns are now asserted identical across repos.
+
+**Citations 14 -> 5.** `extract_citations`, not `trace_quote_to_page` - its own docstring
+stopped that: *"Send a paraphrase here and a sound citation is lost."* Vetting compares the
+quote AND the call against the row name; comparing only the call would have rejected three
+good citations while still catching the row that picked the A.I. Awards three times running.
+
+**Stage 6: `--kind` selects vocabulary and chips, everything else shared.** Awards gain
+"Opening soon", "Open now", "Winners announced soon"; lose "Event soon". **A zero must mean
+zero** - evidence views now read "not yet checked" rather than 0 when no pass has run.
+
+---
+
 ## 2026-09-05 - one contract at last, and a bug at the seam between two repos
 
 **Both sides now run from one text: v2.0.1 plus amendment v2.1**, adopted the same day over
