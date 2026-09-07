@@ -51,7 +51,31 @@ FIELDS =['CONFERENCE', 'Market', 'CITY', 'STATE_PROVINCE', 'COUNTRY', 'FORMAT',
           # render without adding these two produced exactly that on 2026-09-01: the page
           # carried `"lq": ""` for ESF MENA while the delivery held the organiser's sentence.
           # `d.get(col, '')` looked defensive and was the thing hiding it.
-          'LIFECYCLE_QUOTE', 'LIFECYCLE_EVIDENCE_URL']
+          'LIFECYCLE_QUOTE', 'LIFECYCLE_EVIDENCE_URL',
+          # v2.1 (R26) awards. Conferences leave these blank, which is correct, not a gap.
+          # Added here the moment the columns existed - the comment above is the reason:
+          # a column absent from this list renders empty no matter what the delivery holds,
+          # and that shipped `"lq": ""` on 2026-09-01 while the file carried the sentence.
+          'SUBMISSION_OPENS', 'ANNOUNCEMENT_DATE']
+
+# The ONLY place the two modules differ in wording. Everything else - the renderer, the
+# filters, the evidence display, the reconciliation view - is shared, the same division the
+# grounding prompts use. Nicolia was explicit that awards is a separate screen from
+# conferences; this is what makes it one without a second page builder to keep in step.
+VOCAB = {
+    'conference': {
+        'title':  'Conference &amp; Call-for-Papers Review',
+        'noun':   'conferences',
+        'search': 'Conference, city, track...',
+    },
+    'awards': {
+        'title':  'Awards &amp; Entry Deadlines',
+        'noun':   'awards',
+        # No city: many awards are global or online and have no venue at all. Category is
+        # what an entrant actually picks, so it replaces track.
+        'search': 'Award, organiser, category...',
+    },
+}
 
 MARKET_LABEL = {'robotics': 'Robotics', 'Robotics': 'Robotics', 'AdditiveMfg': 'Additive Mfg',
                 'ConsumerElectronics': 'Consumer Electronics', 'BioMedTech': 'BioMedTech',
@@ -204,6 +228,11 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
             'ev': d['DEADLINE_EVIDENCE_URL'],
             'trk': d['TRACK'], 'op': d['OPPORTUNITY_TYPE'],
             'org': d['ORGANIZER'],
+            # v2.1 (R26). An award has a WINDOW, not a deadline, and knowing when it OPENS
+            # is the point of the module: "they might only be open for a month, and if you
+            # didn't know about it you don't get to even enter." Blank on conferences,
+            # which is correct rather than missing.
+            'so': d['SUBMISSION_OPENS'], 'ann': d['ANNOUNCEMENT_DATE'],
             # v1.5. ONLY 'Yes' becomes a badge. 'Unknown' is the default on every row
             # until someone looks, so rendering it would put a meaningless label on
             # nearly the whole list; and 'No' is the norm, so it is not news either.
@@ -285,6 +314,10 @@ h1{margin:0 0 2px;font-size:17px;letter-spacing:-.01em}
   transition:.12s}
 .view:hover{border-color:var(--accent)}
 .view.on{background:var(--accent);border-color:var(--accent);color:#fff}
+/* No evidence pass has run, so this view has nothing to count. Muted and not clickable,
+   because an em dash that still looks pressable invites the reader to trust an empty list. */
+.view.unknown{opacity:.5;cursor:not-allowed}
+.view.unknown:hover{border-color:var(--line)}
 .view .c{font-weight:700;font-variant-numeric:tabular-nums}
 .view small{display:block;font-size:11px;color:var(--muted);font-weight:400}
 .view.on small{color:rgba(255,255,255,.85)}
@@ -373,8 +406,8 @@ a{color:var(--accent)}
 .s-ask{background:#e3edf5;color:#2a5b87}
 </style></head><body>
 <header>
-  <h1>Conference &amp; Call-for-Papers Review</h1>
-  <div class="sub">__COUNT__ conferences &middot; __SCOPE__ &middot; data as at __DATE__ &middot;
+  <h1>__TITLE__</h1>
+  <div class="sub">__COUNT__ __NOUN__ &middot; __SCOPE__ &middot; data as at __DATE__ &middot;
     urgency recalculated live against today's date</div>
 </header>
 <div class="wrap">
@@ -394,7 +427,7 @@ a{color:var(--accent)}
     <div class="sechd">Refine</div>
     <div class="filters">
     <div class="fg"><label>Search</label>
-      <input type="search" id="q" placeholder="Conference, city, track..."></div>
+      <input type="search" id="q" placeholder="__SEARCHHINT__"></div>
     <div class="fg"><label>Status</label><select id="fs">
       <option value="">All statuses</option><option>Open</option><option>Upcoming</option>
       <option>Closed</option><option>Needs Verification</option></select></div>
@@ -462,13 +495,23 @@ const DATA = __DATA__;
 const DEAD_HOSTS = __DEADHOSTS__;
 const today = new Date(); today.setHours(0,0,0,0);
 const URGENT_DAYS = __URGENT_DAYS__, SOON_DAYS = __SOON_DAYS__;
+// 'conference' or 'awards'. Selects the chip set and the vocabulary; the renderer, the
+// filters and the evidence display are shared.
+const KIND = '__KIND__';
+// True when the page was built with --no-evidence, so the deadline-verification and
+// dead-link inputs were never produced. The three views below depend entirely on them.
+const NO_EVIDENCE = __NO_EVIDENCE__;
+const EVIDENCE_VIEWS = ['checked','unconfirmed','broken'];
+// A window that opens inside two months is worth preparing for now. Wider than the closing
+// chips on purpose: the point is lead time, not urgency.
+const OPENING_DAYS = 60;
 // Mutable: the date box rewrites it and every count recomputes. Declared with `let` on
 // purpose - a const here would make the box decorative.
 let SINCE = '__SINCE__';
 const days = s => { if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(s||'')) return null;
   const p=s.split('-'); const d=new Date(+p[0],+p[1]-1,+p[2]); d.setHours(0,0,0,0);
   return Math.round((d-today)/864e5); };
-DATA.forEach(r=>{ r.dd = days(r.dl); r.sd = days(r.start);
+DATA.forEach(r=>{ r.dd = days(r.dl); r.sd = days(r.start); r.od = days(r.so);
   // A STORED STATUS GOES STALE THE DAY AFTER IT IS WRITTEN. STATUS comes from the delivery and
   // was right when produced; the date then passes and nothing updates it. On 2026-08-11 eight
   // rows read "Open" with a deadline already gone, four of them within the previous week - and
@@ -478,13 +521,27 @@ DATA.forEach(r=>{ r.dd = days(r.dl); r.sd = days(r.start);
   if(r.dd!==null && r.dd<0 && (r.s==='Open'||r.s==='Upcoming')){ r.s='Closed'; r.sderived=1; }
 });
 
+// Chips carrying `kinds` appear only on that kind of page; the rest are shared. Same shape
+// as the prompt split - one engine, two questions - so a chip cannot leak between modules.
 const VIEWS = [
+ // THE AWARDS CHIP, and the reason the module exists. Nicolia, 2026-09-02: "some of these
+ // might only be open and available for like a month. They'll open it and then at the end
+ // of the month it's closed. And if you didn't know about it, you don't get to even enter."
+ // A conference deadline is a countdown; an award window has to be CAUGHT. No conference
+ // equivalent, which is why it is not in the shared set.
+ {k:'opening', t:'Opening soon', d:'entries open within '+OPENING_DAYS+' days', kinds:['awards'],
+  f:r=>r.od!==null&&r.od>=0&&r.od<=OPENING_DAYS},
+ {k:'openwindow', t:'Open now', d:'entries being accepted', kinds:['awards'],
+  f:r=>r.s==='Open'||(r.od!==null&&r.od<=0&&r.dd!==null&&r.dd>=0)},
  {k:'urgent', t:'Closing this week', d:URGENT_DAYS+' days or less',
   f:r=>r.dd!==null&&r.dd>=0&&r.dd<=URGENT_DAYS},
  {k:'soon', t:'Closing this month', d:SOON_DAYS+' days or less',
   f:r=>r.dd!==null&&r.dd>=0&&r.dd<=SOON_DAYS},
- {k:'openevent', t:'Event soon, open', d:'event within 4 months',
+ // An award usually has no event to attend, so "event within 4 months" answers nothing.
+ {k:'openevent', t:'Event soon, open', d:'event within 4 months', kinds:['conference'],
   f:r=>r.s==='Open'&&r.sd!==null&&r.sd>=0&&r.sd<=120},
+ {k:'announce', t:'Winners announced soon', d:'the PR moment', kinds:['awards'],
+  f:r=>{const a=days(r.ann); return a!==null&&a>=0&&a<=90;}},
  {k:'open', t:'All open calls', d:'accepting now', f:r=>r.s==='Open'},
  {k:'watching', t:'Awaiting next', d:'hunting next date', f:r=>r.st==='Watching'},
  // WHAT HAS MOVED SINCE I LAST LOOKED. The question a weekly reader actually has, and until
@@ -503,7 +560,7 @@ const VIEWS = [
  {k:'reconcile', t:'Check against your sheet', d:'our record and yours differ',
   f:r=>r.rec && r.rec.length},
  {k:'all', t:'Everything', d:'full list', f:r=>true},
-];
+].filter(v=>!v.kinds||v.kinds.indexOf(KIND)>=0);
 // "Closing this month" is the right landing view when something IS closing this month. On a
 // per-client page it often is not - Arnica had none - and the page then opened on "Nothing
 // matches those filters", which reads as a broken product rather than a quiet month.
@@ -532,10 +589,21 @@ for (const k of ['soon','urgent','open','recent','watching','all']) {
   if (k === 'all') view = 'all';
 }
 function drawViews(){
-  $('views').innerHTML = VIEWS.map(v=>
-   `<button class="view${v.k===view?' on':''}" data-v="${v.k}">
-     <span class="c">${DATA.filter(r=>inMkt(r)&&v.f(r)).length}</span>
-     <span>${v.t}<small>${v.d}</small></span></button>`).join('');
+  // A ZERO MUST MEAN ZERO. The three evidence views are computed from an evidence pass that
+  // may not have run - on the first awards page it had not, and the page showed
+  // "0 Deadline confirmed", which reads as a result when it is an omission. That is the
+  // exact failure this builder already refuses --checks for; passing --no-evidence stepped
+  // around the guard and reintroduced it in the output.
+  //
+  // So when there is no evidence to read, those views say so and are not clickable. A count
+  // is only shown where it was actually counted.
+  $('views').innerHTML = VIEWS.map(v=>{
+   const unknown = NO_EVIDENCE && EVIDENCE_VIEWS.indexOf(v.k)>=0;
+   const c = unknown ? '&mdash;' : DATA.filter(r=>inMkt(r)&&v.f(r)).length;
+   return `<button class="view${v.k===view?' on':''}${unknown?' unknown':''}" data-v="${v.k}"${
+     unknown?' disabled title="No evidence pass has been run for this file yet"':''}>
+     <span class="c">${c}</span>
+     <span>${v.t}<small>${unknown?'not yet checked':v.d}</small></span></button>`;}).join('');
 }
 drawViews();
 $('mk').innerHTML = mkts.map(m=>
@@ -587,12 +655,26 @@ function chkCell(r){
 }
 
 function dlCell(r){
-  if(!r.dl) return '<span style="color:var(--muted)">not announced</span>';
+  // AN AWARD HAS A WINDOW, NOT A DEADLINE (R26). A conference deadline is a countdown; an
+  // award has to be caught between two dates, and "not announced" against a closing date
+  // tells an entrant nothing about whether they can act. So when the window is still ahead
+  // the OPENING date leads, because that is the actionable fact.
+  if(KIND==='awards' && r.od!==null && r.od>0){
+    const soon = r.od<=OPENING_DAYS
+      ? `<span class="days b b-soon">opens in ${r.od}d</span>` : '';
+    const cl = r.dl ? `<span class="days" style="color:var(--muted)">closes ${r.dl}</span>` : '';
+    return `<span class="dl">${r.so}${soon}</span>${cl}`;
+  }
+  if(!r.dl) return '<span style="color:var(--muted)">'
+    + (KIND==='awards' ? 'window not announced' : 'not announced') + '</span>';
   let b='';
   if(r.dd!==null&&r.dd>=0&&r.dd<=URGENT_DAYS) b=`<span class="days b b-urg">${r.dd}d left</span>`;
   else if(r.dd!==null&&r.dd>=0&&r.dd<=SOON_DAYS) b=`<span class="days b b-soon">${r.dd}d left</span>`;
   else if(r.dd!==null&&r.dd<0) b=`<span class="days" style="color:var(--muted)">passed</span>`;
-  return `<span class="dl">${r.dl}${b}</span>`;
+  // Where entries are already open, say so alongside the closing date.
+  const op = (KIND==='awards' && r.so && r.od!==null && r.od<=0)
+    ? `<span class="days" style="color:var(--muted)">open since ${r.so}</span>` : '';
+  return `<span class="dl">${r.dl}${b}</span>${op}`;
 }
 const sB={'Open':'b-open','Closed':'b-closed','Upcoming':'b-up','Needs Verification':'b-nv'};
 const eB={'Active':'b-open','Watching':'b-soon','Archived':'b-closed','Discontinued':'b-nv'};
@@ -728,6 +810,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-i', '--input', required=True)
     ap.add_argument('-o', '--output', required=True)
+    ap.add_argument('--kind', choices=sorted(VOCAB), default='conference',
+                    help="which module this page is for. Selects the vocabulary and the "
+                         "chip set; everything else is shared. Awards gain 'Opening soon', "
+                         "'Open now' and 'Winners announced soon', and lose 'Event soon' - "
+                         "an award usually has no event to attend.")
     ap.add_argument('--date', default='2026-08-07')
     ap.add_argument('--db', help='PREFERRED source for dead links: read link_checks directly, '
                                  'so the picture cannot be stale. Supplying this satisfies '
@@ -914,6 +1001,11 @@ def main():
     # nothing would fail; the two would just quietly mean different things by "closing soon".
     page = (PAGE.replace('__DATA__', json.dumps(data, ensure_ascii=False))
                 .replace('__DEADHOSTS__', json.dumps(dead_hosts, ensure_ascii=False))
+                .replace('__KIND__', a.kind)
+                .replace('__NO_EVIDENCE__', 'true' if a.no_evidence else 'false')
+                .replace('__TITLE__', VOCAB[a.kind]['title'])
+                .replace('__NOUN__', VOCAB[a.kind]['noun'])
+                .replace('__SEARCHHINT__', VOCAB[a.kind]['search'])
                 .replace('__URGENT_DAYS__', str(lifecycle.URGENT_DAYS))
                 .replace('__SOON_DAYS__', str(lifecycle.SOON_DAYS))
                 .replace('__COUNT__', str(len(data)))
