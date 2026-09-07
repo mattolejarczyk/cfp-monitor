@@ -121,6 +121,62 @@ CREATE TABLE IF NOT EXISTS grounding_facts (
     sponsor_cost      TEXT,                     -- free text: tiers, ranges, currency as written
     sponsor_quote     TEXT
 );
+-- Awards claims live in their OWN table, not in grounding_facts. Contract v2.1 made awards a
+-- second entity type, and the operator's standing instruction is that the two must not
+-- intertwine.
+--
+-- WHY SPLIT RATHER THAN SHARE. An award's event_id can never collide with a conference's -
+-- the opportunity type is in the key, and Speaking is unsuffixed by design - so one table
+-- would have WORKED. It was rejected on a specific ground: check_invariants reports "N DB
+-- rows against M delivered ids" straight off grounding_facts. The moment awards share it,
+-- that number means nothing without a filter, and an implicit filter everyone must remember
+-- is the class of defect this project has spent most of its cost on. The reconciliation we
+-- rely on most should not need a qualifier.
+--
+-- Same shape as grounding_facts plus the two v2.1 (R26) columns. An award has a WINDOW, not
+-- a deadline: submission_opens is the other end of it, and announcement_date is the moment
+-- the client plans around - for an award that matters more than the deadline.
+CREATE TABLE IF NOT EXISTS award_grounding_facts (
+    event_id        TEXT PRIMARY KEY,
+    conference_key  TEXT,                       -- normalize_key(url); the award's own site
+    name            TEXT,
+    url             TEXT,
+    city            TEXT,                       -- often EMPTY: many awards have no venue
+    state_province  TEXT,
+    country         TEXT,
+    edition         TEXT,                       -- the cycle year
+    deadline        TEXT,                       -- the date entries CLOSE (R26)
+    submission_url  TEXT,
+    cfp_model       TEXT,
+    status          TEXT,                       -- RAW grounding status, never rewritten
+    overview        TEXT,
+    categories      TEXT,                       -- load-bearing here: a category decides eligibility
+    coordinator_email TEXT,
+    deadline_quote  TEXT,
+    is_projected    TEXT,
+    source_as_of    TEXT,
+    deadline_evidence_url TEXT,
+    main_info_url   TEXT,
+    issues          TEXT,
+    verify_state    TEXT DEFAULT 'unverified',
+    verify_detail   TEXT,
+    imported_at     TEXT,
+    organizer       TEXT,                       -- the operating body; one runs several programmes
+    sponsor_required  TEXT,
+    sponsor_url       TEXT,
+    sponsor_cost      TEXT,
+    sponsor_quote     TEXT,
+    -- v2.1, R26. Blank is a complete answer (R26.2) - never last cycle's date carried forward.
+    submission_opens  TEXT,                     -- the date entries OPEN
+    announcement_date TEXT                      -- the date winners are named
+);
+CREATE TABLE IF NOT EXISTS award_markets (
+    award_key   TEXT,
+    market      TEXT,
+    source_list TEXT,
+    first_seen  TEXT,
+    PRIMARY KEY (award_key, market)
+);
 CREATE TABLE IF NOT EXISTS changes (
     id            INTEGER PRIMARY KEY,
     conference_id INTEGER,

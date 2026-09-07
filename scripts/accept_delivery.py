@@ -74,7 +74,22 @@ OPPORTUNITIES = {"Speaking", "Awards", "Exhibiting", "Registration"}
 # Present-tense claims that assert a live call. Only legitimate with a citation behind them.
 # "(?<!last )" keeps this off past-tense uses such as "the last active edition was held in
 # July 2024", which describe a DORMANT event rather than asserting a live call.
-ACTIVE_PROSE = re.compile(r"(?<!last )\b(active|now open|now accepting|currently accepting)\b", re.I)
+#
+# NEGATION, added 2026-09-06. The lookbehind above handled exactly one past-tense case and
+# nothing else, so the check fired on rows saying the OPPOSITE of what it accused them of:
+#
+#   "No active 2026 cycle or landing page was found for ..."
+#   "The ... Awards have not been active since ..."
+#
+# Three of its four hits on the first awards delivery were rows being honest about absence.
+# This is not awards-specific - any conference row reading "no active call" false-positived
+# the same way, and a check that fails good work is one people learn to ignore.
+#
+# "inactive" already fails to match: \b requires a boundary before "active" and there is
+# none inside the word. What was missing is a preceding negator.
+ACTIVE_PROSE = re.compile(
+    r"(?<!last )(?<!no )(?<!not )(?<!never )(?<!been )(?<!nor )"
+    r"\b(active|now open|now accepting|currently accepting)\b", re.I)
 # Words that only appear in a venue name. "Park" is deliberately absent: Menlo Park and
 # Overland Park are cities, and flagging them would train people to ignore this check.
 VENUE_HINT = re.compile(
@@ -328,13 +343,26 @@ class Gate:
 
         # A call cannot close after the event it feeds has started. When it does,
         # the deadline belongs to a different edition or a different event.
+        #
+        # AWARDS ARE EXEMPT, from 2026-09-06. This is a conference assumption: you cannot
+        # submit a paper to a conference that has begun. An award's entry window routinely
+        # closes DURING the ceremony week, and the first awards delivery produced three
+        # rows of exactly that shape, all correct and all quoted verbatim:
+        #
+        #   Cyber Defense Global InfoSec   deadline 2026-03-25, event March 23-26
+        #   "Late Entry Deadline: March 25, 2026 (final cut-off): $995 per entry."
+        #
+        # For an award START DATE is the ceremony, not a gate the entrant must beat. The
+        # check is kept for Speaking, Exhibiting and Registration, where it still holds.
         late = []
         for r in self.rows:
+            if self.g(r, "OPPORTUNITY_TYPE") == "Awards":
+                continue
             d, s = self.g(r, "SUBMISSION DEADLINE"), self.g(r, "START DATE")
             if (re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", s)
                     and d > s):
                 late.append(f'{self.g(r, "CONFERENCE")[:36]}: deadline {d} after start {s}')
-        self.add("6b", "Submission deadline precedes the event it feeds", late)
+        self.add("6b", "Submission deadline precedes the event it feeds (Awards exempt)", late)
 
         # A row whose own prose says the event has ended cannot claim a verified
         # edition. ShmooCon and Japan Robot Week both did.
