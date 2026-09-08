@@ -171,7 +171,7 @@ class Gate:
             self.add("3", "Cited page contains its quote", ["SKIPPED - --no-network"])
             return
         cache: dict[str, tuple] = {}
-        dead, missing_quote = [], []
+        dead, decayed, missing_quote = [], [], []
         for r in self.rows:
             url = self.g(r, "DEADLINE_EVIDENCE_URL")
             if not url:
@@ -182,8 +182,25 @@ class Gate:
                 cache[url] = (code, text)
             code, text = cache[url]
             name = self.g(r, "CONFERENCE")[:40]
+            from src.cfp_monitor import rules                           # noqa: PLC0415
             if code in (404, 410):
-                dead.append(f"{name}: HTTP {code} {url}")
+                # ---- AMENDMENT v2.2: check 2 evaluates ACTIVE and BLANK deadlines only ----
+                # The same decay v1.4 recognised for check 3, arriving one criterion later.
+                # An entry page comes down once its window closes and the site rolls to the
+                # next cycle; the link dying AFTERWARDS says nothing about whether the
+                # citation was sound when it was made. Measured on the first awards delivery
+                # 2026-09-06: all 14 dead pages belonged to rows whose deadline had passed,
+                # and rules.may_withdraw_citation refused every one of them - so the check
+                # was rejecting a delivery for a condition neither side had an action for.
+                #
+                # Ruled by upstream 2026-09-08. Deliberately NARROWER than the check-3
+                # exemption: a BLANK deadline still fails here. Check 3 excuses a blank
+                # because there is no claim to verify, but a dead LINK is a defect whether
+                # or not the row claims a date - the reader is still sent nowhere.
+                if rules.deadline_has_passed(r, getattr(self, "today", date.today())):
+                    decayed.append(f"{name}: HTTP {code} (deadline passed) {url}")
+                else:
+                    dead.append(f"{name}: HTTP {code} {url}")
                 continue
             if code == 403:
                 continue                       # blocked-but-trusted; exempt from the quote test
@@ -206,7 +223,6 @@ class Gate:
             # Both exemptions were proposed with the measurement behind them and confirmed by
             # upstream on 2026-08-29. Neither lowers the bar: a LIVE call with a missing quote
             # still fails, which is the case the criterion exists for.
-            from src.cfp_monitor import rules                       # noqa: PLC0415
             if not self.g(r, "SUBMISSION DEADLINE").strip():
                 continue                       # v1.4: no claim, so nothing to evidence
             if rules.deadline_has_passed(r, getattr(self, "today", date.today())):
@@ -224,6 +240,9 @@ class Gate:
                     else "quote and date both absent"
                 missing_quote.append(f'{name}: {kind} - "{quote[:52]}"')
         self.add("2", "Cited pages resolve (404/410 = fail, 403 allowed)", dead)
+        if decayed:
+            self.note("2", "dead cited page(s) on rows whose deadline has passed - "
+                           "expected decay under v2.2, not a defect", decayed)
         self.add("3", "Cited page contains its quote verbatim (403 exempt)", missing_quote)
 
     # ---- 4. prose vs projection -------------------------------------------
