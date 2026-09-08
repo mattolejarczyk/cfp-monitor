@@ -44,6 +44,70 @@ def deadline_has_passed(row, today: date) -> bool:
     return bool(d and d < today)
 
 
+# ---- v2.3. The awards EDITION anchor ladder -------------------------------------------
+#
+# R19.1 anchors EDITION to the year of START DATE. That is exact for a conference, which
+# happens on a day. 68 of 127 awards rows have no START DATE at all, so for those the rule had
+# no defined behaviour - and undefined behaviour does not produce blanks, it produces confident
+# answers that disagree with each other. The delivery of 2026-09-05 carried both:
+#
+#     Globee Awards for Cybersecurity            EDITION 2026   deadline 2027-02-04
+#     Security Excellence Awards - Computing UK  EDITION 2027   deadline 2026-11-27
+#
+# Same situation, opposite answers, same generator, same day.
+#
+# RUNG 1 IS NOT HERE, AND ITS ABSENCE IS DELIBERATE. The first rung reads the award's own
+# statement of its cycle off the page - "2027 (36th) Blue Planet Prize". That is an evidence
+# judgement made while looking at the source, not a calculation over a delivered row.
+# cloud-awards.com/programs/ states four different years for four sibling programmes on one
+# page, so a regex over a stored quote here would manufacture exactly the confident wrong
+# answers the amendment exists to stop. Rung 1 is upstream's, applied at research time.
+#
+# So an edition upstream EVIDENCED outranks one we DERIVE. A caller that finds a disagreement
+# reports it; it does not overwrite. Hence the reason string on every answer.
+#
+# SUBMISSION DEADLINE IS NEVER AN ANCHOR. It is the field the ladder exists to stop being used,
+# because it is the one that systematically disagrees with the answer: an award's nomination
+# window routinely opens in the calendar year before the prize it feeds.
+AWARDS_TYPE = "Awards"
+
+
+def award_edition(row, today: date | None = None) -> tuple[str | None, str]:
+    """The EDITION an awards row should carry, and which rung answered.
+
+    Returns (year, reason). A year of None means no rung with an anchor answered, and the
+    caller must KEEP the delivered value and mark it projected - rung 4 never blanks.
+    Blanking was measured first: it would have emptied EDITION on 41 of 127 rows, replacing a
+    plausible year with nothing, which inverts 2.1 - absence is a label, not a deletion.
+    """
+    ann = parse_date(row.get("ANNOUNCEMENT_DATE"))
+    deadline = parse_date(row.get("SUBMISSION DEADLINE"))
+
+    # Rung 2. ANNOUNCEMENT_DATE, but only where it belongs to the cycle this row DESCRIBES.
+    # An announcement dated before the deadline it supposedly follows is a record of a cycle
+    # that already closed, and anchoring to it drags the edition BACKWARDS. Measured: of the 10
+    # rows the ladder would move, 2 moved the wrong way for exactly this reason - Earthshot
+    # 2026 -> 2025 (deadline 2024-12-11) and Grist 50 2026 -> 2025 (deadline 2025-03-14).
+    # This is the same stale-row failure v1.4 and v2.2 exempt the citation criteria from.
+    if ann:
+        if deadline and ann < deadline:
+            pass                    # historical announcement; fall through rather than reverse
+        else:
+            return f"{ann.year}", "rung 2: ANNOUNCEMENT_DATE"
+
+    # Rung 3. R19.1 unchanged, for the awards that do have a ceremony date.
+    start = parse_date(row.get("START DATE"))
+    if start:
+        return f"{start.year}", "rung 3: START DATE"
+
+    # Rung 4. No anchor. Keep what was delivered; the caller marks it projected.
+    return None, "rung 4: no anchor - keep the delivered value, mark projected"
+
+
+def is_awards_row(row) -> bool:
+    return str(row.get("OPPORTUNITY_TYPE") or "").strip() == AWARDS_TYPE
+
+
 # R22. Hosts that can never evidence a deadline, whatever they happen to say.
 #
 # The crawler has known this since July - `aggregator.py` and `sitewalk.py` both refuse to treat

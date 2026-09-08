@@ -56,6 +56,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.cfp_monitor import rules                                    # noqa: E402
+
 YEAR = re.compile(r"\b(20\d\d)\b")
 
 
@@ -93,14 +95,41 @@ def plan(db: str, delivery: Path) -> tuple[list, dict]:
             by_id[up.get(raw, raw)] = r
 
     out, tally = [], {"already right": 0, "would change": 0,
-                      "no date - left alone": 0, "not in delivery": 0}
+                      "no date - left alone": 0, "not in delivery": 0,
+                      "awards - no anchor, kept": 0, "awards - derived disagrees, REPORTED": 0}
     for g in con.execute("select event_id, name, edition from grounding_facts"):
         d = by_id.get(g["event_id"])
         if not d:
             tally["not in delivery"] += 1
             continue
-        true_year = _year(d.get("START DATE"), d.get("CONFERENCE DATES"))
         cur = str(g["edition"] or "").strip()
+
+        # AMENDMENT v2.3. An awards row does not take the conference rule. Applying
+        # "the year the event starts" to a thing with no event is what produced two rows in
+        # identical situations carrying opposite editions, and 68 of 127 awards rows have no
+        # START DATE for it to read. rules.award_edition is the agreed ladder.
+        if rules.is_awards_row(d):
+            true_year, why = rules.award_edition(d)
+            if true_year is None:
+                # Rung 4. KEEP what was delivered. Never blank - that would empty a third of
+                # the awards rows and replace a plausible year with nothing (2.1).
+                tally["awards - no anchor, kept"] += 1
+                out.append((g["event_id"], g["name"], cur, None, why))
+                continue
+            if cur == true_year:
+                tally["already right"] += 1
+                continue
+            # An edition upstream EVIDENCED under rung 1 outranks one we DERIVE, and we cannot
+            # see rung 1's evidence from here - it was a judgement made against the page. So a
+            # disagreement is reported and never applied. Silently overwriting would discard
+            # the better of the two answers.
+            tally["awards - derived disagrees, REPORTED"] += 1
+            out.append((g["event_id"], g["name"], cur, None,
+                        f"REPORT ONLY: {why} gives {true_year}, delivered says "
+                        f"{cur or '(blank)'}"))
+            continue
+
+        true_year = _year(d.get("START DATE"), d.get("CONFERENCE DATES"))
         if not true_year:
             tally["no date - left alone"] += 1
             out.append((g["event_id"], g["name"], cur, None, "no date"))
