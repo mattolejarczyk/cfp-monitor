@@ -62,18 +62,36 @@ FIELDS =['CONFERENCE', 'Market', 'CITY', 'STATE_PROVINCE', 'COUNTRY', 'FORMAT',
 # filters, the evidence display, the reconciliation view - is shared, the same division the
 # grounding prompts use. Nicolia was explicit that awards is a separate screen from
 # conferences; this is what makes it one without a second page builder to keep in step.
+# EVERY READER-FACING WORD THAT DIFFERS BY KIND LIVES HERE.
+# The first awards build (2026-09-08) shipped a page headed "Awards & Entry Deadlines" whose
+# BROWSER TAB said "Conference Review", whose first column said "Conference", and whose legend
+# explained that "the conference no longer exists". The heading had been given a vocabulary and
+# nothing else had. A customer-facing page that calls awards conferences in five places is not
+# a cosmetic problem - it is the page telling them we ran the wrong report.
 VOCAB = {
     'conference': {
-        'title':  'Conference &amp; Call-for-Papers Review',
-        'noun':   'conferences',
-        'search': 'Conference, city, track...',
+        'title':    'Conference &amp; Call-for-Papers Review',
+        'doctitle': 'Conference Review',
+        'noun':     'conferences',
+        'search':   'Conference, city, track...',
+        'col_name': 'Conference',
+        'col_dates': 'Event dates',
+        'col_deadline': 'CFP deadline',
+        'gone':     'the conference no longer exists',
     },
     'awards': {
-        'title':  'Awards &amp; Entry Deadlines',
-        'noun':   'awards',
+        'title':    'Awards &amp; Entry Deadlines',
+        'doctitle': 'Awards Review',
+        'noun':     'awards',
         # No city: many awards are global or online and have no venue at all. Category is
         # what an entrant actually picks, so it replaces track.
-        'search': 'Award, organiser, category...',
+        'search':   'Award, organiser, category...',
+        'col_name': 'Award',
+        # For an award START DATE is the CEREMONY, not a gate to beat - which is the same fact
+        # that exempts awards from gate check 6b.
+        'col_dates': 'Ceremony',
+        'col_deadline': 'Entry deadline',
+        'gone':     'the award is no longer run',
     },
 }
 
@@ -279,7 +297,7 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
 PAGE = """<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Conference Review __DATE__</title>
+<title>__DOCTITLE__ __DATE__</title>
 <style>
 :root{
   --bg:#f6f7f9; --panel:#fff; --ink:#15181d; --muted:#5b6472; --line:#e2e6ec;
@@ -454,9 +472,9 @@ a{color:var(--accent)}
   </div>
 
   <table id="t"><thead><tr>
-    <th data-k="n">Conference</th><th data-k="m">Market</th><th data-k="loc">Location</th>
-    <th data-k="f">Format</th><th data-k="start">Event dates</th>
-    <th data-k="dl">CFP deadline</th><th data-k="s">Status</th>
+    <th data-k="n">__COL_NAME__</th><th data-k="m">Market</th><th data-k="loc">Location</th>
+    <th data-k="f">Format</th><th data-k="start">__COL_DATES__</th>
+    <th data-k="dl">__COL_DEADLINE__</th><th data-k="s">Status</th>
     <th data-k="st">Edition</th><th data-k="c">Confidence</th>
   </tr></thead><tbody id="tb"></tbody></table>
   <div class="empty" id="none" style="display:none">Nothing matches those filters.</div>
@@ -613,7 +631,7 @@ $('key').innerHTML = [
  ['Active','tracking this edition now'],
  ['Awaiting next','this edition has run; hunting the next date'],
  ['Archived','a newer edition exists; this one is final'],
- ['Discontinued','the conference no longer exists'],
+ ['Discontinued',__GONE__],
 ].map(([k,v])=>`<span><b>${k}</b> &mdash; ${v}</span>`).join('')
  + '<span><b>Confirmed</b> &mdash; we opened the cited page and read the deadline there</span>'
  + '<span><b>Disputed</b> &mdash; the cited page states a different date; decide which is right</span>'
@@ -721,7 +739,7 @@ function render(){
   $('hint').innerHTML = urg?`<span class="b b-urg">${urg} closing within ${URGENT_DAYS} days</span>`:'';
   $('tb').innerHTML = rows.map((r,i)=>`
    <tr class="r" data-i="${i}">
-    <td class="nm">${esc(r.n)}${r.op&&r.op!=='Speaking'?` <span class="b b-up">${r.op}</span>`:''}${
+    <td class="nm">${esc(r.n)}${r.op&&r.op!=='Speaking'&&r.op.toLowerCase()!==KIND?` <span class="b b-up">${r.op}</span>`:''}${
       // SPONSOR REQUIRED IS A GATE ON THE OPPORTUNITY, NOT A DETAIL. It decides whether the
       // pitch happens at all, so it belongs in the list where a deadline is - not three
       // clicks down. The cost rides with it when we have one, because "sponsor required" and
@@ -1004,8 +1022,13 @@ def main():
                 .replace('__KIND__', a.kind)
                 .replace('__NO_EVIDENCE__', 'true' if a.no_evidence else 'false')
                 .replace('__TITLE__', VOCAB[a.kind]['title'])
+                .replace('__DOCTITLE__', VOCAB[a.kind]['doctitle'])
                 .replace('__NOUN__', VOCAB[a.kind]['noun'])
                 .replace('__SEARCHHINT__', VOCAB[a.kind]['search'])
+                .replace('__COL_NAME__', VOCAB[a.kind]['col_name'])
+                .replace('__COL_DATES__', VOCAB[a.kind]['col_dates'])
+                .replace('__COL_DEADLINE__', VOCAB[a.kind]['col_deadline'])
+                .replace('__GONE__', json.dumps(VOCAB[a.kind]['gone']))
                 .replace('__URGENT_DAYS__', str(lifecycle.URGENT_DAYS))
                 .replace('__SOON_DAYS__', str(lifecycle.SOON_DAYS))
                 .replace('__COUNT__', str(len(data)))
