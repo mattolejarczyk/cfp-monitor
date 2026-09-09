@@ -4,22 +4,43 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
-> **Where the work stands, end of 2026-09-06. Awards is at stage 6 of 7 and blocked on upstream.**
+> **Where the work stands, end of 2026-09-08. The awards delivery is ACCEPTED and IMPORTED.**
 >
-> **THE AWARDS DELIVERY IS `Markets/Awards_20260905_out.csv`** - 127 rows, 45 columns, through a
-> full networked gate. Everything passes except:
+> **`Markets/Awards_20260905_out.csv` passes 23 of 23 gate checks.** Two NOTEs remain and both
+> are the contract working rather than debt: 11 dead cited pages on passed-deadline rows
+> (v2.2 decay) and 10 declared stubs (2.1).
 >
->     [FAIL] 2    14 dead links, NONE withdrawable  -> contract question, sent
->     [FAIL] 3     5 quote failures                 -> need a human, not another pass
->     [NOTE] STUB 10 ungrounded stubs               -> declared in the manifest
+>     database  119 awards rows in `award_grounding_facts` + 119 memberships
+>               conferences UNTOUCHED at 392 / 391, asserted by a test
+>     links     171 awards URLs in `link_checks`, 16 dead, 0 false 404s out of 16
+>     page      127 rows, 43 deadlines confirmed, 10 dead links, 57 need verification
 >
-> **Two documents drafted and NOT SENT:** `handoff-files/Manifest_Awards_Batch1_20260906.md`
-> (R7) and `handoff-files/Criterion2_Passed_Deadline_Exemption_20260906.md`.
+> **THE NEXT THING IS THE AWARDS VERIFY PASS.** All 119 rows are still
+> `verify_state='unverified'`. The link check is done and the deadline check exists
+> (`check_award_deadlines.py`), but nothing sets `verify_state` on the award table -
+> `verify_grounding.py` is hard-wired to `grounding_facts` in two SQL statements. Its layer 0
+> cross-checks our own crawl history, which for awards is empty, so **layer 0 will be inert**;
+> layers 1 and 2 transfer unchanged.
 >
-> **Criterion 2 needs the exemption criterion 3 already has.** All 14 dead pages belong to rows
-> whose deadline has passed - an entry page comes down once its window closes. v1.4 gave
-> criterion 3 that exemption on the same reasoning, measured at 84% of its failures. **Do not
-> auto-withdraw these**: that was tried 2026-08-29 and 14 of 18 would have been wrong.
+> **`handoff-files/Reply_Batch1_ACCEPTED_20260908.md` is drafted and NOT SENT.**
+>
+> **There is no `check_invariants` equivalent for the award tables.** On the conference side
+> that is the tool that catches a bad mutation after the fact.
+>
+> **Contract v2.2 and v2.3 were both adopted 2026-09-08** and both are implemented. v2.2 gives
+> criterion 2 the passed-deadline exemption - **a blank deadline is deliberately NOT exempt**,
+> which is why criterion 2 went 14 failures to 3 rather than to zero, closed by three agreed
+> withdrawals. v2.3 is the awards `EDITION` anchor ladder; **rung 1 is upstream's and is not
+> implemented here**, so a derived edition never overwrites an evidenced one, and awards
+> disagreements are REPORTED. Do not auto-withdraw passed-deadline 404s: tried 2026-08-29,
+> 14 of 18 would have been wrong.
+>
+> **UPSTREAM MUST SEND CANDIDATE URLS, NOT QUOTES.** Their first patch had 0 of 9 keys matching
+> ours and 5 of 6 citations that did not survive a fetch - three cited pages 404'd and two live
+> pages did not contain their sentence. Same signature as the pilot in `extract_citations`'s own
+> header: the model knows the fact and guesses where it lives. The candidate-URL split fixed it.
+> **A successful fetch is not a successful citation** - those 404 error pages returned 2712,
+> 3430 and 2752 characters.
 >
 > **`NOTES` IS THE CUSTOMER'S AND WE WERE OVERWRITING IT.** Zero of 96 joined conference rows
 > preserved their text. Fixed at source; the awards file is repaired; upstream has agreed to

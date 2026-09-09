@@ -5,6 +5,66 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-08 - awards ACCEPTED, imported, and a page that finally carries evidence
+
+**Two amendments adopted in one day, and measuring each one changed it.**
+
+`v2.2` gives criterion 2 the passed-deadline exemption v1.4 gave criterion 3. Measured: all 14
+dead cited pages belonged to rows `may_withdraw_citation` refuses to touch, so the check was
+rejecting a delivery for a condition **neither side had an action for**. A blank deadline is
+deliberately NOT exempt - check 3 excuses a blank because nothing is claimed, check 2 does not
+because a dead link fails the reader either way. So it went 14 failures to 3, not to zero.
+
+We also corrected a claim already sent upstream: the note said all 14 were passed-deadline
+rows. Eleven were. We had read it off `may_withdraw_citation` refusing all 14 without
+separating why it refused each.
+
+`v2.3` is the awards `EDITION` anchor ladder. R19.1 anchors to `START DATE` and 68 of 127
+awards rows have none, so the rule had no defined behaviour - which produced confident answers
+that disagreed with each other. **Running the ladder over the file before proposing it changed
+the rule twice**: a mechanical reading would have blanked 41 rows (rung 4 now keeps the
+delivered value), and 2 of its 10 moves went BACKWARDS because a stale `ANNOUNCEMENT_DATE`
+records a closed cycle (hence rung 2's `>= deadline` guard). Third amendment to hit that same
+stale-row failure. **Rung 1 is upstream's and is deliberately not implemented here**, so an
+evidenced edition outranks a derived one and disagreements are reported, never applied - which
+makes non-retroactivity structural rather than a matter of discipline.
+
+**Upstream's first patch was unusable, and the reason is on the record.** 0 of 9 keys matched;
+5 of 6 citations did not survive a fetch. Same signature as the pilot in `extract_citations`'s
+header - the URL is non-deterministic while the quote stays stable, because the model knows the
+fact and guesses where it lives. The candidate-URL split fixed it. Note for next time: three of
+those 404 pages returned 2712, 3430 and 2752 characters, so **a successful fetch is not a
+successful citation** and a length check would have passed all three.
+
+**Built:** `apply_row_patch.py` (a blank in a patch is ambiguous, so clears are declared per
+row with `--withdraw`), `label_seed_duplicates.py`, `import_awards.py`, `link_check_awards.py`,
+`check_award_deadlines.py`, and `rules.award_edition`.
+
+**Three things the work found before they shipped.** `DUP_OF` means two different things - six
+labels name a row in the delivery, eight older ones name a coordinate in the customer's sheet -
+and treating them alike excluded 7 real rows including one whose citation we had withdrawn by
+agreement hours earlier. Reading pages through the crawl4ai ladder instead of
+`verify.fetch_text` contradicted the gate on 12 active rows, because the ladder returns
+markdown and splices `[label](href)` through the prose; the flat fetch now goes first and the
+ladder is a second opinion. And the awards page called awards "conferences" in five places -
+tab title, first column, deadline column, legend, plus a badge reading "Golden Bridge Awards
+Awards" - because the heading had been given a vocabulary at stage 6 and nothing else had.
+
+**`link_checks` needed no sibling table**: it is keyed by URL, not by event, so it was already
+domain-neutral and the conference scoping lived entirely in which rows got harvested.
+`award_markets.award_key` is the `event_id`, deliberately unlike `conference_markets`, which
+keys by host - cloud-awards.com runs four programmes with four deadlines.
+
+**End state:** gate 23/23 ACCEPTED; 119 rows imported with conferences untouched at 392/391;
+171 awards URLs link-checked, 16 dead and 0 false 404s; page showing 43 confirmed deadlines,
+10 dead links, 57 needing verification. 944 tests.
+
+**Open:** the awards verify pass (all 119 rows still `unverified`), no `check_invariants` for
+the award tables, `Reply_Batch1_ACCEPTED_20260908.md` unsent, and the page reads "0 Opening
+soon" - the chip the module exists for, worth confirming rather than assuming.
+
+---
+
 ## 2026-09-06 - awards through the gate, and the checks that were wrong
 
 **Stages 5 and 6.** The first awards delivery went through a full networked gate. Of five
