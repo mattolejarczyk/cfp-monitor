@@ -5,6 +5,44 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-11 - the weekly research job had been doing nothing, and N5 is closed
+
+**Both scheduled research tasks reported success weekly while auditing zero rows.** Task
+Scheduler showed exit 0 on 2026-09-02 and 2026-09-05; their own transcripts said
+`Completed : none`. The task ran `powershell.exe -File run_monthly.ps1 -Markets A,B`, and
+`-File` does not send arguments through the PowerShell language parser, so `-Markets`
+bound one literal string and the run looked for a market input file by that name. Fixed on
+both tasks with `-Command "& 'run_monthly.ps1' -Markets A,B"`, verified against the real
+script. Changing a registered task needs a genuinely elevated shell.
+
+**So the last productive research run was 2026-08-31, by hand - and its output was never
+imported.** The live database's newest import is 2026-08-29, and the delivery holds 8 rows
+the database does not. Two different kinds of stale, neither visible from the gate.
+Importing that output is the open item.
+
+This Saturday's run (2026-09-12) was deliberately skipped in favour of a manual run: the
+weekly trigger's start boundary moved to 2026-09-19, so the cadence resumes with nothing
+to re-enable.
+
+**`scripts/fetch_customer_sheet.py` closes N5**, the last manual step in the weekly loop.
+It fetches each customer sheet as CSV with a read-only Google service account and hands
+the bytes to `snapshot_customer_sheet.py`, which keeps owning the snapshot store. A
+service account rather than a browser session on purpose: a session expires and wedges and
+waits for a human, which is exactly the failure mode already costing the Skool sync, and
+Viewer access makes "we never write their sheet" physical rather than a promise.
+
+It refuses anything that is not really the sheet - an HTML sign-in redirect (200 OK, looks
+like success), a wrong gid, an empty export - because a bad file stored today is diffed
+next week as though the customer had deleted their list. 401/403/404 get distinct messages,
+since "never shared with the service account" and "wrong id" otherwise look identical.
+Sheet ids live in `%LOCALAPPDATA%\CFP-Monitor\customer_sheets.json`; this repo is public
+and the example config in the file uses placeholder client names.
+
+On branch `feat/fetch-customer-sheet`, not merged. Blocked on the operator creating the
+service account and sharing both sheets as Viewer; the script cannot create credentials.
+
+---
+
 ## 2026-09-08 - awards ACCEPTED, imported, and a page that finally carries evidence
 
 **Two amendments adopted in one day, and measuring each one changed it.**

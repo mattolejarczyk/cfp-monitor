@@ -4,6 +4,33 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **Where the work stands, end of 2026-09-11. The weekly research job had been a no-op for two weeks.**
+>
+> **Both scheduled research tasks reported success while auditing zero rows** on 2026-09-02
+> and 2026-09-05. `powershell.exe -File script.ps1 -Markets A,B` binds one literal string,
+> not an array, so each run looked for a market input file named after both markets joined
+> and exited clean. Both tasks now use `-Command "& 'script.ps1' -Markets A,B"`, verified
+> against the real script. Changing a registered task needs a genuinely elevated shell.
+>
+> **The last productive research run was 2026-08-31, by hand, and its output was never
+> imported.** The database's newest import is 2026-08-29; the delivery holds 8 rows the
+> database does not. **Importing that output is the open item** - and run
+> `check_invariants.py` after, per the mutation rule.
+>
+> **Saturday 2026-09-12 is deliberately skipped** in favour of a manual run; the weekly
+> trigger resumes 2026-09-19 with nothing to re-enable.
+>
+> **N5 is closed in code, blocked on credentials.** `scripts/fetch_customer_sheet.py` on
+> branch `feat/fetch-customer-sheet` fetches each customer sheet with a read-only service
+> account and hands the bytes to `snapshot_customer_sheet.py`, which keeps owning the
+> snapshot store. It refuses an HTML sign-in redirect, a wrong gid, or an empty export,
+> because a bad file stored today is diffed next week as a customer deletion. Needs the
+> operator to create the service account and share both sheets as Viewer; a script cannot
+> create credentials. Sheet ids live in
+> `%LOCALAPPDATA%\CFP-Monitor\customer_sheets.json`, never in this public repo.
+>
+> **Sponsorship:** the dedicated pass built 2026-09-08 has still not run at scale.
+
 > **Where the work stands, end of 2026-09-08. The awards delivery is ACCEPTED and IMPORTED.**
 >
 > **`Markets/Awards_20260905_out.csv` passes 23 of 23 gate checks.** Two NOTEs remain and both
