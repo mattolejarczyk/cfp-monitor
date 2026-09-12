@@ -13,3 +13,4 @@
 # decision, so it is version-controlled here and copied across to the live build with the
 # scripts. If the live build is ever rebuilt without it, check_invariants.py will correctly
 # report the held row as an undeclared extra.
+2026-09-12 09:35 | Cybersecurity | OWASP Global AppSec EU 2026 | 2026-owasp-global-appsec-eu-2026-vienna-speaking | R15 duplicate, upstream confirmed the surviving id on 2026-09-12. Dropped row's STATUS DETAILS: The event took place from June 22 to June 26, 2026, and is now concluded. The Call for Speakers (CFP) closed on February 3, 2026.
