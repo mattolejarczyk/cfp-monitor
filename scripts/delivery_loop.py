@@ -326,7 +326,10 @@ def main() -> int:
     ap.add_argument("--prior", help="previous version of the delivery (repair class B)")
     ap.add_argument("--db", default=r"C:\Users\matts\AppData\Local\CFP-Monitor\cfp_monitor.db")
     ap.add_argument("--max-rounds", type=int, default=2)
-    ap.add_argument("--max-requests", type=int, default=10, help="Gemini requests per round")
+    ap.add_argument("--max-requests", type=int, default=10,
+                    help="hard cap on Gemini calls per round, retries included")
+    ap.add_argument("--attempts", type=int, default=2, help="Gemini calls per row at most")
+    ap.add_argument("--model", help="Gemini model for the upstream step (default: the audit's)")
     ap.add_argument("--markets-dir", default=str(MARKETS))
     ap.add_argument("--dry-run", action="store_true",
                     help="gate, repair and build findings, show the prompts; no Gemini calls")
@@ -395,7 +398,9 @@ def main() -> int:
 
         answers_path = work / f"{tag}_answers.json"
         cmd = ["py", str(Path(a.markets_dir) / "answer_findings.py"), "--findings", str(fpath),
-               "--max-requests", str(a.max_requests)]
+               "--max-requests", str(a.max_requests), "--attempts", str(a.attempts)]
+        if a.model:
+            cmd += ["--model", a.model]
         cmd += ["--dry-run"] if a.dry_run else ["--out", str(answers_path)]
         with open(work / f"{tag}_answers.log", "w", encoding="utf-8") as fh:
             code = subprocess.run(cmd, cwd=a.markets_dir, stdout=fh, stderr=subprocess.STDOUT,
