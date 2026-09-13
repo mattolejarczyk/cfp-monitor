@@ -182,3 +182,21 @@ def test_rows_asking_only_other_questions_are_spent_last():
     withdrawn = [mr.Repair("D", "B East 2026", "Cybersecurity", "SUBMISSION URL", DEAD, "", "")]
     f, _ = dl.build_findings(rows, {}, declined, withdrawn, "x.csv", "Cybersecurity", TODAY)
     assert [i["conference"] for i in f["rows"]] == ["B East 2026", "A Denver 2026"]
+
+
+def test_a_403_replacement_that_a_browser_shows_as_not_found_is_refused():
+    """Pilot 2026-09-13: upstream answered events.secureworld.io/speaker-submission-form/, which a
+    plain fetch saw as HTTP 403 and a real browser saw as "Page not found - SecureWorld"."""
+    r = row()
+    guess = "https://events.secureworld.io/speaker-submission-form/"
+    res = dl.apply_answers([r], answers(r["CONFERENCE"], ans("replace", "SUBMISSION URL", guess)),
+                           TODAY, fetch({guess: (403, "")}), browser({guess}))
+    assert r["SUBMISSION URL"] == DEAD
+    assert "not-found page" in res.for_person[0].detail
+
+
+def test_a_403_that_a_browser_loads_is_still_accepted():
+    r = row()
+    res = dl.apply_answers([r], answers(r["CONFERENCE"], ans("replace", "SUBMISSION URL", FORM)),
+                           TODAY, fetch({FORM: (403, "")}), browser(set()))
+    assert r["SUBMISSION URL"] == FORM and not res.for_person

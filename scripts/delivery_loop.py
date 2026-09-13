@@ -225,6 +225,12 @@ def apply_answers(rows: list[dict], answers: dict, today: date,
             if disp == "replace" and fld in LINK_FIELDS:
                 code, _ = fetch(url)
                 bad = _page_ok(url, code, evidence=fld == "VENUE_EVIDENCE_URL")
+                # A 403 is "exists but blocks scripts" for a CITATION (R3), but it hides soft 404s:
+                # on 2026-09-13 upstream's replacement for SecureWorld East answered 403 to a plain
+                # fetch and was, in a browser, "Page not found". A link a customer clicks is
+                # checked in a real browser before it replaces anything.
+                if not bad and url in browser_dead([url]):
+                    bad = "a real browser shows a not-found page (plain fetch said HTTP %s)" % code
                 if bad:
                     res.for_person.append(ForPerson(name, f"rejected replacement for {fld}",
                                                     f"{url}: {bad}"))
@@ -242,6 +248,8 @@ def apply_answers(rows: list[dict], answers: dict, today: date,
                 d = rules.parse_date(row.get("SUBMISSION DEADLINE"))
                 if not bad and not text:
                     bad = "page could not be read"
+                if not bad and url in browser_dead([url]):
+                    bad = "a real browser shows a not-found page"
                 if not bad and not d:
                     bad = "the row has no deadline to evidence - that is a claim change"
                 if not bad and not find_date(text, d):
