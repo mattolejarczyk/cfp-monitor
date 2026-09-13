@@ -174,3 +174,24 @@ def test_a_site_whose_every_read_failed_is_not_reported_as_nothing_found(monkeyp
     assert rec["OUTCOME"] == "Could not read the site"
     assert "3 page read(s) failed" in rec["NOTE"]
     assert h.counts["site_crawl"]["could_not_read"] == 1
+
+
+def test_a_site_where_no_page_was_read_at_all_is_not_nothing_found(monkeypatch):
+    """Rerun 2026-09-13: London reported "No live page found" with 0 pages read, 0 failed."""
+    from scripts import find_replacement_links as frl
+    h = rh.RunHealth()
+    monkeypatch.setattr(frl, "HEALTH", h)
+
+    async def run_urls(urls, settings):
+        return [types.SimpleNamespace(submission_url=None, status_basis="", evidence=[],
+                                      submission_platform="")]
+
+    async def close():
+        return None
+    monkeypatch.setattr(frl, "run_urls", run_urls)
+    monkeypatch.setattr(frl, "close_fallback_browser", close)
+    rows = [{"event_id": "e", "name": "London 2027", "submission_url": "https://l.test/apply",
+             "url": "https://l.test/", "main_info_url": ""}]
+    rec = asyncio.run(frl.hunt(rows, types.SimpleNamespace()))[0]
+    assert rec["OUTCOME"] == "Could not read the site" and "no page" in rec["NOTE"]
+    assert h.counts["site_crawl"]["could_not_read"] == 1

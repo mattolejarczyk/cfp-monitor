@@ -198,10 +198,15 @@ async def hunt(rows: list[dict], settings: Settings) -> list[dict]:
         if not found:
             # "Nothing found" is only a finding if the pages were actually read. On 2026-09-13
             # eleven sites reported nothing while their page reads were being rate-limited.
-            if reads_failed and not reads_ok:
+            # ZERO pages read is also "could not look", not only "every read failed": the 2026-09-13
+            # rerun reported London as "No live page found" with 0 pages read and 0 failures -
+            # the crawl never reached a page to read.
+            if not reads_ok:
                 rec["OUTCOME"] = "Could not read the site"
                 rec["NOTE"] = (f"all {reads_failed} page read(s) failed "
-                               f"({', '.join(k for k in reads if k != 'ok')}) - not a finding")
+                               f"({', '.join(k for k in reads if k != 'ok')}) - not a finding"
+                               if reads_failed else
+                               "no page on the site was read at all - not a finding")
                 HEALTH.fail("site_crawl", "could_not_read", f"{name}: {rec['NOTE']}")
                 print(f"        -> could not read ({reads_failed} failed reads)", flush=True)
             else:
