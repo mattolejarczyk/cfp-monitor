@@ -5,6 +5,62 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-13 - the loop meets live services: grounding proven, run health built, links unsolved
+
+**Quality by design became a requirement** (operator): a run must count and log its own failures
+and say HEALTHY or DEGRADED, instead of failures being found afterwards. Every failure below was
+found afterwards, which is why.
+
+### Fail points, in the order they bit
+
+Gemini answer step (`Markets/answer_findings.py`), 17 calls, no usable answer:
+1. **Ours** - `flatten_json_lists()` ran on the reply and turned the `answers` array into a string;
+   the paid answer was lost in the crash.
+2. **Ours** - no request timeout: one call hung 77 minutes. `run_market_audit.py` had `--timeout 90`
+   all along; it was not copied.
+3. **Ours** - `--max-requests` capped rows while each row retried 3 times: 3 calls approved, 9 made.
+4. **Theirs** - 504 DEADLINE_EXCEEDED on most calls, on gemini-3.5-flash and gemini-3-flash-preview,
+   for whole rows and single questions alike. The 2026-09-12 Saturday log has 66 of the same.
+5. Answers that did arrive were plausible, composed, dead URLs; one quote was not on its page; one
+   proposed changing six fields including STATUS when asked for one link.
+6. **Diagnostic** - with JSON mode on, grounding ran (8 searches, 4 sources). Sources are recorded per
+   domain and supported only the dates; the URL path was the model's own. Quotes come from Google's
+   rendering, not the page's characters. Grounding is good for facts and structurally bad for exact
+   URLs and verbatim quotes - which also explains the week's quote rounds.
+
+Verification holes (closed unless stated):
+7. A plain-fetch 403 hid real 404s; every tool browser-checked only 404/410, so Twin Cities shipped a
+   dead link. Now 403 goes to a browser in recheck_dead_links and mechanical_repairs. **The gate's
+   check 2 still does not.**
+8. A 403 replacement link that was a soft 404 was accepted; all replacement links now browser-checked.
+9. SUMMARY.md truncated a failing proposal's verdict; the verdict now leads.
+
+Crawl link-finder (`find_replacement_links`):
+10. The page-reading LLM (openrouter/deepseek/deepseek-chat, provider StreamLake) returned 429
+    "rate-limited upstream" on nearly every page. Errors were swallowed and 11 sites reported "nothing
+    found"; found by reading 112 suppressed banners. Not our quota - paid key, no OpenRouter cap on
+    paid models; shared provider capacity. The fallback provider was degraded too. Credits ~$18.
+11. **Ours** - links checked and fine became replacement questions: 9 of 14 crawls wasted.
+12. **Ours** - a crawl answer was applied to VENUE_EVIDENCE_URL; the crawler only finds submission pages.
+13. `classify()` trusted a `#become-a-speaker` fragment on a listing page.
+14. **Health gap** - a site with 0 pages read still said "No live page found".
+Rerun with retries and health: HEALTHY, 22/22 reads, 0 usable links - SecureWorld's real form sits on
+another host behind a HubSpot CTA, and the crawl finds the CTA (-> Contact Us) and form-post endpoints.
+
+Also found: 9 real duplicate event pairs from key drift (CITY changed or blank, EDITION year changed).
+
+### Built
+`src/cfp_monitor/run_health.py`; retries in `extraction.py`; health through `pipeline.py`,
+`find_replacement_links.py` and `delivery_loop.py` (health first in SUMMARY.md, `health.json`, exit 2
+when DEGRADED); `rules.NEEDS_BROWSER_STATUS`; `--links-via crawl|gemini`; Markets `grounding_summary`,
+`CallHealth` and "RUN HEALTH" lines. Tests: test_run_health.py, test_delivery_loop.py additions,
+Markets test_call_health.py and test_grounding_metadata.py. Full suite 1012 passed.
+
+Friction worth remembering: bash heredocs turned `\\n` into real newlines and broke Python patch
+scripts four times; direct edits were reliable.
+
+---
+
 ## 2026-09-12 - both live markets in, and the hand-back loop taught to close itself
 
 **Cybersecurity and Utility ACCEPTED, imported, reconciled.** Seven hand-back documents crossed

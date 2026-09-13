@@ -171,8 +171,11 @@ hand-back is for - attach the `.repairs.md` so upstream sees every change we mad
 ./.venv/Scripts/python.exe scripts/delivery_loop.py "<delivery>.csv" --market "<Canonical>"     --prior "<previous version>.csv" --dry-run
 ```
 
-Drop `--dry-run` to let it ask Gemini (one request per row with findings, `--max-requests`
-caps it; check the scheduled runs are not due first). Read `SUMMARY.md` in the loop folder:
+Drop `--dry-run` to run it. Link questions are answered by crawling the conference's own site
+(`--links-via crawl`, the default, no Gemini quota); `--links-via gemini` is parked - 17 pilot
+calls on 2026-09-13 returned no usable link. **Read the RUN HEALTH verdict at the top of
+`SUMMARY.md` first:** DEGRADED (exit code 2) means the run could not see enough to trust its
+results - fix the cause and re-run before acting on anything below it. Then:
 import `FINAL.csv` only if it says ACCEPTED, and approve or reject anything under
 "Needs a person" - that is where proposed date and status changes wait.
 

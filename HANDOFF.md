@@ -4,6 +4,37 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **Where the work stands, end of 2026-09-13. Runs now report their own health; automatic replacement links do not work yet.**
+>
+> **Live data:** SecureWorld Twin Cities 2026 (Open, deadline 2026-09-19) and St. Louis carried a
+> dead submission link that answers HTTP 403 to scripts and 404 in a browser. Replaced with
+> upstream's round-5 portal `info.secureworld.io/speaker-submission-form` (browser-verified to list
+> both), gate ACCEPTED, imported, invariants hold. Logged for upstream in the Markets record file.
+>
+> **NEW DEFAULTS - read before running anything:**
+>
+>     runs report health     src/cfp_monitor/run_health.py; SUMMARY.md opens with HEALTHY|DEGRADED;
+>                            delivery_loop exits 0 accepted / 1 not accepted / 2 DEGRADED
+>     Saturday + sponsorship end with "RUN HEALTH: ..." and log [GROUND] N search(es) per call
+>     403s get a browser    rules.NEEDS_BROWSER_STATUS - recheck_dead_links --csv, mechanical_repairs
+>     LLM page reads retry  429/transient after 5s, 15s, 30s (extraction.py)
+>     loop link questions   --links-via crawl (default); Gemini step parked behind --links-via gemini
+>
+> **THE FAIL POINTS, so nobody re-learns them** (full list in docs/design/worklog.md, 2026-09-13):
+> 17 grounded Gemini calls returned no usable link - mostly 504 DEADLINE_EXCEEDED on both models, and
+> the answers that came back were composed, dead URLs. A diagnostic call proved grounding RUNS, but
+> its sources are per domain and support only the facts: **Gemini is good for dates, bad for exact
+> URLs and verbatim quotes.** The crawl alternative first ran blind (OpenRouter deepseek-chat 429
+> "rate-limited upstream" on nearly every page, swallowed); rerun HEALTHY it still found HubSpot
+> plumbing, not SecureWorld's real form. **Replacement links go to a person, crawl candidates are hints.**
+>
+> **NEXT:** read the RUN HEALTH line of the 2026-09-19 Saturday run, then run `delivery_loop.py` on
+> its delivery. **Open:** 9 real duplicate event pairs from key drift (CITY changed/blank or EDITION
+> year changed - St. Louis/Clayton, HITB, Nullcon, Decarb TechInvest, ACT Expo, Carbon Capture Expo,
+> Decarb Connect, Climate Change conf, Industrial Net Zero); gate check 2 still reads neither
+> SUBMISSION URL nor behind a 403 (the 2026-09-12 side sessions left no commits); OpenRouter credits
+> about $18; LIFECYCLE evidence never requested; STATUS ownership unresolved.
+
 > **Where the work stands, end of 2026-09-12. Both live markets are ACCEPTED and IMPORTED, and the hand-back loop can close itself.**
 >
 > **Cybersecurity (58) and Utility (54) passed the full networked gate, are imported, and every
