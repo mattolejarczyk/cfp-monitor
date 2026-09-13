@@ -145,7 +145,8 @@ def test_propose_change_is_never_applied_H2_MEET_dates():
         TODAY, fetch({"https://www.h2meet.com/html/ko/speaker.php": (200, page)}), browser(set()))
     assert r["CONFERENCE DATES"] == "September 23 - September 25, 2026"
     assert not res.applied
-    assert "approve" in res.for_person[0].what and "verbatim" in res.for_person[0].detail
+    assert "approve" in res.for_person[0].what
+    assert res.for_person[0].detail.startswith("evidence checks out")
 
 
 def test_none_public_withdraws_evidence_but_never_the_deadline():
@@ -200,3 +201,17 @@ def test_a_403_that_a_browser_loads_is_still_accepted():
     res = dl.apply_answers([r], answers(r["CONFERENCE"], ans("replace", "SUBMISSION URL", FORM)),
                            TODAY, fetch({FORM: (403, "")}), browser(set()))
     assert r["SUBMISSION URL"] == FORM and not res.for_person
+
+
+def test_a_proposal_whose_evidence_fails_says_so_first():
+    """Pilot 2026-09-13, SecureWorld East: proposed page a browser 404, quote not on it, and it
+    tried to change STATUS and five other fields for a question about one link."""
+    r = row()
+    bad = "https://events.secureworld.io/become-a-speaker/"
+    res = dl.apply_answers([r], answers(r["CONFERENCE"], ans(
+        "propose_change", url=bad, quote="East. October 4, 2026.",
+        changes={"SUBMISSION URL": bad, "STATUS": "Open"})),
+        TODAY, fetch({bad: (403, "")}), browser({bad}))
+    assert not res.applied and r["STATUS"] == "Open" and r["SUBMISSION URL"] == DEAD
+    d = res.for_person[0].detail
+    assert d.startswith("EVIDENCE FAILS") and "not-found" in d and "quote is not on the page" in d

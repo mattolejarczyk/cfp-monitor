@@ -212,14 +212,23 @@ def apply_answers(rows: list[dict], answers: dict, today: date,
 
             if disp == "propose_change":
                 code, text = fetch(url) if url.startswith("http") else (None, "")
-                proof = ("quote found verbatim on the page"
-                         if a.get("quote") and text
-                         and mr._norm_quote(a["quote"]) in mr._norm_quote(text)
-                         else "quote NOT confirmed on the page")
+                dead = url.startswith("http") and url in browser_dead([url])
+                quoted = bool(a.get("quote") and text
+                              and mr._norm_quote(a["quote"]) in mr._norm_quote(text))
+                # The VERDICT LEADS. On 2026-09-13 a proposal whose page was a browser 404 and whose
+                # quote was not on it reached this list with the failure cut off by the summary's
+                # column width - a person skimming would have seen only the proposed values.
+                if dead or not quoted:
+                    verdict = "EVIDENCE FAILS: " + "; ".join(
+                        ([f"page is not-found in a real browser (plain HTTP {code})"] if dead else [])
+                        + ([] if quoted else ["quote is not on the page"])) + " - reject"
+                    what = "upstream proposed a change its own evidence does not support"
+                else:
+                    verdict = f"evidence checks out: page loads (HTTP {code}), quote found verbatim"
+                    what = "upstream proposes changing the claim - approve or reject"
                 res.for_person.append(ForPerson(
-                    name, "upstream proposes changing the claim - approve or reject",
-                    f"changes {a.get('changes')} | {url} (HTTP {code}; {proof}) | "
-                    f"quote: {a.get('quote')!r} | {a.get('explanation')}"))
+                    name, what, f"{verdict} | changes {a.get('changes')} | {url} | "
+                                f"quote: {a.get('quote')!r} | {a.get('explanation')}"))
                 continue
 
             if disp == "replace" and fld in LINK_FIELDS:
