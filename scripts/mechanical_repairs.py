@@ -459,6 +459,17 @@ def _live_browser_dead(urls: list[str]) -> set[str]:
     return {u for u, (verdict, _s, _c) in results.items() if verdict == "dead"}
 
 
+def is_fine_link(d: "Declined") -> bool:
+    """A decline that means "we checked, the link is not dead" - not an open problem.
+
+    Since 403s go to a real browser (2026-09-13), most declines are this: Gartner, RSA and
+    InfoSec World pages that refuse scripts and load, or stay blocked, in a browser. Reporting them
+    as "still need upstream" - and turning them into replacement questions - sent nine crawls
+    after links that were never dead.
+    """
+    return d.cls in ("B", "D") and ("not confirmed dead" in d.why or "is not dead" in d.why)
+
+
 def write_report(path: Path, delivery: Path, res: Result, today: date) -> None:
     lines = [f"# Mechanical repairs - {delivery.name}", "",
              f"    DATE:      {today.isoformat()}",
@@ -477,11 +488,16 @@ def write_report(path: Path, delivery: Path, res: Result, today: date) -> None:
         if ev:
             lines += ["", "### Evidence for re-copied quotes", ""]
             lines += [f"- **{r.conference}**: {r.evidence}" for r in ev]
-    if res.declined:
+    fine = [d for d in res.declined if is_fine_link(d)]
+    open_items = [d for d in res.declined if not is_fine_link(d)]
+    if open_items:
         lines += ["", "## Not repaired - these still need upstream", "",
                   "| Class | Row | Field | Why not |", "|---|---|---|---|"]
-        for d in res.declined:
+        for d in open_items:
             lines.append(f"| {d.cls} | {d.conference} | {d.field} | {d.why} |")
+    if fine:
+        lines += ["", f"{len(fine)} link(s) looked suspect to a script but are not dead in a real "
+                      f"browser - checked, nothing to do."]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

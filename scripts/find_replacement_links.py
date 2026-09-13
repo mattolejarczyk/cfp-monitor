@@ -117,7 +117,10 @@ def cfp_state(res) -> tuple[str, str, str]:
 
 def classify(proposed: str) -> tuple[str, str]:
     """(verdict, why). CONFIDENT is safe to offer upstream; REVIEW needs a human."""
-    u = (proposed or "").strip().lower()
+    # Judge the PAGE, not its #fragment. On 2026-09-13 "secureworld.io/events#become-a-speaker"
+    # was graded CONFIDENT because the fragment contains "become-a-speaker"; the page is the
+    # events listing, and an anchor on it is not a way to submit.
+    u = (proposed or "").strip().lower().split("#", 1)[0]
     if not u:
         return "", ""
     parsed = urlparse(u)

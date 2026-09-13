@@ -264,3 +264,28 @@ def test_withdrawn_links_carry_their_dead_url_into_the_findings():
     withdrawn = [mr.Repair("D", "B East 2026", "Cybersecurity", "SUBMISSION URL", DEAD, "", "")]
     f, _ = dl.build_findings(rows, {}, [], withdrawn, "x.csv", "Cybersecurity", TODAY)
     assert f["rows"][0]["problems"][0]["dead_url"] == DEAD
+
+
+def test_a_link_found_alive_in_a_browser_is_not_a_question():
+    """Crawl run 2026-09-13: nine crawls chased Gartner/RSA/InfoSec links that were never dead."""
+    rows = [row(CONFERENCE="RSA Conference 2027")]
+    fine = [mr.Declined("D", "RSA Conference 2027", "SUBMISSION URL",
+                        "x is HTTP 403 to a script but not confirmed dead in a real browser (5.2)")]
+    f, _ = dl.build_findings(rows, {}, fine, [], "x.csv", "Cybersecurity", TODAY)
+    assert f["rows"] == []
+
+
+def test_the_crawl_is_never_used_for_venue_evidence():
+    """Crawl run 2026-09-13 applied an events listing as St. Louis's VENUE_EVIDENCE_URL."""
+    item = {"conference": "SecureWorld St. Louis 2026", "row": {"CONFERENCE URL": "https://x.test/"},
+            "problems": [{"kind": "link", "field": "VENUE_EVIDENCE_URL", "detail": "", "dead_url": DEAD}]}
+    called = []
+    out = dl.crawl_answers(_findings(item), lambda jobs: called.extend(jobs) or [])
+    assert not called and out["rows"] == []
+    assert "needs research" in out["not_asked"][0]
+
+
+def test_a_url_fragment_does_not_make_a_listing_confident():
+    from scripts.find_replacement_links import classify
+    assert classify("https://www.secureworld.io/events#become-a-speaker")[0] != "CONFIDENT"
+    assert classify("https://www.secureworld.io/become-a-speaker")[0] == "CONFIDENT"

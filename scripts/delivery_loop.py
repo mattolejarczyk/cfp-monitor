@@ -50,6 +50,7 @@ from src.cfp_monitor import rules                                    # noqa: E40
 
 MARKETS = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
 LINK_FIELDS = ("SUBMISSION URL", "CFP_SUBMISSION_URL", "VENUE_EVIDENCE_URL")
+CRAWLABLE_FIELDS = ("SUBMISSION URL", "CFP_SUBMISSION_URL")
 EVIDENCE = "DEADLINE_EVIDENCE_URL"
 DEADLINE_CHECKS = {"2", "3", "R2", "R22"}
 SNAPSHOT = ("CONFERENCE", "CONFERENCE URL", "LOCATION", "CITY", "COUNTRY", "CONFERENCE DATES",
@@ -117,8 +118,8 @@ def build_findings(rows: list[dict], payload: dict, declined: list, withdrawn: l
     names = {r["CONFERENCE"]: r for r in rows if r.get("CONFERENCE")}
     for d in declined:
         row = names.get(d.conference)
-        if row is None:
-            continue
+        if row is None or mr.is_fine_link(d):
+            continue                       # a link checked and found alive is not a question
         if d.cls == "A":
             add(row, "deadline_evidence", EVIDENCE, f"quote could not be re-copied: {d.why}", True)
         elif d.cls in ("B", "D") and d.field in LINK_FIELDS + (EVIDENCE,):
@@ -333,7 +334,10 @@ def crawl_answers(findings: dict, hunt: Callable[[list[dict]], list[dict]]) -> d
         row = item.get("row", {})
         by_url: dict[str, list[int]] = {}
         for n, p in enumerate(item.get("problems", []), 1):
-            if p.get("kind") != "link":
+            # A crawl finds SUBMISSION pages (find_replacement_links hunts res.submission_url).
+            # Using its answer for VENUE_EVIDENCE_URL applied an events listing as St. Louis's
+            # venue evidence on 2026-09-13. Other link fields need research, not this crawl.
+            if p.get("kind") != "link" or p.get("field") not in CRAWLABLE_FIELDS:
                 out["not_asked"].append(f"{item['conference']} - problem {n} ({p.get('kind')} "
                                         f"{p.get('field') or ''}) - needs research, not a crawl")
                 continue
@@ -517,7 +521,8 @@ def main() -> int:
             answers = json.loads(answers_path.read_text(encoding="utf-8"))
         summary.append(f"- link questions answered via: {a.links_via}")
         for n in answers.get("not_asked", []):
-            for_person.append(ForPerson(n, "not asked - over the request cap", ""))
+            for_person.append(ForPerson(n, "not asked - over the request cap" if a.links_via == "gemini"
+                                        else "not a link question - Saturday research or a person", ""))
         applied = apply_answers(rows, answers, today, mr._live_fetch, mr._live_browser_dead)
         for_person += applied.for_person
         current = work / f"{tag}.answered.csv"
