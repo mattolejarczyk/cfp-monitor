@@ -215,3 +215,52 @@ def test_a_proposal_whose_evidence_fails_says_so_first():
     assert not res.applied and r["STATUS"] == "Open" and r["SUBMISSION URL"] == DEAD
     d = res.for_person[0].detail
     assert d.startswith("EVIDENCE FAILS") and "not-found" in d and "quote is not on the page" in d
+
+
+# ============================================================ link questions answered by crawl
+
+def _findings(*items):
+    return {"delivery": "x.csv", "market": "Cybersecurity", "today": "2026-09-13", "rows": list(items)}
+
+
+def test_crawl_answers_link_questions_and_leaves_research_questions_alone():
+    """The loop's default since 2026-09-13: links come from crawling the site, not from Gemini."""
+    item = {"conference": "SecureWorld Government & Critical Infrastructure 2026",
+            "row": {"CONFERENCE URL": "https://www.secureworld.io/", "MAIN_INFO_URL": ""},
+            "problems": [
+                {"kind": "link", "field": "SUBMISSION URL", "detail": "", "dead_url": DEAD},
+                {"kind": "link", "field": "CFP_SUBMISSION_URL", "detail": "", "dead_url": DEAD},
+                {"kind": "deadline_evidence", "field": "DEADLINE_EVIDENCE_URL", "detail": "",
+                 "dead_url": ""}]}
+    seen = []
+
+    def hunt(jobs):
+        seen.extend(jobs)
+        return [{"PROPOSED URL": FORM, "VERDICT": "CONFIDENT", "WHY": "path states how to submit",
+                 "START URL": "https://www.secureworld.io/", "FOUND VIA": "Submit a talk"}]
+
+    out = dl.crawl_answers(_findings(item), hunt)
+    assert len(seen) == 1 and seen[0]["submission_url"] == DEAD      # one crawl for one dead url
+    answers = out["rows"][0]["answers"]
+    assert [(x["field"], x["url"], x["disposition"]) for x in answers] == [
+        ("SUBMISSION URL", FORM, "replace"), ("CFP_SUBMISSION_URL", FORM, "replace")]
+    assert any("problem 3" in n and "needs research" in n for n in out["not_asked"])
+
+
+def test_crawl_review_and_nothing_found_go_to_a_person_not_into_the_row():
+    item = {"conference": "SecureWorld East 2026", "row": {"CONFERENCE URL": "https://x.test/"},
+            "problems": [{"kind": "link", "field": "SUBMISSION URL", "detail": "", "dead_url": DEAD}]}
+    review = dl.crawl_answers(_findings(item), lambda jobs: [
+        {"PROPOSED URL": "https://x.test/speakers-info", "VERDICT": "REVIEW", "WHY": "plausible"}])
+    assert not review["rows"][0]["answers"] and "needs review" in review["rows"][0]["issues"][0]
+    nothing = dl.crawl_answers(_findings(item), lambda jobs: [
+        {"PROPOSED URL": "", "VERDICT": "", "OUTCOME": "No live page found",
+         "CFP STATE": "Call closed"}])
+    assert not nothing["rows"][0]["answers"] and "Call closed" in nothing["rows"][0]["issues"][0]
+
+
+def test_withdrawn_links_carry_their_dead_url_into_the_findings():
+    rows = [row(CONFERENCE="B East 2026", **{"SUBMISSION URL": ""})]
+    withdrawn = [mr.Repair("D", "B East 2026", "Cybersecurity", "SUBMISSION URL", DEAD, "", "")]
+    f, _ = dl.build_findings(rows, {}, [], withdrawn, "x.csv", "Cybersecurity", TODAY)
+    assert f["rows"][0]["problems"][0]["dead_url"] == DEAD

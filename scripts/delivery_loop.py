@@ -55,7 +55,7 @@ DEADLINE_CHECKS = {"2", "3", "R2", "R22"}
 SNAPSHOT = ("CONFERENCE", "CONFERENCE URL", "LOCATION", "CITY", "COUNTRY", "CONFERENCE DATES",
             "START DATE", "SUBMISSION DEADLINE", "STATUS", "STATUS DETAILS", "IS_PROJECTED",
             "CFP MODEL TYPE", "OPPORTUNITY_TYPE", "SUBMISSION URL", "CFP_SUBMISSION_URL",
-            "DEADLINE_EVIDENCE_URL", "DEADLINE_QUOTE", "VENUE_EVIDENCE_URL")
+            "DEADLINE_EVIDENCE_URL", "DEADLINE_QUOTE", "VENUE_EVIDENCE_URL", "MAIN_INFO_URL")
 
 
 # ============================================================================ findings
@@ -96,13 +96,14 @@ def build_findings(rows: list[dict], payload: dict, declined: list, withdrawn: l
     by_name: dict[str, dict] = {}
     unmatched: list[str] = []
 
-    def add(row, kind, fld, detail, blocking):
+    def add(row, kind, fld, detail, blocking, dead_url=""):
         item = by_name.setdefault(row["CONFERENCE"], {
             "conference": row["CONFERENCE"], "blocking": False,
             "row": {k: row.get(k, "") for k in SNAPSHOT if k in row}, "problems": []})
         if any(p["kind"] == kind and p["field"] == fld for p in item["problems"]):
             return
-        item["problems"].append({"kind": kind, "field": fld, "detail": detail})
+        item["problems"].append({"kind": kind, "field": fld, "detail": detail,
+                                 "dead_url": dead_url or (row.get(fld, "") if kind == "link" else "")})
         item["blocking"] |= blocking
 
     for check, name, text in gate_failures(payload):
@@ -130,7 +131,7 @@ def build_findings(rows: list[dict], payload: dict, declined: list, withdrawn: l
         row = names.get(rep.conference)
         if row is not None and rep.field in LINK_FIELDS and rep.before:
             add(row, "link", rep.field, f"{rep.before} was dead and has been withdrawn - is there "
-                                        f"a live page for this field?", False)
+                                        f"a live page for this field?", False, dead_url=rep.before)
 
     # Order is what a --max-requests cap spends first. Blocking rows, then rows whose answers
     # can be applied, then rows asking only "other" questions - those can only ever end up on
@@ -300,13 +301,81 @@ def apply_answers(rows: list[dict], answers: dict, today: date,
 
             if disp == "none_public" and fld in LINK_FIELDS:
                 cur = row.get(fld, "")
-                if cur and fetch(cur)[0] in rules.DISPROVING_STATUS and cur in browser_dead([cur]):
+                if cur and fetch(cur)[0] in rules.NEEDS_BROWSER_STATUS and cur in browser_dead([cur]):
                     put(row, fld, "", "withdrawn - dead, and upstream: no public page")
                 continue
 
             res.for_person.append(ForPerson(name, "answer not usable",
                                             f"{disp} on {fld!r}: {a.get('explanation', '')}"))
     return res
+
+
+# ============================================================================ links by crawl
+def crawl_answers(findings: dict, hunt: Callable[[list[dict]], list[dict]]) -> dict:
+    """Answer LINK questions by crawling the conference's own site, not by asking a model.
+
+    WHY NOT GEMINI. 2026-09-13: 17 grounded Gemini calls across three pilots returned two link
+    answers, both plausible and both 404 in a real browser. A diagnostic call showed grounding
+    did run - 8 searches - but its sources are recorded per DOMAIN and it supported only the
+    dates; the URL paths were composed, not read. Asking a model to REPORT where a page lives
+    produces guesses. scripts/find_replacement_links.py crawls the site and takes a link it
+    actually found, and apply_answers() still browser-checks it before use.
+
+    Returns the same shape as Markets/answer_findings.py, so apply_answers() is unchanged.
+    Deadline-evidence and "other" questions are not a crawl's to answer; they are listed for
+    the Saturday re-research or a person.
+    """
+    out = {"delivery": findings.get("delivery"), "market": findings.get("market"),
+           "today": findings.get("today"), "via": "crawl (find_replacement_links.hunt)",
+           "rows": [], "not_asked": []}
+    jobs, where = [], []                    # one crawl per (row, dead url)
+    for item in findings.get("rows", []):
+        row = item.get("row", {})
+        by_url: dict[str, list[int]] = {}
+        for n, p in enumerate(item.get("problems", []), 1):
+            if p.get("kind") != "link":
+                out["not_asked"].append(f"{item['conference']} - problem {n} ({p.get('kind')} "
+                                        f"{p.get('field') or ''}) - needs research, not a crawl")
+                continue
+            by_url.setdefault(p.get("dead_url") or "", []).append(n)
+        for dead, probs in by_url.items():
+            jobs.append({"event_id": item["conference"], "name": item["conference"],
+                         "submission_url": dead or row.get("CONFERENCE URL", ""),
+                         "url": row.get("CONFERENCE URL", ""),
+                         "main_info_url": row.get("MAIN_INFO_URL", "")})
+            where.append((item, probs))
+    if not jobs:
+        return out
+    results = hunt(jobs)
+    blocks: dict[str, dict] = {}
+    for (item, probs), rec in zip(where, results):
+        block = blocks.setdefault(item["conference"], {"conference": item["conference"],
+                                                       "answers": [], "issues": []})
+        url, verdict = rec.get("PROPOSED URL", ""), rec.get("VERDICT", "")
+        for n in probs:
+            fld = item["problems"][n - 1].get("field", "")
+            if url and verdict == "CONFIDENT":
+                block["answers"].append({
+                    "problem": n, "kind": "link", "field": fld, "disposition": "replace",
+                    "url": url, "quote": "", "changes": {},
+                    "explanation": f"found by crawling {rec.get('START URL', '')}: "
+                                   f"{rec.get('FOUND VIA', '')} ({rec.get('WHY', '')})"})
+            elif url:
+                block["issues"].append(f"problem {n}: crawl found a candidate that needs review - "
+                                       f"{url} ({rec.get('WHY', '')})")
+            else:
+                block["issues"].append(f"problem {n}: crawl found no live page - "
+                                       f"{rec.get('NOTE') or rec.get('OUTCOME') or 'nothing found'}; "
+                                       f"call state: {rec.get('CFP STATE') or 'undetermined'}")
+    out["rows"] = list(blocks.values())
+    return out
+
+
+def _live_hunt(jobs: list[dict]) -> list[dict]:
+    import asyncio
+    from scripts.find_replacement_links import hunt
+    from src.cfp_monitor.config import Settings
+    return asyncio.run(hunt(jobs, Settings()))
 
 
 # ============================================================================ driver
@@ -347,6 +416,10 @@ def main() -> int:
                     help="hard cap on Gemini calls per round, retries included")
     ap.add_argument("--attempts", type=int, default=2, help="Gemini calls per row at most")
     ap.add_argument("--model", help="Gemini model for the upstream step (default: the audit's)")
+    ap.add_argument("--links-via", choices=("crawl", "gemini"), default="crawl",
+                    help="how link questions are answered. crawl (default) uses "
+                         "find_replacement_links on the conference's own site and spends no Gemini "
+                         "quota; gemini asks every question through Markets/answer_findings.py")
     ap.add_argument("--markets-dir", default=str(MARKETS))
     ap.add_argument("--dry-run", action="store_true",
                     help="gate, repair and build findings, show the prompts; no Gemini calls")
@@ -414,24 +487,35 @@ def main() -> int:
         previous_findings = signature
 
         answers_path = work / f"{tag}_answers.json"
-        cmd = ["py", str(Path(a.markets_dir) / "answer_findings.py"), "--findings", str(fpath),
-               "--max-requests", str(a.max_requests), "--attempts", str(a.attempts)]
-        if a.model:
-            cmd += ["--model", a.model]
-        cmd += ["--dry-run"] if a.dry_run else ["--out", str(answers_path)]
-        with open(work / f"{tag}_answers.log", "w", encoding="utf-8") as fh:
-            code = subprocess.run(cmd, cwd=a.markets_dir, stdout=fh, stderr=subprocess.STDOUT,
-                                  env={**__import__("os").environ,
-                                       "PYTHONIOENCODING": "utf-8"}).returncode
-        if a.dry_run:
-            summary.append(f"- DRY RUN: prompts in `{tag}_answers.log`; nothing sent to Gemini")
-            break
-        if code != 0 or not answers_path.exists():
-            why = "out of quota" if code == 3 else f"exit {code}"
-            summary.append(f"- **upstream step stopped ({why}) - see `{tag}_answers.log`**")
-            break
-
-        answers = json.loads(answers_path.read_text(encoding="utf-8"))
+        if a.links_via == "crawl":
+            if a.dry_run:
+                n_links = sum(1 for i in findings["rows"] for p in i["problems"] if p["kind"] == "link")
+                summary.append(f"- DRY RUN: {n_links} link question(s) would be crawled; nothing run")
+                break
+            answers = crawl_answers(findings, _live_hunt)
+            answers_path.write_text(json.dumps(answers, indent=2, ensure_ascii=False), encoding="utf-8")
+            code = 0
+        else:
+            answers = None
+        if answers is None:
+            cmd = ["py", str(Path(a.markets_dir) / "answer_findings.py"), "--findings", str(fpath),
+                   "--max-requests", str(a.max_requests), "--attempts", str(a.attempts)]
+            if a.model:
+                cmd += ["--model", a.model]
+            cmd += ["--dry-run"] if a.dry_run else ["--out", str(answers_path)]
+            with open(work / f"{tag}_answers.log", "w", encoding="utf-8") as fh:
+                code = subprocess.run(cmd, cwd=a.markets_dir, stdout=fh, stderr=subprocess.STDOUT,
+                                      env={**__import__("os").environ,
+                                           "PYTHONIOENCODING": "utf-8"}).returncode
+            if a.dry_run:
+                summary.append(f"- DRY RUN: prompts in `{tag}_answers.log`; nothing sent to Gemini")
+                break
+            if code != 0 or not answers_path.exists():
+                why = "out of quota" if code == 3 else f"exit {code}"
+                summary.append(f"- **upstream step stopped ({why}) - see `{tag}_answers.log`**")
+                break
+            answers = json.loads(answers_path.read_text(encoding="utf-8"))
+        summary.append(f"- link questions answered via: {a.links_via}")
         for n in answers.get("not_asked", []):
             for_person.append(ForPerson(n, "not asked - over the request cap", ""))
         applied = apply_answers(rows, answers, today, mr._live_fetch, mr._live_browser_dead)
