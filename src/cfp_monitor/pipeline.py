@@ -21,6 +21,7 @@ from .crawler import explore
 from .extraction import extract_from_markdown
 from .fetch import close_fallback_browser
 from .models import ConferenceResult
+from .run_health import HEALTH
 from .scoring import normalize_url, score_link
 from .trace import Tracer
 
@@ -73,6 +74,10 @@ async def analyze_conference(crawler, start_url: str, settings: Settings, tracer
     for p in to_extract:
         if pairs and time.monotonic() > extract_deadline:
             tracer.log("budget", p.url, "extraction time budget reached - consolidating pages done so far")
+            # Recorded, not just traced: retries after a rate limit spend this budget, and a site
+            # consolidated from fewer pages than selected is a weaker answer the run should admit.
+            HEALTH.note("page_read", "site_budget_reached_pages_skipped",
+                        len(to_extract) - to_extract.index(p))
             break
         pe = await extract_from_markdown(p.markdown, p.url, settings, tracer)
         if pe:

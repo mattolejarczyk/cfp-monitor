@@ -61,6 +61,7 @@ from src.cfp_monitor.pipeline import run_urls                    # noqa: E402
 from src.cfp_monitor.fetch import close_fallback_browser         # noqa: E402
 from src.cfp_monitor.scoring import normalize_url                # noqa: E402
 from src.cfp_monitor.verify import link_status                   # noqa: E402
+from src.cfp_monitor.run_health import HEALTH                    # noqa: E402
 
 # Classify a proposal before offering it. The pipeline finds a plausible page; it does not
 # know our contract. On the 2026-08-09 run it returned 23 proposals of which 8 were wrong,
@@ -178,20 +179,38 @@ async def hunt(rows: list[dict], settings: Settings) -> list[dict]:
                "START URL": start_url, "LINK STATE": "Unreachable",
                "OUTCOME": "", "PROPOSED URL": "", "VERDICT": "", "WHY": "",
                "CFP STATE": "", "EVIDENCE": "", "EVIDENCE URL": "",
-               "FOUND VIA": "", "HTTP": "", "NOTE": ""}
+               "FOUND VIA": "", "HTTP": "", "NOTE": "", "PAGES READ": ""}
+        before = HEALTH.snapshot("page_read")
         try:
             res = (await run_urls([start_url], settings))[0]
         except Exception as exc:
             rec["NOTE"] = f"pipeline failed: {type(exc).__name__}: {exc}"[:150]
+            HEALTH.fail("site_crawl", "pipeline_failed", f"{name}: {rec['NOTE']}")
             results.append(rec); print(f"        -> {rec['NOTE'][:70]}", flush=True); continue
+        reads = HEALTH.snapshot("page_read") - before
+        reads_ok, reads_failed = reads["ok"], sum(reads.values()) - reads["ok"]
+        rec["PAGES READ"] = f"{reads_ok} ok, {reads_failed} failed"
 
         st, why_ev, ev_url = cfp_state(res)
         rec["CFP STATE"], rec["EVIDENCE"], rec["EVIDENCE URL"] = st, why_ev, ev_url
 
         found = (res.submission_url.value or "").strip() if res.submission_url else ""
         if not found:
-            rec["OUTCOME"] = "No live page found"
-            results.append(rec); print("        -> nothing found", flush=True); continue
+            # "Nothing found" is only a finding if the pages were actually read. On 2026-09-13
+            # eleven sites reported nothing while their page reads were being rate-limited.
+            if reads_failed and not reads_ok:
+                rec["OUTCOME"] = "Could not read the site"
+                rec["NOTE"] = (f"all {reads_failed} page read(s) failed "
+                               f"({', '.join(k for k in reads if k != 'ok')}) - not a finding")
+                HEALTH.fail("site_crawl", "could_not_read", f"{name}: {rec['NOTE']}")
+                print(f"        -> could not read ({reads_failed} failed reads)", flush=True)
+            else:
+                rec["OUTCOME"] = "No live page found"
+                HEALTH.ok("site_crawl")
+                HEALTH.note("site_crawl", "nothing_found")
+                print("        -> nothing found", flush=True)
+            results.append(rec); continue
+        HEALTH.ok("site_crawl")
 
         # ABSOLUTISE BEFORE VERIFYING. The extractor can return a relative href, and on
         # 2026-08-28 one did: IRPS 2027 was proposed as "/abstract-submission". Upstream caught
@@ -272,6 +291,7 @@ def main() -> int:
         w.writerows(results)
 
     print(f"\n{len(found)} of {len(results)} got a live replacement proposal")
+    print("\n" + HEALTH.banner())
     print(f"wrote {a.out}")
     print("\nThese are PROPOSALS. SUBMISSION URL is upstream's field (contract section 3) -")
     print("attach this to the hand-back as corrections, do not write it into the delivery.")

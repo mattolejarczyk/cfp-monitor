@@ -47,6 +47,7 @@ sys.path.insert(0, str(ROOT))
 
 from scripts import mechanical_repairs as mr                          # noqa: E402
 from src.cfp_monitor import rules                                    # noqa: E402
+from src.cfp_monitor.run_health import HEALTH                        # noqa: E402
 
 MARKETS = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
 LINK_FIELDS = ("SUBMISSION URL", "CFP_SUBMISSION_URL", "VENUE_EVIDENCE_URL")
@@ -367,10 +368,14 @@ def crawl_answers(findings: dict, hunt: Callable[[list[dict]], list[dict]]) -> d
             elif url:
                 block["issues"].append(f"problem {n}: crawl found a candidate that needs review - "
                                        f"{url} ({rec.get('WHY', '')})")
+            elif rec.get("OUTCOME") == "Could not read the site":
+                block["issues"].append(f"problem {n}: NOT CHECKED - the crawl could not read the "
+                                       f"site ({rec.get('NOTE', '')}); retry, this is not a finding")
             else:
                 block["issues"].append(f"problem {n}: crawl found no live page - "
                                        f"{rec.get('NOTE') or rec.get('OUTCOME') or 'nothing found'}; "
-                                       f"call state: {rec.get('CFP STATE') or 'undetermined'}")
+                                       f"call state: {rec.get('CFP STATE') or 'undetermined'} "
+                                       f"(pages read: {rec.get('PAGES READ') or 'unknown'})")
     out["rows"] = list(blocks.values())
     return out
 
@@ -406,6 +411,12 @@ def _gate(csv_path: Path, out_json: Path, db: str, market: str) -> tuple[bool, d
         code = subprocess.run(cmd, stdout=fh, stderr=subprocess.STDOUT,
                               env={**__import__("os").environ, "PYTHONIOENCODING": "utf-8"}).returncode
     payload = json.loads(out_json.read_text(encoding="utf-8")) if out_json.exists() else {}
+    # A gate that REJECTS writes its JSON; a gate that CRASHES does not. Without this, a crash
+    # read as "rejected with no failures" and the loop built zero findings from it.
+    if not payload:
+        HEALTH.fail("gate_run", "gate_crashed", f"exit {code}, no JSON - see {log.name}")
+    else:
+        HEALTH.ok("gate_run")
     return code == 0, payload
 
 
@@ -519,6 +530,8 @@ def main() -> int:
                 summary.append(f"- **upstream step stopped ({why}) - see `{tag}_answers.log`**")
                 break
             answers = json.loads(answers_path.read_text(encoding="utf-8"))
+            if isinstance(answers.get("health"), dict):
+                HEALTH.merge(answers["health"])
         summary.append(f"- link questions answered via: {a.links_via}")
         for n in answers.get("not_asked", []):
             for_person.append(ForPerson(n, "not asked - over the request cap" if a.links_via == "gemini"
@@ -556,9 +569,20 @@ def main() -> int:
         summary += ["## Needs a person", "", "| Row | What | Detail |", "|---|---|---|"]
         summary += [f"| {p.conference} | {p.what} | {p.detail.replace('|', '/')[:400]} |"
                     for p in for_person]
+    # HEALTH GOES FIRST. A degraded run's other sections describe what it could not see, so the
+    # reader must meet the verdict before the results.
+    status, _reasons = HEALTH.verdict()
+    summary[2:2] = [f"    HEALTH:  {status}", ""] + HEALTH.report_lines() + [""]
     (work / "SUMMARY.md").write_text("\n".join(summary) + "\n", encoding="utf-8")
+    (work / "health.json").write_text(json.dumps({"status": status, **HEALTH.to_dict()}, indent=2),
+                                      encoding="utf-8")
     print("\n".join(summary))
-    print(f"\nall artifacts: {work}")
+    print(f"\n{HEALTH.banner()}")
+    print(f"all artifacts: {work}")
+    # Exit codes: 0 accepted, 1 not accepted, 2 DEGRADED - checked first, because an accepted
+    # verdict from a run that could not see is not an acceptance anyone should act on.
+    if status == "DEGRADED":
+        return 2
     return 0 if accepted else 1
 
 
