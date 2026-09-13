@@ -165,6 +165,17 @@ Read the report, then add `--apply`. It writes `<delivery>.repaired.csv`, a
 file only if that gate run says ACCEPTED.** Whatever it lists under "Not repaired" is what the
 hand-back is for - attach the `.repairs.md` so upstream sees every change we made.
 
+**Or run the whole loop** - repairs, questions to upstream, verified answers, re-gate:
+
+```bash
+./.venv/Scripts/python.exe scripts/delivery_loop.py "<delivery>.csv" --market "<Canonical>"     --prior "<previous version>.csv" --dry-run
+```
+
+Drop `--dry-run` to let it ask Gemini (one request per row with findings, `--max-requests`
+caps it; check the scheduled runs are not due first). Read `SUMMARY.md` in the loop folder:
+import `FINAL.csv` only if it says ACCEPTED, and approve or reject anything under
+"Needs a person" - that is where proposed date and status changes wait.
+
 A repair never moves a date, a status, an identity or a cited page. If one of those is what is
 wrong, it is a finding for upstream exactly as before.
 
