@@ -151,6 +151,23 @@ shifted columns and its output is meaningless.
 
 Do not report these as one number. That distinction cost us a wrong accusation once.
 
+### If the gate rejects: repair the mechanical defects first (contract v2.4)
+
+Before writing a hand-back, let the tool fix what is only a matter of how a claim is written.
+Upstream accepted this in full on 2026-09-12; every repair is logged for them and reversible.
+
+```bash
+./.venv/Scripts/python.exe scripts/mechanical_repairs.py "<delivery>.csv"     --prior "<previous version of the same delivery>.csv"     --db "C:/Users/matts/AppData/Local/CFP-Monitor/cfp_monitor.db" --market "<Canonical>"
+```
+
+Read the report, then add `--apply`. It writes `<delivery>.repaired.csv`, a
+`<delivery>.repairs.md` log, and re-runs the gate on the repaired file. **Import the repaired
+file only if that gate run says ACCEPTED.** Whatever it lists under "Not repaired" is what the
+hand-back is for - attach the `.repairs.md` so upstream sees every change we made.
+
+A repair never moves a date, a status, an identity or a cited page. If one of those is what is
+wrong, it is a finding for upstream exactly as before.
+
 ### If check 1 fails
 
 The delivery is malformed, not wrong. Repair locally so it does not block you, and send it back
