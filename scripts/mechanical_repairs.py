@@ -372,7 +372,7 @@ def run(rows: list[dict], prior_rows: Optional[list[dict]], today: date,
                 targets = [f for f in URL_FIELDS if _g(r, f) == old]
                 if not targets:
                     continue
-                if get(old)[0] not in rules.DISPROVING_STATUS or old not in browser_dead([old]):
+                if get(old)[0] not in rules.NEEDS_BROWSER_STATUS or old not in browser_dead([old]):
                     res.declined.append(Declined("B", _g(r, "CONFERENCE"), ",".join(targets),
                                                  f"{old} is not dead in both a plain fetch and a "
                                                  f"real browser - nothing to carry"))
@@ -407,7 +407,7 @@ def run(rows: list[dict], prior_rows: Optional[list[dict]], today: date,
             continue                       # v2.2: expected decay, not a defect
         for f in WITHDRAWABLE:
             u = _g(r, f)
-            if not u.startswith("http") or get(u)[0] not in rules.DISPROVING_STATUS:
+            if not u.startswith("http") or get(u)[0] not in rules.NEEDS_BROWSER_STATUS:
                 continue
             if u in upstream_touched:
                 res.declined.append(Declined("D", _g(r, "CONFERENCE"), f,
@@ -420,8 +420,8 @@ def run(rows: list[dict], prior_rows: Optional[list[dict]], today: date,
         for r, f in where:
             name = _g(r, "CONFERENCE")
             if u not in dead:
-                res.declined.append(Declined("D", name, f, f"{u} is 404 to a script but alive in a "
-                                                           f"real browser - not dead (5.2)"))
+                res.declined.append(Declined("D", name, f, f"{u} is HTTP {get(u)[0]} to a script but "
+                                                           f"not confirmed dead in a real browser (5.2)"))
                 continue
             if f == "DEADLINE_EVIDENCE_URL":
                 if withdrawal_would_break_prose(r):
@@ -433,11 +433,12 @@ def run(rows: list[dict], prior_rows: Optional[list[dict]], today: date,
                 for wf, wv in rules.withdrawal_changes(r, fetched=True, today=today).items():
                     if _g(r, wf) != wv:
                         admit(Repair("D", name, _g(r, "Market"), wf, _g(r, wf), wv,
-                                     f"R1 withdrawal - {u} is 404/410 in a plain fetch and a "
-                                     f"real browser"), r)
+                                     f"R1 withdrawal - {u} is dead in a real browser "
+                                     f"(plain fetch HTTP {get(u)[0]})"), r)
             elif _g(r, f) == u:
                 admit(Repair("D", name, _g(r, "Market"), f, u, "",
-                             "R1 withdrawal - dead in a plain fetch and a real browser"), r)
+                             f"R1 withdrawal - dead in a real browser (plain fetch HTTP "
+                             f"{get(u)[0]})"), r)
     return res
 
 

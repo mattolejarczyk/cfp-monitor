@@ -86,26 +86,37 @@ def recheck_csv(path: str) -> int:
                 continue
             if u not in seen:
                 seen[u], _ = link_status(u)
-            if seen[u] in (404, 410):
+            # 403 too (rules.NEEDS_BROWSER_STATUS): a script-blocked site can hide a real 404.
+            if seen[u] in (403, 404, 410):
                 suspects.setdefault(u, []).append(f'{(r.get("CONFERENCE") or "")[:36]} [{c}]')
 
-    print(f"pass 1 checked {len(seen)} url(s); {len(suspects)} returned 404/410\n")
+    print(f"pass 1 checked {len(seen)} url(s); {len(suspects)} returned 403/404/410 and go to "
+          f"a real browser\n")
     if not suspects:
         print("Nothing for the browser to re-check.")
         return 0
 
     results = asyncio.run(browser_check(list(suspects)))
-    dead, false_404 = [], []
+    # Three outcomes, not two. A browser that is ALSO refused (http 403) has not shown the page
+    # is alive - it is blocked-but-trusted under R3, and must not be counted as "reachable".
+    dead, alive, blocked = [], [], []
     for u, where in suspects.items():
         verdict, status, chars = results.get(u, ("no result", 0, 0))
-        (dead if verdict == "dead" else false_404).append((u, verdict, where))
-        print(f"  {verdict[:12]:<13} {u[:66]}")
+        bucket = dead if verdict == "dead" else alive if verdict == "ALIVE" else blocked
+        bucket.append((u, verdict, where))
+        print(f"  {verdict[:12]:<13} {u[:66]}  (plain HTTP {seen.get(u)})")
         for w in where:
             print(f"                {w}")
 
-    print(f"\ntruly dead: {len(dead)}   |   reachable in a browser: {len(false_404)}")
-    if false_404:
-        print("\nThese were FALSE 404s - the link works, our plain HTTP request was blocked.")
+    hidden = [u for u, _v, _w in dead if seen.get(u) == 403]
+    print(f"\ntruly dead: {len(dead)}   |   alive in a browser: {len(alive)}   |   "
+          f"blocked to browsers too (R3, trusted): {len(blocked)}")
+    if hidden:
+        print(f"\n{len(hidden)} of the dead answered 403 to a script - invisible to a 404-only check:")
+        for u in hidden:
+            print(f"    {u}")
+    if alive:
+        print("\nThe ALIVE ones were false alarms - our plain HTTP request was blocked.")
         print("Withdrawing their citations would have been wrong (contract 5.2).")
     return 0
 

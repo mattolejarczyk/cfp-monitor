@@ -31,6 +31,15 @@ CUSTOMER_FACING_URLS = ("SUBMISSION URL", "CFP_SUBMISSION_URL", "MAIN_INFO_URL",
 # Only these disprove a link. 403, 500, timeouts and empty bodies mean blocked-or-broken.
 DISPROVING_STATUS = (404, 410)
 
+# Plain-HTTP answers that must get a REAL BROWSER'S opinion before anyone decides a link lives
+# or dies. 404/410 because a script can be refused a page a browser is served (the rule above
+# stays: only a confirmed 404/410 disproves). 403 because the reverse also happens, and nobody
+# was checking it: on 2026-09-13 events.secureworld.io/speaker-submissions/ answered 403 to
+# every script and was, in a browser, a 404 - the live SUBMISSION URL of SecureWorld Twin Cities
+# 2026, six days before its deadline, passed by the gate and by recheck_dead_links alike.
+# A 403 alone is still never a disproof; only the browser's verdict decides.
+NEEDS_BROWSER_STATUS = (403,) + DISPROVING_STATUS
+
 
 def parse_date(s) -> date | None:
     try:

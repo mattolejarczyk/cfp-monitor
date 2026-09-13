@@ -223,13 +223,23 @@ def test_D_refused_when_a_browser_can_load_it():
     r = row(DEADLINE_EVIDENCE_URL=DEAD)
     res = run([r], fetch=stub_fetch({DEAD: (404, "")}), dead=set())
     assert r["DEADLINE_EVIDENCE_URL"] == DEAD
-    assert any("alive in a real browser" in d.why for d in res.declined)
+    assert any("not confirmed dead in a real browser" in d.why for d in res.declined)
 
 
-def test_D_a_403_is_never_withdrawn():
+def test_D_a_403_that_a_browser_shows_dead_is_withdrawn_twin_cities():
+    """2026-09-13: events.secureworld.io/speaker-submissions/ answered 403 to scripts and 404 in a
+    browser. The old rule - never look behind a 403 - left it live on an Open row."""
+    r = row(**{"SUBMISSION URL": DEAD, "DEADLINE_EVIDENCE_URL": LIVE})
+    run([r], fetch=stub_fetch({DEAD: (403, ""), LIVE: (200, "")}), dead={DEAD})
+    assert r["SUBMISSION URL"] == ""
+
+
+def test_D_a_403_that_a_browser_loads_is_kept():
+    """Blocked-but-trusted (R3) still holds when the browser is served the page."""
     r = row(DEADLINE_EVIDENCE_URL=DEAD)
-    run([r], fetch=stub_fetch({DEAD: (403, "")}), dead={DEAD})
+    res = run([r], fetch=stub_fetch({DEAD: (403, "")}), dead=set())
     assert r["DEADLINE_EVIDENCE_URL"] == DEAD
+    assert any("not confirmed dead" in d.why for d in res.declined)
 
 
 def test_D_passed_deadline_is_decay_not_a_repair():
