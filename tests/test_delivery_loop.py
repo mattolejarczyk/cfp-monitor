@@ -172,3 +172,13 @@ def test_an_answer_for_a_row_not_in_the_delivery_is_reported():
     res = dl.apply_answers([row()], answers("Some Other Event", ans("replace", "SUBMISSION URL", FORM)),
                            TODAY, fetch({FORM: (200, "")}), browser(set()))
     assert res.for_person and "not in the delivery" in res.for_person[0].what
+
+
+def test_rows_asking_only_other_questions_are_spent_last():
+    """Pilot 2026-09-13: with a request cap, Denver's categories question - which can only reach a
+    person's list - must not take a request ahead of a dead link the loop can actually fix."""
+    rows = [row(CONFERENCE="A Denver 2026"), row(CONFERENCE="B East 2026")]
+    declined = [mr.Declined("C", "A Denver 2026", "CATEGORIES", "serialised list")]
+    withdrawn = [mr.Repair("D", "B East 2026", "Cybersecurity", "SUBMISSION URL", DEAD, "", "")]
+    f, _ = dl.build_findings(rows, {}, declined, withdrawn, "x.csv", "Cybersecurity", TODAY)
+    assert [i["conference"] for i in f["rows"]] == ["B East 2026", "A Denver 2026"]

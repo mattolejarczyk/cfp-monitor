@@ -132,7 +132,13 @@ def build_findings(rows: list[dict], payload: dict, declined: list, withdrawn: l
             add(row, "link", rep.field, f"{rep.before} was dead and has been withdrawn - is there "
                                         f"a live page for this field?", False)
 
-    items = sorted(by_name.values(), key=lambda i: (not i["blocking"], i["conference"]))
+    # Order is what a --max-requests cap spends first. Blocking rows, then rows whose answers
+    # can be applied, then rows asking only "other" questions - those can only ever end up on
+    # a person's list, so they are the last thing worth paying for.
+    items = sorted(by_name.values(),
+                   key=lambda i: (not i["blocking"],
+                                  all(p["kind"] == "other" for p in i["problems"]),
+                                  i["conference"]))
     return ({"delivery": delivery, "market": market, "today": today.isoformat(), "rows": items},
             unmatched)
 
