@@ -4,6 +4,37 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **Where the work stands, end of 2026-09-12. Both live markets are ACCEPTED and IMPORTED, and the hand-back loop can close itself.**
+>
+> **Cybersecurity (58) and Utility (54) passed the full networked gate, are imported, and every
+> invariant holds.** The 2026-08-31 import gap from yesterday is closed. H2 MEET 2026 is corrected
+> (call open to 2026-09-30, event Nov 4-6, CITY Goyang) and its same-day duplicate key deleted, with
+> the full row kept in `Markets/Utility_h2meet_dedupe_record.txt`. **Nothing is awaiting upstream.**
+>
+> **KNOWN-GOOD FALLBACK:** `C:\Users\matts\CFP-KnownGood\2026-09-12` (live build, DB, seeds,
+> deliveries, scheduled-task XML, SHA256 manifest, `ROLLBACK.md`) and git tag
+> `known-good-2026-09-12` on this repo, Markets and handoff-files - taken before the changes below.
+>
+> **THE OPERATOR IS BEING TAKEN OUT OF THE MIDDLE.** Three steps, all built and tested today:
+>
+>     1. Markets/standing_rules.md     agreed rules read by the Saturday run (it refuses to start without them)
+>     2. scripts/mechanical_repairs.py contract v2.4 (adopted): fix how a claim is WRITTEN, never what it claims
+>     3. scripts/delivery_loop.py      gate -> repairs -> questions -> Markets/answer_findings.py (Gemini) -> verified -> gate
+>
+> **NEXT: the 4-request live pilot of `delivery_loop.py`** on a copy of
+> `Markets/Cybersecurity_audited.patched.csv` (the morning file), to judge Gemini's answers before
+> the 2026-09-19 weekly run. It has only been dry-run. The loop applies citations and links only;
+> proposed date/status changes wait for a person. It never imports.
+>
+> **Not the same tool:** `scripts/repair_delivery.py` is the older unquoted-comma repair.
+>
+> **Gotchas proven today.** The live DB and seeds live under `AppData\Local\CFP-Monitor`; the
+> repo-root `cfp_monitor.db` is a fixture, and the runbook's relative `--db cfp_monitor.db` misleads.
+> Write seeds to the live `market_sheets` with the existing name (`cyber_seed.csv`). Run
+> `fix_edition.py` after importing new rows - `import_grounding.py` leaves `key_year` blank.
+> Gate check 2 has never read `SUBMISSION URL`, and verifier L0s let a July crawl contradict CES 2027
+> (both in separate sessions). `LIFECYCLE_EVIDENCE_URL/QUOTE` are never requested by the prompt.
+
 > **Where the work stands, end of 2026-09-11. The weekly research job had been a no-op for two weeks.**
 >
 > **Both scheduled research tasks reported success while auditing zero rows** on 2026-09-02

@@ -5,6 +5,38 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-12 - both live markets in, and the hand-back loop taught to close itself
+
+**Cybersecurity and Utility ACCEPTED, imported, reconciled.** Seven hand-back documents crossed
+with upstream to get there, carried by copy and paste. Two of them unwound our own mistakes:
+round 4 told upstream `secureworld.io/events` states no deadlines when it has a "Speaker Deadlines"
+list above the "Schedule" list (retracted in round 5, citations restored with the page's ISO
+strings), and our H2 MEET close-out never compared the row's event dates to the page (gate 6b
+caught it). CES 2027 is correctly Closed; round 3's "the page says OPEN" came from a verifier
+crawl dated 2026-07-20 and was retracted.
+
+**Known-good snapshot and tags first**, at the operator's request, before any process change.
+
+**Why the rounds kept recurring:** the rules agreed in the chat never reached the run. Upstream
+reported three prompt updates; `run_market_audit.py` had not changed since 2026-09-08 and still
+said "Verbatim quote or direct sentence". Three steps, each tested:
+
+- `Markets/standing_rules.md` - eleven rules the run reads at import and appends last. Missing file
+  stops the run. Plus `flatten_json_lists()`: model arrays had reached three customer rows as
+  Python list reprs.
+- **Contract v2.4 adopted** and `scripts/mechanical_repairs.py` built on it. Declines on ambiguity
+  (date twice on a page, another date in the span, serialised lists, withdrawals that break check 4,
+  links upstream changed, R4's bracketed projection form). Replay closed the SecureWorld case the
+  gate needed three rounds for. It first overwrote the unrelated `repair_delivery.py`; restored from
+  git and renamed.
+- `scripts/delivery_loop.py` + `Markets/answer_findings.py` - questions to Gemini as structured
+  findings, answers verified against the live page before use, claim changes left for a person.
+  Dry-run only so far; the live pilot is next.
+
+Tests: 28 + 13 new here, full suite 974 passed; four new Markets test files, all nine pass.
+
+---
+
 ## 2026-09-11 - the weekly research job had been doing nothing, and N5 is closed
 
 **Both scheduled research tasks reported success weekly while auditing zero rows.** Task
