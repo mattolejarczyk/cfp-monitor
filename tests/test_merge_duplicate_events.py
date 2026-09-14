@@ -1,0 +1,124 @@
+"""Merging two records of one event: who survives, and what the merge must never do.
+
+The expensive mistake is not a bad merge of facts. It is deleting the row the CUSTOMER is
+joined to, because their status, priority and notes hang off that key and nothing in our
+evidence tells us it mattered.
+"""
+from __future__ import annotations
+
+import importlib.util
+import sqlite3
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+_spec = importlib.util.spec_from_file_location("mde",
+                                               ROOT / "scripts" / "merge_duplicate_events.py")
+mde = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(mde)
+
+from src.cfp_monitor.clients import ensure_schema      # noqa: E402
+from src.cfp_monitor.storage import Store              # noqa: E402
+
+
+def _row(event_id, **kw):
+    r = {"event_id": event_id, "name": "Big Conference 2027", "city": "Houston",
+         "edition": "2027", "deadline": "", "deadline_quote": "", "deadline_evidence_url": "",
+         "verify_state": "not_found", "source_as_of": "2026-09-12", "submission_url": ""}
+    r.update(kw)
+    return r
+
+
+def _rows(tmp_path, rows, clients=()):
+    p = tmp_path / "t.db"
+    Store(str(p)).db.close()
+    con = sqlite3.connect(str(p))
+    ensure_schema(con)                       # the client layer is its own migration
+    for r in rows:
+        con.execute(f"insert into grounding_facts ({', '.join(r)})"
+                    f" values ({', '.join('?' for _ in r)})", list(r.values()))
+    for c in clients:
+        con.execute("insert into client_conferences (client_key, their_name, event_id, status)"
+                    " values (?, ?, ?, ?)", (c[0], "Their Name", c[1], c[2]))
+    con.commit()
+    con.row_factory = sqlite3.Row
+    got = list(con.execute("select * from grounding_facts"))
+    linked = {r["event_id"]: dict(r) for r in con.execute("select * from client_conferences")}
+    con.close()
+    return got, linked
+
+
+OLD = "2026-big-conference-houston"
+NEW = "2027-big-conference-houston"
+
+
+def test_the_row_the_customer_is_joined_to_survives_even_when_it_is_older(tmp_path):
+    """Six of the seven live groups on 2026-09-14 were exactly this shape. A keep-the-newest
+    merge would have orphaned Nicolia's matches, two of them rows they were actively working."""
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07"),
+                          _row(NEW, verify_state="verified", deadline="2026-10-19")],
+                         clients=[("utility-global", OLD, "Drafting Abstract")])
+    p = mde.plan_one(rows, linked)
+    assert p["keep"]["event_id"] == OLD
+    assert [x["event_id"] for x in p["losers"]] == [NEW]
+
+
+def test_the_newer_rows_facts_move_onto_the_survivor(tmp_path):
+    """The survivor keeps its key and its customer join; it does not keep its stale evidence."""
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07"),
+                          _row(NEW, verify_state="verified", deadline="2026-10-19",
+                               deadline_quote="Regular closes 19 October")],
+                         clients=[("utility-global", OLD, "")])
+    ch = mde.plan_one(rows, linked)["changes"]
+    assert ch["deadline"][1] == "2026-10-19"
+    assert ch["verify_state"][1] == "verified"
+
+
+def test_a_blank_never_overwrites_a_populated_field(tmp_path):
+    """The merge guard apply_resolutions.py --citations already uses. Without it the newer row
+    silently empties everything it did not happen to re-find."""
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07", deadline="2026-10-19",
+                               submission_url="https://a.test/cfp"),
+                          _row(NEW, deadline="", submission_url="")],
+                         clients=[("utility-global", OLD, "")])
+    ch = mde.plan_one(rows, linked)["changes"]
+    assert "deadline" not in ch and "submission_url" not in ch
+
+
+def test_an_older_populated_field_does_not_beat_a_newer_one(tmp_path):
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07", deadline="2026-12-20"),
+                          _row(NEW, source_as_of="2026-09-12", deadline="2026-10-19")],
+                         clients=[("utility-global", OLD, "")])
+    assert mde.plan_one(rows, linked)["changes"]["deadline"][1] == "2026-10-19"
+
+
+def test_two_customer_links_block_the_merge_rather_than_picking_one(tmp_path):
+    """Deleting either row breaks a join the customer relies on. That is a decision, not a
+    default - and a silent default here is unrecoverable."""
+    rows, linked = _rows(tmp_path, [_row(OLD), _row(NEW)],
+                         clients=[("utility-global", OLD, ""), ("arnica", NEW, "")])
+    p = mde.plan_one(rows, linked)
+    assert "AMBIGUOUS" in p["error"]
+    assert "keep" not in p
+
+
+def test_with_no_customer_link_the_better_evidenced_row_survives(tmp_path):
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07"),
+                          _row(NEW, verify_state="verified", deadline="2026-10-19",
+                               deadline_quote="q", deadline_evidence_url="https://a.test")])
+    assert mde.plan_one(rows, linked)["keep"]["event_id"] == NEW
+
+
+def test_the_customers_own_columns_are_never_in_the_merge(tmp_path):
+    """Contract 3. STATUS, NOTES and PRIORITY on client_conferences are theirs; the survivor is
+    chosen the way it is precisely so none of them ever has to be rewritten."""
+    assert "notes" not in mde.FACT_FIELDS
+    assert "priority" not in mde.FACT_FIELDS
+    assert all(t != "client_conferences" for t, _ in mde.ATTACHED)
