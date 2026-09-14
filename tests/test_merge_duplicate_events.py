@@ -122,3 +122,40 @@ def test_the_customers_own_columns_are_never_in_the_merge(tmp_path):
     assert "notes" not in mde.FACT_FIELDS
     assert "priority" not in mde.FACT_FIELDS
     assert all(t != "client_conferences" for t, _ in mde.ATTACHED)
+
+
+REG = "2027-big-conference-houston-registration"
+
+
+def test_a_registration_row_never_supplies_submission_facts(tmp_path):
+    """The draft caught itself on 2026-09-14: merging SIEW's registration row would have moved
+    'Registration is now open for the 1...' onto the speaking row as its deadline quote. That is
+    the CES stale-crawl mistake exactly - an open ticket desk read as an open call."""
+    rows, linked = _rows(tmp_path,
+                         [_row(NEW, source_as_of="2026-08-07"),
+                          _row(REG, deadline="2026-10-19",
+                               deadline_quote="Registration is now open for the 18th edition",
+                               submission_url="https://siew.test/", verify_state="verified")],
+                         clients=[("utility-global", NEW, "")])
+    ch = mde.plan_one(rows, linked)["changes"]
+    assert "deadline" not in ch and "deadline_quote" not in ch
+    assert "submission_url" not in ch and "verify_state" not in ch
+
+
+def test_a_registration_row_may_still_describe_the_event(tmp_path):
+    """It cannot date an abstract; it can still say who runs the event. Discarding the whole row
+    would throw away good information to avoid bad."""
+    rows, linked = _rows(tmp_path,
+                         [_row(NEW, source_as_of="2026-08-07"),
+                          _row(REG, organizer="Energy Market Authority")],
+                         clients=[("utility-global", NEW, "")])
+    assert mde.plan_one(rows, linked)["changes"]["organizer"][1] == "Energy Market Authority"
+
+
+def test_a_speaking_row_still_supplies_submission_facts(tmp_path):
+    """The inversion: the guard must not quietly block a legitimate merge."""
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07"),
+                          _row(NEW, deadline="2026-10-19", verify_state="verified")],
+                         clients=[("utility-global", OLD, "")])
+    assert mde.plan_one(rows, linked)["changes"]["deadline"][1] == "2026-10-19"

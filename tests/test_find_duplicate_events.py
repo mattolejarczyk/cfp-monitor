@@ -83,10 +83,11 @@ def test_a_suburb_is_place_drift_not_a_second_event(tmp_path):
 
 
 def test_an_opportunity_suffix_is_flagged_but_named_as_itself(tmp_path):
-    """event_id() adds OPPORTUNITY on purpose - one event can run several calls with different
-    deadlines. So this is surfaced for a human, never assumed to be a duplicate."""
+    """event_id() adds OPPORTUNITY on purpose - CEDIA Expo runs a call for presentations AND a
+    Best of Show awards entry, two submissions with two deadlines. So this is surfaced for a
+    human, never assumed to be a duplicate."""
     rows = _one_group(tmp_path, [_row("2027-big-conference-houston"),
-                                 _row("2027-big-conference-houston-registration")])
+                                 _row("2027-big-conference-houston-awards")])
     assert fde.classify(rows) == "OPPORTUNITY"
 
 
@@ -126,3 +127,24 @@ def test_agreeing_deadlines_are_not_a_conflict(tmp_path):
     rows = _one_group(tmp_path, [_row("2026-big-conference-houston", deadline="2026-09-10"),
                                  _row("2027-big-conference-houston", deadline="2026-09-10")])
     assert fde.conflicting(rows) is False
+
+
+def test_a_registration_suffix_is_not_a_second_opportunity(tmp_path):
+    """Decided 2026-09-14. Attending is not something the customer submits to, so a key split
+    by it is one event held twice. None of the seven live suffix pairs had a deadline on either
+    row - and two deadlines is the whole reason OPPORTUNITY is in the key."""
+    rows = _one_group(tmp_path, [_row("2027-big-conference-houston"),
+                                 _row("2027-big-conference-houston-registration")])
+    assert fde.classify(rows) == "NON_OPPORTUNITY"
+
+
+def test_exhibiting_remains_a_real_opportunity(tmp_path):
+    """A stand is a commercial opportunity the pipeline already tracks, and what a customer
+    looks at when speaking is unavailable. It is surfaced, never merged on assumption."""
+    rows = _one_group(tmp_path, [_row("2026-it-sa-expo-congress-nuremberg",
+                                      name="it-sa Expo & Congress 2026", edition="2026",
+                                      city="Nuremberg"),
+                                 _row("2026-it-sa-expo-congress-nuremberg-exhibiting",
+                                      name="it-sa Expo & Congress 2026", edition="2026",
+                                      city="Nuremberg")])
+    assert fde.classify(rows) == "OPPORTUNITY"

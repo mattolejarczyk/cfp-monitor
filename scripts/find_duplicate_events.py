@@ -34,11 +34,14 @@ THE FIVE CLASSES, and why they are not one problem
               or to a suburb (St. Louis -> Clayton, the clean_city hazard in the runbook).
               Almost always one event.
 
-    OPPORTUNITY  one key carries a suffix the other does not (`-registration`, `-exhibiting`).
-              **These may be correct.** event_id() includes OPPORTUNITY deliberately, because
-              one event really can run several calls with different deadlines, and collapsing
-              them loses one. Whether "Registration" is an opportunity at all is a contract
-              question for upstream, not a merge this script should assume.
+    NON_OPPORTUNITY  the suffix is a label for ATTENDING, not for anything the customer can
+              submit to. One event, split by a label that should never have made a key.
+              Decided 2026-09-14 - see NOT_AN_OPPORTUNITY below.
+
+    OPPORTUNITY  one key carries a suffix naming a REAL second thing to act on
+              (`-exhibiting`). event_id() includes OPPORTUNITY deliberately, because one event
+              can run several calls with different deadlines and collapsing them loses one.
+              Surfaced for a person; never merged on assumption.
 
     MIXED     more than one component moved, or the group holds more than two rows. Read it.
 
@@ -61,6 +64,21 @@ sys.path.insert(0, str(ROOT))
 from src.cfp_monitor.grounding import slug                          # noqa: E402
 
 TABLES = {"conference": "grounding_facts", "awards": "award_grounding_facts"}
+
+# OPPORTUNITY earns a place in the key when it names a SECOND THING THE CUSTOMER CAN ACT ON -
+# a call for speakers and an awards entry are two submissions with two deadlines, and one key
+# would lose one of them. Attending is not that. Buying a ticket is not a submission, it has no
+# deadline to beat, and Nicolia's product is speaking placement.
+#
+# The data said so before the rule did: of the seven suffix-split pairs found on 2026-09-14,
+# NOT ONE had a deadline on either row - and distinguishing two deadlines is the entire
+# justification for the suffix. Three were pure noise (SANS: both rows empty and contradicted).
+#
+# Decided by the operator 2026-09-14: speaking is the primary opportunity; registration is not
+# an opportunity at all. EXHIBITING STAYS A REAL ONE - a stand is a commercial opportunity the
+# pipeline already tracks through sponsorship, it is what a customer looks at when speaking is
+# unavailable, and a company sending a speaker often exhibits too.
+NOT_AN_OPPORTUNITY = frozenset({"registration", "register", "attending", "attendance", "tickets"})
 OUT_COLUMNS = ["KIND", "CLASS", "CONFLICT", "GROUP", "EVENT_ID", "NAME", "CITY", "EDITION",
                "DEADLINE", "VERIFY_STATE", "SOURCE_AS_OF", "NEWER"]
 
@@ -88,6 +106,9 @@ def classify(rows: list[sqlite3.Row]) -> str:
     (y1, _n1, p1, s1), (y2, _n2, p2, s2) = (parts(r) for r in rows)
     moved = [lbl for lbl, a, b in
              (("YEAR", y1, y2), ("PLACE", p1, p2), ("OPPORTUNITY", s1, s2)) if a != b]
+    if moved == ["OPPORTUNITY"] and {s1, s2} <= NOT_AN_OPPORTUNITY | {""}:
+        # The only thing separating these two rows is a label for attending. That is one event.
+        return "NON_OPPORTUNITY"
     if len(moved) == 1:
         return moved[0]
     # Nothing moved, yet the stored keys differ: the pair agrees on every field event_id()

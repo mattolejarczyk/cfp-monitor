@@ -55,6 +55,19 @@ FACT_FIELDS = ("deadline", "deadline_quote", "deadline_evidence_url", "verify_st
                "verify_detail", "source_as_of", "submission_url", "main_info_url", "status",
                "cfp_model", "overview", "categories", "organizer", "coordinator_email",
                "sponsor_required", "sponsor_url", "sponsor_cost", "sponsor_quote", "is_projected")
+# Everything that describes A SUBMISSION. These must never travel off a row that was only ever
+# about attending, however fresh it is.
+#
+# The draft caught itself doing it on 2026-09-14: merging SIEW's registration row would have
+# put `deadline_quote = "Registration is now open for the 1..."` and status Open onto the
+# speaking row - the same mistake as the CES stale crawl, where "Registration is now open" was
+# read as an open call for speakers and produced a false contradiction. A registration page can
+# still tell us who organises the event and what it is about; it can never tell us when an
+# abstract is due.
+SUBMISSION_FIELDS = frozenset({"deadline", "deadline_quote", "deadline_evidence_url",
+                               "verify_state", "verify_detail", "submission_url", "cfp_model",
+                               "status", "is_projected"})
+
 # Tables that point at an event by id and must follow the row that survives.
 ATTACHED = (("evidence", "event_id"), ("conferences", "event_id"))
 # Read to warn, never written: contract 3.
@@ -77,6 +90,11 @@ def survivor(rows: list[sqlite3.Row], linked: dict[str, dict]) -> tuple[sqlite3.
     return best, "no customer link; kept the row carrying more evidence"
 
 
+def about_attending_only(row: sqlite3.Row) -> bool:
+    """True when this row's key was minted under a label for attending rather than submitting."""
+    return fde.parts(row)[3] in fde.NOT_AN_OPPORTUNITY
+
+
 def plan_one(rows: list[sqlite3.Row], linked: dict[str, dict]) -> dict | None:
     keep, why = survivor(rows, linked)
     if keep is None:
@@ -88,6 +106,8 @@ def plan_one(rows: list[sqlite3.Row], linked: dict[str, dict]) -> dict | None:
         if f not in keep.keys():
             continue
         for src in sorted(losers, key=lambda r: r["source_as_of"] or "", reverse=True):
+            if f in SUBMISSION_FIELDS and about_attending_only(src):
+                continue                        # a ticket page cannot date an abstract
             if not blank(src[f]) and str(src[f]) != str(keep[f] or ""):
                 # The guard: a blank never overwrites a populated field. A populated value is
                 # replaced only by the row that saw the page more recently.
