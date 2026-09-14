@@ -5,6 +5,7 @@
 
 WHAT IT DOES, in the runbook's order (section 5):
     1. audit_evidence.py --field deadline --recheck   re-read every cited page   (no API cost)
+    1a. check_award_deadlines.py --apply              the same, for awards       (no API cost)
     2. export_checks.py                               verdicts -> the CSV the page reads
     2b. weekly_verify.check_all_submission_links      refresh the dead-link flags the page shows
         link_check_awards.py --apply                  the same, for the awards rows
@@ -113,6 +114,7 @@ def main() -> int:
     work = Path(a.out_dir) / f"work_{stamp}"
     work.mkdir(parents=True, exist_ok=True)
     checks = RUNS_OUT / f"checks_{stamp.replace('-', '')}.csv"
+    award_checks = RUNS_OUT / f"award_checks_{stamp.replace('-', '')}.csv"
     hosts = RUNS_OUT / "hosts_final.txt"
 
     # 1 + 2. Evidence, then the export that turns it into what the page reads.
@@ -125,6 +127,22 @@ def main() -> int:
                            "-o", checks], work / "2_export_checks.log")
     if not checks.exists():
         HEALTH.fail("weekly_step", "missing_input", f"no checks CSV at {checks}")
+
+    # 1a + 2a. THE SAME TWO STEPS, FOR AWARDS. audit_evidence/export_checks read the `evidence`
+    # table joined to `grounding_facts` - the CONFERENCES table - so they have nothing to say
+    # about an award, and this one pass does both jobs for them.
+    #
+    # It is here because of what happened without it. On 2026-09-14 the awards page was built
+    # with the CONFERENCE checks CSV, whose 162 rows contain zero awards. Nothing failed, the
+    # run reported HEALTHY, and the page shipped reading "0 Deadline confirmed - we read it on
+    # their page" - an omission rendered as a result, which is the exact failure the builder's
+    # --no-evidence guard exists to prevent. A CSV that matches no rows walks around that guard.
+    # No API cost: it re-opens cited pages, it does not ask a model anything.
+    if not a.skip_evidence:
+        step("awards evidence", [PY, ROOT / "scripts/check_award_deadlines.py", "--db", a.db,
+                                 "-o", award_checks, "--apply"], work / "1a_award_evidence.log")
+    if not award_checks.exists():
+        HEALTH.fail("weekly_step", "missing_input", f"no awards checks CSV at {award_checks}")
 
     # 2b. Refresh the dead-link flags the pages render.
     #
@@ -176,7 +194,7 @@ def main() -> int:
         step("conferences page", cmd, work / "3_conference_page.log")
     if awards_in and awards_in.exists():
         cmd = [PY, ROOT / "scripts/build_review_page.py", "-i", awards_in, "--kind", "awards",
-               "--date", stamp, "--db", a.db, "--checks", checks, "-o", awards_page]
+               "--date", stamp, "--db", a.db, "--checks", award_checks, "-o", awards_page]
         if hosts.exists():
             cmd += ["--dead-hosts", hosts]
         step("awards page", cmd, work / "4_awards_page.log")

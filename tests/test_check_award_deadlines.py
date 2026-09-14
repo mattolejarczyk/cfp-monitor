@@ -117,3 +117,47 @@ def test_a_quote_found_in_ANY_rendering_counts(tmp_path):
 def test_empty_renderings_are_unreadable_not_no_quote(tmp_path):
     rows = cad.claims(_db(tmp_path, [_row()]))
     assert cad.verdicts(rows, {"https://a.test/dates": ["", ""]})[0]["CHECK"] == "unreadable"
+
+
+def _states(db):
+    con = sqlite3.connect(db)
+    got = dict(con.execute("select upstream_event_id, verify_state from award_grounding_facts"))
+    con.close()
+    return got
+
+
+def test_apply_writes_the_verdict_the_pass_reached(tmp_path):
+    """Until 2026-09-14 nothing wrote this column, so all 119 live rows read `unverified` -
+    indistinguishable from a pass that had been skipped."""
+    db = _db(tmp_path, [_row(), _row(event_id="ours-2", upstream_event_id="theirs-2",
+                                     deadline_quote="Entries close April 1 2027")])
+    rows = cad.claims(db)
+    out = cad.verdicts(rows, {"https://a.test/dates": ["Entries close March 19 2027"]})
+    cad.apply_verdicts(db, out)
+    assert _states(db) == {"theirs-1": "verified", "theirs-2": "not_found"}
+
+
+def test_unreadable_is_not_recorded_as_a_judgement(tmp_path):
+    """`unreadable` says we could not open the page - about US, not about the date. Writing it
+    as a verify_state would let a row we never read count as a row we judged."""
+    db = _db(tmp_path, [_row()])
+    out = cad.verdicts(cad.claims(db), {"https://a.test/dates": [""]})
+    assert out[0]["CHECK"] == "unreadable"
+    cad.apply_verdicts(db, out)
+    assert _states(db) == {"theirs-1": "unverified"}
+
+
+def test_apply_leaves_the_conferences_table_alone(tmp_path):
+    """Two tables, two key spaces. An awards pass that touched grounding_facts would silently
+    restate conference verdicts it never checked."""
+    db = _db(tmp_path, [_row()])
+    con = sqlite3.connect(db)
+    con.execute("insert into grounding_facts (event_id, name, verify_state)"
+                " values ('theirs-1', 'A Conference', 'contradicted')")
+    con.commit()
+    con.close()
+    cad.apply_verdicts(db, cad.verdicts(cad.claims(db),
+                                        {"https://a.test/dates": ["Entries close March 19 2027"]}))
+    con = sqlite3.connect(db)
+    assert con.execute("select verify_state from grounding_facts").fetchone()[0] == "contradicted"
+    con.close()

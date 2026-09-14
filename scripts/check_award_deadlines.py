@@ -37,6 +37,7 @@ import csv
 import re
 import sqlite3
 import sys
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -107,6 +108,8 @@ def main() -> int:
     ap.add_argument("--db", required=True)
     ap.add_argument("-o", "--output", required=True)
     ap.add_argument("--limit", type=int, help="check only the first N distinct pages")
+    ap.add_argument("--apply", action="store_true",
+                    help="also write the verdicts back to award_grounding_facts.verify_state")
     a = ap.parse_args()
 
     rows = claims(a.db)
@@ -159,7 +162,45 @@ def main() -> int:
         print(f"  {state:<12}{tally.get(state, 0):>4}")
     print(f"\nwrote {a.output}")
     print("Feed it to: build_review_page.py --checks <file>")
+
+    if a.apply:
+        apply_verdicts(a.db, out)
     return 0
+
+
+# `unreadable` is deliberately NOT written. It says we could not open the page - a statement
+# about US, not about the date - and recording it as a verify_state would let a row we never
+# managed to read count as a row we judged. It stays `unverified`, which is what it is, and
+# the reason is kept in verify_detail so the next pass does not have to rediscover it.
+VERDICT_TO_STATE = {"verified": "verified", "no_quote": "not_found"}
+
+
+def apply_verdicts(db: str, out: list[dict]) -> None:
+    """Persist the pass's findings. Keyed on upstream_event_id, per 5.4.
+
+    Until 2026-09-14 nothing had ever written this column: every writer of `verify_state` in
+    the repo targets `grounding_facts`, the conferences table. All 119 award rows therefore
+    read `unverified`, which looked like a pass that had been skipped rather than one that
+    did not exist.
+    """
+    con = sqlite3.connect(db)
+    written: dict[str, int] = {}
+    for o in out:
+        state = VERDICT_TO_STATE.get(o["CHECK"], "unverified")
+        detail = f"{o['CHECK']} {date.today().isoformat()} {o['CHECK_URL']}"[:500]
+        n = con.execute(
+            "UPDATE award_grounding_facts SET verify_state=?, verify_detail=?"
+            " WHERE upstream_event_id=?", (state, detail, o["EVENT_ID"])).rowcount
+        if n:
+            written[state] = written.get(state, 0) + 1
+    con.commit()
+    remaining = con.execute(
+        "SELECT COUNT(*) FROM award_grounding_facts WHERE verify_state='unverified'").fetchone()[0]
+    con.close()
+    print("\n=== written to award_grounding_facts ===")
+    for state, n in sorted(written.items()):
+        print(f"  {state:<12}{n:>4}")
+    print(f"  still unverified (no cited page, or unreadable): {remaining}")
 
 
 if __name__ == "__main__":
