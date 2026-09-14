@@ -1,0 +1,63 @@
+2026-09-14 2027-act-expo-las-vegas -> 2026-act-expo-las-vegas  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: ['Clean Transportation', 'Commercial Vehicles', 'Fleet Manag -> Clean Transportation, Fleet Technology, Zero-Emission Trucks
+    organizer: (blank) -> TRC Companies
+    overview: ACT Expo is North America's largest advanced commercial vehi -> North America's largest advanced clean transportation and fl
+    source_as_of: 2026-08-07 -> 2026-09-12
+    status: Open -> Closed
+    conferences: 1 re-pointed, 0 duplicate(s) dropped
+2026-09-14 2027-canadian-hydrogen-convention-edmonton -> 2026-canadian-hydrogen-convention-edmonton  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Hydrogen, Clean Energy, Decarbonization, Energy Transition -> Hydrogen Production, Storage, Infrastructure, Clean Energy, 
+    coordinator_email: emelieforsberg@dmgevents.com -> customerservice@hydrogenexpo.com
+    deadline_evidence_url: (blank) -> https://www.hydrogenexpo.com/
+    deadline_quote: (blank) -> The Call for Papers/Abstracts for the 2027 edition has not y
+    is_projected: true -> false
+    organizer: (blank) -> dmg events
+    overview: The Canadian Hydrogen Convention is the largest event in Can -> The Canadian Hydrogen Convention is Canada's leading hydroge
+    source_as_of: 2026-08-07 -> 2026-09-12
+    verify_detail: [L1] submission link returns 404 - page does not exist -> [L2] no parseable deadline to check  <- cited page https://w
+    verify_state: contradicted -> not_found
+    conferences: 1 re-pointed, 0 duplicate(s) dropped
+2026-09-14 2026-carbon-capture-technology-expo-north-america-houston -> 2027-carbon-capture-technology-expo-north-america-houston  (duplicate of the same event; the customer's sheet is matched to this row)
+    evidence: 8 re-pointed, 2 duplicate(s) dropped
+2026-09-14 2027-decarb-connect-north-america-houston -> 2026-decarb-connect-north-america-houston  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Decarbonization, CCUS, Hydrogen, Energy Transition, Industri -> Industrial Decarbonization, CCUS, Hydrogen, Energy Transitio
+    deadline_evidence_url: (blank) -> https://decarbconnectnorthamerica.com/speakers/
+    deadline_quote: (blank) -> Want to propose a speaker for 2027? Fill in the form below! 
+    is_projected: true -> false
+    organizer: (blank) -> Decarb Connect
+    overview: Decarb Connect North America is a premier event focused on a -> Decarb Connect North America brings together energy-intensiv
+    source_as_of: 2026-08-07 -> 2026-09-12
+    submission_url: https://share.hsforms.com/1hwCDfSrwQum1gXNUL4l7_A49ffd -> https://decarbconnectnorthamerica.com/speakers/
+    evidence: 12 re-pointed, 0 duplicate(s) dropped
+    conferences: 2 re-pointed, 0 duplicate(s) dropped
+2026-09-14 2027-india-energy-week-kolkata -> 2026-india-energy-week-kolkata  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: ['Energy', 'Oil & Gas', 'Renewable Energy', 'Hydrogen', 'Bio -> AI and Digital Transformation, Biofuels and Alternative Fuel
+    cfp_model: Not Announced -> Fixed Deadline
+    coordinator_email: iew@indiaenergyweek.com -> conference@indiaenergyweek.com
+    deadline: (blank) -> 2026-09-30
+    is_projected: false -> true
+    organizer: (blank) -> Federation of Indian Petroleum Industry (FIPI) and dmg event
+    overview: India Energy Week is India's flagship energy exhibition and  -> India's flagship global energy exhibition and conference, br
+    source_as_of: 2026-08-07 -> 2026-09-12
+    status: Upcoming -> Open
+    submission_url: (blank) -> https://bit.ly/4yuBPgO
+    verify_detail: [L2] no evidence URL supplied; fell back to a page that does -> [L2] page states 2026-09-30 (not the cited page; no evidence
+    verify_state: not_found -> verified
+2026-09-14 2027-nineteenth-international-conference-on-climate-johannesburg -> 2026-nineteenth-international-conference-on-climate-johannesburg  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Climate Change, Sustainability, Environmental Science, Polic -> Climatology, Ecological Economics, Environmental Policy, Env
+    cfp_model: Rolling Form -> Fixed Deadline
+    deadline: 2026-12-20 -> 2026-10-19
+    deadline_quote: Late 20 October (26) to 20 December (26 -> Regular 20 June (26) to 19 October (26)
+    organizer: (blank) -> Common Ground Research Networks
+    overview: The Nineteenth International Conference on Climate Change: I -> An interdisciplinary international academic conference inves
+    source_as_of: 2026-08-07 -> 2026-09-12
+2026-09-14 2027-world-future-energy-summit-abu-dhabi -> 2026-world-future-energy-summit-abu-dhabi  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Clean Energy, Solar, Water, EcoWASTE, Smart Cities, Climate  -> Clean Energy, Solar Power, Water Security, Desalination, Sma
+    deadline_evidence_url: (blank) -> https://www.worldfutureenergysummit.com/
+    deadline_quote: (blank) -> Speaking Opportunities. Submit your profile to be considered
+    organizer: (blank) -> RX
+    overview: The World Future Energy Summit is the leading global event a -> The World Future Energy Summit is the leading international 
+    source_as_of: 2026-08-07 -> 2026-09-12
+    submission_url: https://www.worldfutureenergysummit.com/en-gb/conferences.ht -> https://www.worldfutureenergysummit.com/
+    verify_detail: [L2] no evidence URL supplied; fell back to a page that does -> [L2] no parseable deadline to check  <- cited page https://w
+    conferences: 1 re-pointed, 0 duplicate(s) dropped

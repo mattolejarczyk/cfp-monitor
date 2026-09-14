@@ -25,7 +25,7 @@ from src.cfp_monitor.storage import Store              # noqa: E402
 
 def _row(event_id, **kw):
     r = {"event_id": event_id, "name": "Big Conference 2027", "city": "Houston",
-         "edition": "2027", "deadline": "", "deadline_quote": "", "deadline_evidence_url": "",
+         "edition": "2027", "deadline": "", "deadline_quote": "", "deadline_evidence_url": "", "is_projected": "false",
          "verify_state": "not_found", "source_as_of": "2026-09-12", "submission_url": ""}
     r.update(kw)
     return r
@@ -159,3 +159,49 @@ def test_a_speaking_row_still_supplies_submission_facts(tmp_path):
                           _row(NEW, deadline="2026-10-19", verify_state="verified")],
                          clients=[("utility-global", OLD, "")])
     assert mde.plan_one(rows, linked)["changes"]["deadline"][1] == "2026-10-19"
+
+
+def test_is_projected_cannot_travel_without_its_citation(tmp_path):
+    """R2/R11. Caught on ACT Expo 2026-09-14: the newer row carried is_projected=true with no
+    quote and no evidence URL, while the survivor held a verified deadline quote. Moving the
+    flag alone relabels an evidenced deadline a projection."""
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07", deadline="2026-09-10",
+                               deadline_quote="Submissions Deadline: Friday, September 10, 2026",
+                               is_projected="false"),
+                          _row(NEW, deadline="", deadline_quote="", is_projected="true")],
+                         clients=[("utility-global", OLD, "")])
+    assert "is_projected" not in mde.plan_one(rows, linked)["changes"]
+
+
+def test_is_projected_travels_when_the_citation_does(tmp_path):
+    """The inversion: the guard must not strand a flag that belongs with a date we did take."""
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07", is_projected="false"),
+                          _row(NEW, deadline="2026-09-30", is_projected="true")],
+                         clients=[("utility-global", OLD, "")])
+    ch = mde.plan_one(rows, linked)["changes"]
+    assert ch["deadline"][1] == "2026-09-30" and ch["is_projected"][1] == "true"
+
+
+def test_seeds_are_repointed_at_the_survivor(tmp_path):
+    """THE STEP THE MERGE IS NOT DONE WITHOUT. identity.seed_map reads EVENT_ID_CANON straight
+    out of these files, so a seed still naming a deleted key makes the next import insert it
+    again - the duplicate returns every Saturday. check_invariants caught this live on
+    2026-09-14, which is what a reconciliation after a mutation is for."""
+    import csv as _csv
+    seeds = tmp_path / "market_sheets"
+    seeds.mkdir()
+    f = seeds / "utility_seed.csv"
+    with open(f, "w", encoding="utf-8", newline="") as fh:
+        w = _csv.DictWriter(fh, fieldnames=["EVENT_ID", "EVENT_ID_CANON", "NAME"])
+        w.writeheader()
+        w.writerow({"EVENT_ID": "theirs-1", "EVENT_ID_CANON": NEW, "NAME": "Big"})
+        w.writerow({"EVENT_ID": "theirs-2", "EVENT_ID_CANON": "untouched", "NAME": "Other"})
+    (tmp_path / "t.db").touch()
+    out = mde.repoint_seeds(str(tmp_path / "t.db"), {NEW: OLD})
+    assert out and "1 row(s)" in out[0]
+    got = {r["EVENT_ID"]: r["EVENT_ID_CANON"]
+           for r in _csv.DictReader(open(f, encoding="utf-8-sig"))}
+    assert got == {"theirs-1": OLD, "theirs-2": "untouched"}
+    assert list(seeds.glob("*.before-merge-*.csv")), "the original must be kept"

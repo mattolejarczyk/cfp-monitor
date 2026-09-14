@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import csv
 import shutil
 import sqlite3
 import sys
@@ -90,6 +91,44 @@ def survivor(rows: list[sqlite3.Row], linked: dict[str, dict]) -> tuple[sqlite3.
     return best, "no customer link; kept the row carrying more evidence"
 
 
+def repoint_seeds(db_path: str, mapping: dict[str, str]) -> list[str]:
+    """Point the seeds' EVENT_ID_CANON at the survivor. THE MERGE IS NOT DONE WITHOUT THIS.
+
+    A merge deletes a canonical row, but upstream's seed files still name it, and
+    `identity.seed_map` reads EVENT_ID -> EVENT_ID_CANON straight out of them. So the next
+    import resolves upstream's id to a key that no longer exists and INSERTS it again - the
+    duplicate returns, every Saturday, for ever.
+
+    `check_invariants.py` catches it immediately ("no delivered row is missing"), which is
+    exactly what a reconciliation after a mutation is for, and how this step was found.
+    """
+    from src.cfp_monitor.identity import seed_roots                 # noqa: PLC0415
+    stamp = f"{datetime.now():%Y%m%d-%H%M%S}"
+    touched: list[str] = []
+    for root in seed_roots(db_path):
+        for seed in sorted(root.glob("*_seed.csv")):
+            with open(seed, encoding="utf-8-sig", newline="") as fh:
+                rd = csv.DictReader(fh)
+                cols, rows = rd.fieldnames, list(rd)
+            if not cols or "EVENT_ID_CANON" not in cols:
+                continue
+            n = 0
+            for r in rows:
+                old = (r.get("EVENT_ID_CANON") or "").strip()
+                if old in mapping:
+                    r["EVENT_ID_CANON"] = mapping[old]
+                    n += 1
+            if not n:
+                continue
+            shutil.copy2(seed, seed.with_suffix(f".before-merge-{stamp}.csv"))
+            with open(seed, "w", encoding="utf-8", newline="") as fh:
+                w = csv.DictWriter(fh, fieldnames=cols, quoting=csv.QUOTE_ALL)
+                w.writeheader()
+                w.writerows(rows)
+            touched.append(f"{seed.name}: {n} row(s) repointed")
+    return touched
+
+
 def about_attending_only(row: sqlite3.Row) -> bool:
     """True when this row's key was minted under a label for attending rather than submitting."""
     return fde.parts(row)[3] in fde.NOT_AN_OPPORTUNITY
@@ -114,6 +153,16 @@ def plan_one(rows: list[sqlite3.Row], linked: dict[str, dict]) -> dict | None:
                 if blank(keep[f]) or (src["source_as_of"] or "") > (keep["source_as_of"] or ""):
                     changes[f] = (keep[f], src[f], src["event_id"])
                 break
+    # IS_PROJECTED DESCRIBES A CITATION, so it cannot travel without one (R2/R11). Caught on
+    # ACT Expo: the newer row carried is_projected=true with no quote and no evidence URL, while
+    # the survivor held a verified "Submissions Deadline: Friday, September 10, 2026, by 5:00
+    # p.m. PT." Moving the flag alone would have relabelled an evidenced deadline a projection.
+    if "is_projected" in changes:
+        src = changes["is_projected"][2]
+        if not any(f in changes and changes[f][2] == src
+                   for f in ("deadline", "deadline_quote", "deadline_evidence_url")):
+            changes.pop("is_projected")
+
     return {"keep": keep, "why": why, "losers": losers, "newest": newest, "changes": changes,
             "client": linked.get(keep["event_id"])}
 
@@ -186,20 +235,48 @@ def main() -> int:
     ledger = ROOT / "docs" / "operations" / "merged_rows.txt"
     lines = []
     for p in plans:
-        keep = p["keep"]
+        keep, moves = p["keep"], []
         for f, (_old, new, _src) in p["changes"].items():
             con.execute(f"UPDATE grounding_facts SET {f}=? WHERE event_id=?",  # noqa: S608
                         (new, keep["event_id"]))
         for lo in p["losers"]:
             for t, col in ATTACHED:
-                con.execute(f"UPDATE OR IGNORE {t} SET {col}=? WHERE {col}=?",  # noqa: S608
-                            (keep["event_id"], lo["event_id"]))
-                con.execute(f"DELETE FROM {t} WHERE {col}=?", (lo["event_id"],))  # noqa: S608
+                # `evidence` is unique(event_id, field, source_url, origin), so a row the
+                # survivor already holds for the same field and page CANNOT be re-pointed. That
+                # is the right outcome - it is the same evidence twice - but it must be counted
+                # rather than swallowed: an UPDATE OR IGNORE followed by a DELETE loses rows
+                # without saying so, and "we found out afterwards" is the failure mode this
+                # pipeline keeps paying for.
+                before = con.execute(f"SELECT COUNT(*) FROM {t} WHERE {col}=?",  # noqa: S608
+                                     (lo["event_id"],)).fetchone()[0]
+                moved = con.execute(f"UPDATE OR IGNORE {t} SET {col}=? WHERE {col}=?",  # noqa: S608
+                                    (keep["event_id"], lo["event_id"])).rowcount
+                dropped = con.execute(f"DELETE FROM {t} WHERE {col}=?",  # noqa: S608
+                                      (lo["event_id"],)).rowcount
+                if before:
+                    print(f"  {t}: {moved} re-pointed, {dropped} dropped as already held"
+                          f"  ({lo['event_id'][:44]})")
+                    moves.append(f"    {t}: {moved} re-pointed, {dropped} duplicate(s) dropped")
             con.execute("DELETE FROM grounding_facts WHERE event_id=?", (lo["event_id"],))
             lines.append(f"{datetime.now():%Y-%m-%d} {lo['event_id']} -> {keep['event_id']}"
                          f"  (duplicate of the same event; {p['why']})")
+            # What the merge CHANGED belongs in the ledger too. The backup holds the old row,
+            # but a reader a month from now needs to see the decision without restoring a DB.
+            lines += [f"    {f}: {str(old or '(blank)')[:60]} -> {str(new)[:60]}"
+                      for f, (old, new, _s) in sorted(p["changes"].items())] + moves
     con.commit()
     con.close()
+
+    # Without this the next import re-inserts every row just merged.
+    redirect = {lo["event_id"]: p["keep"]["event_id"] for p in plans for lo in p["losers"]}
+    seeds = repoint_seeds(a.db, redirect)
+    for s in seeds:
+        print(f"  seed {s}")
+    lines += [f"    seed {s}" for s in seeds]
+    if not seeds:
+        print("  WARNING: no seed row pointed at any merged key - check the seed root, because"
+              " an import will recreate these rows if the map still names them")
+
     with open(ledger, "a", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
     print(f"merged {len(plans)} group(s); recorded in {ledger.name}")
