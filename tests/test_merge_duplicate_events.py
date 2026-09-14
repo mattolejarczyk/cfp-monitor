@@ -205,3 +205,91 @@ def test_seeds_are_repointed_at_the_survivor(tmp_path):
            for r in _csv.DictReader(open(f, encoding="utf-8-sig"))}
     assert got == {"theirs-1": OLD, "theirs-2": "untouched"}
     assert list(seeds.glob("*.before-merge-*.csv")), "the original must be kept"
+
+
+def test_a_deadline_never_arrives_without_the_verdict_that_judged_it(tmp_path):
+    """SecureWorld St. Louis, 2026-09-14. The survivor's deadline was blank so it would have
+    taken 2026-07-08 off a CONTRADICTED row, kept its own not_found, and gained neither quote
+    nor URL - a disputed date arriving stripped of the dispute."""
+    rows, linked = _rows(tmp_path,
+                         [_row(NEW, deadline="", verify_state="not_found"),
+                          _row(OLD, source_as_of="2026-08-05", deadline="2026-07-08",
+                               verify_state="contradicted")],
+                         clients=[("utility-global", NEW, "")])
+    ch = mde.plan_one(rows, linked)["changes"]
+    if "deadline" in ch:                       # if the date moves, the verdict moves with it
+        assert ch["verify_state"][1] == "contradicted"
+
+
+def test_the_whole_citation_cluster_moves_from_one_row(tmp_path):
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07"),
+                          _row(NEW, deadline="2026-10-19", deadline_quote="Closes 19 October",
+                               deadline_evidence_url="https://a.test/cfp",
+                               verify_state="verified")],
+                         clients=[("utility-global", OLD, "")])
+    ch = mde.plan_one(rows, linked)["changes"]
+    assert {c[2] for f, c in ch.items() if f in mde.CITATION_FIELDS} == {NEW}
+    assert ch["deadline_quote"][1] == "Closes 19 October"
+    assert ch["verify_state"][1] == "verified"
+
+
+def test_an_evidenced_quote_on_the_survivor_is_not_disturbed(tmp_path):
+    """The survivor proved its own date. A merge is not a reason to re-open that."""
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-07", deadline="2026-09-10",
+                               deadline_quote="Submissions Deadline: Friday, September 10, 2026",
+                               verify_state="verified"),
+                          _row(NEW, deadline="", verify_state="not_found", is_projected="true")],
+                         clients=[("utility-global", OLD, "")])
+    ch = mde.plan_one(rows, linked)["changes"]
+    assert not any(f in ch for f in mde.CITATION_FIELDS)
+
+
+def test_the_events_own_name_breaks_a_city_tie(tmp_path):
+    """SecureWorld St. Louis 2026, held as both St. Louis and Clayton - the venue's town. An
+    evidence count preferred Clayton; invariant 3 cannot catch it because Clayton is a real
+    place, not a venue string. The name can."""
+    rows, linked = _rows(tmp_path,
+                         [_row("2026-secureworld-st-louis-clayton", name="SecureWorld St. Louis 2026",
+                               city="Clayton", edition="2026", deadline="2026-07-08",
+                               deadline_quote="q", verify_state="verified"),
+                          _row("2026-secureworld-st-louis-st-louis", name="SecureWorld St. Louis 2026",
+                               city="St. Louis", edition="2026", source_as_of="2026-08-05")])
+    assert mde.plan_one(rows, linked)["keep"]["city"] == "St. Louis"
+
+
+def test_a_customer_link_still_outranks_the_name(tmp_path):
+    """The name is a TIE-BREAK, not a new top rule. Orphaning a customer join is still worse."""
+    rows, linked = _rows(tmp_path,
+                         [_row("2026-secureworld-st-louis-clayton", name="SecureWorld St. Louis 2026",
+                               city="Clayton", edition="2026"),
+                          _row("2026-secureworld-st-louis-st-louis", name="SecureWorld St. Louis 2026",
+                               city="St. Louis", edition="2026")],
+                         clients=[("arnica", "2026-secureworld-st-louis-clayton", "Submitted")])
+    assert mde.plan_one(rows, linked)["keep"]["city"] == "Clayton"
+
+
+def test_a_name_with_no_city_in_it_falls_back_to_evidence(tmp_path):
+    """The inversion: most events are not named for their city, and the old rule must survive."""
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, city="Houston", source_as_of="2026-08-07"),
+                          _row(NEW, city="Boston", deadline="2026-10-19", deadline_quote="q",
+                               verify_state="verified")])
+    assert mde.plan_one(rows, linked)["keep"]["event_id"] == NEW
+
+
+def test_a_merge_never_blanks_a_known_deadline(tmp_path):
+    """R1, and it outranks the atomicity rule: a citation edit clears the URL and the quote, and
+    the submission deadline is never touched. SecureWorld St. Louis, 2026-09-14 - a newer 'this
+    event has passed' citation would otherwise have taken a known 2026-07-08 with it."""
+    rows, linked = _rows(tmp_path,
+                         [_row(OLD, source_as_of="2026-08-05", deadline="2026-07-08",
+                               deadline_quote="St. Louis, MO. July 8, 2026.",
+                               verify_state="contradicted"),
+                          _row(NEW, deadline="", deadline_quote="Thank you for your interest.",
+                               verify_state="not_found")],
+                         clients=[("arnica", OLD, "")])
+    ch = mde.plan_one(rows, linked)["changes"]
+    assert ch["deadline_quote"][1] == "Thank you for your interest."   # the citation moves
+    assert "deadline" not in ch                                        # the date does not

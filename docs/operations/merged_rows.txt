@@ -61,3 +61,38 @@
     submission_url: https://www.worldfutureenergysummit.com/en-gb/conferences.ht -> https://www.worldfutureenergysummit.com/
     verify_detail: [L2] no evidence URL supplied; fell back to a page that does -> [L2] no parseable deadline to check  <- cited page https://w
     conferences: 1 re-pointed, 0 duplicate(s) dropped
+2026-09-14 2027-decarb-techinvest-tbd -> 2027-decarb-techinvest-boston  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: ['Energy', 'Cleantech', 'Decarbonization', 'Climate Tech', ' -> Climate Tech Investment, Decarbonization, Hardtech, Venture 
+    organizer: (blank) -> Decarb Connect
+    overview: Decarb TechInvest is a premier summit connecting high-qualit -> An investment summit connecting climate tech founders, ventu
+    source_as_of: 2026-08-06 -> 2026-09-12
+2026-09-14 2026-energy-transition-north-america-tbd -> 2026-energy-transition-north-america-houston  (duplicate of the same event; no customer link; kept the row carrying more evidence)
+    organizer: (blank) -> Reuters Events
+    source_as_of: 2026-08-07 -> 2026-09-12
+    status: Closed -> Needs Verification
+2026-09-14 2026-hack-in-the-box-tbd -> 2026-hack-in-the-box-phuket  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: ['Cybersecurity', 'Vulnerability Research', 'Offensive Secur -> Offensive Security, Vulnerability Research, Hardware Hacking
+    deadline_evidence_url: (blank) -> https://conference.hitb.org/
+    organizer: (blank) -> Hack In The Box
+    overview: Hack In The Box (HITBSecConf) is a deeply technical, anti-ve -> A highly technical security conference featuring deep-knowle
+    source_as_of: 2026-08-05 -> 2026-09-12
+    status: Upcoming -> Needs Verification
+    verify_detail: [L2] no evidence URL supplied; fell back to a page that does -> [L2] no parseable deadline to check  <- cited page https://c
+2026-09-14 2027-industrial-net-zero-conference-tbd -> 2026-industrial-net-zero-conference-sydney  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Net Zero, Decarbonisation, Heavy Industry, Energy Transition -> Net Zero, Heavy Industry, Decarbonization, Clean Tech, Austr
+    organizer: (blank) -> Quest Events
+    overview: The Industrial Net Zero Conference is a premier forum design -> Australia's premier industrial decarbonization summit, bring
+    source_as_of: 2026-08-06 -> 2026-09-12
+2026-09-14 2026-secureworld-st-louis-clayton -> 2026-secureworld-st-louis-st-louis  (duplicate of the same event; no customer link; kept the row whose city the event is named for)
+    categories: Cybersecurity, Information Security, IT Governance, Risk Man -> Cybersecurity, CISO Leadership, Information Security, Cloud 
+    deadline_evidence_url: https://www.secureworld.io/events -> https://events.secureworld.io/details/st-louis-mo-2026/
+    deadline_quote: St. Louis, MO. July 8, 2026. St. Louis, MO. September 2, 202 -> Thank you for your interest. This event has already passed. 
+    main_info_url: https://www.secureworld.io/events/st-louis-mo-2026 -> https://events.secureworld.io/details/st-louis-mo-2026/
+    organizer: (blank) -> SecureWorld
+    overview: SecureWorld St. Louis is a premier cybersecurity conference  -> SecureWorld St. Louis is a premier regional cybersecurity co
+    source_as_of: 2026-08-05 -> 2026-09-12
+    submission_url: https://www.secureworld.io/speaker-submissions -> https://info.secureworld.io/speaker-submission-form
+    verify_detail: [L2] page gives a different deadline: 2026-09-01, 2026-10-21 -> [L2] no parseable deadline to check  <- cited page https://e
+    verify_state: contradicted -> not_found
+    seed cyber_seed.csv: 2 row(s) repointed
+    seed utility_seed.csv: 3 row(s) repointed

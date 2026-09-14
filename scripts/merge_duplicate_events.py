@@ -50,12 +50,23 @@ _spec = importlib.util.spec_from_file_location("fde", ROOT / "scripts" / "find_d
 fde = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(fde)
 
-# The citation travels as a unit: a URL without its quote proves nothing, and a quote attached
-# to a date it did not prove is the defect R1 exists to stop.
-FACT_FIELDS = ("deadline", "deadline_quote", "deadline_evidence_url", "verify_state",
-               "verify_detail", "source_as_of", "submission_url", "main_info_url", "status",
+from src.cfp_monitor.grounding import slug                           # noqa: E402
+
+# THE CITATION IS ONE FACT, NOT SIX, and it is merged as one. A date, the page it was read on,
+# the sentence that carried it, whether we could confirm it, and whether it is a projection are
+# a single claim; splitting them is the defect R1 exists to stop.
+#
+# Merging them field by field produced two live near-misses on 2026-09-14. ACT Expo would have
+# taken is_projected=true off a row with no citation and relabelled an evidenced deadline a
+# projection. SecureWorld St. Louis would have taken deadline 2026-07-08 off a CONTRADICTED row
+# while keeping the survivor's not_found and gaining neither quote nor URL - a disputed date
+# arriving stripped of the dispute. So the whole cluster moves together, from ONE source row,
+# or none of it does.
+CITATION_FIELDS = ("deadline", "deadline_quote", "deadline_evidence_url", "verify_state",
+                   "verify_detail", "is_projected")
+FACT_FIELDS = (*CITATION_FIELDS, "source_as_of", "submission_url", "main_info_url", "status",
                "cfp_model", "overview", "categories", "organizer", "coordinator_email",
-               "sponsor_required", "sponsor_url", "sponsor_cost", "sponsor_quote", "is_projected")
+               "sponsor_required", "sponsor_url", "sponsor_cost", "sponsor_quote")
 # Everything that describes A SUBMISSION. These must never travel off a row that was only ever
 # about attending, however fresh it is.
 #
@@ -86,6 +97,16 @@ def survivor(rows: list[sqlite3.Row], linked: dict[str, dict]) -> tuple[sqlite3.
         return joined[0], "the customer's sheet is matched to this row"
     if len(joined) > 1:
         return None, f"AMBIGUOUS: {len(joined)} rows carry a customer link - decide by hand"
+
+    # THE EVENT'S OWN NAME BREAKS A CITY TIE. "SecureWorld St. Louis 2026" held in Clayton and
+    # in St. Louis is the runbook's clean_city hazard from the other direction: Clayton is the
+    # venue's town, and an evidence count happened to prefer it. Invariant 3 cannot catch that -
+    # Clayton is a real place, not a venue string. The name can.
+    named = [r for r in rows if slug(r["city"] or "", 28)
+             and slug(r["city"] or "", 28) in slug(r["name"], strip_years=True)]
+    if len(named) == 1:
+        return named[0], "no customer link; kept the row whose city the event is named for"
+
     best = max(rows, key=lambda r: (sum(not blank(r[f]) for f in FACT_FIELDS if f in r.keys()),
                                     r["source_as_of"] or ""))
     return best, "no customer link; kept the row carrying more evidence"
@@ -153,15 +174,29 @@ def plan_one(rows: list[sqlite3.Row], linked: dict[str, dict]) -> dict | None:
                 if blank(keep[f]) or (src["source_as_of"] or "") > (keep["source_as_of"] or ""):
                     changes[f] = (keep[f], src[f], src["event_id"])
                 break
-    # IS_PROJECTED DESCRIBES A CITATION, so it cannot travel without one (R2/R11). Caught on
-    # ACT Expo: the newer row carried is_projected=true with no quote and no evidence URL, while
-    # the survivor held a verified "Submissions Deadline: Friday, September 10, 2026, by 5:00
-    # p.m. PT." Moving the flag alone would have relabelled an evidenced deadline a projection.
-    if "is_projected" in changes:
-        src = changes["is_projected"][2]
-        if not any(f in changes and changes[f][2] == src
-                   for f in ("deadline", "deadline_quote", "deadline_evidence_url")):
-            changes.pop("is_projected")
+    # The citation moves as a unit or not at all. A cluster assembled from two different rows -
+    # this row's date, that row's verdict - is a claim neither row ever made.
+    cited = {f: c for f, c in changes.items() if f in CITATION_FIELDS}
+    if cited:
+        srcs = {c[2] for c in cited.values()}
+        if len(srcs) > 1 or not blank(keep["deadline_quote"]) and "deadline_quote" not in cited:
+            # Either the pieces come from different rows, or the survivor already holds an
+            # evidenced quote this merge is not replacing. Leave the whole cluster alone.
+            for f in cited:
+                changes.pop(f)
+        else:
+            src_id = next(iter(srcs))
+            src_row = next(r for r in losers if r["event_id"] == src_id)
+            for f in CITATION_FIELDS:
+                # Carry the REST of the cluster from the same row, so nothing is left behind.
+                if f not in changes and str(src_row[f] or "") != str(keep[f] or ""):
+                    # R1, and it outranks atomicity: a citation edit clears the URL and the
+                    # quote, and THE SUBMISSION DEADLINE IS NEVER TOUCHED. Moving a newer
+                    # "this event has passed" citation onto SecureWorld St. Louis would
+                    # otherwise have blanked a known 2026-07-08 on its way through.
+                    if f == "deadline" and blank(src_row[f]) and not blank(keep[f]):
+                        continue
+                    changes[f] = (keep[f], src_row[f], src_id)
 
     return {"keep": keep, "why": why, "losers": losers, "newest": newest, "changes": changes,
             "client": linked.get(keep["event_id"])}
