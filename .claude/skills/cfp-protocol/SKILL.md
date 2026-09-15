@@ -23,12 +23,7 @@ of being done.** Skipping the read has cost real rework.
 
 Read these three, in order, before writing any code or touching any data:
 
-1. **`docs/operations/pipeline-contract.md`** - the *why*. Consolidated v2.0.1 **plus the
-   amendment files beside it**, which its header lists; read the header first and follow it.
-   Do not trust a version number written here or anywhere else - this line said "v1.1" for six
-   weeks after five amendments had been adopted, and the file itself said v1.1 while being the
-   document the skill sent everyone to. The header is generated from what is actually present
-   and `tests/test_contract_current.py` fails the build if it drifts.
+1. **`docs/operations/pipeline-contract.md`** - the *why*. Its header names the amendments also in force.
    Governs the interface between upstream (grounded research) and downstream (cfp-monitor).
 2. **`docs/operations/market-runbook.md`** - the *how*. Exact commands, in order, and the
    failure modes already seen in the wild.

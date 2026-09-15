@@ -119,7 +119,18 @@ CREATE TABLE IF NOT EXISTS grounding_facts (
     sponsor_required  TEXT,                     -- Yes|No|Unknown, default Unknown (R18.1)
     sponsor_url       TEXT,
     sponsor_cost      TEXT,                     -- free text: tiers, ranges, currency as written
-    sponsor_quote     TEXT
+    sponsor_quote     TEXT,
+    -- WHEN THE EVENT ITSELF STARTS, parsed to ISO at import. Upstream has always shipped
+    -- START DATE in the delivery; we read it for validation and then dropped it, so the only
+    -- date this table held was the submission deadline.
+    --
+    -- That absence was load-bearing. `match_customer_sheet` treats name+city+date as one of
+    -- three CERTAIN tests - "three independent facts" - but had to source our side of the date
+    -- from whatever delivery CSV the operator passed on the command line. On 2026-09-15 that
+    -- file was five weeks old and did not contain the row being matched at all, so the
+    -- strongest test abstained for want of a date rather than on the evidence, and the row
+    -- scored 70 instead of binding. A fact about our own data should not arrive by hand.
+    start_date        TEXT                      -- ISO yyyy-mm-dd, or NULL when unparseable
 );
 -- Awards claims live in their OWN table, not in grounding_facts. Contract v2.1 made awards a
 -- second entity type, and the operator's standing instruction is that the two must not
@@ -440,7 +451,7 @@ class Store:
         # acceptance gate and are then silently discarded on import, which looks like success.
         gf_have = {r["name"] for r in self.db.execute("PRAGMA table_info(grounding_facts)")}
         for col in ("organizer", "sponsor_required", "sponsor_url", "sponsor_cost",
-                    "sponsor_quote"):
+                    "sponsor_quote", "start_date"):
             if col not in gf_have:
                 self.db.execute(f"ALTER TABLE grounding_facts ADD COLUMN {col} TEXT")
         # Backfill `edition` for rows stored before the column existed. Pure derivation from

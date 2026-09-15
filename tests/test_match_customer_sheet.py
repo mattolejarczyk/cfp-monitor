@@ -118,3 +118,42 @@ def test_a_real_number_in_a_name_is_not_mistaken_for_a_year():
 
 def test_two_different_events_still_do_not_match_after_the_change():
     assert mcs.sim("Google Cloud Next '26", "AWS re:Invent 2026") < 0.5
+
+
+def _db_with(tmp_path, rows):
+    """A database carrying our own start dates, the way load_ours now reads them."""
+    import sqlite3
+    from src.cfp_monitor.storage import Store
+    p = tmp_path / "m.db"
+    Store(str(p)).db.close()
+    con = sqlite3.connect(str(p))
+    for r in rows:
+        con.execute("insert into grounding_facts (event_id, name, city, start_date)"
+                    " values (?,?,?,?)", r)
+    con.commit()
+    con.close()
+    return str(p)
+
+
+def test_our_start_date_comes_from_the_database_not_the_delivery(tmp_path):
+    """Live on 2026-09-15: the newest delivery CSV was five weeks old and did not contain the
+    row being matched, so name+city+date - one of three CERTAIN tests - abstained for want of a
+    date rather than on the evidence. A fact about our own data must not depend on an argument."""
+    db = _db_with(tmp_path, [("2026-energy-transition-north-america-houston",
+                              "Energy Transition North America 2026", "Houston", "2026-12-08")])
+    delivery = tmp_path / "d.csv"
+    delivery.write_text("EVENT_ID,START DATE,Market\n", encoding="utf-8")   # deliberately empty
+    canon, start, _seq = mcs.load_ours(db, str(delivery), "Utility")
+    assert start["2026-energy-transition-north-america-houston"] == "2026-12-08"
+
+
+def test_a_row_the_database_cannot_date_still_takes_the_deliverys_value(tmp_path):
+    """The delivery is a fallback, not dead weight: a row imported before the column existed,
+    or one upstream shipped without a date, can still be dated by the file."""
+    db = _db_with(tmp_path, [("2027-widget-expo-houston", "Widget Expo 2027", "Houston", None)])
+    delivery = tmp_path / "d.csv"
+    delivery.write_text("EVENT_ID,START DATE,Market\n2027-widget-expo-houston,2027-05-04,Utility\n",
+                        encoding="utf-8")
+    _canon, start, seq = mcs.load_ours(db, str(delivery), "Utility")
+    assert start["2027-widget-expo-houston"] == "2027-05-04"
+    assert seq == ["2027-widget-expo-houston"]

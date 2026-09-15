@@ -111,10 +111,21 @@ def load_ours(db: str, delivery: str, market: str):
     con = sqlite3.connect(db)
     con.row_factory = sqlite3.Row
     canon = {r["event_id"]: dict(r) for r in con.execute(
-        "select event_id, name, city, country, url, main_info_url from grounding_facts")}
+        "select event_id, name, city, country, url, main_info_url, start_date"
+        " from grounding_facts")}
     con.close()
 
-    start, seq, seen = {}, [], set()
+    # THE DATABASE IS THE SOURCE OF OUR OWN START DATE, and the delivery only fills gaps.
+    #
+    # It used to be the other way round: every date came from whatever CSV was passed on the
+    # command line. name+city+date is one of three CERTAIN tests - "three independent facts" -
+    # so a row missing from that file could not be matched on its strongest evidence however
+    # obvious the match. On 2026-09-15 the newest delivery was five weeks old and did not
+    # contain Energy Transition North America at all; the date tests abstained for want of a
+    # date, the row scored 70 instead of binding, and a low score reads exactly like a
+    # disagreement. A fact about our own data should not depend on an argument.
+    start = {e: r["start_date"] for e, r in canon.items() if (r.get("start_date") or "").strip()}
+    seq, seen = [], set()
     with open(delivery, encoding="utf-8-sig", newline="") as fh:
         for r in csv.DictReader(fh):
             raw = (r.get("EVENT_ID") or "").strip()

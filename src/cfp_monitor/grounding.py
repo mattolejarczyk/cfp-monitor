@@ -391,8 +391,8 @@ def seed_store(store, rows: Iterable[GroundingRow]) -> dict:
             " overview, categories, coordinator_email, deadline_quote, is_projected,"
             " source_as_of, deadline_evidence_url, main_info_url, issues, verify_state,"
             " imported_at, organizer, sponsor_required, sponsor_url, sponsor_cost,"
-            " sponsor_quote)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            " sponsor_quote, start_date)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
             " ON CONFLICT(event_id) DO UPDATE SET"
             "  conference_key=excluded.conference_key, name=excluded.name, url=excluded.url,"
             "  city=excluded.city, state_province=excluded.state_province,"
@@ -414,7 +414,11 @@ def seed_store(store, rows: Iterable[GroundingRow]) -> dict:
             # every re-import. Only a non-empty incoming value may replace it.
             "  sponsor_quote=CASE WHEN excluded.sponsor_quote != ''"
             "                     THEN excluded.sponsor_quote"
-            "                     ELSE grounding_facts.sponsor_quote END",
+            "                     ELSE grounding_facts.sponsor_quote END,"
+            # A blank START DATE must not erase one we already parsed: upstream ships the
+            # column on every row but leaves it empty where the event has no announced date.
+            "  start_date=CASE WHEN excluded.start_date IS NOT NULL"
+            "                  THEN excluded.start_date ELSE grounding_facts.start_date END",
             (row.event_id, key, row.name, row.url, row.city, row.state, row.country,
              row.edition, row.deadline, row.submission_url, row.cfp_model,
              row.grounding_status, row.overview, row.categories, row.coordinator_email,
@@ -422,7 +426,9 @@ def seed_store(store, rows: Iterable[GroundingRow]) -> dict:
              row.deadline_evidence_url, row.main_info_url, "; ".join(row.issues),
              "unverified", now,
              row.organizer, row.sponsor_required, row.sponsor_url, row.sponsor_cost,
-             row.sponsor_quote))
+             row.sponsor_quote,
+             (lambda d: d.isoformat() if d else None)(
+                 parse_loose_date(row.raw.get("START DATE")))))
         stats["updated" if was else "inserted"] += 1
 
         if known:
