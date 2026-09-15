@@ -2,6 +2,9 @@
 
 **Audience:** whoever is operating the pipeline, including a session starting cold.
 **Read `pipeline-contract.md` first** — it says *why*. This says *how*.
+**`WEEKLY-CYCLE.md` says *when*, and who owns each step** — the shape of the week from customer
+intake on Saturday to the files reaching Nicolia on Monday. Read it before deciding where in
+the week you are; this runbook is the detail underneath its steps 3 and 4.
 **Last executed:** 2026-08-11 (all 8 markets; 4,021 claims audited against their own cited pages).
 
 > **The gate accepts TWO column widths right now - 38 and 43.**
