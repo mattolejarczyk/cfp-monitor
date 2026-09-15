@@ -5,8 +5,8 @@
 
 WHAT IT DOES, in the runbook's order (section 5):
     1. audit_evidence.py --field deadline --recheck   re-read every cited page   (no API cost)
-    1a. check_award_deadlines.py --apply              the same, for awards       (no API cost)
     2. export_checks.py                               verdicts -> the CSV the page reads
+    2a. check_award_deadlines.py --apply              BOTH of the above, for awards (no API cost)
     2b. weekly_verify.check_all_submission_links      refresh the dead-link flags the page shows
         link_check_awards.py --apply                  the same, for the awards rows
     3. combine the live markets' accepted deliveries into one input
@@ -128,9 +128,14 @@ def main() -> int:
     if not checks.exists():
         HEALTH.fail("weekly_step", "missing_input", f"no checks CSV at {checks}")
 
-    # 1a + 2a. THE SAME TWO STEPS, FOR AWARDS. audit_evidence/export_checks read the `evidence`
+    # 2a. STEPS 1 AND 2 AGAIN, FOR AWARDS. audit_evidence/export_checks read the `evidence`
     # table joined to `grounding_facts` - the CONFERENCES table - so they have nothing to say
     # about an award, and this one pass does both jobs for them.
+    #
+    # It runs AFTER step 2 rather than beside step 1, and the number says so. The two are
+    # independent - export_checks is conference-only and this CSV is not read until the page
+    # build - so the order is a free choice, and a step numbered for where it actually runs is
+    # worth more than one numbered for where it conceptually belongs.
     #
     # It is here because of what happened without it. On 2026-09-14 the awards page was built
     # with the CONFERENCE checks CSV, whose 162 rows contain zero awards. Nothing failed, the
@@ -140,7 +145,7 @@ def main() -> int:
     # No API cost: it re-opens cited pages, it does not ask a model anything.
     if not a.skip_evidence:
         step("awards evidence", [PY, ROOT / "scripts/check_award_deadlines.py", "--db", a.db,
-                                 "-o", award_checks, "--apply"], work / "1a_award_evidence.log")
+                                 "-o", award_checks, "--apply"], work / "2a_award_evidence.log")
     if not award_checks.exists():
         HEALTH.fail("weekly_step", "missing_input", f"no awards checks CSV at {award_checks}")
 
