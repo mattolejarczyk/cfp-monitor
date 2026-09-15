@@ -5,6 +5,88 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-14 - awards verified for the first time, 18 duplicate rows merged out, contract to v2.5
+
+**The question that started it** (operator): how could the customer files have gone out with the
+awards verification step missed - was it done and not logged? Neither. **The step did not exist.**
+`audit_evidence.py` and `export_checks.py` read the `evidence` table joined to `grounding_facts`,
+the CONFERENCES table, and every writer of `verify_state` in the repo targets that same table.
+`check_award_deadlines.py` was written as the awards sibling on 2026-09-08 and wired to nothing.
+
+Worse than the gap: `weekly_deliverable.py` passed the CONFERENCE checks CSV to the awards page.
+Zero of its 162 rows are awards, so the page built with `NO_EVIDENCE=false` and shipped reading
+**"0 Deadline confirmed - we read it on their page"**. An omission rendered as a result - the exact
+failure `build_review_page.py`'s `--no-evidence` guard exists to prevent. A CSV matching no rows
+walks straight around that guard, and **run health reported HEALTHY because every step it knew
+about succeeded. Health counts steps that ran, not steps that should have existed.**
+
+First awards pass: 100 cited deadlines over 95 pages - 41 verified, 53 no_quote, 6 unreadable, 19
+with no cited page. All 53 no_quote have deadlines already past, which is award pages rolling to
+the next cycle rather than bad data. Of the 19 rows whose deadline is still ahead, 16 are
+confirmed. `--apply` writes the verdicts; `unreadable` is deliberately NOT recorded as a verdict -
+it says we could not open the page, which is about us, not the date.
+
+**Asked whether the corrected page was worth re-sending: no, and it was checked rather than
+assumed.** Only `chk`, `chku`, `chkq` differ, and all 41 "what we found" quotes are already the
+quote the page was showing. The pass confirmed sentences the customer could already read and
+discovered none.
+
+**Duplicates: 21 groups, not the 9 previously recorded** - the old number came from a stricter
+detector. Two corrections to what had been written down: the earlier claim that the customer could
+see both copies was WRONG (both pages are one row per event, 112 of 112 and 127 of 127 distinct),
+and this is database hygiene, not a delivery defect.
+
+`find_duplicate_events.py` classifies by WHICH key component moved, because the causes want
+different fixes: SAME_TODAY (both rows mint the same key today and differ only in the key each was
+born with - `fix_edition.py`'s frozen `key_year` working as designed, and the strongest evidence of
+one event), PLACE, NON_OPPORTUNITY, OPPORTUNITY, YEAR, MIXED. CONFLICT is reported separately
+because it is the only part that can reach a customer. Exactly one group had disagreeing deadlines
+and **it was not an error**: the Nineteenth International Conference on Climate Change runs two
+submission rounds off one page, Regular to 2026-10-19 and Late to 2026-12-20, both verified. The
+schema has no column saying which round a deadline belongs to. The customer page carried the
+regular date, which is the safer one.
+
+18 rows merged out, 419 -> 401, across three batches (7 SAME_TODAY, 5 PLACE, 6 NON_OPPORTUNITY).
+All 111 client links intact, none orphaned, invariants green. No event lost coverage: the five
+name strings that disappeared are alternate spellings of rows that survive.
+
+**Every merge rule came from drafting and reading the output, not from reasoning about it first.**
+The survivor is the row the CUSTOMER is joined to, never the freshest - 6 of 7 SAME_TODAY links
+pointed at the older row, and keep-newest would have orphaned ACT Expo (Drafting Abstract, Urgent)
+and World Future Energy Summit (Submitted). The citation moves as a unit or not at all. R1 outranks
+that atomicity: a citation edit never blanks the deadline. The event's own name breaks a city tie
+(St. Louis vs Clayton, the venue's town - invariant 3 cannot catch it because Clayton is a real
+place). And under v2.5 a retired Registration row never survives - the Gartner IAM draft kept the
+registration row and deleted the SPEAKING row, taking its speakers URL with it.
+
+**The merge was not finished until the seeds were repointed, and `check_invariants.py` said so
+within a minute.** It failed on "no delivered row is missing" naming all 7 deleted keys, because
+`identity.seed_map` reads `EVENT_ID_CANON` straight out of `market_sheets/*_seed.csv`. The next
+import would have recreated every duplicate, every Saturday, for ever. 27 seed rows over 6 files
+repointed, each file backed up.
+
+**Contract Amendment v2.5** requested and accepted in full the same day, numbered by upstream.
+`OPPORTUNITY_TYPE` is restricted to `Speaking`, `Awards`, `Exhibiting`; `Registration` is retired.
+The argument was one measurement - 17 suffixed rows, zero submission deadlines - plus the concrete
+harm: SIEW's registration row quotes "Registration is now open for the 19th Singapore International
+Energy Week", and the merge would have carried it onto the SPEAKING row as its deadline quote with
+STATUS Open. That is the CES 2027 false contradiction retracted in round 3, reproduced exactly.
+Submission fields can no longer travel off a row minted under an attending label.
+
+**ACT Expo checked against the live page** while resolving a customer contradiction: the call IS
+closed ("The 2027 Call for Speakers is now closed"), submitters hear back before end of December
+2026, and questions go to speakers@trccompanies.com. Notable that the row asserting "Closed" had a
+blank quote and blank evidence URL - it was derived from a passed date, not read. The customer page
+already showed Closed, so nothing needed sending.
+
+**Still open:** `docs/operations/pipeline-contract.md` is STILL VERSION 1.1 (2026-08-01) while the
+contract in force is v2.0.1 plus amendments through v2.5 - and the `cfp-protocol` skill sends every
+new session to read it as "the why". That file's own opening rule forbids exactly this divergence.
+`weekly_deliverable.py` has never run and no customer page has been built from a 401-row database;
+its first scheduled fire is Mon 2026-09-21 07:00.
+
+---
+
 ## 2026-09-13 - the loop meets live services: grounding proven, run health built, links unsolved
 
 **Quality by design became a requirement** (operator): a run must count and log its own failures

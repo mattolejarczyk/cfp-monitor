@@ -4,6 +4,76 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **Where the work stands, end of 2026-09-14. Contract is at v2.5, the database is deduplicated, and awards rows are verified for the first time.**
+>
+> **CONTRACT AMENDMENT v2.5 ADOPTED** (accepted by upstream in full, numbered by them).
+> `OPPORTUNITY_TYPE` is restricted to actionable submission opportunities - `Speaking` (default,
+> unsuffixed), `Awards`, `Exhibiting`. **`Registration` is retired and will no longer be emitted.**
+> The case was one measurement: 17 rows carried an OPPORTUNITY suffix and NOT ONE had a submission
+> deadline, which is the entire justification for the component being in the key. Upstream will
+> supply booth closing dates WITH CITATIONS where published, blank where the site is silent.
+> Text: `handoff-files/Contract_v2.5_Amendment_Opportunity_Type_Narrowing_20260914.md`.
+>
+> **AWARDS ARE VERIFIED AT LAST.** All 119 rows read `unverified` because the pass did not exist:
+> `audit_evidence.py` and `export_checks.py` join `grounding_facts`, the CONFERENCES table.
+> `check_award_deadlines.py` was the sibling, written 2026-09-08 and never wired to anything. It
+> now has `--apply` and runs as **step 1a of `weekly_deliverable.py`**. First run: 100 cited
+> deadlines over 95 pages - **41 verified, 53 no_quote, 6 unreadable, 19 with no cited page**.
+> Every one of the 53 has a deadline already past (award pages roll to the next cycle); of the 19
+> rows whose deadline is still AHEAD, **16 are confirmed**.
+> The worse half: the awards page had been built with the CONFERENCE checks CSV, whose 162 rows
+> contain zero awards, so it shipped reading "0 Deadline confirmed - we read it on their page".
+> An omission rendered as a result. Run health saw nothing wrong because every step it knew about
+> succeeded - **health counts steps that ran, not steps that should have existed.**
+>
+> **DUPLICATES: 21 GROUPS, NOT 9. 18 ROWS MERGED OUT, 419 -> 401.** `event_id` is minted once from
+> `<year>-<name>-<city>[-<opportunity>]`, so a change to any of the three makes the next import
+> INSERT instead of update. `find_duplicate_events.py` reports and classifies; `merge_duplicate_events.py`
+> drafts and (with `--apply`) performs. **Neither customer page was ever affected** - both are one
+> row per event. Merged: 7 SAME_TODAY, 5 PLACE, 6 NON_OPPORTUNITY. **Still open: 1 OPPORTUNITY
+> (it-sa exhibiting, keep), 1 YEAR (ShmooCon, may be two real editions), 1 MIXED.**
+>
+> **FIVE MERGE RULES, each found by drafting and READING the output, not by reasoning:**
+>
+>     survivor = the customer's row   6 of 7 SAME_TODAY links pointed at the OLDER row; keep-newest
+>                                     would have orphaned ACT Expo (Drafting Abstract, Urgent) and
+>                                     WFES (Submitted). A key is a name, not a fact.
+>     citation moves as a UNIT        deadline+quote+URL+verify_state+detail+is_projected, from ONE
+>                                     row or none. Assembled from two rows it is a claim neither made.
+>     R1 outranks that atomicity      a citation edit clears URL and quote; THE DEADLINE IS NEVER
+>                                     BLANKED (SecureWorld St. Louis nearly lost 2026-07-08).
+>     the name breaks a city tie      St. Louis vs Clayton (the venue's town). Invariant 3 cannot
+>                                     catch it - Clayton is a real place, not a venue string.
+>     a retired row never survives    v2.5. The Gartner IAM draft kept the REGISTRATION row and
+>                                     deleted the speaking row, taking its speakers URL with it.
+>
+> **THE MERGE IS NOT DONE WITHOUT REPOINTING THE SEEDS.** `check_invariants.py` failed within a
+> minute of the first merge ("no delivered row is missing", 7 keys): `identity.seed_map` reads
+> `EVENT_ID_CANON` straight out of `market_sheets/*_seed.csv`, which still named the deleted rows.
+> The next import would have recreated every duplicate, every Saturday, for ever. `--apply` now
+> repoints them (27 rows over 6 files, each backed up). **This is what a reconciliation after a
+> mutation is for.**
+>
+> **NOT RETIRED, deliberately:** `2026-rng-conference-dana-point-registration` and
+> `2026-international-pulp-week-vancouver-registration` are Registration rows with NO speaking
+> counterpart - the only record we hold of those events, so 2.1 keeps them. They need no
+> `held_rows.txt` entry: they are still named by the seeds, and that file is for rows ABSENT from
+> the delivery. Expect them to re-key as Speaking next cycle; the duplicate is flagged in v2.5 so
+> neither side reads it as drift.
+>
+> **NEXT:** `weekly_deliverable.py` has **never run** (`CFP Weekly Customer Pages`, LastRunTime
+> never, first fire **Mon 2026-09-21 07:00**) and its script changed twice on 2026-09-14. **No
+> customer page has ever been built from a 401-row database.** Dry-run it into a scratch out-dir
+> before the 21st - no API cost.
+> **Open:** `docs/operations/pipeline-contract.md` is STILL VERSION 1.1 (2026-08-01) while the
+> contract in force is v2.0.1 + amendments through v2.5 - and the `cfp-protocol` skill sends every
+> new session to read it as "the why"; gate check 2 still reads neither SUBMISSION URL nor behind a
+> 403; awards have no invariants equivalent; LIFECYCLE evidence never requested; STATUS ownership
+> unresolved; OpenRouter credits about $18; replacement links still go to a person.
+> **Rollback:** checkpoint `known-good-2026-09-14-v25` (all three repos tagged and pushed, 177-file
+> live snapshot). Plus 3 `cfp_monitor.before-merge-*.db` and 8 seed `.before-merge-*.csv` - keep
+> until the merges survive one real import cycle.
+
 > **Where the work stands, end of 2026-09-13. Runs now report their own health; automatic replacement links do not work yet.**
 >
 > **Live data:** SecureWorld Twin Cities 2026 (Open, deadline 2026-09-19) and St. Louis carried a
