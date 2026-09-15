@@ -34,7 +34,6 @@ from __future__ import annotations
 
 import argparse
 import collections
-import csv
 import shutil
 import sqlite3
 import sys
@@ -136,32 +135,13 @@ def repoint_seeds(db_path: str, mapping: dict[str, str]) -> list[str]:
 
     `check_invariants.py` catches it immediately ("no delivered row is missing"), which is
     exactly what a reconciliation after a mutation is for, and how this step was found.
+
+    The loop itself lives in `identity.repoint_canonical`, beside the `seed_map` that reads the
+    same files. One module owns the seed-file format in BOTH directions - a writer kept out here
+    is how the two drift, and `tests/test_identity_join.py` fails the build for exactly that.
     """
-    from src.cfp_monitor.identity import seed_roots                 # noqa: PLC0415
-    stamp = f"{datetime.now():%Y%m%d-%H%M%S}"
-    touched: list[str] = []
-    for root in seed_roots(db_path):
-        for seed in sorted(root.glob("*_seed.csv")):
-            with open(seed, encoding="utf-8-sig", newline="") as fh:
-                rd = csv.DictReader(fh)
-                cols, rows = rd.fieldnames, list(rd)
-            if not cols or "EVENT_ID_CANON" not in cols:
-                continue
-            n = 0
-            for r in rows:
-                old = (r.get("EVENT_ID_CANON") or "").strip()
-                if old in mapping:
-                    r["EVENT_ID_CANON"] = mapping[old]
-                    n += 1
-            if not n:
-                continue
-            shutil.copy2(seed, seed.with_suffix(f".before-merge-{stamp}.csv"))
-            with open(seed, "w", encoding="utf-8", newline="") as fh:
-                w = csv.DictWriter(fh, fieldnames=cols, quoting=csv.QUOTE_ALL)
-                w.writeheader()
-                w.writerows(rows)
-            touched.append(f"{seed.name}: {n} row(s) repointed")
-    return touched
+    from src.cfp_monitor.identity import repoint_canonical          # noqa: PLC0415
+    return repoint_canonical(db_path, mapping)
 
 
 def about_attending_only(row: sqlite3.Row) -> bool:

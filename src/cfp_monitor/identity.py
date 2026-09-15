@@ -28,6 +28,8 @@ compares ids without it.
 from __future__ import annotations
 
 import csv
+import shutil
+from datetime import datetime
 from pathlib import Path
 
 
@@ -114,3 +116,42 @@ def index_by_canonical(rows, up_to_canon: dict[str, str], id_col: str = "EVENT_I
     for r in rows:
         out.setdefault(to_canonical(r.get(id_col, ""), up_to_canon), r)
     return out
+
+
+def repoint_canonical(db_path: str, mapping: dict[str, str]) -> list[str]:
+    """Rewrite EVENT_ID_CANON in every seed file, old canonical id -> new. Backs each file up.
+
+    THE WRITER LIVES BESIDE THE READER ON PURPOSE. `seed_map` above is the only sanctioned way
+    to read this file format, and a writer kept somewhere else is how the two drift - the reader
+    learns to tolerate a BOM or a renamed column and the writer does not, or the reverse. One
+    module owns the format in both directions.
+
+    Called after a merge deletes a canonical row. Without it the seeds still name the deleted id,
+    `seed_map` resolves upstream's EVENT_ID to a row that no longer exists, and the next import
+    INSERTS it again - the duplicate returns on the next cycle, for ever. `check_invariants.py`
+    catches it immediately ("no delivered row is missing"), which is how it was found.
+    """
+    stamp = f"{datetime.now():%Y%m%d-%H%M%S}"
+    touched: list[str] = []
+    for root in seed_roots(db_path):
+        for seed in sorted(root.glob("*_seed.csv")):
+            with open(seed, encoding="utf-8-sig", newline="") as fh:
+                rd = csv.DictReader(fh)
+                cols, rows = rd.fieldnames, list(rd)
+            if not cols or "EVENT_ID_CANON" not in cols:
+                continue
+            n = 0
+            for r in rows:
+                old = (r.get("EVENT_ID_CANON") or "").strip()
+                if old in mapping:
+                    r["EVENT_ID_CANON"] = mapping[old]
+                    n += 1
+            if not n:
+                continue
+            shutil.copy2(seed, seed.with_suffix(f".before-merge-{stamp}.csv"))
+            with open(seed, "w", encoding="utf-8", newline="") as fh:
+                w = csv.DictWriter(fh, fieldnames=cols, quoting=csv.QUOTE_ALL)
+                w.writeheader()
+                w.writerows(rows)
+            touched.append(f"{seed.name}: {n} row(s) repointed")
+    return touched

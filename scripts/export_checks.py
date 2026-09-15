@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import csv
 import importlib.util
+import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -40,6 +41,23 @@ sys.path.insert(0, str(ROOT))
 # thing we know, not the most.
 PRECEDENCE = ("contradicted", "no_quote", "unreadable", "verified")
 COLUMNS = ("EVENT_ID", "CHECK", "CHECK_URL", "CHECK_QUOTE", "CHECK_DETAIL")
+
+
+def same_page(a: str | None, b: str | None) -> bool:
+    """Do these two URLs name the same page?
+
+    Compared after normalising scheme, `www.`, a trailing slash and a fragment, because a
+    citation and the evidence recorded against it drift on exactly those and nothing else.
+    Measured 2026-09-14: of 156 deadline-evidence rows, 115 matched the citation exactly, 40
+    were a genuinely different page, and ONE differed only cosmetically - which a raw `=`
+    would have thrown away as superseded, losing a real verdict.
+    """
+    def norm(u: str | None) -> str:
+        s = (u or "").strip().lower()
+        s = re.sub(r"^https?://", "", s)
+        s = re.sub(r"^www\.", "", s)
+        return s.split("#")[0].rstrip("/")
+    return bool(norm(a)) and norm(a) == norm(b)
 
 
 def main() -> int:
@@ -66,8 +84,7 @@ def main() -> int:
     # would have tripled the alarm on the customer's page using rows that carry no claim.
     rows = list(con.execute(
         "select e.event_id, e.verdict, e.source_url, e.found_quote, e.quote, e.detail, "
-        "       e.fetched_at, "
-        "       (e.source_url = g.deadline_evidence_url) as is_current "
+        "       e.fetched_at, g.deadline_evidence_url as cite "
         "from evidence e join grounding_facts g on g.event_id = e.event_id "
         "where e.field='deadline' and coalesce(e.verdict,'') <> '' "
         f"  and e.origin = ? "
@@ -80,24 +97,36 @@ def main() -> int:
               "report 0 confirmed, which reads as a finding rather than a missing input.")
         return 2
 
+    # ONLY THE PAGE THIS ROW CITES CAN GIVE IT A VERDICT.
+    #
+    # The badge answers one question: did we open the page THIS ROW CITES and find the deadline
+    # on it. Evidence gathered against a url the row has since stopped citing answers a question
+    # about a different page, so it is history, not a verdict.
+    #
+    # Preferring the current citation was not enough. Where a row has NO evidence for its
+    # current citation, the superseded row was the only candidate and won by default. On
+    # 2026-09-14 that put SecureWorld St. Louis on the customer page badged "Disputed", with no
+    # deadline to dispute, quoting a blob of scraped table headings off the old events index -
+    # while the row itself cites the round-5 portal nobody had re-read. 20 events were in that
+    # position: 8 reading confirmed, 9 not-on-page, 2 could-not-check and that 1 disputed.
+    #
+    # So a superseded verdict is now SET ASIDE, not outranked. The honest result for those rows
+    # is no badge at all: we have not opened the page they cite. The confirmed count falls,
+    # which is correct - the verified count is reported, never targeted.
+    fresh = [r for r in rows if same_page(r["source_url"], r["cite"])]
+    set_aside = len(rows) - len(fresh)
+
     def rank(x):
-        # THE CURRENT CITATION WINS OUTRIGHT. The badge answers "did we open the page THIS ROW
-        # cites and find the deadline on it", so evidence against a SUPERSEDED url is history,
-        # not a verdict. Without this, worst-first let a stale 'contradicted' from before a
-        # citation was replaced outrank the fresh 'verified' for the new page - Humanoids,
-        # GreenBiz and World PM would still have read "Disputed" after a full re-audit, which
-        # is the exact thing tonight's run exists to fix.
         v = (x["verdict"] or "")
-        return (0 if x["is_current"] else 1,
-                PRECEDENCE.index(v) if v in PRECEDENCE else len(PRECEDENCE))
+        return PRECEDENCE.index(v) if v in PRECEDENCE else len(PRECEDENCE)
 
     best: dict[str, sqlite3.Row] = {}
-    for r in rows:
+    for r in fresh:
         cur = best.get(r["event_id"])
         if cur is None:
             best[r["event_id"]] = r
             continue
-        # Current beats superseded; then worse beats better; then newer beats older.
+        # Worse beats better, then newer beats older.
         if rank(r) < rank(cur) or (rank(r) == rank(cur)
                                    and (r["fetched_at"] or "") > (cur["fetched_at"] or "")):
             best[r["event_id"]] = r
@@ -137,7 +166,11 @@ def main() -> int:
     from collections import Counter
     c = Counter(r["CHECK"] for r in out)
     need = c["contradicted"] + c["no_quote"] + c["unreadable"]
-    print(f"{len(rows)} deadline claim(s) -> {len(best)} event(s) -> {len(out)} written")
+    print(f"{len(rows)} deadline claim(s) -> {len(fresh)} against the cited page "
+          f"-> {len(best)} event(s) -> {len(out)} written")
+    if set_aside:
+        print(f"  {set_aside} verdict(s) SET ASIDE: recorded against a url the row no "
+              f"longer cites. Those rows get no badge rather than a stale one.")
     if unmapped:
         print(f"  {unmapped} event(s) had no upstream id and were skipped")
     print(f"\n  confirmed       {c['verified']}")
