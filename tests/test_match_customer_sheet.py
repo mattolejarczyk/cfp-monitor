@@ -94,3 +94,27 @@ def test_url_comparison_ignores_trailing_slash_and_case():
 def test_norm_url_of_blank_is_blank():
     assert mcs.norm_url("") == ""
     assert mcs.norm_url(None) == ""
+
+
+def test_an_apostrophe_year_is_a_year_too():
+    """Live on 2026-09-15: their "Google Cloud Next" against our "Google Cloud Next '26" scored
+    0.0 - "every test abstained" - because the stray "26" token survived while four-digit years
+    were stripped. A conference we hold looked like one we had never heard of."""
+    assert mcs.sim("Google Cloud Next", "Google Cloud Next '26") > 0.9
+    assert mcs.sim("Google Cloud Next", "Google Cloud Next ’26") > 0.9
+    assert "26" not in mcs.toks("Google Cloud Next '26")
+
+
+def test_a_fiscal_year_marker_is_not_identity():
+    assert mcs.sim("Partner Summit", "Partner Summit FY26") > 0.9
+
+
+def test_a_real_number_in_a_name_is_not_mistaken_for_a_year():
+    """The inversion: stripping years must not eat a number that IS part of the name."""
+    assert "35th" in " ".join(mcs.toks("35th USENIX Security Symposium")) or \
+        "35" in mcs.toks("35 Degrees Conference")
+    assert mcs.sim("Top 100 Awards", "Top 100 Awards") > 0.9
+
+
+def test_two_different_events_still_do_not_match_after_the_change():
+    assert mcs.sim("Google Cloud Next '26", "AWS re:Invent 2026") < 0.5

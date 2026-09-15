@@ -60,6 +60,13 @@ def host(u: str) -> str:
 
 def toks(n: str) -> set[str]:
     n = re.sub(r"\b(19|20)\d{2}\b", " ", (n or "").lower())
+    # A YEAR IS A YEAR HOWEVER IT IS WRITTEN. Four-digit years were already dropped; an
+    # apostrophe year was not, so "Google Cloud Next '26" kept a stray "26" token and scored
+    # 3/4 against their "Google Cloud Next". Every name test abstained, the row came back
+    # 0.0 - "nothing of ours shares this URL, domain, name, position, city or date" - and a
+    # conference we hold looked like one we had never heard of.
+    n = re.sub(r"['’‘]\d{2}\b", " ", n)
+    n = re.sub(r"\bfy\s?\d{2}\b", " ", n)
     n = re.sub(r"\([^)]*\)", " ", n)
     return {w for w in re.sub(r"[^a-z0-9]+", " ", n).split() if w not in STOP and len(w) > 1}
 
