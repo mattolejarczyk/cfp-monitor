@@ -54,8 +54,11 @@ from __future__ import annotations
 import argparse
 import collections
 import csv
+import importlib.util
+import itertools
 import sqlite3
 import sys
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -131,6 +134,64 @@ def groups(con: sqlite3.Connection, table: str) -> dict[str, list[sqlite3.Row]]:
     return {k: v for k, v in by.items() if len(v) > 1}
 
 
+# The matcher's own threshold for "these names describe the same event", reused rather than
+# invented so one number governs both. `sim` is imported, never reimplemented.
+NAME_FLOOR = 0.7
+SAME_DAYS = 1
+
+
+def _sim():
+    spec = importlib.util.spec_from_file_location(
+        "mcs", Path(__file__).resolve().parent / "match_customer_sheet.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.sim
+
+
+def city_date_pairs(con: sqlite3.Connection, table: str,
+                    seen_together: set[frozenset]) -> list[tuple[sqlite3.Row, sqlite3.Row]]:
+    """Two rows for one event always share its city and its dates, whatever they call it.
+
+    THE CLASS THE NAME DETECTOR CANNOT SEE. Grouping by name slug misses every duplicate whose
+    two names differ in wording rather than in edition or place - `&` against `and`, Summit
+    against Expo, an ordinal prefix, a "Virtual" qualifier. Measured 2026-09-15, this finds
+    seven such pairs the slug grouping had never grouped, among them
+    "IEEE Symposium on Security & Privacy" beside "IEEE Symposium on Security and Privacy".
+
+    A NAME SIGNAL IS STILL REQUIRED, and this is the whole reason city+date is a duplicate test
+    and not a matching rule. 50 pairs in our own data share a city and start within a day, and
+    the collisions are structural: satellite events inside big shows (AppSec Village at DEF CON,
+    four IFA events in Berlin on one morning), industry weeks (three healthcare conferences in
+    San Francisco on 2027-01-11), and co-located sister expos from one organiser. Requiring the
+    names to agree at the matcher's own floor drops those and keeps the real duplicates.
+
+    Pairs the name grouping already reported are skipped - one finding, once.
+    """
+    sim = _sim()
+    cols = {r[1] for r in con.execute(f"PRAGMA table_info({table})")}  # noqa: S608
+    if "start_date" not in cols:
+        return []                                    # awards carry no event date to compare
+    rows = [r for r in con.execute(                                   # noqa: S608
+        f"SELECT * FROM {table} WHERE COALESCE(start_date,'') <> '' AND COALESCE(city,'') <> ''")]
+    by_city: dict[str, list[sqlite3.Row]] = collections.defaultdict(list)
+    for r in rows:
+        by_city[(r["city"] or "").strip().lower()].append(r)
+
+    out = []
+    for group in by_city.values():
+        for a, b in itertools.combinations(group, 2):
+            if frozenset((a["event_id"], b["event_id"])) in seen_together:
+                continue
+            try:
+                delta = abs((date.fromisoformat(a["start_date"])
+                             - date.fromisoformat(b["start_date"])).days)
+            except ValueError:
+                continue
+            if delta <= SAME_DAYS and sim(a["name"], b["name"]) >= NAME_FLOOR:
+                out.append((a, b))
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0],
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -170,6 +231,39 @@ def main() -> int:
                             "DEADLINE": r["deadline"], "VERIFY_STATE": r["verify_state"],
                             "SOURCE_AS_OF": r["source_as_of"],
                             "NEWER": "yes" if newer else ""})
+
+    # THE SECOND DETECTOR. Everything above groups by name; this finds the pairs whose names
+    # never grouped, by the two facts two rows for one event always share.
+    seen_together = set()
+    for kind2 in kinds:
+        for _g, rs in groups(con, TABLES[kind2]).items():
+            for x in rs:
+                for y in rs:
+                    if x["event_id"] != y["event_id"]:
+                        seen_together.add(frozenset((x["event_id"], y["event_id"])))
+    for kind2 in kinds:
+        pairs = city_date_pairs(con, TABLES[kind2], seen_together)
+        if not pairs:
+            continue
+        print(f"\n{'=' * 78}\n{kind2.upper()}: {len(pairs)} pair(s) sharing a city and dates, "
+              f"which the name grouping cannot see\n{'=' * 78}")
+        for a, b in pairs:
+            tally[f"{kind2}/SAME_CITY_DATE"] += 1
+            clash2 = conflicting([a, b])
+            conflicts += clash2
+            flag = "  <<< DEADLINES DISAGREE" if clash2 else ""
+            print(f"\n  [SAME_CITY_DATE]{flag}   {a['city']}, {a['start_date']}")
+            for r in (a, b):
+                print(f"    {r['event_id']}")
+                print(f"           {r['name'][:58]:60} dl={r['deadline'] or '-':11}"
+                      f" {r['verify_state']}")
+                out.append({"KIND": kind2, "CLASS": "SAME_CITY_DATE",
+                            "CONFLICT": "yes" if clash2 else "",
+                            "GROUP": f"{a['city']}|{a['start_date']}",
+                            "EVENT_ID": r["event_id"], "NAME": r["name"], "CITY": r["city"],
+                            "EDITION": r["edition"], "DEADLINE": r["deadline"],
+                            "VERIFY_STATE": r["verify_state"],
+                            "SOURCE_AS_OF": r["source_as_of"], "NEWER": ""})
     con.close()
 
     print(f"\n{'=' * 78}\nBY CAUSE\n{'=' * 78}")

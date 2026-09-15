@@ -148,3 +148,95 @@ def test_exhibiting_remains_a_real_opportunity(tmp_path):
                                       name="it-sa Expo & Congress 2026", edition="2026",
                                       city="Nuremberg")])
     assert fde.classify(rows) == "OPPORTUNITY"
+
+
+def _con(tmp_path, rows):
+    import sqlite3
+    p = _db(tmp_path, rows)
+    con = sqlite3.connect(p)
+    con.row_factory = sqlite3.Row
+    return con
+
+
+def _row2(event_id, name, city="Houston", start="2027-02-10", edition="2027"):
+    r = _row(event_id, name=name, city=city, edition=edition)
+    r["start_date"] = start
+    return r
+
+
+def test_it_finds_the_duplicate_the_name_grouping_cannot_see(tmp_path):
+    """`&` against `and` produces two different name slugs, so slug grouping never groups them.
+    Two rows for one event always share its city and its dates. Live on 2026-09-15: IEEE
+    Symposium on Security & Privacy beside IEEE Symposium on Security and Privacy."""
+    con = _con(tmp_path, [
+        _row2("2026-ieee-sp-sf", "IEEE Symposium on Security & Privacy 2026", "San Francisco",
+              "2026-05-18", "2026"),
+        _row2("2026-ieee-security-and-privacy-sf", "IEEE Symposium on Security and Privacy 2026",
+              "San Francisco", "2026-05-18", "2026")])
+    pairs = fde.city_date_pairs(con, "grounding_facts", set())
+    con.close()
+    assert len(pairs) == 1
+
+
+def test_a_satellite_event_is_not_called_a_duplicate(tmp_path):
+    """THE INVERSION THAT MATTERS. 50 pairs in our data share a city and start within a day,
+    because big shows carry satellites - AppSec Village sits inside DEF CON, ShowStoppers inside
+    CES, and Berlin ran four IFA events on one morning. City and date alone would merge them."""
+    con = _con(tmp_path, [
+        _row2("2026-def-con-34-las-vegas", "DEF CON 34", "Las Vegas", "2026-08-06", "2026"),
+        _row2("2026-appsec-village-las-vegas", "AppSec Village at DEF CON 34", "Las Vegas",
+              "2026-08-06", "2026")])
+    pairs = fde.city_date_pairs(con, "grounding_facts", set())
+    con.close()
+    assert pairs == []
+
+
+def test_two_unrelated_conferences_in_one_city_are_not_a_duplicate(tmp_path):
+    """Las Vegas really did hold D.I.C.E. Summit and the National Ethanol Conference on
+    2027-02-16."""
+    con = _con(tmp_path, [
+        _row2("2027-dice-summit-las-vegas", "D.I.C.E. Summit 2027", "Las Vegas", "2027-02-16"),
+        _row2("2027-national-ethanol-conference-las-vegas", "National Ethanol Conference 2027",
+              "Las Vegas", "2027-02-16")])
+    pairs = fde.city_date_pairs(con, "grounding_facts", set())
+    con.close()
+    assert pairs == []
+
+
+def test_a_different_city_is_never_paired(tmp_path):
+    con = _con(tmp_path, [
+        _row2("2027-widget-expo-houston", "Widget Expo 2027", "Houston", "2027-02-10"),
+        _row2("2027-widget-expo-boston", "Widget Expo 2027", "Boston", "2027-02-10")])
+    pairs = fde.city_date_pairs(con, "grounding_facts", set())
+    con.close()
+    assert pairs == []
+
+
+def test_dates_a_week_apart_are_not_the_same_event(tmp_path):
+    con = _con(tmp_path, [
+        _row2("2027-widget-expo-houston", "Widget Expo 2027", "Houston", "2027-02-10"),
+        _row2("2027-widget-expo-houston-b", "Widget Expo 2027", "Houston", "2027-02-18")])
+    pairs = fde.city_date_pairs(con, "grounding_facts", set())
+    con.close()
+    assert pairs == []
+
+
+def test_a_pair_the_name_grouping_already_reported_is_not_repeated(tmp_path):
+    """One finding, once. The name detector runs first and hands over what it grouped."""
+    con = _con(tmp_path, [
+        _row2("2026-widget-expo-houston", "Widget Expo 2027", "Houston", "2027-02-10", "2027"),
+        _row2("2027-widget-expo-houston", "Widget Expo 2027", "Houston", "2027-02-10", "2027")])
+    already = {frozenset(("2026-widget-expo-houston", "2027-widget-expo-houston"))}
+    assert fde.city_date_pairs(con, "grounding_facts", already) == []
+    con.close()
+
+
+def test_a_row_without_a_date_is_simply_not_compared(tmp_path):
+    """Undated rows are invisible here rather than wrongly paired - 36 rows still carry no
+    start date, and a missing date must never read as an agreeing one."""
+    con = _con(tmp_path, [
+        _row2("2027-widget-expo-houston", "Widget Expo 2027", "Houston", "2027-02-10"),
+        _row2("2027-widget-expo-houston-b", "Widget Expo 2027", "Houston", None)])
+    pairs = fde.city_date_pairs(con, "grounding_facts", set())
+    con.close()
+    assert pairs == []
