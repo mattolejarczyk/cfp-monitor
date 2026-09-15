@@ -293,3 +293,29 @@ def test_a_merge_never_blanks_a_known_deadline(tmp_path):
     ch = mde.plan_one(rows, linked)["changes"]
     assert ch["deadline_quote"][1] == "Thank you for your interest."   # the citation moves
     assert "deadline" not in ch                                        # the date does not
+
+
+def test_a_retired_registration_row_never_survives(tmp_path):
+    """Contract v2.5. The Gartner IAM draft kept the registration row and deleted the SPEAKING
+    row - pulling the speakers URL off the row it was about to delete. The surviving record of
+    a speaking opportunity would have been keyed, and named, as a ticket desk."""
+    rows, linked = _rows(tmp_path,
+                         [_row(NEW, source_as_of="2026-08-05"),
+                          _row(REG, submission_url="https://g.test/speakers",
+                               deadline_quote="q", verify_state="verified")])
+    assert mde.plan_one(rows, linked)["keep"]["event_id"] == NEW
+
+
+def test_a_customer_joined_to_a_retired_row_blocks_rather_than_re_points(tmp_path):
+    """Re-pointing someone's match is not a merge decision. Contract 3."""
+    rows, linked = _rows(tmp_path, [_row(NEW), _row(REG)],
+                         clients=[("utility-global", REG, "Submitted")])
+    assert "BLOCKED" in mde.plan_one(rows, linked)["error"]
+
+
+def test_two_registration_rows_and_nothing_else_still_merge(tmp_path):
+    """The inversion: excluding retired rows must not deadlock a group made only of them."""
+    rows, linked = _rows(tmp_path,
+                         [_row(REG, source_as_of="2026-08-05"),
+                          _row("2026-big-conference-houston-registration", deadline_quote="q")])
+    assert mde.plan_one(rows, linked).get("keep") is not None

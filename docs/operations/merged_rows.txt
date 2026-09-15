@@ -96,3 +96,38 @@
     verify_state: contradicted -> not_found
     seed cyber_seed.csv: 2 row(s) repointed
     seed utility_seed.csv: 3 row(s) repointed
+2026-09-14 2027-clean-fuels-conference-phoenix-registration -> 2027-clean-fuels-conference-phoenix  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: ['Biodiesel', 'Renewable Diesel', 'Sustainable Aviation Fuel -> Biofuels, Renewable Diesel, Sustainable Aviation Fuel (SAF),
+    organizer: (blank) -> Clean Fuels Alliance America
+    overview: The Clean Fuels Conference is the premier event for biodiese -> The premier event for biodiesel, renewable diesel, and susta
+    source_as_of: 2026-08-07 -> 2026-09-12
+2026-09-14 2027-cybertech-global-tel-aviv-tel-aviv-registration -> 2027-cybertech-global-tel-aviv-tel-aviv  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: ['Cybersecurity', 'Information Technology', 'IoT Security',  -> Global Cybersecurity, Cyber Startups, Threat Intelligence, C
+    organizer: (blank) -> Arrowmedia Israel Ltd.
+    overview: Cybertech Global Tel Aviv is a premier international cyberse -> Cybertech Global Tel Aviv 2027 is a premier international cy
+    source_as_of: 2026-08-05 -> 2026-09-12
+2026-09-14 2026-gartner-identity-access-management-summit-las-vegas-registration -> 2026-gartner-identity-access-management-summit-las-vegas  (duplicate of the same event; no customer link; kept the row carrying more evidence)
+    categories: Identity & Access Management, Cybersecurity, Identity Govern -> Identity & Access Management (IAM), Cybersecurity, AI Adopti
+    organizer: (blank) -> Gartner
+    overview: Gartner Identity & Access Management Summit 2026 dives deep  -> Join us at the premier conference for IAM and cybersecurity 
+    source_as_of: 2026-08-05 -> 2026-09-12
+2026-09-14 2026-gartner-security-risk-management-summit-japan-tokyo-registration -> 2026-gartner-security-risk-management-summit-japan-tokyo  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: ['Cybersecurity', 'Risk Management', 'Information Security'] -> Cybersecurity, Risk Management, CISO Strategy, Cloud Securit
+    organizer: (blank) -> Gartner
+    overview: Gartner Security & Risk Management Summit 2026 in Tokyo dive -> Gartner Security & Risk Management Summit Tokyo 2026 provide
+    source_as_of: 2026-08-05 -> 2026-09-12
+2026-09-14 2026-sans-cyber-defense-initiative-washington-registration -> 2026-sans-cyber-defense-initiative-washington  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Cyber Defense, Incident Response, Threat Hunting, Digital Fo -> Cyber Security Training, Cyber Defense, Incident Response, B
+    organizer: (blank) -> SANS Institute
+    overview: SANS Cyber Defense Initiative (CDI) 2026 is a flagship end-o -> SANS Cyber Defense Initiative 2026 is one of SANS Institute'
+    source_as_of: 2026-08-05 -> 2026-09-12
+2026-09-14 2026-singapore-international-energy-week-singapore-registration -> 2026-singapore-international-energy-week-singapore  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Energy, Decarbonisation, Renewable Energy, Climate Finance,  -> Clean Energy, Regional Grid Integration, Hydrogen, Power Gri
+    organizer: (blank) -> Energy Market Authority
+    overview: Singapore International Energy Week (SIEW) is an annual plat -> Asia's leading platform for energy professionals, policymake
+    source_as_of: 2026-08-07 -> 2026-09-12
+    sponsor_cost: (blank) -> Various levels of sponsorship are available and opportunitie
+    sponsor_required: Unknown -> Yes
+    sponsor_url: (blank) -> https://www.siew.gov.sg/sponsors-partners/sponsorship-opport
+    seed cyber_seed.csv: 4 row(s) repointed
+    seed utility_seed.csv: 2 row(s) repointed

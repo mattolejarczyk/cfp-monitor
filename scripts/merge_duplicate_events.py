@@ -92,11 +92,25 @@ def blank(v) -> bool:
 
 def survivor(rows: list[sqlite3.Row], linked: dict[str, dict]) -> tuple[sqlite3.Row, str]:
     """The row the customer is joined to, if any. Otherwise the one with the most evidence."""
-    joined = [r for r in rows if r["event_id"] in linked]
+    # CONTRACT v2.5: Registration is retired as an opportunity, so a row minted under it is not
+    # a candidate to survive while a real one exists. Without this the Gartner IAM draft kept
+    # the registration row and deleted the SPEAKING row, pulling the speakers URL off the row
+    # it was about to delete - the surviving record of a speaking opportunity would have been
+    # keyed, and named, as a ticket desk.
+    real = [r for r in rows if not about_attending_only(r)]
+    candidates = real or rows
+
+    joined = [r for r in candidates if r["event_id"] in linked]
     if len(joined) == 1:
         return joined[0], "the customer's sheet is matched to this row"
     if len(joined) > 1:
         return None, f"AMBIGUOUS: {len(joined)} rows carry a customer link - decide by hand"
+    if real and any(r["event_id"] in linked for r in rows if r not in real):
+        # Their sheet is joined to the row v2.5 retires. Re-pointing a customer join is not a
+        # merge decision.
+        return None, ("BLOCKED: the customer is joined to the retired Registration row - "
+                      "re-point their match by hand before merging")
+    rows = candidates
 
     # THE EVENT'S OWN NAME BREAKS A CITY TIE. "SecureWorld St. Louis 2026" held in Clayton and
     # in St. Louis is the runbook's clean_city hazard from the other direction: Clayton is the
