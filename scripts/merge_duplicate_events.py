@@ -203,6 +203,10 @@ def main() -> int:
     ap.add_argument("--class", dest="cls", default="SAME_TODAY",
                     help="which duplicate class to merge (default: SAME_TODAY)")
     ap.add_argument("--apply", action="store_true", help="write the merge (backs up the DB first)")
+    ap.add_argument("--exclude", nargs="*", metavar="EVENT_ID",
+                    help="leave any group containing this row alone. For the pair a detector "
+                         "is right to surface and a person is right to refuse - two co-located "
+                         "expos from one organiser look exactly like one event held twice.")
     a = ap.parse_args()
 
     con = sqlite3.connect(a.db)
@@ -211,12 +215,30 @@ def main() -> int:
     for r in con.execute("SELECT * FROM client_conferences"):
         linked.setdefault(r["event_id"], dict(r))
 
-    plans, blocked = [], []
-    for _gkey, rows in sorted(fde.groups(con, "grounding_facts").items()):
-        if fde.classify(rows) != a.cls:
+    # SAME_CITY_DATE comes from the second detector, which pairs rows the name grouping cannot
+    # see, so it is sourced differently rather than filtered out of the name groups.
+    if a.cls == "SAME_CITY_DATE":
+        seen = set()
+        for _g, rs in fde.groups(con, "grounding_facts").items():
+            for x in rs:
+                for y in rs:
+                    if x["event_id"] != y["event_id"]:
+                        seen.add(frozenset((x["event_id"], y["event_id"])))
+        candidates = [list(p) for p in fde.city_date_pairs(con, "grounding_facts", seen)]
+    else:
+        candidates = [rows for _g, rows in sorted(fde.groups(con, "grounding_facts").items())
+                      if fde.classify(rows) == a.cls]
+
+    plans, blocked, skipped = [], [], []
+    for rows in candidates:
+        ids = {r["event_id"] for r in rows}
+        if ids & set(a.exclude or ()):
+            skipped.append(rows)
             continue
         p = plan_one(rows, linked)
         (blocked if p.get("error") else plans).append(p)
+    for rows in skipped:
+        print(f"EXCLUDED by request: {' || '.join(r['name'][:40] for r in rows)}")
 
     print(f"MERGE DRAFT - class {a.cls} - {len(plans)} group(s)"
           f"{f', {len(blocked)} blocked' if blocked else ''}\n")

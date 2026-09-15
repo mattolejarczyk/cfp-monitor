@@ -131,3 +131,48 @@
     sponsor_url: (blank) -> https://www.siew.gov.sg/sponsors-partners/sponsorship-opport
     seed cyber_seed.csv: 4 row(s) repointed
     seed utility_seed.csv: 2 row(s) repointed
+2026-09-15 2026-american-hydrogen-ccus-forum-houston -> 2026-6th-american-hydrogen-ccus-forum-houston  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Hydrogen, CCUS, Energy Transition, Decarbonization -> Hydrogen, CCUS, Decarbonization, Clean Energy, Energy Transi
+    cfp_model: Rolling Form -> Not Announced
+    deadline_evidence_url: (blank) -> https://ushydrogenforum.com/forum-speakers/
+    deadline_quote: (blank) -> Would you like to become a speaker? Contact us.
+    organizer: (blank) -> ALJ Group
+    overview: The 6th American Hydrogen & CCUS Forum is a premier event br -> A pivotal event bringing together two transformative forces 
+    source_as_of: 2026-08-06 -> 2026-09-12
+    sponsor_url: (blank) -> https://ushydrogenforum.com/sponsors/
+    submission_url: https://ushydrogenforum.com/ -> https://ushydrogenforum.com/forum-speakers/
+    verify_detail: [L2] no evidence URL supplied; fell back to a page that does -> [L2] no parseable deadline to check  <- cited page https://u
+    conferences: 1 re-pointed, 0 duplicate(s) dropped
+2026-09-15 2026-ieee-symposium-on-security-and-privacy-san-francisco -> 2026-ieee-symposium-on-security-privacy-san-francisco  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Computer Security, Electronic Privacy, Cryptography -> Computer Security, Electronic Privacy, Applied Cryptography,
+    coordinator_email: sp26-pcchairs@ieee-security.org -> sp26-chair@ieee-security.org
+    organizer: (blank) -> IEEE Computer Society
+    source_as_of: 2026-08-05 -> 2026-09-12
+    sponsor_required: Unknown -> No
+    submission_url: https://cycle2.sp2026.ieee-security.org/ -> https://sp2026.ieee-security.org/cfpapers.html
+2026-09-15 2027-mrs-spring-meeting-seattle -> 2027-mrs-spring-meeting-exhibit-seattle  (duplicate of the same event; no customer link; kept the row carrying more evidence)
+    evidence: 16 re-pointed, 0 duplicate(s) dropped
+    conferences: 1 re-pointed, 0 duplicate(s) dropped
+2026-09-15 2026-secureworld-threat-defense-virtual -> 2026-secureworld-threat-defense-virtual-conference-virtual  (duplicate of the same event; no customer link; kept the row whose city the event is named for)
+    categories: Cybersecurity, Threat Intelligence, IT Security -> Cybersecurity, CISO Leadership, Information Security, Cloud 
+    coordinator_email: tom@secureworld.io -> info@secureworld.io
+    overview: A live virtual conference focused on defending against moder -> Premier regional cybersecurity conference series providing C
+    source_as_of: 2026-08-06 -> 2026-09-12
+    status: Open -> Needs Verification
+    submission_url: https://www.secureworld.io/speaker-submissions -> https://www.secureworld.io/call-for-speakers
+2026-09-15 2026-german-owasp-day-karlsruhe -> 2026-owasp-german-chapter-conference-karlsruhe  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Application Security, Cybersecurity, Software Development -> Application Security, AppSec, DevSecOps, Secure Development,
+    organizer: (blank) -> OWASP German Chapter
+    overview: German OWASP Day is the national application security confer -> German OWASP Day 2026 is an application security conference 
+    source_as_of: 2026-08-05 -> 2026-09-12
+    sponsor_url: (blank) -> https://god.owasp.de/2026/
+    submission_url: https://god.owasp.de/2026/en/cfp.html -> https://god.owasp.de/2026/cfp.html
+2026-09-15 2027-world-hydrogen-summit-rotterdam -> 2027-world-hydrogen-summit-exhibition-rotterdam  (duplicate of the same event; the customer's sheet is matched to this row)
+    coordinator_email: (blank) -> Catalina.Zuliani@rxglobal.com
+    evidence: 10 re-pointed, 2 duplicate(s) dropped
+    seed bio_seed.csv: 1 row(s) repointed
+    seed cyber_seed.csv: 3 row(s) repointed
+    seed grounding_seed.csv: 3 row(s) repointed
+    seed semi_seed.csv: 1 row(s) repointed
+    seed utility_seed.csv: 1 row(s) repointed
+    seed v15_accepted_seed.csv: 2 row(s) repointed
