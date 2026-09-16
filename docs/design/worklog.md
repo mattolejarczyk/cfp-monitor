@@ -5,6 +5,74 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-15 - three things stored where they could drift, and every check stayed green
+
+Foundations day. Nothing reached the customer; a great deal that was invisible stopped being so.
+
+**The shape, because it repeated three times.** A fact about OUR OWN data was stored somewhere it
+could drift, or not stored at all, and nothing reported it.
+
+`conference_markets` identifies a conference by its WEBSITE ADDRESS, not by our canonical id.
+Addresses move and the membership row stays pointing at the old one, so the conference falls off
+every market list while sitting in plain sight. **115 of 401 (29%) were on no list at all**,
+including all thirteen SecureWorld rows we had spent a week repairing, and ~98 entries pointed at
+addresses nothing uses. `resolve_client_matches` had been reporting events we plainly hold as
+"not in our industry list" for exactly this reason. `rebuild_market_membership.py` re-derives it
+with **the customer's sheet as the highest authority** - it is how these conferences were
+identified in the first place - then upstream's Market column for the six markets with no
+customer. Additive, never deletes; dead entries are reported. 115 -> 1.
+
+`grounding_facts` had no start-date column. Upstream has always shipped `START DATE`; import read
+it for validation (DEADLINE_AFTER_EVENT_START) and dropped it. So `match_customer_sheet`, which
+treats name+city+date as one of three CERTAIN tests, sourced our side of the date from whatever
+delivery CSV was passed on the command line - five weeks old, and missing the row being matched.
+The strongest test abstained for want of a date rather than on the evidence, and a low score reads
+exactly like a disagreement. Column added, populated at import, backfilled 0 -> 365 of 401. It
+earned its place immediately **by saying no**: their Energy Transition row starts 2026-12-08 and
+our only dated candidate is the 2027 edition, so the date test rejected a bind that name and city
+alone would have allowed.
+
+Awards had no reconciliation at all - v2.1 made them a second entity type and every invariant
+since looked only at conferences, which is how 119 rows sat at `unverified` from the day the table
+existed. Checks 10-15 added to `check_invariants.py`, and wired into `weekly_deliverable` step 2d,
+because that run mutates twice and had never reconciled.
+
+**A check that cannot tell a reasoned decision from a fault teaches people to stop running it.**
+The new check 14 called 8 delivered awards "missing" on its first run. All 8 are deliberate:
+`import_awards` excludes rows whose `OPPORTUNITY_TYPE` is not an award and rows labelled `DUP_OF`.
+Those reasons live in the import run's stdout and nowhere a later check can read. It now
+recomputes the importer's own exclusions rather than restating the rule.
+
+**A wrong hypothesis produced the day's best tool.** The operator proposed same-city-same-date as
+a matching rule. Measured against our own data it fails - 50 pairs share a city and start within a
+day, and the collisions are structural: satellites inside big shows (AppSec Village inside DEF
+CON, four IFA events in Berlin on one morning), industry weeks, co-located sister expos. But it is
+an excellent duplicate finder, because two of our own rows for one event always share both. Eight
+pairs the name-slug grouping cannot see: `&` against `and`, Summit against Expo, an ordinal
+prefix, a "Virtual" qualifier. Six merged (401 -> 395); two refused after checking their websites,
+both a conference against its co-located trade show.
+
+**Customer intake is now step 0 of the Saturday job**, contained so it can never cost a research
+window, and self-repairing to the extent it honestly can be: it loads any snapshot the database
+has not seen, which closed a two-week gap where 2026-09-01 snapshots sat unloaded while the tables
+held 2026-08-30. It always reports the age of the client layer.
+
+**Voice of customer, corrected.** "Info Needed" is not the customer asking us for anything - their
+NOTES are notes to themselves and the only STATUS DETAILS on those rows describe them emailing
+organisers. Nor is it the untouched default; blank status is, at 53 rows. The field that asks
+something of us is `SUBMISSION DATE VERIFIED`, 41 rows of it. `CUSTOMER-SIGNAL.md` already said so.
+
+**Guards caught me three times** - the docs-size cap (my own edit pushed the protocol skill over
+it), `test_identity_join` (my merge tool parsed the seed format itself; the fix was to move the
+writer beside the reader, not to claim an exemption), and my own check 14. Third day running.
+
+Also: the repo's contract is now the contract in force (v2.0.1 plus five amendments, with a test
+that fails the build if the header stops matching the files present); `WEEKLY-CYCLE.md` records
+the agreed week; the Monday build was dry-run end to end and its one defect - a verdict from a
+page the row no longer cites - fixed.
+
+---
+
 ## 2026-09-14 - awards verified for the first time, 18 duplicate rows merged out, contract to v2.5
 
 **The question that started it** (operator): how could the customer files have gone out with the

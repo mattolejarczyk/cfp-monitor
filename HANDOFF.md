@@ -4,6 +4,84 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **Where the work stands, end of 2026-09-15. Foundations day - three things were stored where they could drift, or not stored at all, and nothing reported it. Nothing reached the customer.**
+>
+> **THE DAY HAD ONE SHAPE.** Three separate investigations ended in the same finding: a fact
+> about OUR OWN data was somewhere it could drift, and every check stayed green.
+>
+>     market membership   identified a conference by its WEBSITE ADDRESS. Addresses move; the
+>                         row stays pointing at the old one. 115 of 401 (29%) were on NO market
+>                         list, including all 13 SecureWorld rows, and ~98 entries pointed at
+>                         addresses nothing uses. Everything that asks "show me the Cybersecurity
+>                         conferences" reads that list. Now 1 (the declared AES hold).
+>     our START DATE      had no column. Upstream always sent it; import read it for validation
+>                         and dropped it. So the matcher sourced our side of name+city+date - one
+>                         of three CERTAIN tests - from a delivery CSV passed on the command line,
+>                         five weeks old and missing the row being matched. 0 -> 365 of 401.
+>     awards              had NO reconciliation at all. v2.1 made them a second entity type and
+>                         every invariant since looked only at conferences.
+>
+> **When a check is silent, ask whether it RAN, not only what it said.** A missing step, an
+> absent column and a stale list all look identical to a green dashboard.
+>
+> **AWARDS INVARIANTS, checks 10-15 inside `check_invariants.py`** (one gate; new checks go into
+> it). Identity; **the awards evidence pass has run at all** - the check that would have caught
+> 119 rows sitting at `unverified`; market membership; **an award window opens before it closes**
+> (the analogue of gate 6b, which awards are exempt from because an award has no event to attend,
+> v2.3); and presence against `--awards-delivery`. Now `weekly_deliverable` step 2d - that run
+> mutates twice and had never reconciled - **recorded, never blocking**: an invariant failure is
+> about the DATABASE while the conference page is built from the delivery CSVs.
+>
+> **A CHECK THAT CANNOT TELL A REASONED DECISION FROM A FAULT TEACHES PEOPLE TO STOP RUNNING IT.**
+> Check 14 called 8 delivered awards "missing" on its first run. All 8 are deliberate:
+> `import_awards` excludes rows whose `OPPORTUNITY_TYPE` is not an award, and rows labelled
+> `DUP_OF`. It now recomputes the importer's OWN exclusions rather than restating the rule, and
+> prints each with its reason.
+>
+> **A SECOND DUPLICATE DETECTOR: same city, same dates, agreeing names.** Only possible because
+> `start_date` now exists. The operator proposed city+date as a MATCHING rule; measured, it fails
+> - 50 pairs share a city and start within a day, because big shows carry satellites (AppSec
+> Village inside DEF CON, four IFA events in Berlin on one morning), industry weeks cluster, and
+> sister expos co-locate. But it is an excellent DUPLICATE finder, since two of our own rows for
+> one event always share both. Found 8 pairs the name-slug grouping is blind to - `&` against
+> `and`, Summit against Expo, an ordinal prefix, a "Virtual" qualifier. **6 merged, 401 -> 395.**
+>
+> **TWO PAIRS REFUSED, both after checking their websites:** Carbon Capture Technology Expo NA
+> against Hydrogen Technology Expo NA, and World Biogas Summit (`world-biogas-summit.com`)
+> against World Biogas Expo (`biogastradeshow.com`). A conference and its co-located trade show
+> share a city, a date and most of a name. `merge_duplicate_events --exclude` makes that a named
+> decision.
+>
+> **CUSTOMER INTAKE IS NOW STEP 0 OF THE SATURDAY JOB** (`scripts/weekly_intake.py`, called from
+> `run_monthly.ps1`). Contained so it can NEVER cost a research window: exit code ignored,
+> exceptions swallowed, returns 0 even when degraded. Self-repairing where it honestly can be -
+> it loads any snapshot the database has not seen, which immediately closed a two-week gap where
+> 2026-09-01 snapshots sat on disk unloaded while the tables held 2026-08-30. **It always reports
+> the AGE of the client layer**, because silence about staleness is the failure.
+>
+> **VOICE OF CUSTOMER, CORRECTED.** "Info Needed" is NOT the customer asking us for anything -
+> their NOTES are intelligence written for themselves and the only STATUS DETAILS on those rows
+> describe THEM emailing organisers. It is also not the untouched default (blank status is, 53
+> rows): it carries a PRIORITY on 9 of 15, so it is deliberate triage they then pursue. **The
+> field that asks something of us is `SUBMISSION DATE VERIFIED`** - 41 rows read "Needs
+> Verification". `CUSTOMER-SIGNAL.md` already said this.
+>
+> **The contract in this repo is now the contract in force** - consolidated v2.0.1 plus the five
+> amendment files beside it, behind a header listing them, with `tests/test_contract_current.py`
+> failing the build if that header stops matching the files present. It had been v1.1 from
+> 2026-08-01 while the `cfp-protocol` skill sent every session there to read it.
+>
+> **NEXT: the duplicate tidy** - 3 groups left (it-sa keep, ShmooCon possibly two real editions,
+> 1 MIXED). Then the gate's blind spots on `SUBMISSION URL` and behind a 403, which two earlier
+> sessions were handed and left no commits on.
+> **Open:** the Google service-account key is still not on this machine - the config is complete
+> (both sheet ids, both gids, the key path), only the downloaded JSON is missing, and its
+> `client_email` is what the sheets must be shared with. Until then Saturday's intake reports
+> DEGRADED and the browser export remains the path. Also: ~98 membership entries point at dead
+> addresses (reported, never deleted); 36 rows still carry no start date; the 27 rows citing no
+> page now read "not yet checked", which is true.
+> **Rollback:** `known-good-2026-09-15b`, plus per-step DB backups beside the live database.
+
 > **Where the work stands, end of 2026-09-14. Contract is at v2.5, the database is deduplicated, and awards rows are verified for the first time.**
 >
 > **CONTRACT AMENDMENT v2.5 ADOPTED** (accepted by upstream in full, numbered by them).
