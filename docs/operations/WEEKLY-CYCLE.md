@@ -52,15 +52,22 @@ tab. **Never `/gviz/tq?tqx=out:csv`** - it types each column and silently drops 
 text. It blanked eight sponsorship figures and five free-text dates once already, and the diff
 reported them as customer edits.
 
-**Current state, 2026-09-15: the last intake was 2026-08-30.** Sixteen days stale. The config
-at `AppData\Local\CFP-Monitor\customer_sheets.json` is complete - both sheet ids, both gids,
-and the key path - but `sheets-reader-key.json` is not on disk, so the automatic path does not
-run yet. The browser export still works and is how the 08-30 snapshot was taken.
+**Automatic since 2026-09-16.** `scripts/weekly_intake.py` runs as the FIRST step of the
+Saturday 02:00 job (settled 2026-09-15), fetching both sheets through a read-only service
+account - the same `/export?format=csv` endpoint, no browser, no signed-in session. Verified
+2026-09-16 with a fetch-only run: Utility Global 84 rows, Arnica 125.
 
-**A SCHEDULING CONFLICT TO SETTLE.** Research fires automatically at Saturday 02:00, so intake
-cannot precede it without either running Friday evening or becoming a pre-step of the Saturday
-job. Recommendation: fold intake into the Saturday job as its first action, so the chain is one
-thing and the ordering cannot drift. Until then, intake on Friday evening.
+    key       AppData\Local\CFP-Monitor\sheets-reader-key.json   (never in this public repo)
+    account   brandable-sheet-reader@... in Google Cloud project brandable-508317
+    access    Viewer on both sheets; Google Drive API enabled on the project
+    library   google-auth, declared in pyproject.toml
+
+It never stops research: exit code is always 0, and INTAKE HEALTH says HEALTHY or DEGRADED with
+the client layer's age. A failure a retry cannot fix (missing library or key, a sheet no longer
+shared, a changed tab) is reported once with what a person must do, not retried. The browser
+export above is the manual fallback when it reports DEGRADED.
+
+Test without saving anything: `python scripts/fetch_customer_sheet.py --client all --no-snapshot`
 
 **Refuses to:** write any customer-owned column; run on a `gviz` export; match on the delivery's
 `EVENT_ID` directly (that is upstream's key - cross it through `identity.to_canonical`).

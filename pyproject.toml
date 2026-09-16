@@ -17,6 +17,8 @@ dependencies = [
     "fastapi>=0.139.0",
     "uvicorn>=0.49.0",
     "httpx>=0.28.1",
+    "google-auth>=2.30",
+    "requests>=2.31",
 ]
 
 [project.scripts]

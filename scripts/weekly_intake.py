@@ -63,6 +63,63 @@ CLIENTS = {
 RETRY_DELAYS = (10, 30, 60)      # a sheet fetch is cheap; a lost research window is not
 STALE_AFTER_DAYS = 9             # one cycle plus slack: a week plus two days
 
+# FAILURES A RETRY CANNOT FIX, and what a person has to do about each. Matched against the fetch's
+# own error text. Retrying these spent ~100 seconds proving the same thing four times, and the
+# note that came out the other end did not even say what it was (see failure_reasons).
+#
+# Anything NOT listed is retried exactly as before. The list names only failures that are
+# certain not to change between attempts; an unrecognised failure is cheap to retry, and giving
+# up early on a transient one would be the expensive mistake.
+PERMANENT = (
+    ("No module named", "a library is missing from the project environment - run `uv sync` "
+                        "in cfp-monitor"),
+    ("Service account key not found", "the key file is missing - see WEEKLY-CYCLE.md step 0"),
+    ("No config at", "customer_sheets.json is missing"),
+    ("Unknown client", "customer_sheets.json does not name this client"),
+    ("404 from the export endpoint", "wrong sheet_id, or the sheet is no longer shared with "
+                                     "the service account"),
+    ("401 from the export endpoint", "the sheet is not shared with the service account as Viewer"),
+    ("403 from the export endpoint", "the sheet is not shared with the service account as "
+                                     "Viewer, or the Google Drive API is disabled"),
+    ("HTML page, not CSV", "a sign-in or permission redirect - check the sheet's sharing"),
+    ("is missing column(s)", "wrong tab (gid), or the customer changed the sheet's columns"),
+    ("has no rows", "the sheet came back empty - look at it before trusting any snapshot"),
+    ("invalid_grant", "the key was deleted or disabled in Google Cloud - create a new one"),
+)
+
+
+def failure_reasons(output: str) -> list[str]:
+    """The lines that say WHY a fetch failed.
+
+    Not the last line of output. With --alert, the fetch always finishes by printing where it
+    wrote the alert file, so until 2026-09-16 every failure was recorded in intake_status.json
+    as "alert written: ...Desktop\\CUSTOMER-SHEET-FETCH-FAILED.txt" - true, and useless.
+    """
+    lines = [ln.strip() for ln in output.splitlines() if ln.strip()]
+    failed = [ln for ln in lines if ": FAILED - " in ln]
+    if failed:
+        return failed
+    # A failure before any client was tried (no key, no config) arrives as a bare message.
+    return [ln for ln in lines if not ln.startswith(("alert written:", "Traceback"))][-1:]
+
+
+def permanent_fix(reasons: list[str]) -> str | None:
+    """What a person must do, if EVERY reason is one a retry cannot fix; otherwise None.
+
+    All, not any: with two clients, one may fail on sharing while the other hit a timeout, and
+    the timeout still deserves its retry.
+    """
+    if not reasons:
+        return None
+    fixes = []
+    for reason in reasons:
+        fix = next((f for sig, f in PERMANENT if sig in reason), None)
+        if fix is None:
+            return None
+        if fix not in fixes:
+            fixes.append(fix)
+    return "; ".join(fixes)
+
 
 def run(cmd: list[str], timeout: int = 600) -> tuple[int, str]:
     """Run a step. Never raises - a crash here is a finding, not an exception."""
@@ -150,8 +207,12 @@ def fetch_all(config: Path, snapshots: Path) -> tuple[bool, list[str]]:
             if attempt:
                 notes.append(f"fetch succeeded on attempt {attempt + 1}")
             return True, notes
-        last = out.strip().splitlines()[-1] if out.strip() else f"exit {code}"
-        notes.append(f"fetch attempt {attempt + 1} failed: {last[:160]}")
+        reasons = failure_reasons(out) or [f"exit {code}"]
+        notes.append(f"fetch attempt {attempt + 1} failed: {' | '.join(reasons)[:300]}")
+        fix = permanent_fix(reasons)
+        if fix:
+            notes.append(f"not retried - a retry cannot fix this. A person must: {fix}")
+            break
     return False, notes
 
 
