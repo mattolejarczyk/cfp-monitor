@@ -112,6 +112,16 @@ def main() -> int:
 
     md, stamp = Path(a.markets_dir), a.date
     work = Path(a.out_dir) / f"work_{stamp}"
+
+    # 0. THE IMPORT STEP'S QA REPORT, before anything below writes to the database - so it records
+    # what Step 4 (promote, import, reconcile) left behind, not what this build then changed.
+    # Read, never enforced, and contained: a failure here must not cost Monday's pages.
+    try:
+        subprocess.run([PY, ROOT / "scripts/qa_import.py", "--db", a.db, "--on", stamp],
+                       capture_output=True, text=True, timeout=900,
+                       env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+    except Exception as exc:                                         # noqa: BLE001
+        print(f"import QA report did not run ({type(exc).__name__})")
     work.mkdir(parents=True, exist_ok=True)
     checks = RUNS_OUT / f"checks_{stamp.replace('-', '')}.csv"
     award_checks = RUNS_OUT / f"award_checks_{stamp.replace('-', '')}.csv"

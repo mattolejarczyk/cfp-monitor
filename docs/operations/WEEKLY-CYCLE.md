@@ -162,6 +162,15 @@ ever.
 **Refuses to:** clear rows before importing - import upserts, then reconcile, then delete only
 what is positively identified as superseded, declaring anything held in `held_rows.txt`.
 
+**The step's QA report** (`scripts/qa_import.py`) runs first thing in Monday's build, before the
+build writes anything, so it records what this step left behind: each live delivery against the
+database field by field (a delivered row MISSING from the database is the invisible failure
+above), the database's totals against last cycle's, how many of each customer's rows link to a
+conference we research, and the invariants result. The database keeps no history, so the report
+saves its own numbers and next cycle reads them back. A fall in row count is checked against the
+merges recorded in `merged_rows.txt`; declared holds are counted apart. Run it by hand straight
+after importing, too.
+
 ---
 
 ## Step 5 - BUILD AND PUBLISH (Monday 07:00, automatic)
