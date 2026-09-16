@@ -130,7 +130,28 @@ CREATE TABLE IF NOT EXISTS grounding_facts (
     -- file was five weeks old and did not contain the row being matched at all, so the
     -- strongest test abstained for want of a date rather than on the evidence, and the row
     -- scored 70 instead of binding. A fact about our own data should not arrive by hand.
-    start_date        TEXT                      -- ISO yyyy-mm-dd, or NULL when unparseable
+    start_date        TEXT,                     -- ISO yyyy-mm-dd, or NULL when unparseable
+    -- HAS THE SERIES ENDED, and where does it say so. R16 (v1.3) has required these two fields
+    -- since the amendment; the delivery has carried them as columns 37 and 38; the acceptance
+    -- gate checks them; the customer page renders them. This table had no column for either,
+    -- so import read them and dropped them.
+    --
+    -- Found 2026-09-16 through a duplicate that was not one. We held a PROJECTED ShmooCon 2027
+    -- for a series whose last event was January 2025 - and upstream had told us, in these two
+    -- fields, in the delivery we imported. What survived the import was a Wikipedia paraphrase
+    -- sitting in `deadline_quote`, which is precisely the field R16.2 exempts these from:
+    -- a dead deadline citation is withdrawn under R1, and withdrawing it would have erased the
+    -- only remaining trace that the conference had ended.
+    --
+    -- So the most consequential claim upstream can make - this event is over, do not send a
+    -- customer at it - was the one claim the database could not hold. Everything reading the
+    -- DB rather than the delivery (the duplicate detectors, the verifier, DECISION-TREE) was
+    -- blind to it.
+    --
+    -- R16.3: the same rules as a deadline citation. The exact page, not a homepage or index;
+    -- only 404/410 disprove; the quote must appear on the page it cites.
+    lifecycle_evidence_url TEXT,
+    lifecycle_quote        TEXT
 );
 -- Awards claims live in their OWN table, not in grounding_facts. Contract v2.1 made awards a
 -- second entity type, and the operator's standing instruction is that the two must not
@@ -451,7 +472,8 @@ class Store:
         # acceptance gate and are then silently discarded on import, which looks like success.
         gf_have = {r["name"] for r in self.db.execute("PRAGMA table_info(grounding_facts)")}
         for col in ("organizer", "sponsor_required", "sponsor_url", "sponsor_cost",
-                    "sponsor_quote", "start_date"):
+                    "sponsor_quote", "start_date",
+                    "lifecycle_evidence_url", "lifecycle_quote"):
             if col not in gf_have:
                 self.db.execute(f"ALTER TABLE grounding_facts ADD COLUMN {col} TEXT")
         # Backfill `edition` for rows stored before the column existed. Pure derivation from

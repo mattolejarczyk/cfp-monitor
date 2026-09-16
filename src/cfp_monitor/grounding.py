@@ -208,6 +208,11 @@ class GroundingRow:
     sponsor_url: str = ""
     sponsor_cost: str = ""
     sponsor_quote: str = ""
+    # v1.3 R16, and only read from 2026-09-16. Defaulted so a pre-v1.3 delivery still
+    # constructs, and because the research prompt has never requested them - most rows
+    # legitimately carry neither, and a row that carries them carries both.
+    lifecycle_evidence_url: str = ""
+    lifecycle_quote: str = ""
     issues: list[str] = field(default_factory=list)
     raw: dict = field(default_factory=dict)
 
@@ -271,6 +276,9 @@ _COL = {
     "organizer": "ORGANIZER", "sponsor_required": "SPONSOR_REQUIRED",
     "sponsor_url": "SPONSOR_URL", "sponsor_cost": "SPONSOR_COST",
     "sponsor_quote": "SPONSOR_QUOTE",
+    # v1.3 R16 - has the series ended, and the page that says so. Columns 37 and 38 of the
+    # delivery since the amendment; read here only from 2026-09-16.
+    "lifecycle_url": "LIFECYCLE_EVIDENCE_URL", "lifecycle_quote": "LIFECYCLE_QUOTE",
 }
 
 
@@ -319,6 +327,8 @@ def normalize_rows(raw_rows: Iterable[dict], today: Optional[date] = None
             sponsor_url=v("sponsor_url"),
             sponsor_cost=v("sponsor_cost"),
             sponsor_quote=v("sponsor_quote"),
+            lifecycle_evidence_url=v("lifecycle_url"),
+            lifecycle_quote=v("lifecycle_quote"),
             raw=dict(raw),
         )
         key = (row.event_id, row.market.lower())
@@ -391,8 +401,8 @@ def seed_store(store, rows: Iterable[GroundingRow]) -> dict:
             " overview, categories, coordinator_email, deadline_quote, is_projected,"
             " source_as_of, deadline_evidence_url, main_info_url, issues, verify_state,"
             " imported_at, organizer, sponsor_required, sponsor_url, sponsor_cost,"
-            " sponsor_quote, start_date)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            " sponsor_quote, start_date, lifecycle_evidence_url, lifecycle_quote)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
             " ON CONFLICT(event_id) DO UPDATE SET"
             "  conference_key=excluded.conference_key, name=excluded.name, url=excluded.url,"
             "  city=excluded.city, state_province=excluded.state_province,"
@@ -418,7 +428,26 @@ def seed_store(store, rows: Iterable[GroundingRow]) -> dict:
             # A blank START DATE must not erase one we already parsed: upstream ships the
             # column on every row but leaves it empty where the event has no announced date.
             "  start_date=CASE WHEN excluded.start_date IS NOT NULL"
-            "                  THEN excluded.start_date ELSE grounding_facts.start_date END",
+            "                  THEN excluded.start_date ELSE grounding_facts.start_date END,"
+            # R16 - A DISCONTINUATION IS NEVER ERASED BY A BLANK. The research prompt has never
+            # requested these two fields, so upstream ships them empty on almost every row and
+            # on almost every cycle; a plain excluded.* would clear the claim on the next
+            # import and nothing would report it. That is the same shape as sponsor_quote.
+            #
+            # They move AS ONE CLAIM, gated on the quote, because a new quote beside an old URL
+            # is the split-citation defect R1 exists to stop, applied to the field R16.2
+            # deliberately puts beyond R1's reach.
+            #
+            # The consequence is deliberate: import can SET a lifecycle claim and can REPLACE
+            # one, but cannot CLEAR one. Retracting "this event has ended" is an evidenced
+            # decision under R16, not something a blank cell should do by accident. If an event
+            # genuinely revives, clear it by hand and record why.
+            "  lifecycle_evidence_url=CASE WHEN excluded.lifecycle_quote != ''"
+            "                              THEN excluded.lifecycle_evidence_url"
+            "                              ELSE grounding_facts.lifecycle_evidence_url END,"
+            "  lifecycle_quote=CASE WHEN excluded.lifecycle_quote != ''"
+            "                       THEN excluded.lifecycle_quote"
+            "                       ELSE grounding_facts.lifecycle_quote END",
             (row.event_id, key, row.name, row.url, row.city, row.state, row.country,
              row.edition, row.deadline, row.submission_url, row.cfp_model,
              row.grounding_status, row.overview, row.categories, row.coordinator_email,
@@ -428,7 +457,8 @@ def seed_store(store, rows: Iterable[GroundingRow]) -> dict:
              row.organizer, row.sponsor_required, row.sponsor_url, row.sponsor_cost,
              row.sponsor_quote,
              (lambda d: d.isoformat() if d else None)(
-                 parse_loose_date(row.raw.get("START DATE")))))
+                 parse_loose_date(row.raw.get("START DATE"))),
+             row.lifecycle_evidence_url, row.lifecycle_quote))
         stats["updated" if was else "inserted"] += 1
 
         if known:

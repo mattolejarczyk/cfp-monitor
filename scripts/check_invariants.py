@@ -290,6 +290,26 @@ def main() -> int:
     res.add("8  edition matches the name year", "watch: run fix_edition.py to derive from date",
             odd, fatal=False)
 
+    # 16. A LIFECYCLE CLAIM IS WHOLE. Numbered after the awards block because it arrived after it
+    #     (2026-09-16), and a renumbering would make every older run log misleading.
+    #     R16.1 wants the page AND the verbatim sentence. Import and the backfill both refuse
+    #     half a claim, so a row carrying one field without the other means something wrote
+    #     around them - and half a discontinuation is the worst half-fact we can hold: a quote
+    #     with no page is an assertion wearing evidence's clothes, a page with no quote is a
+    #     link nobody can check. Fatal for that reason.
+    #     WHAT THIS DOES NOT ASK: whether the quote is on the page. Nothing fetches lifecycle
+    #     citations yet, and on the day this was written one of fifteen (ShmooCon) already
+    #     failed that test by hand. That belongs to the weekly verification sweep - open item.
+    gf_cols = {c[1] for c in con.execute("pragma table_info(grounding_facts)")}
+    if {"lifecycle_evidence_url", "lifecycle_quote"} <= gf_cols:
+        halves = [f"{r['event_id']} - {'quote, no page' if (r['lifecycle_quote'] or '').strip() else 'page, no quote'}"
+                  for r in con.execute("select event_id, lifecycle_evidence_url, lifecycle_quote"
+                                       " from grounding_facts")
+                  if bool((r["lifecycle_quote"] or "").strip())
+                  != bool((r["lifecycle_evidence_url"] or "").strip())]
+        res.add("16 a lifecycle claim is whole", "R16.1: page and quote together, or neither",
+                halves)
+
     # 9 - CONTENT agreement, not just row presence. Everything above asks whether the right
     # ROWS are here; this asks whether the two stores say the same thing about one of them.
     con.close()
