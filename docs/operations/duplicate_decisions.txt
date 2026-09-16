@@ -1,0 +1,31 @@
+# Duplicate pairs a person has looked at and decided to KEEP AS TWO ROWS.
+#
+# WHY THIS FILE EXISTS
+# The detectors are working correctly when they surface these. Two co-located expos from one
+# organiser, and one event running both a call for speakers and a call for exhibitors, look
+# exactly like one event held twice - same city, same dates, nearly the same name. Nothing in
+# the data distinguishes them; only a person reading the two websites can.
+#
+# Without a record of that reading, every run re-reports them as open findings, the report
+# never comes back clean, and the lesson of 2026-09-15 applies: A CHECK THAT CANNOT TELL A
+# REASONED DECISION FROM A FAULT TEACHES PEOPLE TO STOP RUNNING IT.
+#
+# So a decision is DECLARED here rather than remembered on a command line. The pair is still
+# printed on every run, under DECIDED, with its reason and its date - visible and reviewable,
+# just not counted as work outstanding. That is the same treatment `held_rows.txt` gives a row
+# kept without a counterpart (contract 2.1): declared, never hidden.
+#
+# FORMAT   one decision per line, `#` comments and blank lines ignored
+#     YYYY-MM-DD <event_id> <event_id> [<event_id>...] | who decided | why
+#
+# A decision settles the EXACT SET of rows it names. If a third row later joins the group, the
+# set no longer matches and the group is reported again - new evidence reopens the question,
+# which is the behaviour we want.
+#
+# TO REVERSE ONE, delete its line. Nothing else reads it.
+
+2026-09-15 2027-carbon-capture-technology-expo-north-america-houston 2027-hydrogen-technology-expo-north-america-houston | operator | Two separate dmg events expos co-located in Houston on 2027-02-10, not one event held twice. Different subject matter, different websites, and a customer could speak at either.
+
+2026-09-15 2027-world-biogas-summit-birmingham 2027-world-biogas-expo-birmingham | operator | A conference and its co-located trade show, on different domains. The Summit is the speaking opportunity and the Expo is the exhibition floor; collapsing them would lose one.
+
+2026-09-16 2026-it-sa-expo-congress-nuremberg 2026-it-sa-expo-congress-nuremberg-exhibiting | contract v2.5 + customer note | One event, two real opportunities. v2.5 keeps Exhibiting as an opportunity type, and the exhibiting row is the evidenced half: it carries a booked-stand page, a quote and a stand price, where the base speaking row is projected with no CFP announced. Arnica's own sheet note says the same - "Exhibition-focused (not traditional conference CFP). Vendor exhibitor applications open year-round."

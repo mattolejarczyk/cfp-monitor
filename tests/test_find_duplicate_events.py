@@ -240,3 +240,45 @@ def test_a_row_without_a_date_is_simply_not_compared(tmp_path):
     pairs = fde.city_date_pairs(con, "grounding_facts", set())
     con.close()
     assert pairs == []
+
+
+# ---------------------------------------------------------------------------------------------
+# DECLARED DECISIONS. A pair a person read and kept as two rows must stop being reported as work
+# outstanding - but must never stop being reported. The lesson from 2026-09-15 is that a check
+# which cannot tell a reasoned decision from a fault teaches people to stop running it, and the
+# failure mode on the other side is a decision that silently hides a real duplicate forever.
+
+def _decisions(tmp_path, text):
+    p = tmp_path / "duplicate_decisions.txt"
+    p.write_text(text, encoding="utf-8")
+    return fde.load_decisions(p)
+
+
+def test_a_declared_pair_is_read_with_its_date_and_its_reason():
+    """The real file must parse - the three live decisions are in it, and a silent parse failure
+    would put a settled pair back in front of a person every week."""
+    live = fde.load_decisions()
+    assert frozenset(("2027-world-biogas-summit-birmingham",
+                      "2027-world-biogas-expo-birmingham")) in live
+    when, who, why = live[frozenset(("2027-world-biogas-summit-birmingham",
+                                     "2027-world-biogas-expo-birmingham"))]
+    assert when == "2026-09-15" and who == "operator" and "trade show" in why
+
+
+def test_comments_and_blank_lines_decide_nothing(tmp_path):
+    got = _decisions(tmp_path, "# a comment mentioning 2027-a and 2027-b\n\n   \n")
+    assert got == {}
+
+
+def test_a_line_naming_one_row_decides_nothing(tmp_path):
+    """A decision is about a PAIR. One id cannot settle a group, and a typo that drops an id
+    must fail closed - reporting the group again - not open."""
+    assert _decisions(tmp_path, "2026-09-16 2027-only-one | operator | oops\n") == {}
+
+
+def test_a_decision_settles_the_exact_set_it_names(tmp_path):
+    """If a third row joins the group later, the set no longer matches and the group is reported
+    again. New evidence reopens the question."""
+    got = _decisions(tmp_path, "2026-09-16 2027-a 2027-b | operator | co-located\n")
+    assert frozenset(("2027-a", "2027-b")) in got
+    assert frozenset(("2027-a", "2027-b", "2027-c")) not in got

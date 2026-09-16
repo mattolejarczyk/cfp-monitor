@@ -229,14 +229,24 @@ def main() -> int:
         candidates = [rows for _g, rows in sorted(fde.groups(con, "grounding_facts").items())
                       if fde.classify(rows) == a.cls]
 
-    plans, blocked, skipped = [], [], []
+    # A decision declared in duplicate_decisions.txt binds here too, so a pair a person has
+    # already refused cannot be merged by a later run that forgot to pass --exclude. One
+    # definition of "decided", read by the report and by the tool that would destroy the row.
+    decisions = fde.load_decisions()
+    plans, blocked, skipped, settled = [], [], [], []
     for rows in candidates:
         ids = {r["event_id"] for r in rows}
+        if frozenset(ids) in decisions:
+            settled.append((rows, decisions[frozenset(ids)]))
+            continue
         if ids & set(a.exclude or ()):
             skipped.append(rows)
             continue
         p = plan_one(rows, linked)
         (blocked if p.get("error") else plans).append(p)
+    for rows, (when, who, _why) in settled:
+        print(f"DECIDED {when} by {who} - kept as two rows: "
+              f"{' || '.join(r['name'][:34] for r in rows)}")
     for rows in skipped:
         print(f"EXCLUDED by request: {' || '.join(r['name'][:40] for r in rows)}")
 

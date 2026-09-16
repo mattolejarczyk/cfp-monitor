@@ -58,6 +58,7 @@ import importlib.util
 import itertools
 import sqlite3
 import sys
+import textwrap
 from datetime import date
 from pathlib import Path
 
@@ -84,6 +85,31 @@ TABLES = {"conference": "grounding_facts", "awards": "award_grounding_facts"}
 NOT_AN_OPPORTUNITY = frozenset({"registration", "register", "attending", "attendance", "tickets"})
 OUT_COLUMNS = ["KIND", "CLASS", "CONFLICT", "GROUP", "EVENT_ID", "NAME", "CITY", "EDITION",
                "DEADLINE", "VERIFY_STATE", "SOURCE_AS_OF", "NEWER"]
+
+DECISIONS_FILE = ROOT / "docs" / "operations" / "duplicate_decisions.txt"
+
+
+def load_decisions(path: Path = DECISIONS_FILE) -> dict[frozenset, tuple[str, str, str]]:
+    """Pairs a person has read and decided to keep as two rows, keyed by the exact row set.
+
+    Read by BOTH this report and `merge_duplicate_events.py`, so a decision survives the
+    command line that first expressed it. `--exclude` still works and still wins; this is the
+    durable half. See the file's own header for the reasoning and the format.
+    """
+    out: dict[frozenset, tuple[str, str, str]] = {}
+    if not path.exists():
+        return out
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        head, _, rest = line.partition("|")
+        who, _, why = rest.partition("|")
+        bits = head.split()
+        if len(bits) < 3:                     # a date and at least two rows, or it decides nothing
+            continue
+        out[frozenset(bits[1:])] = (bits[0], who.strip(), why.strip())
+    return out
 
 
 def parts(row: sqlite3.Row) -> tuple[str, str, str, str]:
@@ -206,12 +232,20 @@ def main() -> int:
 
     out: list[dict] = []
     tally: collections.Counter = collections.Counter()
+    decided_hits: list[tuple[str, list[sqlite3.Row], tuple[str, str, str]]] = []
     conflicts = 0
+    decisions = load_decisions()
     for kind in kinds:
         found = groups(con, TABLES[kind])
-        print(f"\n{'=' * 78}\n{kind.upper()}: {len(found)} group(s), "
-              f"{sum(len(v) for v in found.values())} row(s)\n{'=' * 78}")
+        open_groups = {k: v for k, v in found.items()
+                       if frozenset(r["event_id"] for r in v) not in decisions}
+        print(f"\n{'=' * 78}\n{kind.upper()}: {len(open_groups)} group(s), "
+              f"{sum(len(v) for v in open_groups.values())} row(s)\n{'=' * 78}")
         for gkey, rows in sorted(found.items()):
+            settled = decisions.get(frozenset(r["event_id"] for r in rows))
+            if settled:
+                decided_hits.append((kind, rows, settled))
+                continue
             cls = classify(rows)
             clash = conflicting(rows)
             tally[f"{kind}/{cls}"] += 1
@@ -242,33 +276,54 @@ def main() -> int:
                     if x["event_id"] != y["event_id"]:
                         seen_together.add(frozenset((x["event_id"], y["event_id"])))
     for kind2 in kinds:
-        pairs = city_date_pairs(con, TABLES[kind2], seen_together)
+        found_pairs = city_date_pairs(con, TABLES[kind2], seen_together)
+        pairs = []
+        for left, right in found_pairs:
+            settled = decisions.get(frozenset((left["event_id"], right["event_id"])))
+            (decided_hits.append((kind2, [left, right], settled)) if settled
+             else pairs.append((left, right)))
         if not pairs:
             continue
         print(f"\n{'=' * 78}\n{kind2.upper()}: {len(pairs)} pair(s) sharing a city and dates, "
               f"which the name grouping cannot see\n{'=' * 78}")
-        for a, b in pairs:
+        # not `a, b` - `a` is the parsed arguments, and shadowing it here made --csv crash
+        # at the very end of a clean run, after every finding had already been printed
+        for left, right in pairs:
             tally[f"{kind2}/SAME_CITY_DATE"] += 1
-            clash2 = conflicting([a, b])
+            clash2 = conflicting([left, right])
             conflicts += clash2
             flag = "  <<< DEADLINES DISAGREE" if clash2 else ""
-            print(f"\n  [SAME_CITY_DATE]{flag}   {a['city']}, {a['start_date']}")
-            for r in (a, b):
+            print(f"\n  [SAME_CITY_DATE]{flag}   {left['city']}, {left['start_date']}")
+            for r in (left, right):
                 print(f"    {r['event_id']}")
                 print(f"           {r['name'][:58]:60} dl={r['deadline'] or '-':11}"
                       f" {r['verify_state']}")
                 out.append({"KIND": kind2, "CLASS": "SAME_CITY_DATE",
                             "CONFLICT": "yes" if clash2 else "",
-                            "GROUP": f"{a['city']}|{a['start_date']}",
+                            "GROUP": f"{left['city']}|{left['start_date']}",
                             "EVENT_ID": r["event_id"], "NAME": r["name"], "CITY": r["city"],
                             "EDITION": r["edition"], "DEADLINE": r["deadline"],
                             "VERIFY_STATE": r["verify_state"],
                             "SOURCE_AS_OF": r["source_as_of"], "NEWER": ""})
     con.close()
 
+    # Printed, never hidden - a decision stays reviewable, it just stops counting as work.
+    if decided_hits:
+        print(f"\n{'=' * 78}\nDECIDED - {len(decided_hits)} group(s) a person read and kept as "
+              f"two rows\n{'=' * 78}")
+        for kind3, rows, (when, who, why) in decided_hits:
+            print(f"\n  [{kind3}]  decided {when} by {who}")
+            for r in rows:
+                print(f"    {r['event_id']}\n           {r['name'][:60]}")
+            for chunk in textwrap.wrap(why, 72):
+                print(f"      {chunk}")
+        print(f"\n  Declared in {DECISIONS_FILE.relative_to(ROOT)}. Delete a line to reopen it.")
+
     print(f"\n{'=' * 78}\nBY CAUSE\n{'=' * 78}")
     for k, n in sorted(tally.items()):
         print(f"  {k:34}{n:>4}")
+    if not tally:
+        print("  nothing outstanding - every duplicate is merged or declared")
     print(f"\n  groups whose two rows claim DIFFERENT deadlines: {conflicts}")
     print("\nNothing was changed. 2.1 - a row is kept and declared, never deleted on suspicion;")
     print("choosing between two evidenced rows is a judgement about evidence, not a script.")

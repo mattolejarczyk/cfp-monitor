@@ -176,3 +176,17 @@
     seed semi_seed.csv: 1 row(s) repointed
     seed utility_seed.csv: 1 row(s) repointed
     seed v15_accepted_seed.csv: 2 row(s) repointed
+2026-09-16 2026-nullcon-goa-tbd -> 2026-nullcon-goa-bambolim  (duplicate of the same event; the customer's sheet is matched to this row)
+    organizer: (blank) -> Payatu Technologies Pvt Ltd
+    source_as_of: 2026-08-05 -> 2026-09-12
+    status: Upcoming -> Needs Verification
+    seed cyber_seed.csv: 1 row(s) repointed
+2026-09-16 2026-shmoocon-washington -> 2027-shmoocon-washington  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Cybersecurity, Hacking, Information Security -> Hacking, Cybersecurity, Cryptography
+    deadline_evidence_url: (blank) -> https://en.wikipedia.org/wiki/ShmooCon
+    deadline_quote: (blank) -> The first event was held in 2005, with its last year was in 
+    organizer: (blank) -> The Shmoo Group
+    overview: ShmooCon was an annual East Coast hacker convention organize -> A grassroots hacker convention organized by The Shmoo Group 
+    source_as_of: 2026-08-05 -> 2026-09-12
+    verify_detail: [L2] no evidence URL supplied - nothing to check; grounding  -> [L2] no parseable deadline to check  <- cited page https://e
+    seed cyber_seed.csv: 1 row(s) repointed
