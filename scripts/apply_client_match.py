@@ -100,8 +100,13 @@ def main() -> int:
     after = {t: con.execute(f"select count(*) from [{t}]").fetchone()[0] for t in PROTECTED}
 
     print(f"\n  applied      {r['applied']}")
+    print(f"  already linked, left as they were  {r['already_linked']}")
     print(f"  needs review {r['needs_review']}")
     print(f"  no match     {r['no_match']}")
+    if r["conflicts"]:
+        print(f"  CONFLICTS    {len(r['conflicts'])} - the existing link was KEPT; a person decides")
+        for x in r["conflicts"]:
+            print(f"      {x}")
     print(f"  candidates raised {c['raised']}, pending {c['pending']}"
           "  (undecided - nothing joins an industry list on its own)")
 

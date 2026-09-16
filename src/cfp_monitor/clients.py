@@ -388,7 +388,11 @@ def apply_matches(con: sqlite3.Connection, client_key: str,
     it invents a join; treated as absent it proposes adding a conference we already hold.
     """
     now = date.today().isoformat()
-    applied = review = absent = 0
+    applied = review = absent = kept = 0
+    conflicts: list[str] = []
+    existing = {r[0]: ((r[1] or "").strip(), r[2] or "") for r in con.execute(
+        "select their_name, event_id, match_method from client_conferences where client_key = ?",
+        (client_key,))}
     for m in matches:
         name = (m.get("their_name") or "").strip()
         if not name:
@@ -397,6 +401,31 @@ def apply_matches(con: sqlite3.Connection, client_key: str,
         conf = float(conf) if conf is not None else 0.0
         eid = (m.get("event_id") or "").strip()
         certain = conf >= CERTAIN and eid
+
+        # A LINK WE ALREADY HOLD IS NEVER REWRITTEN BY AN AUTOMATIC RUN. From 2026-09-16 the matcher
+        # runs every week, unattended, so two locks:
+        #   - a DIFFERENT certain answer does not replace a link. It is reported. The first dry run
+        #     would have moved Horizons Asia onto Horizons Week and Carbon Capture USA onto another
+        #     expo, both wrongly - a person decides between two links, never a re-run.
+        #   - a less certain re-run leaves the row alone entirely. The old update blanked
+        #     match_method whenever it was not certain, and 18 linked rows had already lost the
+        #     record of how they were linked. "human review" and resolve_client_matches links are
+        #     the ones a re-run must never touch.
+        held, method = existing.get(name, ("", ""))
+        if held:
+            if certain and eid != held:
+                conflicts.append(f"{name}: linked to {held} ({method or 'method unrecorded'}); "
+                                 f"the matcher is now certain of {eid}")
+            elif certain and eid == held:
+                con.execute("""update client_conferences set match_confidence = :conf,
+                                 match_justification = :why, matched_at = :now,
+                                 match_method = case when coalesce(match_method,'') = ''
+                                                     then 'match_customer_sheet' else match_method end
+                               where client_key = :k and their_name = :n""",
+                            {"conf": conf, "why": (m.get("justification") or "")[:400], "now": now,
+                             "k": client_key, "n": name})
+            kept += 1
+            continue
         con.execute(
             """update client_conferences
                  set event_id = case when :certain then :eid else event_id end,
@@ -416,7 +445,8 @@ def apply_matches(con: sqlite3.Connection, client_key: str,
         else:
             absent += 1
     con.commit()
-    return {"applied": applied, "needs_review": review, "no_match": absent}
+    return {"applied": applied, "needs_review": review, "no_match": absent,
+            "already_linked": kept, "conflicts": conflicts}
 
 
 def refresh_candidates(con: sqlite3.Connection, client_key: str, industry: str,

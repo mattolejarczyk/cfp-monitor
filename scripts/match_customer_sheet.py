@@ -45,6 +45,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
+# Fewer anchors than this and calibration is guesswork - see where anchors are built.
+MIN_ANCHORS = 10
 STOP = {"the", "and", "of", "for", "on", "in", "a", "an", "conference", "summit", "expo",
         "exhibition", "congress", "forum", "show", "annual", "international", "week", "event"}
 
@@ -169,7 +171,11 @@ def main() -> int:
         sys.exit("every name read as blank - refusing to report numbers built on nothing")
 
     CN, CU = I[a.name_col], I[a.url_col]
-    CL, CD = I.get("LOCATION"), I.get("START DATES")
+    # THEIR DATE COLUMN IS "EVENT START DATE", and has been in every snapshot since the first on
+    # 2026-08-30. This read "START DATES", which no customer sheet has ever had - so their date was
+    # always None, and the certain test "name + city + date" could never fire on a customer row,
+    # nor "domain + date" vote. Found 2026-09-16. The old name is kept as a fallback only.
+    CL, CD = I.get("LOCATION"), I.get("EVENT START DATE", I.get("START DATES"))
 
     by_host, by_name, by_url = defaultdict(set), defaultdict(set), defaultdict(set)
     for eid, c in canon.items():
@@ -246,6 +252,20 @@ def main() -> int:
     # calibrate the supporting tests against anchors (domain AND position agreed)
     anchors = {i: one(v["domain+position"]) for i, (v, *_ ) in enumerate(votes)
                if one(v["domain+position"])}
+    anchor_source = "domain+position"
+    # POSITION ANCHORS ASSUME THEIR LIST IS IN OUR ORDER. That held while their sheets were exports
+    # of our delivery. By 2026-09-16 both had been reordered and extended (Arnica 53 -> 125 rows)
+    # and alignment found ZERO anchors, so every supporting test weighed 0.00: nothing could land
+    # in the review band, and every row short of certain fell to "under 40%" - the band that
+    # proposes adding a conference we may already hold. When position gives too few anchors,
+    # calibrate against rows an exact URL settles instead: that test is certain on its own and
+    # does not depend on order.
+    if len(anchors) < MIN_ANCHORS:
+        for i, (v, td, *_rest) in enumerate(votes):
+            g, _ = collapse(v["exact URL"], td)
+            if g and i not in anchors:
+                anchors[i] = g
+        anchor_source = "domain+position, topped up with exact URL"
     weight = {}
     for m in votes[0][0]:
         fired = agree = 0
@@ -255,7 +275,7 @@ def main() -> int:
                 fired += 1
                 agree += (series(g) == series(anc))
         weight[m] = (agree / fired) ** 2 if fired else 0.0
-    print(f"anchors: {len(anchors)}    calibrated weights:")
+    print(f"anchors: {len(anchors)} ({anchor_source})    calibrated weights:")
     for m in sorted(weight, key=lambda x: -weight[x]):
         print(f"   {m:<16} {weight[m]:.2f}")
 
@@ -291,6 +311,29 @@ def main() -> int:
         ranked = sorted(tally.items(), key=lambda x: -x[1])
         best, score = ranked[0]
         proved = [m for m in CERTAIN if m in who[best]]
+        # A WEBSITE CANNOT TELL SIBLING EVENTS APART. "Unique domain" says no other row of OURS uses
+        # this domain, so theirs must be the one we hold. That held while their sheets mirrored
+        # ours. By 2026-09-16 they tracked sibling events we do not hold, on the same organiser
+        # site, and a dry run proposed: four different SANS summits -> SANS Cyber Defense
+        # Initiative; OWASP Global AppSec USA -> OWASP Italy Day; Nullcon Berlin -> Nullcon Goa;
+        # Horizons Asia -> Horizons Week (overwriting a correct link). The same holds for an exact
+        # match on a bare HOMEPAGE, which names an organiser, not an event.
+        #
+        # Name similarity could not separate them (WFCC2026 was right at 0.08, Horizons Asia wrong
+        # at 0.83). What does: every wrong pair had a word in THEIR name that ours lacks - Asia,
+        # Berlin, ICS, Global AppSec USA. A shorter form of our name ("ARPA-E Summit", "Nullcon")
+        # was right. So a website test proves nothing unless their name adds no word of its own.
+        # A test that fails this still VOTES - the row lands in review for a person, never linked
+        # by a guess. Missing a link costs a review; a wrong link puts another event's deadline
+        # in front of the customer.
+        # THIS row's name and URL, read here. This loop does not set `tn`/`tu`; the first draft
+        # used them anyway and compared every row with the LAST row of the loop above ("Upfront").
+        this_name, this_url = r[CN].strip(), r[CU].strip()
+        extra = sorted(toks(this_name) - toks(canon[best]["name"]))
+        root_url = not urlparse(this_url).path.strip("/")
+        demoted = [m for m in proved
+                   if extra and (m == "unique domain" or (m == "exact URL" and root_url))]
+        proved = [m for m in proved if m not in demoted]
 
         if proved:
             conf = 100
@@ -305,6 +348,13 @@ def main() -> int:
             depth = min(1.0, len(who[best]) / 4.0)
             conf = max(3, min(99, int(100 * purity * (0.6 + 0.4 * depth))))
             head = "No single test is conclusive on its own."
+            if demoted:
+                # Kept in the review band even if every vote agrees: the votes share the same
+                # website evidence that was just ruled insufficient.
+                conf = min(conf, 89)
+                head = (f"NOT CERTAIN: {' and '.join(demoted)} matched, but a website cannot tell "
+                        f"sibling events apart and their name has word(s) ours lacks "
+                        f"({', '.join(extra)}). A person should confirm.")
 
         total = len(v)
         parts = [head,

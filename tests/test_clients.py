@@ -183,7 +183,8 @@ def test_only_a_certain_match_sets_an_event_id(db, tmp_path):
          "justification": "domain+name"},
         {"their_name": "KubeCon", "event_id": "", "confidence": 12.0, "justification": ""},
     ])
-    assert r == {"applied": 1, "needs_review": 1, "no_match": 1}
+    assert {k: r[k] for k in ("applied", "needs_review", "no_match")} == \
+        {"applied": 1, "needs_review": 1, "no_match": 1}
     got = dict(db.execute("select their_name, event_id from client_conferences").fetchall())
     assert got["Black Hat USA"] == "2026-bh-lv"
     assert not got["BSides LV"], "an 80% vote must NOT be written as a join"
@@ -249,3 +250,50 @@ def test_reloading_the_same_sheet_changes_nothing(db, tmp_path):
     s = clients.load_sheet(db, "arnica", p, industry="Cybersecurity")
     assert s["added"] == 0 and s["withdrawn"] == 0
     assert db.execute("select * from client_conferences").fetchall() == first
+
+
+# ------------------------------------------------------------------------------------------------
+# 2026-09-16: THE MATCHER NOW RUNS EVERY WEEK, UNATTENDED. A link we already hold is never rewritten
+# by it - not replaced by a different answer, and not stripped of the record of how it was made.
+
+def _linked(db, name, eid, method):
+    db.execute("update client_conferences set event_id=?, match_method=? where their_name=?",
+               (eid, method, name))
+    db.commit()
+
+
+def test_a_different_certain_answer_never_replaces_a_link(db, tmp_path):
+    """The first dry run would have moved Horizons Asia onto Horizons Week - wrongly."""
+    _loaded(db, tmp_path, ["Horizons Asia"])
+    _linked(db, "Horizons Asia", "2027-horizons-asia-tokyo", "human review")
+    r = clients.apply_matches(db, "arnica", [
+        {"their_name": "Horizons Asia", "event_id": "2026-horizons-week-copenhagen",
+         "confidence": 100.0, "justification": "CERTAIN via unique domain"}])
+    got = db.execute("select event_id, match_method from client_conferences").fetchone()
+    assert got == ("2027-horizons-asia-tokyo", "human review")
+    assert r["applied"] == 0 and len(r["conflicts"]) == 1
+
+
+def test_a_less_certain_rerun_does_not_erase_how_a_link_was_made(db, tmp_path):
+    """The old update blanked match_method on every non-certain row: 18 links had lost it."""
+    _loaded(db, tmp_path, ["LASCON"])
+    _linked(db, "LASCON", "2026-lascon-austin", "resolve_client_matches: name+city")
+    clients.apply_matches(db, "arnica", [{"their_name": "LASCON", "event_id": "2026-lascon-austin",
+                                          "confidence": 89.0, "justification": "NOT CERTAIN"}])
+    got = db.execute("select event_id, match_method, match_justification "
+                     "from client_conferences").fetchone()
+    assert got[0] == "2026-lascon-austin" and got[1].startswith("resolve_client_matches")
+    assert got[2] != "NOT CERTAIN"
+
+
+def test_a_certain_rerun_restores_a_lost_method_but_keeps_a_recorded_one(db, tmp_path):
+    _loaded(db, tmp_path, ["CES", "ADIPEC"])
+    _linked(db, "CES", "2027-ces-las-vegas", "")
+    _linked(db, "ADIPEC", "2026-adipec-abu-dhabi", "human review")
+    clients.apply_matches(db, "arnica", [
+        {"their_name": "CES", "event_id": "2027-ces-las-vegas", "confidence": 100.0,
+         "justification": "CERTAIN via exact URL"},
+        {"their_name": "ADIPEC", "event_id": "2026-adipec-abu-dhabi", "confidence": 100.0,
+         "justification": "CERTAIN via exact URL"}])
+    got = dict(db.execute("select their_name, match_method from client_conferences"))
+    assert got == {"CES": "match_customer_sheet", "ADIPEC": "human review"}
