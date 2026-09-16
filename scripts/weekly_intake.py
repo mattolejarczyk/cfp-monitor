@@ -359,6 +359,17 @@ def main() -> int:
     except Exception as exc:                                         # noqa: BLE001
         print(f"\ncould not write {out}: {exc}")
 
+    # THE STEP'S QA REPORT - their sheet vs the previous copy vs our database, column by column,
+    # saved under runs_out/qa/<date>/ for the weekly review and a future dashboard drill-down.
+    # Read, never enforced; contained like every other step here.
+    if not a.dry_run:
+        code, out = run([PY, ROOT / "scripts/qa_intake.py", "--db", a.db,
+                         "--snapshots", snapshots], timeout=300)
+        first = next((ln for ln in out.splitlines() if ln.startswith("**")), "")
+        verdict = first.replace("**", "").strip() or f"did not run (exit {code})"
+        print()
+        print(f"INTAKE QA: {verdict}  (runs_out/qa/{today.isoformat()}/intake.md)")
+
     # ALWAYS 0. The Saturday job must not lose a research window to an intake problem.
     return 0
 

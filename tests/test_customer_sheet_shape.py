@@ -138,3 +138,53 @@ def test_closed_keeps_each_consumers_old_behaviour_until_ruled():
     the word silently. The review page treated it as settled; the remediation tool did not."""
     assert sheet_reconcile.settled("Closed") is True
     assert cc.bucket({"status": "Closed"}) == "TRACKED"
+
+
+# --------------------------------------------------------------------- the QA report --
+_qspec = importlib.util.spec_from_file_location("qa", ROOT / "scripts" / "qa_intake.py")
+qa = importlib.util.module_from_spec(_qspec)
+_qspec.loader.exec_module(qa)
+
+
+def _snap(root, name, rows, headers=FULL):
+    d = root / "arnica"
+    d.mkdir(parents=True, exist_ok=True)
+    return _sheet(d / name, rows, headers)
+
+
+def test_the_qa_report_passes_when_the_database_matches_the_sheet(tmp_path):
+    from datetime import date
+    snaps = tmp_path / "snaps"
+    _snap(snaps, "arnica_20260909-020000.csv", [{"CONFERENCE": "A", "NOTES": "x"}])
+    cur = _snap(snaps, "arnica_20260916-020000.csv",
+                [{"CONFERENCE": "A", "NOTES": "x"}, {"CONFERENCE": "B", "PRIORITY": "High"}])
+    con = _db(tmp_path)
+    clients.load_sheet(con, "arnica", cur, industry="Cybersecurity")
+    r = qa.build(tmp_path / "t.db", snaps, ["arnica"], date(2026, 9, 16))
+    assert r["status"] == "PASS", r["flags"]
+    cols = {row[1]: row for row in r["sections"][1]["rows"]}
+    assert cols["PRIORITY"][3:7] == [0, 1, 1, 1], "previous, this, change, database"
+
+
+def test_the_qa_report_flags_a_field_the_database_did_not_get(tmp_path):
+    from datetime import date
+    snaps = tmp_path / "snaps"
+    cur = _snap(snaps, "arnica_20260916-020000.csv", [{"CONFERENCE": "A", "NOTES": "x"}])
+    con = _db(tmp_path)
+    clients.load_sheet(con, "arnica", cur, industry="Cybersecurity")
+    con.execute("update client_conferences set notes = ''")
+    con.commit()
+    r = qa.build(tmp_path / "t.db", snaps, ["arnica"], date(2026, 9, 16))
+    assert r["status"] == "FLAG" and any("NOTES" in f for f in r["flags"])
+
+
+def test_two_copies_on_one_day_are_not_compared_with_each_other(tmp_path):
+    """Intake ran twice on 2026-09-16. 'Previous' must mean an earlier DAY, or the week reads
+    as having no changes at all."""
+    from datetime import date
+    snaps = tmp_path / "snaps"
+    _snap(snaps, "arnica_20260901-132355.csv", [{"CONFERENCE": "A"}])
+    _snap(snaps, "arnica_20260916-111025.csv", [{"CONFERENCE": "A"}])
+    _snap(snaps, "arnica_20260916-115342.csv", [{"CONFERENCE": "A"}])
+    cur, prev = qa.this_and_last("arnica", snaps, date(2026, 9, 16))
+    assert cur.name == "arnica_20260916-115342.csv" and prev.name == "arnica_20260901-132355.csv"

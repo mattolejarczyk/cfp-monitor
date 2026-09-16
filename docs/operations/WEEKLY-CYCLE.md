@@ -81,6 +81,12 @@ A column that disappears is **kept at last week's values, never blanked** - befo
 loader would have erased that field on every row. Their values are never corrected: an odd value is
 theirs to fix, and ours only to report.
 
+**The step's QA report** (`scripts/qa_intake.py`, run by intake after loading) - per client, per
+column: filled in the previous copy, filled now, the change, filled in our database, match or not.
+Saved as `runs_out/qa/<date>/intake.md` for a person and `intake.json` for a dashboard. PASS means
+the database holds exactly what their sheet holds. "Previous" is the newest copy from an earlier
+DAY, so two runs in one morning are never compared with each other.
+
 **Open ruling: what "Closed" and "Not Appropriate" mean.** 17 rows. Most Closed rows have a passed
 deadline, but Black Hat Asia and USENIX Security are Closed with deadlines still ahead. Until ruled,
 the review page counts Closed as settled and `customer_context.py` does not - their pre-existing
