@@ -58,8 +58,8 @@ account - the same `/export?format=csv` endpoint, no browser, no signed-in sessi
 2026-09-16 with a fetch-only run: Utility Global 84 rows, Arnica 125.
 
     key       AppData\Local\CFP-Monitor\sheets-reader-key.json   (never in this public repo)
-    account   brandable-sheet-reader@... in Google Cloud project brandable-508317
-    access    Viewer on both sheets; Google Drive API enabled on the project
+    account   the key's client_email - recorded on this machine, not in this public repo
+    access    Viewer on both sheets; Google Drive API enabled on the account's project
     library   google-auth, declared in pyproject.toml
 
 It never stops research: exit code is always 0, and INTAKE HEALTH says HEALTHY or DEGRADED with
