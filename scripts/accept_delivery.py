@@ -97,6 +97,38 @@ VENUE_HINT = re.compile(
     r"koelnmesse|terminal|ahoy|sniec|lvcc|iicc|nec)\b", re.I)
 
 
+# THE LINKS A READER IS SENT TO, not only the one that evidences a date. Until 2026-09-16 check 2
+# read DEADLINE_EVIDENCE_URL alone, so the link the customer actually clicks to submit was never
+# checked by the gate: on that day 19 of the 95 distinct links in the two live deliveries were in
+# no column check 2 read, and seven SecureWorld submission forms returned 404 unreported.
+# `recheck_dead_links.py --csv` had the same hole in August and it was fixed there; the gate
+# was never brought level.
+SUBMISSION_LINK_COLS = ("SUBMISSION URL", "CFP_SUBMISSION_URL")
+
+
+def browser_second_opinion(urls) -> dict[str, int | None]:
+    """HTTP status a REAL BROWSER gets for each URL; None where it could not load at all.
+
+    A plain fetch is answered 403 by bot protection on pages a browser reads normally - and,
+    measured 2026-09-16, on pages that do not exist. Black Hat USA's call-for-briefings link
+    returned 403 to `link_status` and 404 to a browser; check 2 had waved it through as
+    "blocked-but-trusted" in all three link columns. Contract 5.2 says only 404/410 disprove a
+    link, and a 404 the browser sees IS a 404 - the 403 was hiding it, not contradicting it.
+
+    Delegates to `recheck_dead_links.browser_check` rather than launching a browser here: the
+    fetch ladder is owned elsewhere and is never re-implemented (runbook non-negotiable).
+    Raises when the browser cannot start; the caller reports that, it never passes silently.
+    """
+    import asyncio
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "recheck_dead_links", Path(__file__).resolve().parent / "recheck_dead_links.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    got = asyncio.run(mod.browser_check(sorted(set(urls))))
+    return {u: (v[1] or None) for u, v in got.items()}
+
+
 def norm(text: str) -> str:
     """Normalize for quote comparison: entities, quotes, dashes, whitespace, case."""
     t = (text or "")
@@ -172,17 +204,51 @@ class Gate:
             return
         cache: dict[str, tuple] = {}
         dead, decayed, missing_quote = [], [], []
+        from src.cfp_monitor import rules                               # noqa: PLC0415
+        today = getattr(self, "today", date.today())
+
+        # Plain status for every link a reader can be sent to; page text only where a quote is
+        # checked. One request per distinct URL - SecureWorld shares one form across 7 rows.
+        codes: dict[str, int | None] = {}
+        for r in self.rows:
+            for col in ("DEADLINE_EVIDENCE_URL", *SUBMISSION_LINK_COLS):
+                u = self.g(r, col)
+                if u.startswith("http") and u not in codes:
+                    codes[u] = link_status(u)[0]
+
+        # BEHIND A 403: ask a real browser, once, for every blocked link. Only a browser 404/410
+        # replaces the plain 403; a browser 200 or a browser 403 leaves the link exempt exactly
+        # as before, so this can find a dead link and can never un-exempt a live one.
+        blocked = sorted(u for u, c in codes.items() if c == 403)
+        behind_403: set[str] = set()
+        if blocked:
+            try:
+                seen = browser_second_opinion(blocked)
+            except Exception as e:                                      # noqa: BLE001
+                # Run health: a second opinion that did not run is REPORTED with its count.
+                # Staying silent would read exactly like "every 403 was checked and is fine".
+                self.note("2", f"browser second opinion did NOT run ({type(e).__name__}) - "
+                               f"{len(blocked)} link(s) behind a 403 remain unchecked", blocked)
+                seen = {}
+            for u in blocked:
+                if seen.get(u) in (404, 410):
+                    codes[u] = seen[u]
+                    behind_403.add(u)
+
+        def how(u: str) -> str:
+            return (f"HTTP {codes[u]} (plain fetch said 403; a browser says {codes[u]})"
+                    if u in behind_403 else f"HTTP {codes[u]}")
+
         for r in self.rows:
             url = self.g(r, "DEADLINE_EVIDENCE_URL")
             if not url:
                 continue
             if url not in cache:
-                code, _ = link_status(url)
+                code = codes.get(url) if url.startswith("http") else link_status(url)[0]
                 text, _ = fetch_text(url)
                 cache[url] = (code, text)
             code, text = cache[url]
             name = self.g(r, "CONFERENCE")[:40]
-            from src.cfp_monitor import rules                           # noqa: PLC0415
             if code in (404, 410):
                 # ---- AMENDMENT v2.2: check 2 evaluates ACTIVE and BLANK deadlines only ----
                 # The same decay v1.4 recognised for check 3, arriving one criterion later.
@@ -197,10 +263,10 @@ class Gate:
                 # exemption: a BLANK deadline still fails here. Check 3 excuses a blank
                 # because there is no claim to verify, but a dead LINK is a defect whether
                 # or not the row claims a date - the reader is still sent nowhere.
-                if rules.deadline_has_passed(r, getattr(self, "today", date.today())):
-                    decayed.append(f"{name}: HTTP {code} (deadline passed) {url}")
+                if rules.deadline_has_passed(r, today):
+                    decayed.append(f"{name}: {how(url)} (deadline passed) {url}")
                 else:
-                    dead.append(f"{name}: HTTP {code} {url}")
+                    dead.append(f"{name}: {how(url)} {url}")
                 continue
             if code == 403:
                 continue                       # blocked-but-trusted; exempt from the quote test
@@ -239,10 +305,38 @@ class Gate:
                 kind = "paraphrase, date IS on page" if (d and find_date(text, d)) \
                     else "quote and date both absent"
                 missing_quote.append(f'{name}: {kind} - "{quote[:52]}"')
-        self.add("2", "Cited pages resolve (404/410 = fail, 403 allowed)", dead)
+        self.add("2", "Cited pages resolve (404/410 = fail, 403 allowed unless a browser "
+                      "gets 404)", dead)
         if decayed:
             self.note("2", "dead cited page(s) on rows whose deadline has passed - "
                            "expected decay under v2.2, not a defect", decayed)
+
+        # ---- 2s. SUBMISSION LINKS - ADVISORY until upstream agrees ----
+        # Requested in handoff-files/Handback_Criterion2_Submission_Links_20260916.md.
+        # Upstream assigns amendment numbers (v2.5 precedent), so none is assumed here.
+        # Criterion 2 as agreed covers CITED pages, and a submission link is not a citation. So
+        # this REPORTS and does not reject: widening an agreed criterion without upstream is how
+        # the v2.2 exemption would have been got wrong. Promote to self.add() once it is
+        # agreed. The v2.2 decay rule is applied the same way so the promotion changes nothing
+        # but the verdict. A link identical to the row's DEADLINE_EVIDENCE_URL is already judged
+        # by criterion 2 above and is not reported twice.
+        sub_live, sub_decayed = [], []
+        for r in self.rows:
+            ev = self.g(r, "DEADLINE_EVIDENCE_URL")
+            by_url: dict[str, list[str]] = {}
+            for col in SUBMISSION_LINK_COLS:
+                u = self.g(r, col)
+                if u.startswith("http") and u != ev and codes.get(u) in (404, 410):
+                    by_url.setdefault(u, []).append(col)
+            for u, cols in by_url.items():
+                line = f"{self.g(r, 'CONFERENCE')[:40]}: {' + '.join(cols)} {how(u)} {u}"
+                (sub_decayed if rules.deadline_has_passed(r, today) else sub_live).append(line)
+        if sub_live:
+            self.note("2s", "SUBMISSION link returns 404/410 on a LIVE call - the reader is sent "
+                            "nowhere (advisory until upstream agrees)", sub_live)
+        if sub_decayed:
+            self.note("2s", "dead submission link(s) on rows whose deadline has passed - "
+                            "expected decay under v2.2", sub_decayed)
         self.add("3", "Cited page contains its quote verbatim (403 exempt)", missing_quote)
 
     # ---- 4. prose vs projection -------------------------------------------
