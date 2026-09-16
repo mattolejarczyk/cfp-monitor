@@ -81,6 +81,15 @@ A column that disappears is **kept at last week's values, never blanked** - befo
 loader would have erased that field on every row. Their values are never corrected: an odd value is
 theirs to fix, and ours only to report.
 
+**Then their rows are linked to ours** (since 2026-09-16, every run): `match_customer_sheet.py`
+scores each row, `apply_client_match.py` writes only CERTAIN links. A link we already hold is never
+rewritten - a different certain answer is reported as a CONFLICT for a person - and a website match
+is certain only when their name adds no word ours lacks, because one organiser site hosts sibling
+events (SANS, OWASP, Nullcon). The notes say how many links were added, how many wait for review,
+and how many conferences they track that we do not research at all: those are pending candidates,
+and nothing joins an industry list without a person deciding. First run: Utility 39 -> 53 linked
+of 84, Arnica 39 -> 43 of 125.
+
 **The step's QA report** (`scripts/qa_intake.py`, run by intake after loading) - per client, per
 column: filled in the previous copy, filled now, the change, filled in our database, match or not.
 Saved as `runs_out/qa/<date>/intake.md` for a person and `intake.json` for a dashboard. PASS means

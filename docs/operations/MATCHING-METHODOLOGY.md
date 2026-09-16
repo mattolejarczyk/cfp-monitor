@@ -259,6 +259,17 @@ and one dataset is enough to find them. Stopword lists, similarity thresholds, s
 and keyword gates encode what *this particular data* looks like. The failed gate was a content
 rule wearing the costume of a mechanical one, which is how it got past scepticism.
 
+> **Corrected 2026-09-16 - "a unique domain as proof" was not mechanical either.** It assumed the
+> customer tracks only events we hold. True while their sheets mirrored our lists; false once they
+> grew to track sibling events on the same organiser site. A dry run on the grown sheets linked four
+> different SANS summits to SANS Cyber Defense Initiative, OWASP Global AppSec USA to OWASP Italy Day,
+> and Nullcon Berlin to Nullcon Goa. Similarity could not separate right from wrong; what did was
+> whether THEIR name carries a word ours lacks. A website match (unique domain, or an exact match on
+> a bare homepage) is now certain only when it does not. The same population shift left position
+> alignment with zero anchors, and had hidden for weeks that the matcher never read their date
+> column at all. **Re-measure when the population changes - here, when their list stopped being a
+> copy of ours.**
+
 **State the population, every time.** Every threshold in the CFP matcher was calibrated on 47
 anchors from a single market. Reporting "all nine tests scored 97-100% precision" without
 saying "on Utility" presents a property of one dataset as a property of the method. Utility is

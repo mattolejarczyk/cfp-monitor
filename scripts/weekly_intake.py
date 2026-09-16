@@ -88,6 +88,45 @@ PERMANENT = (
 )
 
 
+MARKETS = SNAPSHOTS.parent
+
+
+def match_client(client: str, meta: dict, snapshot: Path, db: str) -> list[str]:
+    """Match one client's sheet to our conferences and apply the CERTAIN links. Never raises.
+
+    Two existing tools, in their documented order: match_customer_sheet.py scores every row,
+    apply_client_match.py writes only 100% matches (with its own backup and shared-table check)
+    and raises promotion candidates from what nothing matched. Their summary lines become notes.
+    """
+    delivery = MARKETS / f"{meta['industry']}_audited.final.csv"
+    out = RUNS_OUT / f"match_{client}_{date.today():%Y%m%d}.csv"
+    if not delivery.exists():
+        return [f"{client}: matching skipped - no {delivery.name} to supply our dates and order"]
+    code, text = run([PY, ROOT / "scripts/match_customer_sheet.py", "--sheet", snapshot,
+                      "--market", meta["industry"], "--db", db, "--delivery", delivery,
+                      "-o", out], timeout=900)
+    if code != 0:
+        return [f"{client}: matching failed - {(text.strip().splitlines() or [f'exit {code}'])[-1][:160]}"]
+    code, text = run([PY, ROOT / "scripts/apply_client_match.py", "--db", db, "--client",
+                      meta["key"], "--matches", out, "--industry", meta["industry"]], timeout=900)
+    if code != 0:
+        return [f"{client}: applying matches failed - "
+                f"{(text.strip().splitlines() or [f'exit {code}'])[-1][:160]}"]
+
+    def num(label: str) -> str:
+        m = re.search(rf"^\s*{re.escape(label)}\s+(\d+)", text, re.M)
+        return m.group(1) if m else "?"
+    note = (f"{client}: matching - {num('applied')} new link(s), "
+            f"{num('already linked, left as they were')} already linked, "
+            f"{num('needs review')} for review, {num('no match')} not found")
+    notes = [note]
+    if "CONFLICTS" in text:
+        notes.append(f"{client}: matching - CONFLICTS kept for a person: "
+                     + "; ".join(ln.strip() for ln in text.splitlines()
+                                 if " is now certain of " in ln)[:400])
+    return notes
+
+
 def shape_notes(client: str, snapshot: Path) -> dict:
     """Reconcile this sheet's structure against what we load. `changed` means the STRUCTURE moved
     (a column we load is gone, or row identity is ambiguous) - the cases that can corrupt the
@@ -312,6 +351,14 @@ def main() -> int:
             if not loaded:
                 detail = (out.strip().splitlines() or [f"exit {code}"])[-1][:160]
                 notes.append(f"{client}: load failed - {detail}")
+
+        # LINK THEIR ROWS TO OURS, every run - not only when a new snapshot loaded, because our side
+        # changes too (Monday imports new conferences). Until 2026-09-16 nothing ran the matcher
+        # after intake, so every row a customer added or renamed stayed linked to nothing, and
+        # research never looked at it: 86 of Arnica's 125 rows, 45 of Utility's 84. Only CERTAIN
+        # matches are applied, a link we hold is never rewritten, and the rest go to review.
+        if newest is not None and not a.dry_run:
+            notes += match_client(client, meta, newest, a.db)
 
         results.append({"client": client, "snapshot": newest.name if newest else None,
                         "taken": taken.isoformat() if taken else None,

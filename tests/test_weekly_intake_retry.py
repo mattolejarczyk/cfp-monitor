@@ -90,3 +90,53 @@ def test_one_permanent_and_one_transient_failure_is_still_retried(monkeypatch, t
                 "arnica: FAILED - Read timed out." + ALERT)
     _, _, attempts = _fetch_all(monkeypatch, tmp_path, [mixed])
     assert attempts == 1 + len(wi.RETRY_DELAYS)
+
+
+# ------------------------------------------------------------------------------------------------
+# 2026-09-16: intake now links their rows to ours after loading. Nothing ran the matcher before, so
+# every row a customer added or renamed stayed linked to nothing and research never saw it.
+
+APPLY_OUT = """arnica  -  125 row(s) from the matcher
+  certain (100%)        36  -> event_id applied
+  needs review (40-99)  19  -> left unmatched, for a person
+
+  applied      4
+  already linked, left as they were  39
+  needs review 13
+  no match     69
+  CONFLICTS    1 - the existing link was KEPT; a person decides
+      Horizons Asia: linked to 2027-x (human review); the matcher is now certain of 2026-y
+"""
+
+
+def test_matching_reports_what_it_applied_and_what_waits_for_a_person(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_run(cmd, timeout=600):
+        calls.append(str(cmd[1]))
+        return (0, APPLY_OUT) if "apply_client_match" in str(cmd[1]) else (0, "ok")
+    monkeypatch.setattr(wi, "run", fake_run)
+    monkeypatch.setattr(wi, "MARKETS", tmp_path)
+    monkeypatch.setattr(wi, "RUNS_OUT", tmp_path)
+    (tmp_path / "Cybersecurity_audited.final.csv").write_text("EVENT_ID\n", encoding="utf-8")
+    notes = wi.match_client("arnica", wi.CLIENTS["arnica"], tmp_path / "s.csv", "db")
+    assert [Path(c).name for c in calls] == ["match_customer_sheet.py", "apply_client_match.py"]
+    assert notes[0] == ("arnica: matching - 4 new link(s), 39 already linked, "
+                        "13 for review, 69 not found")
+    assert "Horizons Asia" in notes[1] and "CONFLICTS" in notes[1]
+
+
+def test_matching_is_skipped_not_crashed_without_a_delivery(monkeypatch, tmp_path):
+    monkeypatch.setattr(wi, "MARKETS", tmp_path)
+    monkeypatch.setattr(wi, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError("ran")))
+    notes = wi.match_client("utility", wi.CLIENTS["utility"], tmp_path / "s.csv", "db")
+    assert "matching skipped" in notes[0]
+
+
+def test_a_failed_match_is_a_note_never_an_exception(monkeypatch, tmp_path):
+    monkeypatch.setattr(wi, "MARKETS", tmp_path)
+    monkeypatch.setattr(wi, "RUNS_OUT", tmp_path)
+    (tmp_path / "Utility_audited.final.csv").write_text("EVENT_ID\n", encoding="utf-8")
+    monkeypatch.setattr(wi, "run", lambda cmd, timeout=600: (1, "sheet has no 'CONFERENCE' column"))
+    notes = wi.match_client("utility", wi.CLIENTS["utility"], tmp_path / "s.csv", "db")
+    assert notes == ["utility: matching failed - sheet has no 'CONFERENCE' column"]
