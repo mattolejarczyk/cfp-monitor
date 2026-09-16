@@ -176,6 +176,9 @@ def held_rows(seed_dir: Path) -> dict[str, str]:
     return out
 
 
+ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Check database integrity invariants.")
     ap.add_argument("--db", default="cfp_monitor.db")
@@ -183,6 +186,9 @@ def main() -> int:
                                        "compares CITATIONS between the database and the "
                                        "delivery - the two stores drifted on 176 rows in "
                                        "August and nothing noticed")
+    ap.add_argument("--awards-delivery", help="the awards delivery CSV. Enables "
+                                             "checks 14 and 15, which reconcile the "
+                                             "awards table against it")
     ap.add_argument("--seed-dir", help="defaults to market_sheets beside the database, "
                                        "falling back to the working directory")
     a = ap.parse_args()
@@ -299,7 +305,123 @@ def main() -> int:
               "drifted")
         print("            silently for two days in August because nothing compared them.")
 
+    # ---------------------------------------------------------------- AWARDS ----
+    # Contract v2.1 made awards a SECOND ENTITY TYPE in its own table, and until now every
+    # invariant above has only ever looked at conferences. That asymmetry is not academic: all
+    # 119 award rows sat at verify_state 'unverified' from the day the table was created until
+    # 2026-09-14, because the pass that would set it did not exist - and nothing anywhere
+    # reported a problem, because nothing was reconciling this table against anything.
+    #
+    # These do not copy the conference checks. An award has no event to attend, so the ordering
+    # rule that governs a conference (a deadline cannot fall after the event starts) has no
+    # meaning here; what an award has instead is a WINDOW, and a window that closes before it
+    # opens is the equivalent nonsense. Awards are exempt from gate check 6b for the same
+    # reason (v2.3).
     con = sqlite3.connect(a.db)
+    con.row_factory = sqlite3.Row
+    try:
+        aw = list(con.execute("select * from award_grounding_facts"))
+    except sqlite3.OperationalError:
+        aw = []
+    if aw:
+        print()
+        a_ids = {r["event_id"] for r in aw}
+        up_ids = {(r["upstream_event_id"] or "").strip() for r in aw
+                  if (r["upstream_event_id"] or "").strip()}
+
+        # 10. Identity, the same standard the conference table is held to.
+        a_seen: dict[str, int] = {}
+        for r in aw:
+            a_seen[r["event_id"]] = a_seen.get(r["event_id"], 0) + 1
+        res.add("10 award event_id is unique", "one row per canonical award id",
+                sorted(f"{k} x{v}" for k, v in a_seen.items() if v > 1))
+
+        # 11. THE CHECK THAT WOULD HAVE CAUGHT THE ORIGINAL GAP. Individual rows may honestly
+        #     be unverified - 19 carry no cited page at all, and 6 cite a page we could not
+        #     open - but a table where EVERY row is unverified means the pass never ran, which
+        #     is exactly what shipped a customer page reading "0 Deadline confirmed".
+        judged = [r for r in aw if (r["verify_state"] or "") not in ("", "unverified")]
+        res.add("11 the awards evidence pass has run",
+                "a table where every row is 'unverified' means nothing ever checked it",
+                [] if judged else [f"all {len(aw)} award row(s) are unverified - run "
+                                   f"check_award_deadlines.py --apply"])
+
+        # 12. Market membership, which drifted to 115 missing rows on the conference side
+        #     before anyone noticed. Awards are clean today; this is what keeps them so.
+        try:
+            in_market = {r[0] for r in con.execute("select award_key from award_markets")}
+        except sqlite3.OperationalError:
+            in_market = set()
+        res.add("12 every award is on a market list", "an award on no list is invisible to "
+                "every market-scoped query", sorted(a_ids - in_market))
+
+        # 13. THE AWARDS ANALOGUE OF 6b. A window that closes before it opens.
+        bad_window = []
+        for r in aw:
+            opens, close = (r["submission_opens"] or "").strip(), (r["deadline"] or "").strip()
+            if ISO_DATE.match(opens) and ISO_DATE.match(close) and opens > close:
+                bad_window.append(f"{(r['name'] or r['event_id'])[:44]} - opens {opens}, "
+                                  f"closes {close}")
+        res.add("13 an award window opens before it closes",
+                "SUBMISSION_OPENS must not fall after the deadline", bad_window)
+
+        # 14 + 15. Reconciliation against the delivery, keyed on UPSTREAM's id (5.4) because
+        #     that is what an awards delivery carries.
+        if a.awards_delivery:
+            d = Path(a.awards_delivery)
+            delivered = set()
+            with open(d, encoding="utf-8-sig", newline="") as fh:
+                for row in csv.DictReader(fh):
+                    eid = (row.get("EVENT_ID") or "").strip()
+                    if eid:
+                        delivered.add(eid)
+            # A DELIVERED ROW MAY BE ABSENT ON PURPOSE, and the importer already decides which.
+            # It excludes rows whose OPPORTUNITY_TYPE is not an award - the awards market file
+            # carries a few Speaking and Registration rows, and writing one of those into the
+            # award tables is exactly the mixing the two pipelines are kept apart to prevent -
+            # and rows labelled DUP_OF in the seed.
+            #
+            # Those reasons live in the import run's output and nowhere a later check can read,
+            # so a naive comparison calls eight deliberate exclusions data loss. It did, on the
+            # first run of this check. Recomputing them from the importer's own helpers rather
+            # than restating the rule keeps one definition of "legitimately absent".
+            excluded, why = set(), {}
+            for row in csv.DictReader(open(d, encoding="utf-8-sig", newline="")):
+                eid, opp = (row.get("EVENT_ID") or "").strip(), (row.get("OPPORTUNITY_TYPE") or "").strip()
+                if eid and opp != "Awards":
+                    excluded.add(eid)
+                    why[eid] = f"OPPORTUNITY_TYPE={opp!r}, not an award"
+            try:
+                sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+                from scripts.import_awards import duplicate_names     # noqa: PLC0415
+                names = {r["name"] for r in aw}
+                seed = next(iter(sorted(d.parent.glob("Awards_seed_*.csv"))), None)
+                for nm, target in (duplicate_names(seed, names) or {}).items():
+                    for row in csv.DictReader(open(d, encoding="utf-8-sig", newline="")):
+                        if (row.get("CONFERENCE") or "").strip() == nm:
+                            eid = (row.get("EVENT_ID") or "").strip()
+                            excluded.add(eid)
+                            why[eid] = f"labelled DUP_OF {target[:34]!r} in the seed"
+            except Exception:                                        # noqa: BLE001
+                pass                                                 # no seed: report them all
+
+            lost = sorted(delivered - up_ids - excluded)
+            res.add("14 no delivered award is missing",
+                    "every EVENT_ID in the awards delivery exists in the DB, unless the "
+                    "importer excluded it for a stated reason", lost)
+            deliberate = sorted(delivered - up_ids - set(lost))
+            if deliberate:
+                print(f"  [ok  ] 14a {len(deliberate)} delivered award(s) absent BY DECISION:")
+                for eid in deliberate[:12]:
+                    print(f"            - {why.get(eid, 'excluded by the importer')}")
+            res.add("15 no undeclared extra awards",
+                    "watch: DB awards absent from this delivery", sorted(up_ids - delivered),
+                    fatal=False)
+        else:
+            print("  [skip ] 14 no delivered award is missing   pass --awards-delivery to run")
+            print("            Awards identity and window were checked above; PRESENCE was "
+                  "not.")
+
     rc = res.report()
     if held:
         print("\nDeclared holds (present in the DB by decision, not by accident):")

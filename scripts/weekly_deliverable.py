@@ -173,6 +173,16 @@ def main() -> int:
         step("awards link check", [PY, ROOT / "scripts/link_check_awards.py", "--db", a.db,
                                    "--apply"], work / "2c_awards_links.log", timeout=3600)
 
+    # 2d. RECONCILE, BECAUSE THIS RUN MUTATED. Steps 2a and 2c both write to the database
+    # (verify_state, dead-link flags) and nothing here has ever checked the result. "A mutation
+    # needs a reconciliation" is the oldest rule in this repo and the weekly build was quietly
+    # exempt from it.
+    #
+    # RECORDED, NOT BLOCKING. An invariant failure is a statement about the DATABASE; the
+    # conference page is built from the delivery CSVs, so a database fault does not
+    # automatically make the page wrong. Blocking here would mean the customer gets nothing on
+    # a Monday over a fault that may not touch what they read - and the agreed rule is to
+    # publish what is accepted and say what is unresolved.
     # 3. The conferences page reads one file; the live markets are delivered separately.
     sources = [md / "Cybersecurity_audited.final.csv", md / "Utility_audited.final.csv"]
     missing = [s.name for s in sources if not s.exists()]
@@ -188,6 +198,26 @@ def main() -> int:
     awards_in = Path(a.awards_input) if a.awards_input else newest("Awards_*_out.csv", md)
     conf_page = work / f"Conference Review {stamp} - Live Markets.html"
     awards_page = work / f"Awards Review {stamp}.html"
+
+    # 2d. RECONCILE, BECAUSE THIS RUN MUTATED. Steps 2a and 2c both write to the database -
+    # verify_state and the dead-link flags - and nothing here has ever checked the result. "A
+    # mutation needs a reconciliation" is the oldest rule in this repo, and the weekly build
+    # was quietly exempt from it.
+    #
+    # RECORDED, NOT BLOCKING. An invariant failure is a statement about the DATABASE, while the
+    # conference page is built from the delivery CSVs, so a database fault does not by itself
+    # make the page wrong. Blocking here would mean the customer gets nothing on a Monday over
+    # a fault that may not touch what they read, and the agreed rule is to publish what is
+    # accepted and say what is unresolved.
+    inv = [PY, ROOT / "scripts/check_invariants.py", "--db", a.db]
+    if awards_in and Path(awards_in).exists():
+        inv += ["--awards-delivery", str(awards_in)]
+    done = subprocess.run([str(c) for c in inv], capture_output=True, text=True,
+                          env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+    (work / "2d_invariants.log").write_text(done.stdout + done.stderr, encoding="utf-8")
+    HEALTH.note("invariants", "hold" if done.returncode == 0 else "VIOLATED")
+    print(f"\ninvariants: {'hold' if done.returncode == 0 else 'VIOLATED'} "
+          f"(2d_invariants.log)")
 
     # 4 + 5. The two pages. --reconcile adds the "check against your sheet" view.
     if combined:
