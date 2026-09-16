@@ -69,6 +69,23 @@ export above is the manual fallback when it reports DEGRADED.
 
 Test without saving anything: `python scripts/fetch_customer_sheet.py --client all --no-snapshot`
 
+**First thing after every download: the shape check** (`clients.sheet_shape`, run by intake before
+loading, notes under INTAKE HEALTH). It reconciles their sheet against what we load:
+
+    STRUCTURE (degrades the run)   a column we load is gone; a conference name appears twice
+    reported, run stays HEALTHY    a new column we do not read; a blank conference name;
+                                   credential columns holding data (counts only);
+                                   values our logic does not understand; statuses awaiting a ruling
+
+A column that disappears is **kept at last week's values, never blanked** - before 2026-09-16 the
+loader would have erased that field on every row. Their values are never corrected: an odd value is
+theirs to fix, and ours only to report.
+
+**Open ruling: what "Closed" and "Not Appropriate" mean.** 17 rows. Most Closed rows have a passed
+deadline, but Black Hat Asia and USENIX Security are Closed with deadlines still ahead. Until ruled,
+the review page counts Closed as settled and `customer_context.py` does not - their pre-existing
+behaviour, now written in one place (`clients.UNDECIDED_STATES`).
+
 **Refuses to:** write any customer-owned column; run on a `gviz` export; match on the delivery's
 `EVENT_ID` directly (that is upstream's key - cross it through `identity.to_canonical`).
 

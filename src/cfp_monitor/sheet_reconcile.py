@@ -50,9 +50,13 @@ from __future__ import annotations
 import re
 from datetime import date
 
-# Their pipeline states that mean the deadline no longer bites.
-SETTLED = ("submitted", "accepted", "declined", "client declined", "rejected", "withdrawn",
-           "closed", "not pursuing", "passed", "no longer")
+from .clients import DONE_STATES
+
+# Their pipeline states that mean the deadline no longer bites - from the ONE definition in
+# clients.py. "closed" is added back here ONLY to keep this page's pre-2026-09-16 behaviour while
+# its meaning is undecided (see clients.UNDECIDED_STATES): Black Hat Asia and USENIX Security
+# are marked Closed with deadlines still ahead. Remove or keep this once the operator rules.
+SETTLED = DONE_STATES + ("closed",)
 
 PROMOTE_AT = 70.0
 

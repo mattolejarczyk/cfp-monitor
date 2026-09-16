@@ -88,6 +88,42 @@ PERMANENT = (
 )
 
 
+def shape_notes(client: str, snapshot: Path) -> dict:
+    """Reconcile this sheet's structure against what we load. `changed` means the STRUCTURE moved
+    (a column we load is gone, or row identity is ambiguous) - the cases that can corrupt the
+    client layer. Unfamiliar VALUES are noted but do not degrade the run: the customer owns them.
+    """
+    from src.cfp_monitor import clients                              # noqa: PLC0415
+    s = clients.sheet_shape(snapshot)
+    notes: list[str] = []
+    p = f"{client}: shape -"
+    if s["missing_fields"]:
+        notes.append(f"{p} NO COLUMN FEEDS {s['missing_fields']} - renamed or removed on their "
+                     f"side; kept at last week's values, not blanked")
+    if s["duplicate_names"]:
+        notes.append(f"{p} DUPLICATE conference names {s['duplicate_names'][:5]} - one row "
+                     f"overwrites the other")
+    if s["unmapped_columns"]:
+        notes.append(f"{p} new column(s) we do not read {s['unmapped_columns']} - their data "
+                     f"is not loaded until mapped in clients.COLUMN_MAP")
+    if s["blank_names"]:
+        notes.append(f"{p} {s['blank_names']} row(s) with no CONFERENCE cannot be loaded")
+    if s["credentials_filled"]:
+        notes.append(f"{p} credential column(s) now hold data {s['credentials_filled']} "
+                     f"(counts only) - redacted from the snapshot, never loaded")
+    for col, vals in s["unrecognised"].items():
+        shown = "; ".join(f"{v!r} x{n}" for v, n in list(vals.items())[:3])
+        notes.append(f"{p} {col} values our logic does not recognise: {shown}")
+    if s["undecided"]:
+        notes.append(f"{p} statuses awaiting a ruling on their meaning: {s['undecided']}")
+    if s["speaker_column_contact_only"]:
+        notes.append(f"{p} {s['speaker_column_contact_only']} SPEAKER & ABSTRACTS SUBMITTED "
+                     f"cell(s) hold only contact emails - not read as submitted")
+    if not notes:
+        notes.append(f"{p} {s['columns']} columns, all mapped; nothing unfamiliar")
+    return {"notes": notes, "changed": bool(s["missing_fields"] or s["duplicate_names"])}
+
+
 def failure_reasons(output: str) -> list[str]:
     """The lines that say WHY a fetch failed.
 
@@ -241,9 +277,21 @@ def main() -> int:
         notes += fetch_notes
 
     results = []
+    shape_changed = []
     for client, meta in CLIENTS.items():
         newest = newest_snapshot(client, snapshots)
         taken = snapshot_date(newest)
+        # STEP ONE AFTER DOWNLOAD: does their sheet still have the shape we load? Reported before
+        # the load, never blocking it - load_sheet keeps last week's value for any field whose
+        # column has gone, rather than blanking every row. Contained like everything else here.
+        if newest is not None:
+            try:
+                shape = shape_notes(client, newest)
+                notes += shape["notes"]
+                if shape["changed"]:
+                    shape_changed.append(client)
+            except Exception as exc:                                 # noqa: BLE001
+                notes.append(f"{client}: shape check could not run ({type(exc).__name__})")
         is_new = taken is not None and taken != before.get(client)
         in_db = loaded_snapshot_date(a.db, meta["key"])
         # LOAD WHATEVER THE DATABASE HAS NOT SEEN, not merely what we fetched just now. This is
@@ -286,6 +334,9 @@ def main() -> int:
         status, why = "DEGRADED", "a client has never been snapshotted"
     elif worst is not None and worst > STALE_AFTER_DAYS:
         status, why = "DEGRADED", f"client layer is {worst} days old (stale after {STALE_AFTER_DAYS})"
+    elif shape_changed:
+        status, why = "DEGRADED", (f"{', '.join(shape_changed)} sheet changed shape - affected "
+                                   f"fields kept at last week's values; see notes")
     elif notes and not fetched:
         status, why = "DEGRADED", "nothing was fetched this run"
     else:

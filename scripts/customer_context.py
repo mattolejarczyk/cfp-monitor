@@ -6,7 +6,7 @@ layer. It was correct work on the wrong queue. Checked afterwards, 22 of the row
 repaired had already been verified or acted on by Nicolia's team:
 
     World Future Energy Summit   status "Submitted"   - form already filed for the end client
-    it-sa Expo & Congress        already submitted
+    it-sa Expo & Congress        already submitted  [WRONG - see below]
     ADIPEC 2026                  status "Client Declined"
     ESF MENA                     status "Accepted", $12,500 sponsorship under consideration
     Horizons Asia 2027           status "Submitted"
@@ -33,6 +33,12 @@ customer is drafting against is the product.
     python scripts/customer_context.py --delivery <csv> --failures <gate-output.txt>
     python scripts/customer_context.py --all-acted
 
+CORRECTION, 2026-09-16. The it-sa line above was this tool misreading its own input: Arnica's
+SPEAKER & ABSTRACTS SUBMITTED cell for it-sa holds an organiser email address, and any non-blank
+value was taken as "submitted". Their own note calls it exhibition-focused, not submitted. The
+2026-09-01 figure of 22 rows already acted on was inflated by the same test on every row whose
+cell held a contact. `clients.records_a_submission` now refuses an address as proof.
+
 Read-only. It never writes: `status`, `status_details` and `NOTES` are the CUSTOMER's fields
 under contract section 3, and nothing here may propose changing them.
 """
@@ -47,10 +53,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-# Their pipeline states, ranked by how much a deadline still matters to them.
-LIVE = ("info needed", "drafting abstract", "in progress", "reviewing", "interested")
-DONE = ("submitted", "accepted", "declined", "client declined", "rejected", "withdrawn",
-        "not pursuing", "passed")
+from src.cfp_monitor.clients import (DONE_STATES as DONE, LIVE_STATES as LIVE,  # noqa: E402
+                                     records_a_submission)
+
+# Their pipeline states now come from ONE definition in clients.py. Until 2026-09-16 this file and
+# sheet_reconcile.py each kept a copy, and they disagreed about "closed". This file never counted
+# "closed" as done and still does not - that word's meaning is undecided (clients.UNDECIDED_STATES).
 
 
 def _db() -> str:
@@ -66,7 +74,9 @@ def bucket(row: dict) -> str:
     st = str(row.get("status") or "").strip().lower()
     if _yes(row.get("withdrawn_by_customer")):
         return "MOOT"
-    if _yes(row.get("speaker_abstracts_submitted")):
+    # Not _yes(): Arnica keeps organiser contact emails in this column, and an address is who
+    # to write to, not proof anything was sent. Six rows were ranked MOOT on that until 2026-09-16.
+    if records_a_submission(row.get("speaker_abstracts_submitted")):
         return "MOOT"
     if any(st.startswith(d) for d in DONE):
         return "MOOT"
@@ -88,10 +98,15 @@ def describe(d: dict) -> str:
     st = (d.get("status") or "").strip()
     if st:
         bits.append(f"status={st}")
-    if _yes(d.get("speaker_abstracts_submitted")):
+    if records_a_submission(d.get("speaker_abstracts_submitted")):
         bits.append("ALREADY SUBMITTED")
-    if _yes(d.get("submission_date_verified")):
+    # Only the word itself. "Needs Verification" is the OPPOSITE claim and was printed as
+    # "date verified by their team" by the old any-non-blank test, until 2026-09-16.
+    sdv = (d.get("submission_date_verified") or "").strip()
+    if sdv.lower() == "verified":
         bits.append("date verified by their team")
+    elif sdv:
+        bits.append(f"date verification: {sdv}")
     if _yes(d.get("withdrawn_by_customer")):
         bits.append("WITHDRAWN by customer")
     td = (d.get("their_deadline") or "").strip()

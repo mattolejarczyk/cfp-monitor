@@ -62,6 +62,121 @@ NEVER_LOAD = {"LOGIN", "PW", "PASSWORD", "USER", "USERNAME", "API KEY", "TOKEN"}
 
 VALUE_COLUMNS = sorted(set(COLUMN_MAP.values()) - {"their_name"})
 
+# ---------------------------------------------------------------- their vocabulary --
+# THEIR PIPELINE STATES, defined ONCE. Until 2026-09-16 there were two copies that disagreed:
+# `sheet_reconcile.SETTLED` counted "closed" as settled and `customer_context.DONE` did not, so
+# the review page and the remediation tool ranked the same row differently. Matched as a
+# lower-case PREFIX of the customer's value, exactly as both copies already did.
+LIVE_STATES = ("info needed", "drafting abstract", "in progress", "reviewing", "interested")
+DONE_STATES = ("submitted", "accepted", "declined", "client declined", "rejected", "withdrawn",
+               "not pursuing", "passed", "no longer")
+# RECOGNISED, DELIBERATELY NOT CLASSIFIED - awaiting the operator's reading of the word.
+# "Closed" looked like "the call has closed" and mostly is: 8 of Arnica's 10 have a passed
+# deadline. But Black Hat Asia (deadline 2026-10-20) and USENIX Security (2027-01-29) are marked
+# Closed with deadlines still ahead, and 6 of Utility's 7 carry no deadline at all. Classifying it
+# as DONE would bury a live deadline. Each consumer keeps its pre-2026-09-16 behaviour until the
+# meaning is settled; the shape check reports the count every week so it is not forgotten.
+UNDECIDED_STATES = ("closed", "not appropriate")
+
+# Values each controlled column may hold, for the shape check. A value outside these is not an
+# error - the customer owns the column - but our logic will not understand it, so it is REPORTED.
+KNOWN_VALUES = {
+    "priority": ("urgent", "high", "medium", "low"),
+    "submission_date_verified": ("verified", "needs verification"),
+}
+
+_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+
+
+def is_contact_only(value: str) -> bool:
+    """True when a cell holds nothing but email addresses and separators.
+
+    Arnica fills SPEAKER & ABSTRACTS SUBMITTED with organiser contacts - six rows on 2026-09-16,
+    every one an address (it-sa, two OWASP events, LabsCon). `customer_context` read ANY value
+    there as "already submitted" and ranked those rows as not worth working. An address is who to
+    write to, not a record that anything was sent.
+    """
+    rest = _EMAIL.sub("", value or "")
+    return bool(_EMAIL.search(value or "")) and not re.sub(r"[\s,;/|&]+|and", "", rest)
+
+
+def records_a_submission(value: str) -> bool:
+    """Does SPEAKER & ABSTRACTS SUBMITTED actually record something submitted?"""
+    v = (value or "").strip()
+    if v.lower() in ("", "0", "no", "false", "none", "n/a", "-"):
+        return False
+    return not is_contact_only(v)
+
+
+def sheet_shape(path: Path) -> dict:
+    """Reconcile a customer sheet's STRUCTURE against what we load, before loading it.
+
+    Run first after every download (weekly_intake does). It never changes anything and never
+    raises for a malformed sheet - it reports:
+
+      missing_fields     a field we load that no column in this sheet feeds. load_sheet keeps
+                         last week's values for it rather than blanking every row.
+      unmapped_columns   a column they added that we do not read - their data, silently dropped
+      duplicate_names    CONFERENCE is the row identity; a repeat means one row overwrites another
+      blank_names        rows with no CONFERENCE, which cannot be loaded at all
+      credentials_filled LOGIN/PW-style columns holding something (COUNT only, never the value)
+      unrecognised       values in status/priority/verified columns our logic does not understand
+      undecided          statuses we recognise but have deliberately not classified yet
+    """
+    with open(path, encoding="utf-8-sig", newline="") as fh:
+        raw = list(csv.DictReader(fh))
+        fh.seek(0)
+        header = next(csv.reader(fh), [])
+    heads = [norm_header(h) for h in header]
+    fed = {COLUMN_MAP[h] for h in heads if h in COLUMN_MAP}
+    names = [(r.get(next((k for k in r if norm_header(k) == "CONFERENCE"), ""), "") or "").strip()
+             for r in raw]
+    counts: dict[str, int] = {}
+    for n in names:
+        counts[n] = counts.get(n, 0) + 1
+
+    def col(field):
+        return next((k for k in (raw[0] if raw else {}) if COLUMN_MAP.get(norm_header(k)) == field),
+                    None)
+
+    unrecognised: dict[str, dict[str, int]] = {}
+    undecided: dict[str, int] = {}
+    st_col = col("status")
+    for r in raw:
+        v = (r.get(st_col) or "").strip() if st_col else ""
+        low = v.lower()
+        if not v:
+            continue
+        if any(low.startswith(s) for s in UNDECIDED_STATES):
+            undecided[v] = undecided.get(v, 0) + 1
+        elif not any(low.startswith(s) for s in LIVE_STATES + DONE_STATES):
+            unrecognised.setdefault("STATUS", {})[v[:80]] = \
+                unrecognised.get("STATUS", {}).get(v[:80], 0) + 1
+    for field, known in KNOWN_VALUES.items():
+        c = col(field)
+        for r in raw:
+            v = (r.get(c) or "").strip() if c else ""
+            if v and v.lower() not in known:
+                label = norm_header(c)
+                unrecognised.setdefault(label, {})[v[:80]] = \
+                    unrecognised.get(label, {}).get(v[:80], 0) + 1
+    sp = col("speaker_abstracts_submitted")
+    contact_only = sum(1 for r in raw if sp and is_contact_only(r.get(sp) or ""))
+
+    return {
+        "rows": len(raw), "columns": len(header),
+        "missing_fields": sorted(set(COLUMN_MAP.values()) - fed),
+        "unmapped_columns": [h for h in heads if h and h not in COLUMN_MAP and h not in NEVER_LOAD],
+        "duplicate_names": sorted(n for n, k in counts.items() if n and k > 1),
+        "blank_names": counts.get("", 0),
+        "credentials_filled": {h: sum(1 for r in raw if (r.get(k) or "").strip())
+                               for k, h in zip(header, heads) if h in NEVER_LOAD
+                               and any((r.get(k) or "").strip() for r in raw)},
+        "unrecognised": unrecognised,
+        "undecided": undecided,
+        "speaker_column_contact_only": contact_only,
+    }
+
 SCHEMA = """
 create table if not exists clients (
     client_key   text primary key,
@@ -191,6 +306,14 @@ def load_sheet(con: sqlite3.Connection, client_key: str, path: Path,
     today = date.today().isoformat()
     seen = {r["their_name"] for r in rows}
 
+    # A FIELD NO COLUMN FEEDS IS KEPT, NEVER BLANKED. Until 2026-09-16 a missing column meant
+    # `r.get(c, "")` for every row and `c = excluded.c` on conflict - so if the customer renamed
+    # or deleted one column, the next load would silently erase that field for every row we hold,
+    # and the diff would read as the customer clearing it. A new row still gets a blank; an
+    # existing row keeps last week's value, and the field is reported.
+    fed = {COLUMN_MAP[h] for h in _headers(path) if h in COLUMN_MAP}
+    missing = [c for c in VALUE_COLUMNS if c not in fed]
+
     before = {r[0]: r[1] for r in con.execute(
         "select their_name, event_id from client_conferences where client_key = ?",
         (client_key,))}
@@ -200,7 +323,7 @@ def load_sheet(con: sqlite3.Connection, client_key: str, path: Path,
         cols = {c: r.get(c, "") for c in VALUE_COLUMNS}
         params = {"k": client_key, "n": r["their_name"], "t": today,
                   "f": path.name, **cols}
-        sets = ", ".join(f"{c} = excluded.{c}" for c in VALUE_COLUMNS)
+        sets = ", ".join(f"{c} = excluded.{c}" for c in VALUE_COLUMNS if c not in missing)
         colnames = ", ".join(VALUE_COLUMNS)
         placeholders = ", ".join(f":{c}" for c in VALUE_COLUMNS)
         con.execute(
@@ -209,7 +332,7 @@ def load_sheet(con: sqlite3.Connection, client_key: str, path: Path,
                    snapshot_file, withdrawn_by_customer)
                 values (:k, :n, {placeholders}, :t, :t, :f, 0)
                 on conflict(client_key, their_name) do update set
-                  {sets},
+                  {sets + ',' if sets else ''}
                   last_seen_in_sheet = excluded.last_seen_in_sheet,
                   snapshot_file = excluded.snapshot_file,
                   withdrawn_by_customer = 0""", params)
@@ -240,7 +363,13 @@ def load_sheet(con: sqlite3.Connection, client_key: str, path: Path,
         (client_key,)).fetchone()[0]
     return {"rows": len(rows), "added": added, "updated": updated,
             "withdrawn": len(gone), "withdrawn_names": gone,
-            "unmapped_columns": unmapped, "not_yet_matched": unmatched}
+            "unmapped_columns": unmapped, "missing_fields_kept": missing,
+            "not_yet_matched": unmatched}
+
+
+def _headers(path: Path) -> list[str]:
+    with open(path, encoding="utf-8-sig", newline="") as fh:
+        return [norm_header(h) for h in next(csv.reader(fh), [])]
 
 
 def apply_matches(con: sqlite3.Connection, client_key: str,
