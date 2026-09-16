@@ -184,6 +184,16 @@ good one, and would tell Nicolia's team that nothing was verified.
 **Refuses to:** publish while degraded. Give a row a verdict from a page it no longer cites - a
 superseded verdict is set aside, and the row reads "not yet checked", which is true.
 
+**The step's QA report** (`scripts/qa_build.py`, run after the build, published or not) reads the
+built pages themselves - exactly what Nicolia's team receives - and compares them with the last
+published pages: what each page shows, and every row whose deadline, status, confidence, check
+verdict, opportunity label or name changed. **Read `runs_out/qa/<cycle>/build.md` before sending.**
+It flags a deadline that moved EARLIER, a row that disappeared, an Open row past its deadline, a
+disputed deadline, a dead link on an open call, and a retired opportunity label (v2.5).
+
+All of a week's QA reports share one folder, named for the Monday that cycle publishes
+(`src/cfp_monitor/qa_report.py`), so a drill-down can open any step of any week.
+
 ---
 
 ## Step 6 - SEND (Monday morning, operator)

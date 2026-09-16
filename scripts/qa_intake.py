@@ -5,8 +5,8 @@
 
 Run by `weekly_intake.py` after loading. Writes, per run:
 
-    runs_out/qa/<YYYY-MM-DD>/intake.json   machine-readable - what a dashboard drill-down reads
-    runs_out/qa/<YYYY-MM-DD>/intake.md     the same tables, for a person
+    runs_out/qa/<cycle Monday>/intake.json   machine-readable - what a dashboard drill-down reads
+    runs_out/qa/<cycle Monday>/intake.md     the same tables, for a person
 
 WHY IT EXISTS
 Asked for by the operator on 2026-09-16, after the first column-by-column comparison of both
@@ -19,10 +19,7 @@ answer without running anything:
 Counts, not values. A count per column shows a dropped column, a half-loaded field or a sudden
 emptying without putting the customer's text into another file.
 
-THE SHARED SHAPE - intended for every step's QA report, not just this one:
-
-    {"step", "week_of", "ran_at", "status": PASS | FLAG, "summary",
-     "sections": [{"title", "scope", "columns": [...], "rows": [[...]], "flags": [...]}]}
+THE SHARED SHAPE, and the one-folder-per-cycle layout, live in src/cfp_monitor/qa_report.py.
 
 A FLAG is something a person should look at, never a failure of the run: this report is read,
 not enforced. It changes nothing and writes only under runs_out/qa.
@@ -32,7 +29,6 @@ from __future__ import annotations
 import argparse
 import csv
 import difflib
-import json
 import re
 import sqlite3
 import sys
@@ -42,11 +38,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.cfp_monitor import clients                                  # noqa: E402
+from src.cfp_monitor import clients, qa_report                       # noqa: E402
 
 LIVE_DB = Path(r"C:\Users\matts\AppData\Local\CFP-Monitor\cfp_monitor.db")
 SNAPSHOTS = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets\customer_snapshots")
-QA_OUT = Path(r"C:\Users\matts\AppData\Local\CFP-Monitor\runs_out\qa")
+QA_OUT = qa_report.QA_ROOT
 
 # snapshot folder -> the client key the database uses (same table as weekly_intake.CLIENTS)
 CLIENTS = {"utility": ("utility-global", "Utility Global"), "arnica": ("arnica", "Arnica")}
@@ -171,7 +167,8 @@ def build(db: Path, snapshots: Path, folders: list[str], today: date) -> dict:
     # A credential in their own sheet is worth seeing but is not a defect in OUR step.
     ours = [x for x in flags if "credential" not in x and "likely rename" not in x]
     return {
-        "step": "intake", "week_of": today.isoformat(),
+        "step": "intake", "cycle": qa_report.cycle_of(today).isoformat(),
+        "ran_on": today.isoformat(),
         "ran_at": datetime.now().isoformat(timespec="seconds"),
         "status": "FLAG" if ours else "PASS",
         "summary": ("every column in both sheets matches the database" if not ours
@@ -191,7 +188,7 @@ def _cell(v) -> str:
 
 
 def to_markdown(r: dict) -> str:
-    out = [f"# Intake QA - week of {r['week_of']}", "",
+    out = [f"# Intake QA - cycle {r['cycle']} (ran {r['ran_on']})", "",
            f"**{r['status']}** - {r['summary']}  ", f"ran {r['ran_at']}", ""]
     for p in r["clients"]:
         out += [f"## {p['client']}", "",
@@ -228,12 +225,8 @@ def main() -> int:
     r = build(Path(a.db), Path(a.snapshots), folders, today)
     md = to_markdown(r)
     print(md)
-    d = Path(a.out) / today.isoformat()
     try:
-        d.mkdir(parents=True, exist_ok=True)
-        (d / "intake.json").write_text(json.dumps(r, indent=2), encoding="utf-8")
-        (d / "intake.md").write_text(md, encoding="utf-8")
-        print(f"wrote {d / 'intake.json'} and intake.md")
+        print(f"wrote {qa_report.write(r, md, Path(a.out))}")
     except OSError as exc:
         print(f"could not write QA report: {exc}")
     return 0

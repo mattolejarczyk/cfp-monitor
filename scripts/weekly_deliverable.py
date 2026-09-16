@@ -261,6 +261,23 @@ def main() -> int:
                   "This run could not verify what the pages would claim, and a page built from a "
                   "failed evidence pass looks exactly like a good one. Fix the cause, re-run, and "
                   "only then send anything.", ""] + [f"- {r}" for r in reasons]
+    # THE STEP'S QA REPORT - what the customer will see against last week's published pages, and
+    # anything worth a look before sending. Runs whether or not this build published, and says
+    # which. Read, never enforced: it cannot change the verdict above.
+    built = [p for p in (conf_page, awards_page) if p.exists()]
+    if built:
+        try:
+            qa = subprocess.run([PY, ROOT / "scripts/qa_build.py", "--current", *built,
+                                 "--weekly", a.out_dir, "--on", stamp,
+                                 "--published", "yes" if status == "HEALTHY" else "no"],
+                                capture_output=True, text=True, timeout=300,
+                                env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+            first = next((ln for ln in qa.stdout.splitlines() if ln.startswith("**")), "")
+            verdict = first.replace("**", "").strip() or f"did not run (exit {qa.returncode})"
+        except Exception as exc:                                     # noqa: BLE001
+            verdict = f"did not run ({type(exc).__name__})"
+        lines += ["## Build QA", "", f"    {verdict}", "",
+                  "Read runs_out/qa/<cycle>/build.md before sending.", ""]
     (work / "MANIFEST.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
     print(f"\nwork folder: {work}")

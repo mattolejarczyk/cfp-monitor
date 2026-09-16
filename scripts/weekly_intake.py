@@ -368,7 +368,7 @@ def main() -> int:
         first = next((ln for ln in out.splitlines() if ln.startswith("**")), "")
         verdict = first.replace("**", "").strip() or f"did not run (exit {code})"
         print()
-        print(f"INTAKE QA: {verdict}  (runs_out/qa/{today.isoformat()}/intake.md)")
+        print(f"INTAKE QA: {verdict}  (runs_out/qa/<cycle Monday>/intake.md)")
 
     # ALWAYS 0. The Saturday job must not lose a research window to an intake problem.
     return 0
