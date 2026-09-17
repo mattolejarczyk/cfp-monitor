@@ -5,6 +5,57 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-16 - rules whose premise expired when the customer's list stopped mirroring ours
+
+Nothing reached the customer. The customer's sheets are now fetched, reconciled, linked and
+QA-reported without a person, and three matching rules that had quietly stopped being true were
+caught in a dry run before they wrote wrong links.
+
+**Duplicates closed.** Nullcon and ShmooCon merged (395 -> 393); ShmooCon was not two editions but
+a projected 2027 edition of a series that ended in 2025. The three decided keeps (it-sa, Carbon
+Capture/Hydrogen Expo, World Biogas) are declared in `duplicate_decisions.txt`, read by the
+detector and the merge tool, so the report comes back clean.
+
+**Lifecycle evidence had no column (R16).** Upstream sent LIFECYCLE_EVIDENCE_URL/QUOTE; import
+dropped them; the only trace of ShmooCon ending sat in `deadline_quote`, which R1 can withdraw.
+Two columns, import never lets a blank erase a claim, backfill 0 -> 15, invariant check 16. Open:
+nothing checks the quote against its page.
+
+**Gate check 2.** A plain 403 now gets a browser second opinion (Black Hat USA and Infosecurity
+Europe were 404s behind a 403). SUBMISSION URL and CFP_SUBMISSION_URL, never read, are note `2s`,
+advisory until upstream agrees; hand-back drafted, not sent.
+
+**Intake end to end.** Service-account key on disk, google-auth installed, live fetch verified
+(84 + 125 rows). Retries stop on failures a retry cannot fix; the recorded reason is the failure,
+not the alert path.
+
+**Sheet shape first.** Columns reconciled cleanly, but a missing column would have BLANKED that
+field on every row - now kept at last week's value. Contact emails in SPEAKER & ABSTRACTS SUBMITTED
+were read as "submitted" (it-sa among six; the 2026-09-01 "22 acted on" was inflated by it).
+"Needs Verification" was described as verified. Two status vocabularies disagreed about "Closed" -
+now one, with Closed/Not Appropriate recognised but unclassified until the operator rules.
+
+**Matching, before running it unattended, found three expired premises.** The matcher read their
+date from "START DATES", a column no customer sheet has had - so name+city+date never fired.
+Calibration anchored on their list being in our order - zero anchors once reordered. "Unique
+domain" was proof while their list mirrored ours - and linked four SANS summits to SANS CDI, OWASP
+Global AppSec USA to OWASP Italy Day, Nullcon Berlin to Goa. Similarity could not separate right
+from wrong; "their name has a word ours lacks" could. apply_matches never rewrites a link we hold
+(18 had lost their method record). MATCHING-METHODOLOGY corrected in place. Linked: Utility 39 ->
+53 of 84, Arnica 39 -> 43 of 125. My own first draft of the domain rule compared every row with the
+last row of the previous loop - caught by reading the output, not by a test.
+
+**Per-step QA reports**, asked for by the operator: intake, import (did the delivery land; a fall
+in rows checked against recorded merges - exactly 26), build (reads the page's own DATA; rename
+matching by website then gloss-free name, after the first draft called 11 renames "removed").
+Shared shape and one folder per cycle in `qa_report.py`.
+
+**Page check measured, not built.** Opening the customer's link and asking whether it shows their
+row AND ours confirms 58 of 96 links and settles 8 of 21 review rows. First reading was wrong:
+"confirmed" only meant the page fits THEIR row. Details in HANDOFF.
+
+---
+
 ## 2026-09-15 - three things stored where they could drift, and every check stayed green
 
 Foundations day. Nothing reached the customer; a great deal that was invisible stopped being so.

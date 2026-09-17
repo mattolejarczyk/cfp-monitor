@@ -4,6 +4,57 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **Where the work stands, end of 2026-09-16. The customer's sheets are now read automatically, reconciled, linked to our conferences, and every step leaves a QA report. Nothing reached the customer.**
+>
+> **NEXT (operator asked for this first): turn the page check into a weekly step.** Measured today
+> on 117 customer links, cached, results and script in
+> `AppData\Local\CFP-Monitor\runs_out\qa\2026-09-21\page_check_measurement\` (a rerun from the
+> cache takes about a minute). The question: open THEIR link and ask whether the page shows their
+> name/date/city AND ours. Result: 58 of 96 existing links page-confirmed; Decarbonization Congress
+> looks like a wrong link; 10 links where our date is not on their page (Carbon Capture USA, Future
+> Fuels MENA, SAF NAM, Infosecurity Europe, CYBERUK, Gartner SRM, CES x2, European Biomass, H2 MEET);
+> Decarb Connect Canada where their sheet looks stale. Of 21 review rows the page settles 8: link
+> OWASP Global AppSec EU, OWASP LASCON, ACS Green Chemistry, FEW, Renewable Resources (+SXSW AI Track
+> for a person); keep Nullcon Berlin and NA SAF apart. **Nothing written yet** - the operator
+> approves the auto-link rule first. Rules already learned: tolerate spelling (s/z, joined words,
+> typos), drop ordinals ("17th"), browser-read pages that show no dates, fold accents and alias
+> cities, and "different event" needs THEIR date on the page and OURS absent.
+>
+> **WHAT CHANGED TODAY**
+>
+>     duplicates      tidy closed (Nullcon, ShmooCon merged); decided keeps declared in
+>                     docs/operations/duplicate_decisions.txt, read by detector AND merge tool
+>     lifecycle       grounding_facts gained lifecycle_evidence_url/quote (R16) - the claim "this
+>                     event has ended" had no column. 0 -> 15. A blank import never erases one.
+>     gate check 2    a 403 gets a browser second opinion (Black Hat USA was a 404 behind it);
+>                     SUBMISSION URL now reported as note 2s, advisory until upstream agrees -
+>                     request DRAFTED, NOT SENT: handoff-files/Handback_Criterion2_Submission_Links_20260916.md
+>     intake          service account works (key on disk; google-auth installed). Retries stop on
+>                     failures a retry cannot fix, and record the real reason.
+>     sheet shape     reconciled first after every download; a removed column keeps last week's
+>                     values instead of BLANKING every row; contact emails no longer read as
+>                     "submitted"; one status vocabulary (clients.LIVE/DONE/UNDECIDED_STATES)
+>     matching        now runs every intake. Three defects fixed: their date column was never read
+>                     (EVENT START DATE); calibration needed their list in our order; "unique
+>                     domain" linked sibling events (SANS, OWASP, Nullcon). Links we hold are never
+>                     rewritten. Utility 39 -> 53 linked of 84, Arnica 39 -> 43 of 125.
+>     QA reports      runs_out/qa/<cycle Monday>/{intake,import,build}.md+.json, one folder per
+>                     cycle. Import and build run automatically inside Monday's weekly_deliverable.
+>
+> **OPEN, needing the operator:** what "Closed" and "Not Appropriate" mean (17 rows; Black Hat Asia
+> and USENIX are Closed with deadlines ahead); send the criterion-2 hand-back or not; the 94
+> customer conferences we do not research (pending industry candidates); two sheet-hygiene points
+> for the customer, recorded in the private memory note, not here.
+>
+> **Watch:** Sat 2026-09-19 is the first live intake with shape check, matching and QA. Mon
+> 2026-09-21 is the first automatic import and build QA - read build.md before sending. Utility
+> currently fails gate check 6 (Climate Week NYC past its deadline); should clear with Saturday's
+> delivery, as should six rows labelled Registration on the page sent 2026-09-14.
+>
+> **Other open items:** nothing checks a lifecycle quote against its page (ShmooCon's fails);
+> 62 of their deadlines are free text and not compared on the review page; remaining QA reports
+> for steps 1 (research), 2 (verify), 3 (review), 6 (send).
+
 > **Where the work stands, end of 2026-09-15. Foundations day - three things were stored where they could drift, or not stored at all, and nothing reported it. Nothing reached the customer.**
 >
 > **THE DAY HAD ONE SHAPE.** Three separate investigations ended in the same finding: a fact
