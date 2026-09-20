@@ -85,6 +85,46 @@ def test_a_negation_in_a_previous_sentence_does_not_silence_this_one():
     assert ad.ACTIVE_PROSE.search("No cycle was announced. The 2027 call is now open.")
 
 
+# ------------------------------------------------------- ROTATION: whole words only --
+# Found 2026-09-20 by sweeping every text pattern in the gate over both live deliveries.
+# "alternat" was a bare substring and matched ALTERNATIVE, a word with the opposite sense.
+#
+# This one matters more than check 4 did because of DIRECTION. A ROTATION hit exempts a row
+# from being treated as defunct, so a false positive fails OPEN and silently: a dead event
+# is excused and nothing reports a problem. Check 4's false positives were noisy, which is
+# how they got found at all.
+
+NOT_ROTATION = [
+    # the live mis-fire, on Carbon Capture Technology Expo MENA 2026
+    "the original 2026 dates have passed and no alternative 2026 event is scheduled",
+    "No alternative venue was announced.",
+    "Alternatively, the organisers may cancel.",
+    "There are alternatives under discussion.",
+]
+IS_ROTATION = [
+    "The event alternates between Hannover and Milan.",
+    "It alternated to Chicago for 2026.",
+    "The venue is alternating this cycle.",
+    "EMO rotates between host cities.",
+    "The rotation brings it to Hannover.",
+    "A rotational schedule governs the host city.",
+    "The cycle dictates a move to Milan.",
+    "The conference moves to Osaka in 2027.",
+    "It is held instead in Lyon this year.",
+]
+
+
+def test_alternative_is_not_a_rotation():
+    for s in NOT_ROTATION:
+        assert not ad.ROTATION.search(s), f"false positive - fails OPEN on: {s}"
+
+
+def test_genuine_rotation_language_still_matches():
+    """The inversion. Widening the exclusion until nothing matches would delete the rule."""
+    for s in IS_ROTATION:
+        assert ad.ROTATION.search(s), f"missed genuine rotation language: {s}"
+
+
 # ------------------------------------------------------- 6b: awards are exempt --
 def _gate_with(rows):
     g = ad.Gate.__new__(ad.Gate)

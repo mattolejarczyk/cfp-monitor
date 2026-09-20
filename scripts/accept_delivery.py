@@ -65,7 +65,23 @@ PLACEHOLDERS = {"n/a", "na", "n.a.", "tbd", "tba", "unknown", "none", "null", "v
 SERIES_HINT = re.compile(r"\bmultiple\b|\bvarious\b|\bregional\b|\bnationwide\b|\bseveral\b", re.I)
 # Prose that says the event is over for good.
 # A rotating event is not a dead one - EMO Hannover moves venue on a cycle.
-ROTATION = re.compile(r'cycle dictates|rotat|alternat|moves to|held instead in', re.I)
+# WHOLE WORDS, not letter-strings. Fixed 2026-09-20.
+# "alternat" was a bare substring, so it also matched ALTERNATIVE - a different word with
+# the opposite sense. Carbon Capture Technology Expo MENA 2026 said "the original 2026 dates
+# have passed and no alternative 2026 event is scheduled", which means the event is GONE,
+# and this pattern read it as a venue rotation and excused the row.
+#
+# That direction is what makes it worth fixing. A false positive here FAILS OPEN: the row is
+# quietly exempted from the checks that would have caught a defunct event, and nothing
+# anywhere reports a problem. Check 4's false positives were the noisy kind - a good row got
+# accused and somebody looked. This kind is how four rows once went missing in silence.
+#
+# "rotat" keeps a suffix wildcard because every word that starts with it (rotates, rotating,
+# rotation, rotational) means the same thing. "alternat" gets an explicit suffix list
+# precisely because "alternative" does not.
+ROTATION = re.compile(
+    r'cycle dictates|\brotat\w*\b|\balternat(?:e|es|ed|ing|ion|ions)\b|'
+    r'moves to|held instead in', re.I)
 DEFUNCT_PHRASES = re.compile(
     r"permanently ended|permanently concluded|no future editions|final edition|last edition|"
     r"discontinued|no longer (?:being )?(?:held|running)|has been cancell?ed|"
