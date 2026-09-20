@@ -50,6 +50,41 @@ def test_inactive_never_matched_and_still_does_not():
     assert not ad.ACTIVE_PROSE.search("The programme is inactive.")
 
 
+# ------------------------------------------------ check 4, after the 2026-09-20 rewrite --
+# The lookbehind list was replaced by a windowed negator search because a fixed-width
+# lookbehind must sit immediately before the word, so anything in between defeats it.
+# These are the two escapes that proved it, plus the cases the rewrite must not regress.
+
+WORD_ORDER_ESCAPES = [
+    # the Cybersecurity delivery of 2026-09-20: the row says the call CONCLUDED, and was
+    # flagged for the word "active" inside its own evidence for saying so
+    "As of September 19, 2026, the 2026 event and its call for papers have concluded based "
+    "on the typical annual schedule and the absence of active 2026 listings on the site.",
+    # "been" was already a negator and the single word "an" was enough to get past it
+    "There has never been an active call for this series.",
+    "The lack of active listings suggests the series is dormant.",
+    "The series ran without active sponsorship after 2023.",
+    "The programme is no longer active.",
+]
+
+
+def test_a_negator_separated_from_the_word_still_spares_the_row():
+    for s in WORD_ORDER_ESCAPES:
+        assert not ad.ACTIVE_PROSE.search(s), f"false positive on: {s}"
+
+
+def test_been_active_with_no_negator_is_a_live_claim():
+    """The inversion. 'been' must NOT be treated as a negator on its own - only
+    'not been' / 'never been' are negations, and those negators stand by themselves."""
+    assert ad.ACTIVE_PROSE.search("The call for papers has been active since July.")
+
+
+def test_a_negation_in_a_previous_sentence_does_not_silence_this_one():
+    """The window stops at a sentence boundary, so an earlier absence cannot be
+    borrowed to excuse a genuine claim that follows it."""
+    assert ad.ACTIVE_PROSE.search("No cycle was announced. The 2027 call is now open.")
+
+
 # ------------------------------------------------------- 6b: awards are exempt --
 def _gate_with(rows):
     g = ad.Gate.__new__(ad.Gate)

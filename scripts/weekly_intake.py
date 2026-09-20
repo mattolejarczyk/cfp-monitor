@@ -257,6 +257,32 @@ def loaded_snapshot_date(db: str, client_key: str) -> date | None:
     return snapshot_date(Path(row[0])) if row and row[0] else None
 
 
+def loaded_snapshot_file(db: str, client_key: str) -> str | None:
+    """The exact snapshot FILE the database last ingested for this client.
+
+    Separate from loaded_snapshot_date because the load decision must not be taken at day
+    granularity. Snapshot names carry a full timestamp (client_YYYYMMDD-HHMMSS.csv), so two
+    runs on the same day produce two distinct, lexicographically ordered names.
+
+    Found 2026-09-19. The weekly run was re-triggered the same afternoon after a failed
+    02:00 run. It fetched both sheets, but `taken > in_db` compared 2026-09-19 with
+    2026-09-19, concluded it was not behind, and loaded nothing - so the research consulted
+    a client layer twelve hours stale, with the fresh file sitting unused on disk and the
+    status line reporting HEALTHY. The date comparison was right while a re-run could only
+    happen on a later day; re-running the same day is now the intended way to recover from
+    a failure, which is what made it wrong.
+    """
+    import sqlite3                                                   # noqa: PLC0415
+    try:
+        con = sqlite3.connect(db)
+        row = con.execute("SELECT MAX(snapshot_file) FROM client_conferences WHERE client_key=?",
+                          (client_key,)).fetchone()
+        con.close()
+    except Exception:                                                # noqa: BLE001
+        return None
+    return row[0] if row and row[0] else None
+
+
 def fetch_all(config: Path, snapshots: Path) -> tuple[bool, list[str]]:
     """Fetch both sheets, with retries. Returns (any_success, notes)."""
     notes: list[str] = []
@@ -333,15 +359,28 @@ def main() -> int:
                 notes.append(f"{client}: shape check could not run ({type(exc).__name__})")
         is_new = taken is not None and taken != before.get(client)
         in_db = loaded_snapshot_date(a.db, meta["key"])
+        in_db_file = loaded_snapshot_file(a.db, meta["key"])
         # LOAD WHATEVER THE DATABASE HAS NOT SEEN, not merely what we fetched just now. This is
         # the self-repairing part: a snapshot taken on a week the load step failed, or was never
         # run, is picked up on the next pass instead of sitting on disk for ever while the
         # client layer quietly ages.
-        behind = taken is not None and (in_db is None or taken > in_db)
+        #
+        # Compared by FILENAME, not by date. The names are client_YYYYMMDD-HHMMSS.csv, so a
+        # plain string compare orders them by the moment they were taken and a second run on
+        # the same day is correctly seen as newer. See loaded_snapshot_file for the run this
+        # was found on.
+        behind = newest is not None and (in_db_file is None or newest.name > in_db_file)
         loaded, detail = False, ""
         if behind and not is_new:
-            notes.append(f"{client}: snapshot {taken} was on disk but the database held "
-                         f"{in_db or 'nothing'} - loading it now")
+            # Name the FILES when the dates are equal, or the note reads as nonsense
+            # ("snapshot 2026-09-19 was on disk but the database held 2026-09-19").
+            if taken is not None and in_db == taken:
+                notes.append(f"{client}: a newer snapshot was taken today "
+                             f"({newest.name}) than the one the database holds "
+                             f"({in_db_file}) - loading it now")
+            else:
+                notes.append(f"{client}: snapshot {taken} was on disk but the database held "
+                             f"{in_db or 'nothing'} - loading it now")
 
         if behind and not a.dry_run:
             code, out = run([PY, ROOT / "scripts/load_client_sheet.py", "--db", a.db,

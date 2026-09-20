@@ -87,9 +87,62 @@ OPPORTUNITIES = {"Speaking", "Awards", "Exhibiting", "Registration"}
 #
 # "inactive" already fails to match: \b requires a boundary before "active" and there is
 # none inside the word. What was missing is a preceding negator.
-ACTIVE_PROSE = re.compile(
-    r"(?<!last )(?<!no )(?<!not )(?<!never )(?<!been )(?<!nor )"
-    r"\b(active|now open|now accepting|currently accepting)\b", re.I)
+#
+# REPLACED THE LOOKBEHIND PILE, 2026-09-20. The list above grew each time a new phrasing
+# slipped through, and it kept slipping through for a structural reason: a fixed-width
+# lookbehind has to sit immediately before the word, so any article or adverb between the
+# negator and "active" defeats it. Two escapes proved it -
+#
+#   "...concluded ... based on the ABSENCE OF active 2026 listings..."   (this delivery)
+#   "There has NEVER BEEN AN active call for this series."               (found by its test)
+#
+# - and the second is the interesting one, because "been" was already in the list and the
+# lone word "an" was enough to get past it. Widening the list further would have kept
+# losing that race.
+#
+# So: find the claim word, then look back a short way IN THE SAME SENTENCE for a negator.
+# The window is deliberately small, and `[^.]` stops it at a sentence boundary, so a
+# negation in a previous sentence cannot silence a genuine claim in this one.
+#
+# "been" is deliberately NOT a negator here. "The call has been active since July" asserts a
+# live call; the cases that need sparing say "has NOT been" or "has NEVER been", and those
+# negators are in the list on their own.
+#
+# The .search() interface is kept because two scripts and the existing test call it that way.
+class _ActiveProse:
+    """Assertions that a call is LIVE, sparing prose that is honest about its absence."""
+
+    WORD = re.compile(r"\b(active|now open|now accepting|currently accepting)\b", re.I)
+    # A negator, then at most 30 characters of the same sentence, then the claim word.
+    NEGATOR = re.compile(
+        r"\b(no|not|never|nor|without|absence|absent|lack|lacking|last|dormant)\b"
+        r"[^.]{0,30}$", re.I)
+
+    # "Active" inside an ORGANISATION'S NAME, found 2026-09-20 on Sustainable Fuels Global
+    # Summit 2027: "the organizer, Active Communications International (ACI), have not yet
+    # published confirmed dates or a call for speakers". The row says the opposite of what
+    # it was accused of, and no amount of negator hunting helps - the word is simply part of
+    # a proper noun.
+    #
+    # Narrow on purpose: only the bare word "active", only when Capitalised AND followed by
+    # another capitalised word. "Active submissions are open" keeps firing, because the next
+    # word is lowercase. The multi-word phrases ("now open", "now accepting") are left alone
+    # entirely - they do not appear inside company names, and exempting title case there
+    # would silence a genuine "Now Open For Submissions".
+    PROPER_NOUN = re.compile(r"Active\s+[A-Z]")
+
+    def search(self, text: str):
+        text = text or ""
+        for m in self.WORD.finditer(text):
+            if self.NEGATOR.search(text[:m.start()]):
+                continue
+            if m.group(0) == "Active" and self.PROPER_NOUN.match(text, m.start()):
+                continue
+            return m
+        return None
+
+
+ACTIVE_PROSE = _ActiveProse()
 # Words that only appear in a venue name. "Park" is deliberately absent: Menlo Park and
 # Overland Park are cities, and flagging them would train people to ignore this check.
 VENUE_HINT = re.compile(

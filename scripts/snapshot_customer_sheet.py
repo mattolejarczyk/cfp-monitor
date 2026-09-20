@@ -41,6 +41,27 @@ from pathlib import Path
 # snapshot and then diffed next week as though the customer had emptied their list.
 REQUIRED = ("CONFERENCE", "SUBMISSION DEADLINE", "STATUS")
 
+# ONE RULE PER WORKSTREAM, same as fetch_customer_sheet.py (2026-09-20).
+# This check is deliberately INDEPENDENT of the fetcher's - it is the last thing standing
+# between a sign-in redirect and the snapshot store, and it caught the awards sheets on the
+# first real fetch precisely because it does not trust the caller. Teaching it the awards
+# shape must not weaken that: an unknown kind is refused rather than defaulted, and the
+# awards rules are as strict as the conference ones about the columns awards actually have.
+#
+# The awards sheets key on AWARD, and the two customers disagree on the status column -
+# Arnica's says STATUS, Utility Global's says SUBMISSION STATUS - so "at least one of"
+# is what we mean, not a longer REQUIRED list. See build_awards_seed.py, which documents
+# the same naming split.
+REQUIRED_BY_KIND = {
+    "conference": ("CONFERENCE", "SUBMISSION DEADLINE", "STATUS"),
+    "awards":     ("AWARD", "SUBMISSION DEADLINE"),
+}
+ONE_OF_BY_KIND = {
+    "conference": (),
+    "awards":     ("STATUS", "SUBMISSION STATUS"),
+}
+DEFAULT_KIND = "conference"
+
 # Their columns, by who owns them (rule C1). Recorded in the manifest rather than enforced here:
 # this step only copies. But a snapshot whose shape has drifted is worth knowing about the day
 # it drifts, not the week we try to diff it.
@@ -118,6 +139,9 @@ def main() -> int:
     ap.add_argument("--client", required=True, help="short client key, e.g. utility, arnica")
     ap.add_argument("--out-dir", default=os.environ.get("CFP_CUSTOMER_SNAPSHOTS", ""),
                     help="PRIVATE directory for snapshots; never a public repo")
+    ap.add_argument("--kind", default=DEFAULT_KIND, choices=sorted(REQUIRED_BY_KIND),
+                    help="which workstream's column shape this sheet must match "
+                         f"(default {DEFAULT_KIND})")
     ap.add_argument("--source-url", default="", help="the sheet URL, recorded in the manifest")
     ap.add_argument("--note", default="", help="free text recorded with this snapshot")
     a = ap.parse_args()
@@ -134,12 +158,24 @@ def main() -> int:
         return 2
 
     headers, n_rows, present = read_shape(src)
-    missing = [c for c in REQUIRED if c not in headers]
+    required = REQUIRED_BY_KIND.get(a.kind)
+    if required is None:
+        print(f"REFUSED: unknown sheet kind {a.kind!r}. Known kinds: "
+              f"{sorted(REQUIRED_BY_KIND)}. Nothing was saved.")
+        return 3
+    missing = [c for c in required if c not in headers]
     if missing:
-        print(f"REFUSED: {src.name} does not look like a customer sheet - missing {missing}.\n"
+        print(f"REFUSED: {src.name} does not look like a {a.kind} sheet - missing {missing}.\n"
               f"  Found {len(headers)} column(s): {headers[:8]}\n"
               "  A sign-in redirect or the wrong tab produces exactly this, and storing it\n"
               "  would read next week as the customer deleting their whole list.")
+        return 3
+    one_of = ONE_OF_BY_KIND.get(a.kind, ())
+    if one_of and not any(c in headers for c in one_of):
+        print(f"REFUSED: {src.name} carries none of {list(one_of)}.\n"
+              f"  Found {len(headers)} column(s): {headers[:8]}\n"
+              "  One of them holds the customer's own status, which is the signal we read\n"
+              "  and never write. A sheet without it is the wrong tab.")
         return 3
 
     out = Path(a.out_dir) / a.client

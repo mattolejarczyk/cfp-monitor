@@ -57,6 +57,31 @@ from datetime import datetime
 from pathlib import Path
 
 REQUIRED = ("CONFERENCE", "SUBMISSION DEADLINE", "STATUS")
+
+# THE SHAPE RULES BELONG TO THE WORKSTREAM, NOT TO THE FETCHER.
+# Added 2026-09-20, when the awards sheets were wired up. REQUIRED above was written when
+# conferences were the only customer sheet, and it is correct for them. The awards sheets
+# are a different shape and would have failed it three ways: they key on AWARD rather than
+# CONFERENCE, and the two customers do not agree on the status column - Arnica's awards
+# sheet says STATUS, Utility Global's says SUBMISSION STATUS.
+#
+# That last one is why ONE_OF exists rather than a longer REQUIRED list. The disagreement
+# is a NAME difference, not a value difference (see build_awards_seed.py, which documents
+# the same split), so demanding both columns would reject a healthy sheet, and demanding
+# neither would let a sheet with no customer signal through unnoticed. "At least one of"
+# is what we actually mean.
+#
+# A client entry with no "kind" is a conference sheet, so a config written before this
+# change keeps working unaltered.
+REQUIRED_BY_KIND = {
+    "conference": ("CONFERENCE", "SUBMISSION DEADLINE", "STATUS"),
+    "awards":     ("AWARD", "SUBMISSION DEADLINE"),
+}
+ONE_OF_BY_KIND = {
+    "conference": (),
+    "awards":     ("STATUS", "SUBMISSION STATUS"),
+}
+DEFAULT_KIND = "conference"
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 DEFAULT_CONFIG = Path(os.environ.get("LOCALAPPDATA", ".")) / "CFP-Monitor" / "customer_sheets.json"
 HERE = Path(__file__).resolve().parent
@@ -105,19 +130,36 @@ def fetch_csv(sheet_id: str, gid: str, key_path: Path, timeout: int = 60) -> str
     return r.text
 
 
-def validate(text: str, client: str) -> int:
+def validate(text: str, client: str, kind: str = DEFAULT_KIND) -> int:
     # Headers come from the reader, NOT from the first row: an export with a header line and
     # no data would otherwise report "missing columns" and send the reader to check the gid,
     # when the real news is that the sheet came back empty.
     reader = csv.DictReader(io.StringIO(text))
     headers = reader.fieldnames or []
     rows = list(reader)
-    missing = [c for c in REQUIRED if c not in headers]
+
+    required = REQUIRED_BY_KIND.get(kind)
+    if required is None:
+        # An unknown kind must not silently fall back to the conference shape and "pass".
+        raise RuntimeError(
+            f"{client}: unknown sheet kind {kind!r}. Known kinds: "
+            f"{sorted(REQUIRED_BY_KIND)}. Nothing was saved."
+        )
+    missing = [c for c in required if c not in headers]
     if missing:
         raise RuntimeError(
-            f"{client}: the export is missing column(s) {missing}. Wrong tab (check the gid) "
-            "or the sheet's shape has changed. Nothing was saved."
+            f"{client}: the {kind} export is missing column(s) {missing}. Wrong tab (check "
+            "the gid) or the sheet's shape has changed. Nothing was saved."
         )
+
+    one_of = ONE_OF_BY_KIND.get(kind, ())
+    if one_of and not any(c in headers for c in one_of):
+        raise RuntimeError(
+            f"{client}: the {kind} export carries none of {list(one_of)}. One of them holds "
+            "the customer's own status, which is the signal we read and never write. "
+            "Nothing was saved."
+        )
+
     if not rows:
         raise RuntimeError(f"{client}: the export parsed as CSV but has no rows. Nothing was saved.")
     return len(rows)
@@ -157,13 +199,20 @@ def clear_alert() -> None:
             pass
 
 
-def snapshot(csv_text: str, client: str, out_dir: str | None) -> int:
-    """Hand the bytes to snapshot_customer_sheet.py, which owns the snapshot store."""
+def snapshot(csv_text: str, client: str, out_dir: str | None,
+             kind: str = DEFAULT_KIND) -> int:
+    """Hand the bytes to snapshot_customer_sheet.py, which owns the snapshot store.
+
+    The kind goes with them. That script checks the shape AGAIN, independently, and it is
+    right to - it is the last thing between a sign-in redirect and the store, and it is not
+    supposed to trust this caller. Passing the kind tells it which shape to demand; it does
+    not tell it to skip the demand.
+    """
     tmp = Path(tempfile.gettempdir()) / f"cfp_fetch_{client}_{os.getpid()}.csv"
     tmp.write_text(csv_text, encoding="utf-8", newline="")
     try:
         cmd = [sys.executable, str(HERE / "snapshot_customer_sheet.py"),
-               "--csv", str(tmp), "--client", client]
+               "--csv", str(tmp), "--client", client, "--kind", kind]
         if out_dir:
             cmd += ["--out-dir", out_dir]
         return subprocess.run(cmd, check=False).returncode
@@ -196,11 +245,12 @@ def main() -> int:
     for client in clients:
         entry = cfg["clients"][client]
         try:
+            kind = entry.get("kind", DEFAULT_KIND)
             text = fetch_csv(entry["sheet_id"], str(entry["gid"]), key_path)
-            rows = validate(text, client)
-            print(f"{client}: fetched {rows} rows ({len(text):,} bytes)")
+            rows = validate(text, client, kind)
+            print(f"{client}: fetched {rows} rows ({len(text):,} bytes) [{kind}]")
             if not args.no_snapshot:
-                code = snapshot(text, client, args.out_dir)
+                code = snapshot(text, client, args.out_dir, kind)
                 if code != 0:
                     problems.append(f"{client}: snapshot step exited {code}")
         except Exception as exc:
