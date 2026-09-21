@@ -4,7 +4,24 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
-> **Where the work stands, end of 2026-09-16. The customer's sheets are now read automatically, reconciled, linked to our conferences, and every step leaves a QA report. Nothing reached the customer.**
+> **Where the work stands, end of 2026-09-20. THIS WEEK'S RESEARCH IS IMPORTED AND ALL INVARIANTS HOLD.** Monday 07:00 publishes 58 Cybersecurity and 54 Utility rows. Both deliveries cleared the gate as ACCEPTED. Net change for the customer: 10 improvements, 4 genuine losses, and 12 already-expired deadlines cleared off the page.
+>
+> **NEXT: nothing is required before Monday.** After that, in order:
+> 1. **SAF Europe Summit 2027** - held OPEN in `market_sheets/held_rows.txt` with no established reason. An UPCOMING event should not fall off a live-market input list; the other two holds (it-sa Exhibiting, Oil and Gas Decarbonisation 2026) are likelier to be harmless.
+> 2. **Awards cadence** (operator agreed the split, not yet built): add awards to `weekly_verify.py` using the existing `check_award_deadlines.py` and `link_check_awards.py` - free, no LLM - then a monthly paid awards re-research task offset from the Wed prospect sweep. Awards intake already runs weekly; 153 rows live in the two sheets against 135 in the Sept 3 seed.
+> 3. **Amend the contract for the R16 decision** below. Upstream assigns the number.
+>
+> **THE SATURDAY JOB IS ARMED** with the ungrounded guard, circuit breaker, corrected model default, canary (both its first-run bugs fixed), archive fix and tightened lifecycle prompt. The 2026-09-19 02:00 run wrote 114 answers no search stood behind; 0 have been written since.
+>
+> **R16 CHANGED, BY OPERATOR DECISION 2026-09-20.** An ASSERTED ending with no citation still fails the gate. A DECLARED DOUBT - "Needs Verification" plus IS_PROJECTED=true - now ships with a note saying someone should go cite it. Previously the generator deliberately produced rows the gate always rejected, and two of them, on conferences nobody at the customer tracks, blocked all 112 rows of a week's research. Nothing ships as "Closed" on prose alone; that protection is untouched. `tests/test_gate_r16_declared_doubt.py` pins both directions.
+>
+> **TWO TRAPS FOR THE NEXT SESSION, both cost hours today:**
+> - `import_grounding --out` must write to the seed directory **beside the DATABASE** (`AppData\Local\CFP-Monitor\market_sheets`), using the SHORT names `cyber_seed.csv` / `utility_seed.csv`. Writing `cybersecurity_seed.csv` into the repo folder leaves the DB holding rows the index does not know about.
+> - `verify_grounding` runs **between** import and `check_invariants`. Skipping it leaves every new row without a verify state.
+>
+> **Read `C:\Users\matts\CLAUDE.md` before writing any code.** It now requires announcing `USING EXISTING: <path>` or `NEW CODE: searched TOOLING.md ... found nothing` before each run. Roughly 20 throwaway scripts were written on 2026-09-20 and two produced wrong conclusions that were reported as fact - one of them joined on the delivery's EVENT_ID directly, the join contract 5.4 forbids, when `scripts/qa_import.py` already did the job correctly.
+>
+> **Where it stood end of 2026-09-16. The customer's sheets are read automatically, reconciled, linked to our conferences, and every step leaves a QA report.**
 >
 > **NEXT (operator asked for this first): turn the page check into a weekly step.** Measured today
 > on 117 customer links, cached, results and script in

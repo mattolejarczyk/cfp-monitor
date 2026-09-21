@@ -1,0 +1,58 @@
+2026-09-20	Cybersecurity	SecureWorld East 2026	DEADLINE_QUOTE	A	East. October 4, 2026.	East 2026 2026-10-04	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld Government & Critical Infrastructure 2026	DEADLINE_QUOTE	A	Government & Critical Infrastructure. October 28, 2026. Government & Critical Infrastructure. December 9, 2026	Government & Critical Infrastructure 2026 2026-10-28	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	RSA Conference 2027	VENUE_EVIDENCE_URL	D	https://www.rsaconference.com/about/frequently-asked-questions		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	AppSec Israel 2026	SUBMISSION URL	D	https://appsecil.org/cfp/		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	AppSec Israel 2026	CFP_SUBMISSION_URL	D	https://appsecil.org/cfp/		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	Infosecurity Europe 2026	SUBMISSION URL	D	https://www.infosecurityeurope.com/en-gb/speak.html		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	Infosecurity Europe 2026	CFP_SUBMISSION_URL	D	https://www.infosecurityeurope.com/en-gb/speak.html		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	Infosecurity Europe 2026	DEADLINE_EVIDENCE_URL	D	https://www.infosecurityeurope.com/en-gb/speak.html		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	Infosecurity Europe 2026	SOURCE_AS_OF	D	2026-09-19	2026-09-20	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	Infosecurity Europe 2026	VENUE_EVIDENCE_URL	D	https://www.infosecurityeurope.com/en-gb/about/venue.html		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	OWASP Italy Day 2026	SUBMISSION URL	D	https://sessionize.com/owasp-italy-day-2026/		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	OWASP Italy Day 2026	CFP_SUBMISSION_URL	D	https://sessionize.com/owasp-italy-day-2026/		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	LASCON 2026	SUBMISSION URL	D	https://sessionize.com/lascon-2026/		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	LASCON 2026	CFP_SUBMISSION_URL	D	https://sessionize.com/lascon-2026/		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	LASCON 2026	DEADLINE_EVIDENCE_URL	D	https://sessionize.com/lascon-2026/		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	LASCON 2026	DEADLINE_QUOTE	D	Call for Speakers is closed.		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	LASCON 2026	IS_PROJECTED	D	false	true	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	LASCON 2026	GROUNDING_CONFIDENCE	D	Verified (2026)	Projected (2026)	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	LASCON 2026	SOURCE_AS_OF	D	2026-09-19	2026-09-20	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	it-sa Expo & Congress 2026	SUBMISSION URL	D	https://www.itsa365.de/en/it-sa-expo-congress/programme/supporting-programme		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	it-sa Expo & Congress 2026	CFP_SUBMISSION_URL	D	https://www.itsa365.de/en/it-sa-expo-congress/programme/supporting-programme		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	it-sa Expo & Congress 2026	DEADLINE_EVIDENCE_URL	D	https://www.itsa365.de/en/it-sa-expo-congress/programme/supporting-programme		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	it-sa Expo & Congress 2026	IS_PROJECTED	D	false	true	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	it-sa Expo & Congress 2026	GROUNDING_CONFIDENCE	D	Verified (2026)	Projected (2026)	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	it-sa Expo & Congress 2026	SOURCE_AS_OF	D	2026-09-19	2026-09-20	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	it-sa Expo & Congress 2026	VENUE_EVIDENCE_URL	D	https://www.itsa365.de/en/it-sa-expo-congress/industry-information/dates-opening-times		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld Detroit 2026	SUBMISSION URL	D	https://www.secureworld.io/call-for-speakers		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld Detroit 2026	CFP_SUBMISSION_URL	D	https://www.secureworld.io/call-for-speakers		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld Detroit 2026	DEADLINE_EVIDENCE_URL	D	https://www.secureworld.io/call-for-speakers		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld Detroit 2026	IS_PROJECTED	D	false	true	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld Detroit 2026	GROUNDING_CONFIDENCE	D	Verified (2026)	Projected (2026)	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld Detroit 2026	SOURCE_AS_OF	D	2026-09-19	2026-09-20	Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld East 2026	SUBMISSION URL	D	https://www.secureworld.io/call-for-speakers		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld East 2026	CFP_SUBMISSION_URL	D	https://www.secureworld.io/call-for-speakers		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld Government & Critical Infrastructure 2026	SUBMISSION URL	D	https://www.secureworld.io/call-for-speakers		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	SecureWorld Government & Critical Infrastructure 2026	CFP_SUBMISSION_URL	D	https://www.secureworld.io/call-for-speakers		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	Cloud & Cyber Security Expo London 2027	SUBMISSION URL	D	https://www.cloudsecurityexpo.com/call-for-speakers		Cybersecurity_audited.csv
+2026-09-20	Cybersecurity	Cloud & Cyber Security Expo London 2027	DEADLINE_EVIDENCE_URL	D	https://www.cloudsecurityexpo.com/register-your-interest-for-2027		Cybersecurity_audited.csv
+2026-09-20	Utility	Carbon Capture Technology Expo Europe 2026	SUBMISSION URL	D	https://www.carboncapture-expo.com/call-for-speakers/		Utility_audited.csv
+2026-09-20	Utility	Carbon Capture Technology Expo Europe 2026	CFP_SUBMISSION_URL	D	https://www.carboncapture-expo.com/call-for-speakers/		Utility_audited.csv
+2026-09-20	Utility	Carbon Capture Technology Expo Europe 2026	VENUE_EVIDENCE_URL	D	https://www.hamburg-messe.de/en/exhibitors/event-calendar/event-details/event/carbon-capture-technology-world-expo		Utility_audited.csv
+2026-09-20	Utility	World Future Energy Summit 2027	SUBMISSION URL	D	https://www.worldfutureenergysummit.com/en-gb/visit/speaking-opportunities.html		Utility_audited.csv
+2026-09-20	Utility	World Future Energy Summit 2027	CFP_SUBMISSION_URL	D	https://www.worldfutureenergysummit.com/en-gb/visit/speaking-opportunities.html		Utility_audited.csv
+2026-09-20	Utility	International Conference on Climate Change: Impacts & Responses	VENUE_EVIDENCE_URL	D	https://on-climate.com/2027-conference/location		Utility_audited.csv
+2026-09-20	Utility	India Energy Week 2027	SUBMISSION URL	D	https://www.indiaenergyweek.com/conference/technical-conference/call-for-papers/		Utility_audited.csv
+2026-09-20	Utility	India Energy Week 2027	CFP_SUBMISSION_URL	D	https://www.indiaenergyweek.com/conference/technical-conference/call-for-papers/		Utility_audited.csv
+2026-09-20	Utility	Canadian Hydrogen Convention 2027	SUBMISSION URL	D	https://www.hydrogenexpo.com/conference/interested-in-speaking/		Utility_audited.csv
+2026-09-20	Utility	Canadian Hydrogen Convention 2027	CFP_SUBMISSION_URL	D	https://www.hydrogenexpo.com/conference/interested-in-speaking/		Utility_audited.csv
+2026-09-20	Utility	Canadian Hydrogen Convention 2027	DEADLINE_EVIDENCE_URL	D	https://www.hydrogenexpo.com/conference/interested-in-speaking/		Utility_audited.csv
+2026-09-20	Utility	Canadian Hydrogen Convention 2027	SOURCE_AS_OF	D	2026-09-19	2026-09-20	Utility_audited.csv
+2026-09-20	Utility	Innovation Zero World Congress 2027	SUBMISSION URL	D	https://www.innovationzero.com/speak		Utility_audited.csv
+2026-09-20	Utility	Innovation Zero World Congress 2027	CFP_SUBMISSION_URL	D	https://www.innovationzero.com/speak		Utility_audited.csv
+2026-09-20	Utility	Hydrogen Technology World Expo 2027	VENUE_EVIDENCE_URL	D	https://www.hamburg-messe.de/en/exhibitors/event-details/event/hydrogen-technology-world-expo		Utility_audited.csv
+2026-09-20	Utility	Industrial Net Zero & Decarbonisation Europe Summit 2026	SUBMISSION URL	D	https://www.leadventgrp.com/become-a-speaker		Utility_audited.csv
+2026-09-20	Utility	Industrial Net Zero & Decarbonisation Europe Summit 2026	CFP_SUBMISSION_URL	D	https://www.leadventgrp.com/become-a-speaker		Utility_audited.csv
+2026-09-20	Utility	World Hydrogen 2027 Summit & Exhibition	SUBMISSION URL	D	https://www.world-hydrogen-summit.com/speaker-hub/		Utility_audited.csv
+2026-09-20	Utility	World Hydrogen 2027 Summit & Exhibition	CFP_SUBMISSION_URL	D	https://www.world-hydrogen-summit.com/speaker-hub/		Utility_audited.csv
+2026-09-20	Utility	World Hydrogen 2027 Summit & Exhibition	DEADLINE_EVIDENCE_URL	D	https://www.world-hydrogen-summit.com/speaker-hub/		Utility_audited.csv

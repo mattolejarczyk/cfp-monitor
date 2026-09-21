@@ -473,6 +473,19 @@ uv run --with pypdf python scripts/accept_delivery.py "/c/Users/matts/Downloads/
 uv run python scripts/repair_delivery.py "/c/Users/matts/Downloads/M.csv" --out ".../M_REPAIRED.csv"
 
 # 3  back up + import + verify
+#
+#    THE cd IS LOAD-BEARING. `market_sheets/` below is RELATIVE, and the seed directory that
+#    check_invariants reads is the one beside the DATABASE - not the one in the repo. Running
+#    these from cfp-monitor/ instead writes the seed into the repo folder, the database takes
+#    the new rows, the index that tracks them does not, and reconciliation reports them as
+#    undeclared extras. Cost hours on 2026-09-20 with 18 rows.
+#
+#    The names are SHORT and already established: cyber_seed.csv, utility_seed.csv,
+#    robotics_seed.csv ... Writing cybersecurity_seed.csv creates a second, ignored file
+#    beside the real one rather than updating it.
+#
+#    And verify_grounding runs BETWEEN import and check_invariants. Skipping it leaves every
+#    newly inserted row with no verify state, which check 4 then reports. Also 2026-09-20.
 cd "/c/Users/matts/AppData/Local/CFP-Monitor"
 cp cfp_monitor.db "cfp_monitor.backup-pre-M-$(date +%Y%m%d-%H%M%S).db"
 ./venv/Scripts/python.exe scripts/import_grounding.py ".../M.csv" --out market_sheets/m_seed.csv --seed cfp_monitor.db

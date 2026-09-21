@@ -5,6 +5,109 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-20 - a run that wrote guesses as research, and the week that finally reached the customer
+
+**This week's data is IMPORTED and all invariants hold.** Monday 07:00 publishes 58
+Cybersecurity and 54 Utility rows - the first cycle to reach the customer since the pipeline
+started counting its own failures.
+
+### The defect that started it
+
+The Sat 2026-09-19 02:00 run wrote **114 answers that no search stood behind**, as though they
+were research. `DEFAULT_MODEL` still read `gemini-3.5-flash` while the comment directly above
+it said `gemini-3-flash-preview` "answered the same grounded prompt reliably on the same key".
+The finding was made in an earlier session and written into the COMMENT; the constant beneath
+it was never changed, and the scheduled job passes no `--model`. Of that run's calls that did
+return, 98% had run no search. Output quarantined at
+`Markets\quarantine\20260919-ungrounded\`.
+
+### Built
+
+    ungrounded guard    an answer with no search now raises, retries, and falls through to a
+                        stub that says so. 0 ungrounded written since, against 114 before.
+    circuit breaker     --max-consecutive-stubs (default 10); one good row resets it. Exit 4
+                        halts remaining markets - grounding being down is not per-market.
+    run_canary.ps1      5 rows through the REAL entry point, then grounding bar, gate, and an
+                        import into a COPY of the DB. run_monthly runs it itself rather than
+                        refusing without one, and BEFORE the archive step.
+    archive fix         run_monthly moved into a per-MONTH folder with -Force; a second run in
+                        one month silently overwrote the first. It did exactly that here.
+    awards intake       both award sheets now fetched and snapshotted weekly under their own
+                        client keys. They had NEVER been fetched by the automation.
+
+### The canary's first run found two bugs, either of which would have BLOCKED a Saturday
+
+`$rows` collided with the `[int]$Rows` parameter (PowerShell names are case-insensitive), so
+stage A produced a clean 5 rows and stage B counted 1 and declared grounding broken. And stage
+C demanded the 5-row sample be ACCEPTED, when a content failure in five rows is ordinary - it
+now fails only on a STRUCTURAL break, which is the one that means the generator and gate
+disagree about the schema.
+
+### Gate changes
+
+- **check 4 (ACTIVE_PROSE) rewritten.** Fixed-width lookbehinds must sit immediately before
+  the word, so any article defeated them. Three real rows proved it: "the absence of active
+  2026 listings", "never been AN active call", and "the organizer, Active Communications
+  International". Replaced with a windowed negator search plus a narrow proper-noun rule.
+- **ROTATION matches whole words.** `alternat` matched ALTERNATIVE - "no alternative 2026
+  event is scheduled" read as a venue rotation and excused a defunct row. That direction
+  matters: a ROTATION false positive fails OPEN and in silence.
+- **R16, operator decision.** An ASSERTED ending without evidence still fails; a DECLARED
+  DOUBT ("Needs Verification" + projected) now ships with a note. The generator and the gate
+  had disagreed by design - `downgrade_unevidenced_discontinuation` deliberately keeps an
+  unproven finding visible, and the gate rejected the delivery for it. Two such rows, on
+  conferences nobody tracks, blocked all 112 rows. Nothing ships as "Closed" on prose alone.
+  **The contract needs an amendment recording this; upstream assigns the number.**
+- **Lifecycle prompt tightened.** Rule 6a told the model to announce an ending and never
+  mentioned `LIFECYCLE_EVIDENCE_URL` or `LIFECYCLE_QUOTE`. Re-researching under the tightened
+  rule did NOT clear the rows - the model still wrote "permanently ended" with nothing to
+  cite, which is why the gate change was the fix and the prompt was not.
+
+### Intake
+
+`weekly_intake` compared snapshots by DATE, so re-running the weekly the same afternoon
+fetched both sheets, compared 2026-09-19 with 2026-09-19, and loaded nothing while reporting
+HEALTHY. Now compares by snapshot FILENAME, which carries the full timestamp. Both
+`fetch_customer_sheet` and `snapshot_customer_sheet` gained a per-workstream `kind` - the
+awards sheets key on AWARD, and the two customers disagree on the status column.
+
+### The import defect that nearly stopped the publish
+
+`import_grounding --out` was pointed at `cfp-monitor/market_sheets/cybersecurity_seed.csv`.
+The real seed directory is **beside the DATABASE** and the convention is SHORT:
+`cyber_seed.csv`. So the DB took 18 new conferences while the index that tracks them stayed
+stale, and `check_invariants` correctly reported 18 undeclared extras. `verify_grounding` was
+also skipped - the runbook puts it BETWEEN import and reconciliation.
+
+Order that fixed it: `fix_edition.py` (key_year on 18 rows) -> re-run `import_grounding` with
+the correct `--out` -> declare the last 3 in `held_rows.txt`.
+
+### Process
+
+Roughly 20 throwaway scripts were written, and TWO produced wrong conclusions reported as
+fact. The worst joined on the delivery's `EVENT_ID` directly - the join 5.4 forbids - and said
+all 112 rows were absent from the database; `scripts/qa_import.py` already did that job and
+uses `identity.to_canonical`. The second counted 12 removed deadlines as regressions and
+argued against publishing; all 12 were already EXPIRED. Real impact: **10 improvements against
+4 genuine losses across 112 rows**, plus 12 expired deadlines cleared.
+
+A rule now lives in `C:\Users\matts\CLAUDE.md`: before running or writing ANY code, announce
+`USING EXISTING: <path>` or `NEW CODE: searched TOOLING.md ... found nothing`. A missing line
+is itself the defect.
+
+### Open
+
+- Three rows held OPEN in `held_rows.txt`, reasons NOT established: it-sa Exhibiting, Oil and
+  Gas Decarbonisation Congress 2026, SAF Europe Summit 2027. **SAF Europe first** - an
+  UPCOMING event should not leave a live-market input list.
+- `apply_row_patch --withdraw` blanks a citation but does not complete the projection
+  downgrade a withdrawal implies, so it can hand the gate a fresh R2 failure.
+  `mechanical_repairs` does both halves and refuses repairs that create a new failure.
+- Awards: monthly research task not scheduled, and awards are still absent from
+  `weekly_verify.py` although both award check scripts exist and Monday's publish uses them.
+
+---
+
 ## 2026-09-16 - rules whose premise expired when the customer's list stopped mirroring ours
 
 Nothing reached the customer. The customer's sheets are now fetched, reconciled, linked and

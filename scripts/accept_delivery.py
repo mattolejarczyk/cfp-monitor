@@ -634,15 +634,47 @@ class Gate:
         # produces: it removes an event from the pipeline for good. It must carry its
         # OWN citation, in its OWN fields, so an R1 deadline withdrawal can never
         # delete it. Prose alone is not enough (R16.5).
-        unevidenced = []
+        # ASSERTING AN ENDING IS THE FAILURE. DECLARING DOUBT IS NOT.
+        # Operator decision, 2026-09-20. Until now this failed ANY row whose prose read as a
+        # discontinuation without a citation - including a row the generator had already
+        # downgraded to "Needs Verification" precisely because it could not evidence the
+        # claim. So the two halves of the pipeline disagreed by design: the generator
+        # deliberately keeps an unproven finding visible for a person to go cite, and the gate
+        # rejected the whole delivery for it.
+        #
+        # The cost was measured, not theoretical. On 2026-09-20 two such rows - on conferences
+        # NOBODY at the customer was tracking - blocked all 112 rows of a week's research from
+        # reaching them. Re-researching under a tightened prompt did not clear them either: the
+        # model still wrote "permanently ended" with no citation to offer.
+        #
+        # So the question the check asks is now the one that actually matters: is this row
+        # ASSERTING that an event is over, or REPORTING that it could not confirm it is alive?
+        #   Closed, no citation            -> FAIL. The dangerous claim, unproven.
+        #   Needs Verification + projected -> pass, and get NOTED so it stays visible.
+        #   any citation present           -> pass, as before.
+        # The protection that matters is untouched: nothing reaches a customer as "Closed"
+        # without someone on the record saying so.
+        unevidenced, declared_doubt = [], []
         for r in self.rows:
             prose = f'{self.g(r, "STATUS DETAILS")} {self.g(r, "NOTES")}'
             if not DEFUNCT_PHRASES.search(prose) or ROTATION.search(prose):
                 continue
-            if not (self.g(r, "LIFECYCLE_EVIDENCE_URL") and self.g(r, "LIFECYCLE_QUOTE")):
-                unevidenced.append(f'{self.g(r, "CONFERENCE")[:40]}: says the event has ended, '
-                                   f'but carries no lifecycle citation')
-        self.add("R16", "A discontinuation claim carries its own evidence", unevidenced)
+            if self.g(r, "LIFECYCLE_EVIDENCE_URL") and self.g(r, "LIFECYCLE_QUOTE"):
+                continue                                   # evidenced - nothing to answer for
+            label = self.g(r, "STATUS").strip().lower()
+            projected = self.g(r, "IS_PROJECTED").strip().lower() == "true"
+            if label == "needs verification" and projected:
+                declared_doubt.append(f'{self.g(r, "CONFERENCE")[:40]}: prose reads as ended '
+                                      f'and carries no citation, but the row claims only that '
+                                      f'it could not be confirmed - someone should go cite it')
+            else:
+                unevidenced.append(f'{self.g(r, "CONFERENCE")[:40]}: STATUS={self.g(r, "STATUS")} '
+                                   f'asserts the event has ended, but carries no lifecycle '
+                                   f'citation')
+        self.add("R16", "An ASSERTED discontinuation carries its own evidence", unevidenced)
+        if declared_doubt:
+            self.note("R16b", "Unconfirmed discontinuation(s) shipping as 'Needs Verification' "
+                              "- allowed, but they are someone's follow-up", declared_doubt)
 
         # ---- R18, v1.5. Skipped entirely on a pre-v1.5 delivery. ----
         # A cost figure is the most consequential number in this file: it either kills an
