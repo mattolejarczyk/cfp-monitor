@@ -60,20 +60,40 @@ def _sentence_around(text: str, at: int, width: int = 240) -> str:
     return re.sub(r"\s+", " ", text[max(lo, at - width):min(hi, at + width)]).strip()
 
 
-def find_deadline_sentence(page_text: str, iso: str, context_window: int = 160):
-    """(found, quote). The deadline is confirmed only when one of its date forms appears on the
-    page AND a submission-context word sits within `context_window` chars - a bare date could be
-    the event date or an early-bird price. Deterministic, so it is fully unit-testable."""
+# The conference's own dates need a DIFFERENT context word than a deadline: "the conference is
+# held ..." not "abstracts due ...". Same date-locating machinery, different proof context.
+# STRONG cues only. A bare "conference"/"expo"/"dates" appears all over a page (media partners,
+# promos, embargo notes) and produced false positives on 2026-09-22 - a date matched near loose
+# boilerplate. These phrases specifically INTRODUCE the event's own dates.
+EVENT_CONTEXT = re.compile(
+    r"held|takes? place|will take place|taking place|scheduled for|save the date|"
+    r"mark your calend|conference dates|event dates|dates:", re.IGNORECASE)
+
+
+def _find_date_in_context(page_text, iso, context_re, context_window=160):
+    """(found, quote). A date FORM appears on the page AND a context word sits within
+    `context_window` chars - so a bare date (an event date, an early-bird price) is not mistaken
+    for the claim. Deterministic, so it is fully unit-testable. The shared core of both finders."""
     if not page_text or not iso:
         return False, ""
     for form in deadline_forms(iso):
         idx = page_text.find(form)
         while idx != -1:
             lo, hi = max(0, idx - context_window), idx + len(form) + context_window
-            if DEADLINE_CONTEXT.search(page_text[lo:hi]):
+            if context_re.search(page_text[lo:hi]):
                 return True, _sentence_around(page_text, idx)
             idx = page_text.find(form, idx + 1)
     return False, ""
+
+
+def find_deadline_sentence(page_text: str, iso: str, context_window: int = 160):
+    """The deadline, confirmed only in a SUBMISSION context (abstracts due, deadline, call for)."""
+    return _find_date_in_context(page_text, iso, DEADLINE_CONTEXT, context_window)
+
+
+def find_conference_dates_sentence(page_text: str, iso_start: str, context_window: int = 140):
+    """The conference's OWN dates, confirmed in an EVENT context (held, takes place, venue)."""
+    return _find_date_in_context(page_text, iso_start, EVENT_CONTEXT, context_window)
 
 
 @dataclass

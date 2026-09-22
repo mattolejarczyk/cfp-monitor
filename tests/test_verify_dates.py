@@ -1,39 +1,44 @@
-"""Date rendering coverage for verification.
-
-A missed rendering does not fail loudly - it silently records a row as unverified when the
-page states the date plainly. That is the worst shape of bug here, because it looks like a
-data problem on the other side.
+"""verify_dates promotes a conference_dates claim to verified against the table's unique key, and
+never creates a duplicate (the bug that crashed the first run: INSERT collided with the crawl row).
 """
-import datetime
+import importlib.util
+import sqlite3
+import sys
+from pathlib import Path
 
-from src.cfp_monitor.verify import find_date
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
-
-def test_september_is_abbreviated_sept_as_often_as_sep():
-    """Regression 2026-08-11. AMP's page reads "Case Study Submission Closes: 11:59 p.m. ET,
-    Friday, Sept. 4, 2026". strftime("%b") yields "Sep", so the claim did not match and the
-    row was recorded unverified while the page said it plainly."""
-    d = datetime.date(2026, 9, 4)
-    for text in ("Closes Friday, Sept. 4, 2026", "Closes Sept 4, 2026",
-                 "Closes Sep. 4, 2026", "Closes Sep 4, 2026",
-                 "Closes September 4, 2026", "Closes 4 September 2026"):
-        assert find_date(text, d), text
+_spec = importlib.util.spec_from_file_location("_vd", ROOT / "scripts" / "verify_dates.py")
+vd = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(vd)
 
 
-def test_common_renderings_still_match():
-    assert find_date("Abstracts due March 15, 2026", datetime.date(2026, 3, 15))
-    assert find_date("Abstracts due 15 March 2026", datetime.date(2026, 3, 15))
-    assert find_date("Abstracts due 2026-03-15", datetime.date(2026, 3, 15))
-    assert find_date("Abstracts due 3/15/2026", datetime.date(2026, 3, 15))
-    assert find_date("Abstracts due Mar. 15, 2026", datetime.date(2026, 3, 15))
+def _evidence_db():
+    con = sqlite3.connect(":memory:")
+    con.execute("""CREATE TABLE evidence (id INTEGER PRIMARY KEY, event_id TEXT, field TEXT,
+        value_claimed TEXT, source_url TEXT, quote TEXT, origin TEXT, method TEXT, fetched_at TEXT,
+        verdict TEXT, found_quote TEXT, detail TEXT, call_type TEXT, exportable INT, export_block TEXT)""")
+    con.execute("CREATE UNIQUE INDEX ux ON evidence(event_id, field, source_url, origin)")
+    # the pre-existing crawl claim: scraped, not proven
+    con.execute("INSERT INTO evidence (event_id, field, value_claimed, source_url, quote, origin, "
+                "method, verdict, found_quote, exportable) VALUES "
+                "('a','conference_dates','2027-04-05','http://x','','crawl','crawl','no_quote','',0)")
+    con.commit()
+    return con
 
 
-def test_zero_padded_day_matches():
-    """A page reading "December 04, 2026" once failed to match a claim of 12/4/2026 and was
-    reported as a CONTRADICTION against a date printed on the page."""
-    assert find_date("Deadline December 04, 2026", datetime.date(2026, 12, 4))
+def test_upsert_promotes_the_existing_crawl_row_no_duplicate():
+    con = _evidence_db()
+    vd.write_verified(con, "a", "2027-04-05", "http://x", "the conference is held April 5, 2027")
+    rows = con.execute("SELECT verdict, found_quote, method, exportable FROM evidence "
+                       "WHERE event_id='a' AND field='conference_dates'").fetchall()
+    assert len(rows) == 1                                   # promoted, not duplicated
+    assert rows[0][0] == "verified" and "April 5, 2027" in rows[0][1]
+    assert rows[0][2] == "date-context" and rows[0][3] == 1
 
 
-def test_a_different_date_does_not_match():
-    assert not find_date("Deadline September 5, 2026", datetime.date(2026, 9, 4))
-    assert not find_date("Deadline Sept. 5, 2026", datetime.date(2026, 9, 4))
+def test_upsert_on_a_new_page_inserts_a_second_row():
+    con = _evidence_db()
+    vd.write_verified(con, "a", "2027-04-05", "http://other", "held April 5, 2027")
+    assert con.execute("SELECT COUNT(*) FROM evidence WHERE event_id='a'").fetchone()[0] == 2

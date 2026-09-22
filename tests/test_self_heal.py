@@ -32,6 +32,15 @@ def test_bare_date_without_context_is_not_a_deadline():
     assert not found          # a date alone could be the event date or a price - not enough
 
 
+def test_conference_dates_finder_needs_event_context():
+    ok = sh.find_conference_dates_sentence("The conference is held April 5, 2027 in San Francisco.", "2027-04-05")
+    assert ok[0] and "April 5, 2027" in ok[1]
+    # a bare date with no event word (a ticket price line) is NOT an event-dates confirmation
+    assert sh.find_conference_dates_sentence("Early-bird ticket priced from April 5, 2027.", "2027-04-05")[0] is False
+    # and it must not fire on a mismatched date
+    assert sh.find_conference_dates_sentence("The conference is held April 5, 2027.", "2027-08-09")[0] is False
+
+
 def test_absent_date_is_not_found():
     assert sh.find_deadline_sentence("Submit your abstract by December 1.", "2026-10-19")[0] is False
 
