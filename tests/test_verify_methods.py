@@ -9,8 +9,8 @@ sys.path.insert(0, str(ROOT))
 
 from src.cfp_monitor import verify_methods as vm  # noqa: E402
 
-SOURCES = {"plain-http", "real-browser", "grounded-search", "upstream"}
-MATCHES = {"date-context-regex", "llm-verbatim", "none"}
+SOURCES = {"derived", "plain-http", "real-browser", "grounded-search", "upstream"}
+MATCHES = {"date-comparison", "date-context-regex", "llm-verbatim", "none"}
 COSTS = {"free", "llm", "grounded"}
 
 

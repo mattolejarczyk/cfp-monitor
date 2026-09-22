@@ -81,6 +81,27 @@ def test_confirm_flag_and_unavailable():
     assert out[0].action == "skip:no-page"          # an outage is not a finding
 
 
+def test_passed_deadline_is_resolved_free_before_any_fetch():
+    from datetime import date
+    from src.cfp_monitor import verify_methods as vm
+
+    class _Boom:
+        def verify(self, *a):
+            raise AssertionError("a passed-deadline row must never reach the verifier")
+
+    # a PAST-deadline row must resolve for free, never reaching the verifier (which would raise).
+    con = _db_with([("a", "A", "2026-02-11", "not_found", "http://a")])
+    res = sh.resolve_rows(con, sh.select_unconfirmed(con, 0), _Boom(), today=date(2026, 9, 22))
+    assert res[0].action == "closed-passed" and res[0].method == vm.DEADLINE_PASSED
+
+    # a FUTURE-deadline row DOES reach the verifier and is confirmed on evidence.
+    con2 = _db_with([("b", "B", "2026-12-01", "not_found", "http://b")])
+    r2 = sh.resolve_rows(con2, sh.select_unconfirmed(con2, 0),
+                         _Fake(sh.VerifyResult(True, vm.FETCH_PLAIN, "http://b", "abstract deadline December 1, 2026")),
+                         today=date(2026, 9, 22))
+    assert r2[0].action == "confirm"
+
+
 def test_customer_working_row_is_surfaced_not_healed():
     con = _db_with([("a", "A", "2026-10-19", "not_found", "http://a")],
                    clients=[("a", "Drafting Abstract")])

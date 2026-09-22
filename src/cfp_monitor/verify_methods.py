@@ -13,14 +13,20 @@ from dataclasses import dataclass
 class Method:
     id: str
     label: str
-    source: str        # plain-http | real-browser | grounded-search | upstream
-    match: str         # date-context-regex | llm-verbatim | none
+    source: str        # derived | plain-http | real-browser | grounded-search | upstream
+    match: str         # date-comparison | date-context-regex | llm-verbatim | none
     cost: str          # free | llm | grounded
     deterministic: bool
     note: str
 
 
 _METHODS = [
+    Method("deadline-passed", "Deadline already passed",
+           source="derived", match="date-comparison", cost="free", deterministic=True,
+           note="No page needed: the row's own deadline is in the past, so the call is CLOSED. "
+                "not_found is expected and harmless here (a passed-deadline page comes down, v2.2) "
+                "- there is nothing to confirm and no search is worth spending. The cheapest "
+                "resolution, checked before any fetch."),
     Method("fetch-plain+regex", "Plain fetch + regex",
            source="plain-http", match="date-context-regex", cost="free", deterministic=True,
            note="Cheapest: a plain HTTP GET, deadline located by date-in-submission-context. A "
@@ -48,6 +54,7 @@ _METHODS = [
 METHODS = {m.id: m for m in _METHODS}
 
 # Convenience ids, so callers reference a constant, not a string literal.
+DEADLINE_PASSED = "deadline-passed"
 FETCH_PLAIN = "fetch-plain+regex"
 BROWSER_LADDER = "browser-ladder+regex"
 LLM_VERBATIM = "llm-verbatim"

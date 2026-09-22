@@ -73,6 +73,7 @@ the claim was confirmed), COST (what it spends).
 
 | id | source | match | cost | when it applies |
 |---|---|---|---|---|
+| `deadline-passed` | derived | date-comparison | **free** | No page needed: the row's own deadline is in the past, so the call is closed. Checked before any fetch - the cheapest resolution, and the largest chunk (25 of 34). |
 | `fetch-plain+regex` | plain-http | date-context-regex | **free** | The floor: a plain GET, deadline located in a submission context. A `not_found` row already failed this, so it re-confirms little. |
 | `browser-ladder+regex` | real-browser | date-context-regex | **free** | Escalation for JS/403 pages a plain GET cannot read - the signed-in Chrome on :9222 (`render_targets`). No grounded quota; slower. |
 | `llm-verbatim` | real-browser | llm-verbatim | llm | The model finds the sentence stating the known deadline; it must be a literal substring of the fetched page. For date forms the regex misses. OpenRouter, not grounded quota. |
@@ -172,6 +173,36 @@ for a FRESH row, but NOT for the not_found backlog, which by definition already 
 check. The escalation plugs into the same `Verifier` seam - a better verifier, same contract.
 The report-only foundation (row selection, customer guard, method provenance, trail, report)
 stands; the next build is the escalating verifier.
+
+**Update 2026-09-22, after the free methods (deadline-passed, plain, browser-ladder):** of the
+same 34 rows, **27 now resolve for free and 0 grounded requests are spent** - 25 are closed
+calls (deadline already passed), and 2 more were confirmed once the browser ladder read the JS
+pages a plain GET could not. Only **7** remain, all future-deadline rows whose cited URL is
+stale. So the "exception path" (discovery) is genuinely small - 7 of 34 - which is why it is
+worth being careful about how it is done rather than reaching for grounded quota by reflex.
+
+**The 7 that need discovery** are the only place a search of any kind is warranted, and the
+route is still open (browser-search vs grounded-API) - see the browser-automation note below.
+
+## Automating a web search - what the evidence says (2026-09-22)
+
+Tested once each, no repeats (avoiding an account flag):
+- **Automated pane -> Google:** bot wall ("unusual traffic ... not a robot"). Google flags the
+  browser as AUTOMATION (navigator.webdriver / CDP fingerprint, IP + behaviour), NOT the input
+  method - typing keystrokes instead of pasting a URL does not change the fingerprint, so it
+  would not clear the wall.
+- **Own Chrome -> Google:** blocked before reaching Google by a navigation POLICY ("domain not
+  allowed"), a separate issue from bot detection.
+- **Automated pane -> Bing:** works, returns real source links but not a reliable direct answer,
+  so the links still have to be fetched-and-verified (the same verify step).
+
+The Gemini/grounding answer a person sees on Google is produced by Google's own models; the
+SANCTIONED programmatic form of exactly that is the grounded-search API (the `google_search`
+tool) - same technology, no bot wall, but it costs quota and lives upstream. So the grounded-API
+is not a different thing from "ask Google" - it IS the automatable form of it. Scraping Google
+through an automated browser is fragile, against its terms, bot-walled, and risks flagging the
+signed-in account. Decision on grounded-API vs browser-search is deferred until a path is proven
+on the 7 rows; the passed-deadline + browser-ladder work already removed 27 of the 34 without it.
 
 ## Motivating cases
 

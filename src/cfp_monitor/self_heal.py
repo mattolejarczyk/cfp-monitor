@@ -19,8 +19,9 @@ from __future__ import annotations
 import re
 import sqlite3
 from dataclasses import dataclass
+from datetime import date
 
-from src.cfp_monitor.verify_methods import BROWSER_LADDER, FETCH_PLAIN
+from src.cfp_monitor.verify_methods import BROWSER_LADDER, DEADLINE_PASSED, FETCH_PLAIN
 
 # A row the customer is actively working is SURFACED, never auto-resolved: their in-flight
 # state (a verbal agreement, a submission past the shown deadline) is truth no page shows.
@@ -171,13 +172,15 @@ def customer_working_status(con: sqlite3.Connection, event_id: str) -> str:
     return ""
 
 
-def resolve_rows(con: sqlite3.Connection, rows, verifiers, pace=None) -> list[RowOutcome]:
-    """`verifiers` is an ordered list, cheapest first. We ESCALATE only on 'unavailable' - a page
-    we could not read. A page we CAN read but that does not state the deadline is a real 'flag';
-    escalating to a stronger fetch of the same page would not change that. The recorded method is
-    whichever verifier produced the decisive result. A single verifier may be passed for tests."""
+def resolve_rows(con: sqlite3.Connection, rows, verifiers, pace=None, today=None) -> list[RowOutcome]:
+    """`verifiers` is an ordered list, cheapest first. Before ANY fetch we resolve the free cases:
+    a customer-worked row (surface, never heal) and a PASSED deadline (the call is closed - not
+    a thing to hunt a citation for). Only a future-deadline row reaches the verifiers, which
+    ESCALATE only on 'unavailable'. The recorded method is whichever produced the decisive result.
+    A single verifier may be passed for tests."""
     if not isinstance(verifiers, (list, tuple)):
         verifiers = [verifiers]
+    today = (today or date.today()).isoformat()
     out: list[RowOutcome] = []
     for row in rows:
         eid, name, dl, url = row["event_id"], row["name"], row["deadline"], row["url"]
@@ -185,6 +188,12 @@ def resolve_rows(con: sqlite3.Connection, rows, verifiers, pace=None) -> list[Ro
         if working:
             out.append(RowOutcome(eid, name, dl, url, "skip:customer-working",
                                   reason=f"customer status '{working}' - surface, do not heal"))
+            continue
+        if re.match(r"^\d{4}-\d{2}-\d{2}$", dl or "") and dl < today:
+            # Cheapest resolution: the deadline is in the past, so the call is closed. not_found
+            # is expected here (the page came down), and no fetch or search is worth spending.
+            out.append(RowOutcome(eid, name, dl, url, "closed-passed", DEADLINE_PASSED,
+                                  reason=f"deadline {dl} has passed (as of {today}) - call closed"))
             continue
         res = None
         for v in verifiers:
@@ -210,9 +219,15 @@ def render(outcomes: list[RowOutcome]) -> str:
         by.setdefault(o.action, []).append(o)
     n_conf = len(by.get("confirm", []))
     lines = [f"SELF-HEAL (Phase 1, report-only) - {len(outcomes)} row(s) checked",
-             f"  {n_conf} confirmable, {len(by.get('flag', []))} still need a person, "
+             f"  {len(by.get('closed-passed', []))} closed (deadline passed, free), "
+             f"{n_conf} confirmable, {len(by.get('flag', []))} still need a person, "
              f"{len(by.get('skip:customer-working', []))} left to the customer, "
              f"{len(by.get('skip:no-page', []))} unreadable", ""]
+    if by.get("closed-passed"):
+        lines.append("CLOSED - deadline already passed (no action, no search) [method: deadline-passed]")
+        for o in by["closed-passed"]:
+            lines.append(f"- {o.name[:52]}  deadline {o.deadline} (past)")
+        lines.append("")
     if by.get("confirm"):
         lines.append("CONFIRMABLE (deadline located on the cited page)")
         for o in by["confirm"]:
