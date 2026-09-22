@@ -155,13 +155,16 @@ row on suspicion - discovery is innocent until proven guilty (2.1).
 
 **The step most easily forgotten, and the one that fails invisibly.**
 
-    promote   the accepted delivery becomes Cybersecurity_audited.final.csv / Utility_audited.final.csv
+    promote   scripts/promote_delivery.py    the accepted delivery becomes <Market>_audited.final.csv
     import    scripts/import_grounding.py
     reconcile scripts/check_invariants.py        A MUTATION NEEDS A RECONCILIATION
 
 Monday's conference page is built from those two `.final.csv` files; the evidence badges come
-from the database. **If the delivery is gated and repaired but not promoted and imported, Monday
-publishes last week's rows with this week's badges, reports HEALTHY, and looks entirely normal.**
+from the database. Forgetting to promote used to publish last week's rows with this week's badges,
+HEALTHY and entirely normal-looking. **That gap is now guarded (2026-09-22):** `promote_delivery.py`
+refuses to promote a delivery the gate did not ACCEPT and leaves a signed manifest, and Monday's
+build (`publish_guard.check_publish_fresh`) marks the run DEGRADED - nothing publishes - if a
+`.final.csv` is unmanifested, non-ACCEPTED, changed since promotion, or older than 4 days.
 
 Invariants earn their keep here. On 2026-09-14 a merge deleted seven canonical rows and the
 seeds still named them; `check_invariants.py` failed within a minute on "no delivered row is
@@ -233,5 +236,6 @@ Named so nobody rediscovers them:
   solved it: grounding composes plausible URLs that 404, and the crawler finds form plumbing
   rather than the real submission page.
 - **Nothing is emailed.**
-- **The chain does not yet refuse to build from a stale delivery.** That guard is the next thing
-  worth building, and step 4 is why.
+- ~~The chain does not yet refuse to build from a stale delivery.~~ **Built 2026-09-22** -
+  `promote_delivery.py` + `publish_guard.check_publish_fresh`; the Monday build goes DEGRADED
+  rather than publish an unmanifested, non-ACCEPTED, tampered or week-old `.final.csv` (Step 4).

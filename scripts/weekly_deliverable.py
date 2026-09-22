@@ -42,6 +42,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.cfp_monitor.run_health import HEALTH                        # noqa: E402
+from src.cfp_monitor.publish_guard import check_publish_fresh        # noqa: E402
 
 PY = sys.executable
 MARKETS_DIR = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
@@ -196,8 +197,23 @@ def main() -> int:
     # 3. The conferences page reads one file; the live markets are delivered separately.
     sources = [md / "Cybersecurity_audited.final.csv", md / "Utility_audited.final.csv"]
     missing = [s.name for s in sources if not s.exists()]
+    # STEP-4a GUARD: each published file must be a fresh, ACCEPTED, untampered promotion.
+    # A stale final.csv (nobody promoted this cycle) publishes last week's data with every
+    # other check green - it happened on 2026-09-14. A failure here rides the existing
+    # "nothing publishes from a DEGRADED run" path. See src/cfp_monitor/publish_guard.py.
+    stale = []
+    for s in sources:
+        if s.exists():
+            ok, reason = check_publish_fresh(s)
+            if not ok:
+                stale.append(reason)
     if missing:
         HEALTH.fail("weekly_step", "missing_input", f"delivery not found: {', '.join(missing)}")
+        combined, n_rows = None, 0
+    elif stale:
+        for reason in stale:
+            HEALTH.fail("weekly_step", "stale_delivery", reason)
+        print("\n".join(f"  [STALE] {r}" for r in stale))
         combined, n_rows = None, 0
     else:
         combined = work / f"live_markets_{stamp}.csv"

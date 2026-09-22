@@ -324,41 +324,46 @@ criteria 7 (no row wearing another event's evidence) and 8 (open rows always lab
 ## 4b. PROMOTE the accepted file to `<Market>_audited.final.csv`
 
 **The gate saying ACCEPTED is not what makes a file the week's delivery. The filename is.**
+`weekly_deliverable.py` - the Monday 07:00 job that builds what the customer reads - does not
+search for the newest accepted delivery and does not build from the database. It has the two
+paths hardcoded (`sources = [md / "Cybersecurity_audited.final.csv", md / "Utility_audited.final.csv"]`).
+So a delivery can be researched, gated ACCEPTED, imported and reconciled, and the customer is
+still shown last cycle unless someone copies the accepted file over that exact name.
+
+**Promote through the guarded script - not a bare `cp`:**
 
 ```bash
-cd "/c/Users/matts/Desktop/Nicolia-PR-Prime/Markets"
-cp "<Market>_audited.final.csv" "<Market>_audited.final.pre-$(date +%Y%m%d).bak.csv"
-cp "<the accepted file>" "<Market>_audited.final.csv"
+# First, the gate writes a machine-readable acceptance record (a NETWORKED run):
+./venv/Scripts/python.exe scripts/accept_delivery.py \
+    "/c/Users/matts/Desktop/Nicolia-PR-Prime/Markets/Cybersecurity_audited.csv" \
+    --json "/c/Users/matts/Desktop/Nicolia-PR-Prime/Markets/Cybersecurity_accept.json"
+
+# Then promote. It REFUSES anything not ACCEPTED, backs up the current published file,
+# and writes the manifest the Monday build checks:
+./venv/Scripts/python.exe scripts/promote_delivery.py \
+    --delivery ".../Cybersecurity_audited.csv" \
+    --accept-json ".../Cybersecurity_accept.json" \
+    --market Cybersecurity
 ```
 
-`weekly_deliverable.py` - the Monday 07:00 job that builds what the customer reads - does not
-search for the newest accepted delivery, and does not build from the database. It has the two
-paths hardcoded:
+**The stale-delivery gap is now closed (2026-09-22).** `promote_delivery.py` leaves a signed
+manifest (`<Market>_audited.final.csv.promoted.json`) recording the acceptance verdict, the
+promoted file's sha256, and when it was promoted. The Monday build calls
+`publish_guard.check_publish_fresh` on each file first and marks the run **DEGRADED - nothing
+publishes** if any is: unmanifested (a bare `cp` that skipped the guard), promoted from a
+non-ACCEPTED delivery, changed since promotion (hash mismatch), or older than 4 days (a cycle
+was skipped - last week's file). It rides the existing "nothing publishes from a DEGRADED run"
+path. Module `src/cfp_monitor/publish_guard.py`; tests `tests/test_publish_guard.py`.
 
-```python
-sources = [md / "Cybersecurity_audited.final.csv", md / "Utility_audited.final.csv"]
-```
-
-So a delivery can be researched, gated ACCEPTED, imported and fully reconciled, and the
-customer will still be shown the previous cycle - silently, with every check passing, because
-nothing in the pipeline ever asks whether those two filenames point at this week's work.
-
-**Measured 2026-09-21.** Both markets passed the gate on 2026-09-20 and were imported with all
-invariants holding. The 07:00 job then ran against `.final.csv` files dated 2026-09-12 and
-2026-09-13 and would have published a fortnight-old page. The only symptom beforehand was in
-the import QA report, which said 30 delivered rows were "NOT in the database" - it was
+**Why it was built (measured 2026-09-21).** Both markets passed the gate on 2026-09-20 and
+imported with all invariants holding; the 07:00 job then ran against `.final.csv` files dated
+2026-09-12/13 and would have published a fortnight-old page. Every other check was green. The
+only symptom was the import QA report calling 30 delivered rows "NOT in the database" - it was
 comparing the database against the STALE file, and the accusation pointed the wrong way.
 
-Two things follow:
-
-- **Promote immediately after the gate accepts**, in the same sitting. It is one copy, and it
-  is the step with no tool, no check and no reminder attached to it.
-- **Check the dates before believing a publish.** `ls -la *_audited.final.csv` costs a second.
-  If they are not from this cycle, nothing downstream of here is about this cycle.
-
-The backup copy matters as much as the promotion: it is the only record of what the customer
-was shown last week, and a page nobody can reconstruct is a page nobody can answer questions
-about.
+Still true and still worth the second it costs: **check the dates before believing a publish**
+(`ls -la *_audited.final.csv`), and keep the backup - it is the only record of what the customer
+was shown last week.
 
 ---
 
@@ -538,13 +543,13 @@ cp cfp_monitor.db "cfp_monitor.backup-pre-M-$(date +%Y%m%d-%H%M%S).db"
 # 5  reconcile the DB against the delivery - catches rows lost during import
 ./venv/Scripts/python.exe scripts/check_invariants.py --db cfp_monitor.db
 
-# 6  PROMOTE - the step with no tool and no check attached to it (see section 4b)
-#    weekly_deliverable.py builds the customer page from these two FILENAMES, hardcoded.
-#    Skip this and Monday publishes the PREVIOUS cycle while every check still passes.
-cd "/c/Users/matts/Desktop/Nicolia-PR-Prime/Markets"
-cp "M_audited.final.csv" "M_audited.final.pre-$(date +%Y%m%d).bak.csv"
-cp "<the accepted file>" "M_audited.final.csv"
-ls -la *_audited.final.csv        # dates MUST be from this cycle. One second, every time.
+# 6  PROMOTE through the guarded script (see section 4b). weekly_deliverable.py builds the
+#    customer page from two hardcoded FILENAMES; the build now REFUSES a stale/unaccepted file
+#    (publish_guard), so skipping this makes Monday go DEGRADED rather than silently publish
+#    last cycle. Needs the gate's --json acceptance record first.
+./venv/Scripts/python.exe scripts/accept_delivery.py ".../M_audited.csv" --json ".../M_accept.json"
+./venv/Scripts/python.exe scripts/promote_delivery.py --delivery ".../M_audited.csv" --accept-json ".../M_accept.json" --market "<Market>"
+ls -la "/c/Users/matts/Desktop/Nicolia-PR-Prime/Markets/"*_audited.final.csv   # dates from this cycle
 ```
 
 ---
