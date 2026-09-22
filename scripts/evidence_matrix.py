@@ -84,11 +84,12 @@ def build(con, limit):
     if limit:
         eids = eids[:limit]
 
-    flat, cards, markets = [], [], set()
+    flat, cards, markets, all_clients = [], [], set(), set()
     for i, eid in enumerate(eids):
         gf = dict(con.execute("SELECT * FROM grounding_facts WHERE event_id=?", (eid,)).fetchone())
         gf["_loc"] = ", ".join([x for x in (gf.get("city"), gf.get("state_province"), gf.get("country")) if x])
         clients = sorted({r[0] for r in con.execute("SELECT client_key FROM client_conferences WHERE event_id=?", (eid,))})
+        all_clients.update(clients)
         mkt = (gf.get("categories") or "-").split(",")[0][:20] or "-"
         markets.add(mkt)
 
@@ -111,7 +112,7 @@ def build(con, limit):
         cli = " ".join(f'<span class="cli">{html.escape(x)}</span>' for x in clients)
         flat.append(
             f'<tr class="row" data-i="{i}" data-mkt="{html.escape(mkt)}" data-paid="{1 if paid else 0}" '
-            f'data-maxd="{maxd or 0}" onclick="tog({i})">'
+            f'data-maxd="{maxd or 0}" data-clients="{html.escape(" ".join(clients))}" onclick="tog({i})">'
             f'<td class="nm">{html.escape(gf["name"][:46])}<div class="sub">{cli}</div></td>'
             f'<td class="mkt">{html.escape(mkt)}</td>' + "".join(cell(s) for s in states)
             + f'<td class="c maxd">{("L"+str(maxd)) if maxd else "-"}</td>'
@@ -121,7 +122,7 @@ def build(con, limit):
             f'<div class="card"><table class="ct"><thead><tr><th>Field</th><th>Value</th>'
             f'<th>Where it came from</th><th>Source</th><th>Verbatim evidence</th></tr></thead>'
             f'<tbody>{"".join(crows)}</tbody></table></div></td></tr>')
-    return flat, sorted(markets), len(eids)
+    return flat, sorted(markets), sorted(all_clients), len(eids)
 
 
 STYLE = """
@@ -156,8 +157,10 @@ td.c{font:600 .68rem/1 "JetBrains Mono",monospace}.paidy{color:var(--l6t);font-w
 """
 JS = """
 function tog(i){var d=document.getElementById('d'+i);d.style.display=d.style.display=='none'?'':'none';}
-function applyFilters(){var mk=document.getElementById('fmkt').value,pd=document.getElementById('fpaid').value,dp=document.getElementById('fdepth').value;
-document.querySelectorAll('tr.row').forEach(function(tr){var ok=(mk==''||tr.dataset.mkt==mk)&&(pd==''||tr.dataset.paid==pd)&&(dp==''||(+tr.dataset.maxd)>=(+dp));
+function applyFilters(){var mk=document.getElementById('fmkt').value,pd=document.getElementById('fpaid').value,dp=document.getElementById('fdepth').value,cu=document.getElementById('fcust').value;
+document.querySelectorAll('tr.row').forEach(function(tr){var cl=tr.dataset.clients||'';
+var cok=(cu==''||(cu=='__none__'?cl=='':((' '+cl+' ').indexOf(' '+cu+' ')>=0)));
+var ok=(mk==''||tr.dataset.mkt==mk)&&(pd==''||tr.dataset.paid==pd)&&(dp==''||(+tr.dataset.maxd)>=(+dp))&&cok;
 tr.style.display=ok?'':'none';var d=document.getElementById('d'+tr.dataset.i);if(d&&!ok)d.style.display='none';});}
 """
 
@@ -174,8 +177,10 @@ def main() -> int:
         subprocess.run([sys.executable, str(ROOT / "scripts" / "build_evidence.py"), "--db", a.db], check=False)
 
     con = sqlite3.connect(a.db)
-    flat, markets, n = build(con, a.limit)
+    flat, markets, clients, n = build(con, a.limit)
     mkt_opts = "".join(f'<option value="{html.escape(m)}">{html.escape(m)}</option>' for m in markets)
+    cust_opts = "".join(f'<option value="{html.escape(cl)}">{html.escape(cl)}</option>' for cl in clients) \
+        + '<option value="__none__">(none - untracked)</option>'
     heads = "".join(f"<th>{l}</th>" for l, _g, _e in FIELDS)
     doc = f"""<title>CFP Evidence Matrix</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap">
@@ -191,6 +196,7 @@ deterministic checks - free. <b>unv</b> = value held but unproven; <b>&mdash;</b
  <span class="lg c4">L4 plain</span><span class="lg c5">L5 browser</span>
  &nbsp;<span class="lg cu">unv</span><span class="lg cx">&mdash;</span></div>
 <div class="controls">
+ <label>Customer <select id="fcust" onchange="applyFilters()"><option value="">all</option>{cust_opts}</select></label>
  <label>Market <select id="fmkt" onchange="applyFilters()"><option value="">all</option>{mkt_opts}</select></label>
  <label>Cost <select id="fpaid" onchange="applyFilters()"><option value="">all</option><option value="1">paid ($)</option><option value="0">free</option></select></label>
  <label>Min depth <select id="fdepth" onchange="applyFilters()"><option value="">any</option><option value="3">L3+</option><option value="4">L4+</option><option value="5">L5+</option><option value="6">L6</option></select></label>

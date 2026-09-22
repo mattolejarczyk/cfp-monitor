@@ -279,6 +279,20 @@ def main() -> int:
     (work / "2g_customer_context.log").write_text(cc.stdout + cc.stderr, encoding="utf-8")
     print("customer context (what the client has acted on) -> 2g_customer_context.log")
 
+    # Evidence matrix: a standing weekly artifact - every field, how deep we went for evidence,
+    # and the source + quote behind it, filterable by customer. --refresh rebuilds the evidence
+    # table first so it is current. Advisory: a failure never blocks the publish.
+    matrix = RUNS_OUT / f"evidence_matrix_{stamp}.html"
+    em = subprocess.run([str(PY), str(ROOT / "scripts/evidence_matrix.py"), "--db", a.db,
+                         "--refresh", "--out", str(matrix)], capture_output=True, text=True,
+                        env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+    if em.returncode == 0 and matrix.exists():
+        HEALTH.note("evidence_matrix", "built")
+        print(f"evidence matrix -> {matrix.name}")
+    else:
+        HEALTH.note("evidence_matrix", "not_built")
+        print(f"evidence matrix: not built ({(em.stderr or em.stdout)[:120].strip()})")
+
     # 4 + 5. The two pages. --reconcile adds the "check against your sheet" view.
     if combined:
         cmd = [PY, ROOT / "scripts/build_review_page.py", "-i", combined, "--kind", "conference",
