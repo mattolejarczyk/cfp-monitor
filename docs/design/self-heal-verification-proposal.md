@@ -194,6 +194,14 @@ cannot flood the API: a SPIKE guard (refuse the whole step if more than N rows a
 spike is an upstream break, not discovery) and a hard BUDGET, human-paced, off by default. It is
 the LAST step, run only on the residue the free methods could not resolve.
 
+**`--apply` built and run live 2026-09-22.** Report-only stays the default; `--apply` writes ONLY
+the proven confirmations - `verify_state -> verified`, the verbatim quote, the resolved citation
+URL (never a vertexaisearch redirect - R22 would reject it), and `verify_detail=self-heal:<method>`
+so the change is traceable. It backs up the DB first, logs every change old->new, touches no
+non-confirmed row and no customer field, and leaves the gate as the final say. First live apply:
+2 rows (RSA Conference 2027 "Submissions close October 9, 2026", IWLPC "Abstracts Due: December 1,
+2026") moved not_found -> verified; `check_invariants` held.
+
 ## Automating a web search - what the evidence says (2026-09-22)
 
 Tested once each, no repeats (avoiding an account flag):

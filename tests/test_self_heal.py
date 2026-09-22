@@ -114,6 +114,46 @@ def _flag(name, dl="2026-12-01"):
     return sh.RowOutcome("e-" + name, name, dl, "http://x", "flag", sh.__dict__.get("_", "") or "fetch-plain+regex")
 
 
+def _apply_db():
+    con = sqlite3.connect(":memory:")
+    con.execute("CREATE TABLE grounding_facts (event_id TEXT, name TEXT, deadline TEXT, "
+                "verify_state TEXT, deadline_evidence_url TEXT, deadline_quote TEXT, verify_detail TEXT)")
+    con.executemany("INSERT INTO grounding_facts VALUES (?,?,?,?,?,?,?)", [
+        ("a", "A", "2026-12-01", "not_found", "http://a-cited", "", ""),   # will be confirmed
+        ("b", "B", "2026-12-01", "not_found", "http://b-cited", "", ""),   # stays flagged
+    ])
+    con.commit()
+    return con
+
+
+def test_apply_writes_only_confirmations_and_leaves_the_rest():
+    from src.cfp_monitor import verify_methods as vm
+    con = _apply_db()
+    outcomes = [
+        sh.RowOutcome("a", "A", "2026-12-01", "https://real.org/cfp", "confirm", vm.GROUNDED,
+                      "abstract deadline December 1, 2026"),
+        sh.RowOutcome("b", "B", "2026-12-01", "http://b-cited", "flag", vm.FETCH_PLAIN),
+    ]
+    log, backup = sh.apply_confirmations(con, outcomes, db_path=None)
+    assert len(log) == 1 and backup is None
+    a = con.execute("SELECT verify_state, deadline_evidence_url, deadline_quote, verify_detail "
+                    "FROM grounding_facts WHERE event_id='a'").fetchone()
+    assert a[0] == "verified" and a[1] == "https://real.org/cfp" and "December 1, 2026" in a[2]
+    assert a[3] == "self-heal:" + vm.GROUNDED                       # provenance written
+    b = con.execute("SELECT verify_state FROM grounding_facts WHERE event_id='b'").fetchone()
+    assert b[0] == "not_found"                                      # the flagged row is untouched
+
+
+def test_apply_never_stores_a_google_redirect_as_the_citation():
+    from src.cfp_monitor import verify_methods as vm
+    con = _apply_db()
+    redirect = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc"
+    outcomes = [sh.RowOutcome("a", "A", "2026-12-01", redirect, "confirm", vm.GROUNDED, "deadline December 1, 2026")]
+    sh.apply_confirmations(con, outcomes, db_path=None)
+    a = con.execute("SELECT verify_state, deadline_evidence_url FROM grounding_facts WHERE event_id='a'").fetchone()
+    assert a[0] == "verified" and a[1] == "http://a-cited"          # kept the clean cited url, not the redirect
+
+
 def test_grounded_spike_guard_refuses_a_flood():
     from src.cfp_monitor import verify_methods as vm
 

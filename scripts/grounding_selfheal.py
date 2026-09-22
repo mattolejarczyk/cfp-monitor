@@ -21,8 +21,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.cfp_monitor.self_heal import (                                 # noqa: E402
-    BrowserLadderVerifier, DateContextVerifier, GroundedVerifier, discover_flagged,
-    render, resolve_rows, select_unconfirmed, to_records)
+    BrowserLadderVerifier, DateContextVerifier, GroundedVerifier, apply_confirmations,
+    discover_flagged, render, resolve_rows, select_unconfirmed, to_records)
 
 DEFAULT_HELPER = r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets\grounded_ask.py"
 
@@ -54,6 +54,9 @@ def main() -> int:
     ap.add_argument("--grounded-python", default="py",
                     help="interpreter with google-genai for the upstream grounded_ask helper")
     ap.add_argument("--grounded-helper", default=DEFAULT_HELPER)
+    ap.add_argument("--apply", action="store_true",
+                    help="WRITE the proven confirmations (verify_state -> verified + quote); backs "
+                         "up the DB first and logs every change. Default is report-only.")
     ap.add_argument("--trail", help="write the machine trail (jsonl) here")
     a = ap.parse_args()
 
@@ -76,6 +79,18 @@ def main() -> int:
         print(f"[grounded] {note}\n")
 
     print(render(outcomes))
+
+    if a.apply:
+        log, backup = apply_confirmations(con, outcomes, db_path=a.db)
+        print(f"\nAPPLIED {len(log)} confirmation(s) to the database"
+              + (f" (backup: {Path(backup).name})" if backup else ""))
+        for e in log:
+            print(f"  {e['name'][:46]}: {e['before']['verify_state']} -> verified "
+                  f"[{e['method']}]  {e['after']['url']}")
+    else:
+        n = sum(1 for o in outcomes if o.action == "confirm")
+        if n:
+            print(f"\n(report-only: {n} confirmation(s) NOT written - pass --apply to write them)")
 
     trail = Path(a.trail) if a.trail else Path(a.db).with_name("self_heal.jsonl")
     with open(trail, "w", encoding="utf-8") as fh:

@@ -16,10 +16,11 @@ Nothing here trusts an answerer - a confirmation is a verbatim sentence located 
 """
 from __future__ import annotations
 
+import os
 import re
 import sqlite3
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 
 from src.cfp_monitor.verify_methods import BROWSER_LADDER, DEADLINE_PASSED, FETCH_PLAIN
 
@@ -172,8 +173,24 @@ class GroundedVerifier:
             text, _note = fetch_text(uri)     # urllib follows the redirect to the deep page
             found, quote = find_deadline_sentence(text, deadline_iso)
             if found:
-                return VerifyResult(True, self.method, uri, quote=quote, evidence=ev)
+                # Store the RESOLVED page, never the vertexaisearch redirect (which is not an
+                # admissible citation host - the gate's R22 would reject it).
+                real = _resolve_final_url(uri) or ("https://" + (s.get("title") or "").strip("/"))
+                return VerifyResult(True, self.method, real, quote=quote, evidence=ev)
         return VerifyResult(False, self.method, url, evidence=ev)   # searched, none confirmed the date
+
+
+def _resolve_final_url(uri: str) -> str:
+    """Follow a Google grounding redirect to the real page URL. '' if it will not resolve to a
+    real host (never return the vertexaisearch redirect - it is not an admissible citation)."""
+    try:
+        import urllib.request
+        req = urllib.request.Request(uri, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            final = r.geturl()
+        return "" if "vertexaisearch" in (final or "") else final
+    except Exception:                                                    # noqa: BLE001
+        return ""
 
 
 @dataclass
@@ -319,6 +336,39 @@ def render(outcomes: list[RowOutcome]) -> str:
             for o in by[label]:
                 lines.append(f"- {o.name[:52]}  ({o.reason})")
     return "\n".join(lines)
+
+
+def apply_confirmations(con: sqlite3.Connection, outcomes: list[RowOutcome], db_path=None):
+    """Write ONLY the confirmed rows, and only what was proven. For each confirm: verify_state ->
+    verified, store the verbatim quote and (for a grounded confirm) the resolved citation URL, and
+    record the method in verify_detail so the change is traceable. Backs up the DB file first, logs
+    every change old->new, and NEVER touches a non-confirmed row or a customer-owned field. Returns
+    (log, backup_path). The gate still decides what ships - this only raises our own verify state.
+    """
+    confirmed = [o for o in outcomes if o.action == "confirm"]
+    backup = None
+    if confirmed and db_path and os.path.isfile(db_path):
+        import shutil
+        backup = f"{os.path.splitext(db_path)[0]}.before-selfheal-{datetime.now():%Y%m%d-%H%M%S}.db"
+        shutil.copy2(db_path, backup)
+    log = []
+    for o in confirmed:
+        before = con.execute("SELECT verify_state, deadline_evidence_url FROM grounding_facts "
+                             "WHERE event_id=?", (o.event_id,)).fetchone()
+        if before is None:
+            continue
+        # A grounded confirm brings a fresh URL; a free-method confirm re-verifies the cited one.
+        # Never store a vertexaisearch redirect (R22 would reject it) - keep the existing URL then.
+        clean = o.url if re.match(r"^https?://", o.url or "") and "vertexaisearch" not in (o.url or "") \
+            else (before[0 + 1] or "")
+        con.execute("UPDATE grounding_facts SET verify_state='verified', deadline_quote=?, "
+                    "deadline_evidence_url=?, verify_detail=? WHERE event_id=?",
+                    (o.quote, clean, f"self-heal:{o.method}", o.event_id))
+        log.append({"event_id": o.event_id, "name": o.name, "method": o.method,
+                    "before": {"verify_state": before[0], "url": before[1]},
+                    "after": {"verify_state": "verified", "url": clean, "quote": (o.quote or "")[:80]}})
+    con.commit()
+    return log, backup
 
 
 def to_records(outcomes: list[RowOutcome]) -> list[dict]:
