@@ -33,6 +33,7 @@ citations_*.csv
 candidate_urls*.csv
 *_audited.csv
 *_seed.csv
+*.before-merge-*.csv
 runs_out/
 # NOT market_sheets/ wholesale - that folder has its own rule, and held_rows.txt is a record
 # of deliberate decisions that must stay tracked.

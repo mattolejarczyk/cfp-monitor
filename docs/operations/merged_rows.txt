@@ -190,3 +190,23 @@
     source_as_of: 2026-08-05 -> 2026-09-12
     verify_detail: [L2] no evidence URL supplied - nothing to check; grounding  -> [L2] no parseable deadline to check  <- cited page https://e
     seed cyber_seed.csv: 1 row(s) repointed
+2026-09-22 2027-act-expo-las-vegas -> 2026-act-expo-las-vegas  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Clean Transportation, Fleet Technology, Zero-Emission Trucks -> Clean Transportation, Fleet Electrification, Hydrogen Mobili
+    coordinator_email: speakers@trccompanies.com -> info@actexpo.com
+    overview: North America's largest advanced clean transportation and fl -> North America's largest fleet conversion and clean transport
+    source_as_of: 2026-09-12 -> 2026-09-20
+    status: Closed -> Needs Verification
+    submission_url: https://www.actexpo.com/call-for-speakers -> https://www.actexpo.com/
+    seed utility_seed.csv: 1 row(s) repointed
+    seed utility_seed.csv: 1 row(s) repointed
+2026-09-22 2027-international-conference-on-climate-change-johannesburg -> 2026-nineteenth-international-conference-on-climate-johannesburg  (duplicate of the same event; the customer's sheet is matched to this row)
+    categories: Climatology, Ecological Economics, Environmental Policy, Env -> Climate Change, Environmental Science, Sustainability, Polic
+    overview: An interdisciplinary international academic conference inves -> An interdisciplinary international academic conference inves
+    source_as_of: 2026-09-12 -> 2026-09-19
+    sponsor_cost: (blank) -> Tailored packages available; the organization offers a range
+    sponsor_required: Unknown -> Yes
+    sponsor_url: (blank) -> https://cgnetworks.org/about/sponsorship
+    conferences: 1 re-pointed, 0 duplicate(s) dropped
+    seed grounding_seed.csv: 1 row(s) repointed
+    seed utility_seed.csv: 1 row(s) repointed
+    seed utility_seed.csv: 1 row(s) repointed
