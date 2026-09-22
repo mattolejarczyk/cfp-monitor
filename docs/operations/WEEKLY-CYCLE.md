@@ -139,8 +139,12 @@ The human step, and the reason the weekend has slack in it.
     scripts/accept_delivery.py        the one gate. Never build a second opinion.
     scripts/mechanical_repairs.py     v2.4 classes A-D: how a claim is WRITTEN, never what it claims
     scripts/delivery_loop.py          gate -> repairs -> gate, with run health
+    scripts/grounding_review.py       the grounding trail's flags, as actions to work
 
-Read the RUN HEALTH line first. A DEGRADED run is a finding, not a formality.
+Read the RUN HEALTH line first. A DEGRADED run is a finding, not a formality. Then run
+`grounding_review.py` over the run's `.grounding.jsonl`: it lists each row whose citation is on
+a host the run never searched (a likely composed URL) with the action - verify the page, or
+withdraw the citation, never invent one - and each no-search stub to re-run.
 
 **Conflicts that need upstream go to upstream** as a hand-back, and those take round trips -
 sometimes days. **A conflict unresolved by Monday does not hold the delivery.** Its row keeps
