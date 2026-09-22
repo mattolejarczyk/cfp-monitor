@@ -21,8 +21,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.cfp_monitor.self_heal import (                                 # noqa: E402
-    BrowserLadderVerifier, DateContextVerifier, render, resolve_rows,
-    select_unconfirmed, to_records)
+    BrowserLadderVerifier, DateContextVerifier, GroundedVerifier, discover_flagged,
+    render, resolve_rows, select_unconfirmed, to_records)
+
+DEFAULT_HELPER = r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets\grounded_ask.py"
 
 
 def human_pace(delay: float):
@@ -42,6 +44,16 @@ def main() -> int:
                     help="seconds between checks, human-paced and sequential")
     ap.add_argument("--no-browser", action="store_true",
                     help="plain fetch only; skip the real-Chrome escalation (free but slower)")
+    ap.add_argument("--grounded", action="store_true",
+                    help="LAST resort: ground the FLAGGED residue (spends quota). Off by default.")
+    ap.add_argument("--max-grounded", type=int, default=3,
+                    help="budget: grounded requests to spend (small first, grow with proof)")
+    ap.add_argument("--grounded-spike-guard", type=int, default=15,
+                    help="refuse the grounded step if more rows are flagged than this - a spike "
+                         "means an upstream break, not a discovery need")
+    ap.add_argument("--grounded-python", default="py",
+                    help="interpreter with google-genai for the upstream grounded_ask helper")
+    ap.add_argument("--grounded-helper", default=DEFAULT_HELPER)
     ap.add_argument("--trail", help="write the machine trail (jsonl) here")
     a = ap.parse_args()
 
@@ -56,6 +68,13 @@ def main() -> int:
     if not a.no_browser:
         verifiers.append(BrowserLadderVerifier())    # free escalation for JS/403 pages
     outcomes = resolve_rows(con, rows, verifiers, pace=human_pace(a.delay))
+
+    if a.grounded:
+        gv = GroundedVerifier(a.grounded_helper, python=a.grounded_python)
+        outcomes, note = discover_flagged(outcomes, gv, a.max_grounded,
+                                           a.grounded_spike_guard, pace=human_pace(max(a.delay, 8)))
+        print(f"[grounded] {note}\n")
+
     print(render(outcomes))
 
     trail = Path(a.trail) if a.trail else Path(a.db).with_name("self_heal.jsonl")

@@ -110,6 +110,34 @@ def test_customer_working_row_is_surfaced_not_healed():
     assert res[0].action == "skip:customer-working" and "Drafting Abstract" in res[0].reason
 
 
+def _flag(name, dl="2026-12-01"):
+    return sh.RowOutcome("e-" + name, name, dl, "http://x", "flag", sh.__dict__.get("_", "") or "fetch-plain+regex")
+
+
+def test_grounded_spike_guard_refuses_a_flood():
+    from src.cfp_monitor import verify_methods as vm
+
+    class _Boom:
+        def verify(self, *a):
+            raise AssertionError("the grounded verifier must not be called on a spike")
+
+    flagged = [_flag(f"c{i}") for i in range(20)]
+    out, note = sh.discover_flagged(flagged, _Boom(), max_grounded=3, spike_threshold=15)
+    assert "REFUSED" in note and all(o.action == "flag" for o in out)   # nothing grounded
+
+
+def test_grounded_confirms_within_budget_and_captures_evidence():
+    from src.cfp_monitor import verify_methods as vm
+    flagged = [_flag("PCIM Europe 2027", "2026-10-14"), _flag("SEMICON China 2027")]
+    ev = {"queries": ["q1", "q2"], "source_hosts": ["mesago.com"]}
+    gv = _Fake(sh.VerifyResult(True, vm.GROUNDED, "https://mesago.com/x", "abstract deadline October 14, 2026", evidence=ev))
+    out, note = sh.discover_flagged(flagged, gv, max_grounded=1, spike_threshold=15)
+    confirmed = [o for o in out if o.action == "confirm"]
+    assert len(confirmed) == 1 and confirmed[0].method == vm.GROUNDED
+    assert confirmed[0].evidence["source_hosts"] == ["mesago.com"]      # provenance captured
+    assert "grounded 1" in note                                          # budget honoured
+
+
 def test_every_record_carries_a_registered_method():
     from src.cfp_monitor import verify_methods as vm
     con = _db_with([("a", "A", "2026-10-19", "not_found", "http://a")])

@@ -184,6 +184,16 @@ worth being careful about how it is done rather than reaching for grounded quota
 **The 7 that need discovery** are the only place a search of any kind is warranted, and the
 route is still open (browser-search vs grounded-API) - see the browser-automation note below.
 
+**Update 2026-09-22 - the grounded step (built, gated, live):** `grounded-search+verify` shells
+to `Markets/grounded_ask.py` (upstream's half; cfp-monitor never imports google-genai), asks one
+specific question, then FETCHES the sources it returns and proves the claimed deadline on one.
+Run over the 7 flagged with budget 3: **2 confirmed** (embedded world 2027, SEMICON China 2027 -
+via `semiconchina.org` etc.), 1 searched-but-unconfirmed, source hosts captured as evidence.
+Total now **29 of 34 resolved, 3 grounded requests spent.** Two guards so a broken pipeline
+cannot flood the API: a SPIKE guard (refuse the whole step if more than N rows are flagged - a
+spike is an upstream break, not discovery) and a hard BUDGET, human-paced, off by default. It is
+the LAST step, run only on the residue the free methods could not resolve.
+
 ## Automating a web search - what the evidence says (2026-09-22)
 
 Tested once each, no repeats (avoiding an account flag):

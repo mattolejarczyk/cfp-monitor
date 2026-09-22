@@ -82,6 +82,7 @@ class VerifyResult:
     url: str = ""
     quote: str = ""
     status: str = "checked"     # 'checked' | 'unavailable' (an outage is not a finding, 2.5)
+    evidence: dict = None        # grounded step: {queries, source_hosts} - captured for the trail
 
 
 def _decide(method: str, url: str, text: str, deadline_iso: str) -> VerifyResult:
@@ -132,16 +133,60 @@ class BrowserLadderVerifier:
         return _decide(self.method, url, text, deadline_iso)
 
 
+class GroundedVerifier:
+    """LAST resort (grounded-search+verify): ask ONE specific question via grounded Google search,
+    then FETCH the sources it returns and prove the claimed deadline is on one. Grounded search is
+    upstream's half, so this SHELLS to Markets/grounded_ask.py under an interpreter that has
+    google-genai - cfp-monitor never imports it. The grounded answer is only a lead; a confirmation
+    is still a verbatim sentence on a page we fetched. Queries + source hosts are captured as
+    evidence. Spends a grounded request per row - budgeted and spike-guarded by the caller."""
+    method = "grounded-search+verify"
+
+    def __init__(self, helper: str, python: str = "py", max_sources: int = 4, timeout: int = 120):
+        self.helper, self.python, self.max_sources, self.timeout = helper, python, max_sources, timeout
+
+    def verify(self, event_name: str, deadline_iso: str, url: str) -> VerifyResult:
+        import json
+        import subprocess
+        q = (f"What is the abstract or paper submission deadline for {event_name}? "
+             f"Give the official source page.")
+        try:
+            p = subprocess.run([self.python, self.helper, "--question", q],
+                               capture_output=True, text=True, timeout=self.timeout)
+            data = json.loads(p.stdout.strip().splitlines()[-1]) if p.stdout.strip() else {}
+        except Exception:                                                # noqa: BLE001
+            return VerifyResult(False, self.method, url, status="unavailable")
+        if not data.get("ok") or not data.get("searched"):
+            return VerifyResult(False, self.method, url, status="unavailable")
+        sources = data.get("sources", [])
+        ev = {"queries": data.get("queries", []),
+              "source_hosts": sorted({(s.get("title") or "").lower() for s in sources if s.get("title")})}
+        try:
+            from src.cfp_monitor.verify import fetch_text
+        except Exception:                                                # noqa: BLE001
+            return VerifyResult(False, self.method, url, evidence=ev)
+        for s in sources[:self.max_sources]:
+            uri = s.get("uri", "")            # a Google redirect that resolves to the real page
+            if not uri:
+                continue
+            text, _note = fetch_text(uri)     # urllib follows the redirect to the deep page
+            found, quote = find_deadline_sentence(text, deadline_iso)
+            if found:
+                return VerifyResult(True, self.method, uri, quote=quote, evidence=ev)
+        return VerifyResult(False, self.method, url, evidence=ev)   # searched, none confirmed the date
+
+
 @dataclass
 class RowOutcome:
     event_id: str
     name: str
     deadline: str
     url: str
-    action: str                 # 'confirm' | 'flag' | 'skip:customer-working' | 'skip:no-page'
+    action: str                 # closed-passed | confirm | flag | skip:customer-working | skip:no-page
     method: str = ""
     quote: str = ""
     reason: str = ""
+    evidence: dict = None        # grounded step: {queries, source_hosts}
 
 
 def select_unconfirmed(con: sqlite3.Connection, limit: int) -> list[sqlite3.Row]:
@@ -213,6 +258,38 @@ def resolve_rows(con: sqlite3.Connection, rows, verifiers, pace=None, today=None
     return out
 
 
+def discover_flagged(outcomes: list[RowOutcome], verifier, max_grounded: int,
+                     spike_threshold: int, pace=None):
+    """The LAST step, gated. Runs the grounded verifier over the rows the free methods FLAGGED -
+    and only those. Returns (outcomes, note). Two guards so a broken pipeline cannot pound the
+    grounded API:
+      - SPIKE: if more rows are flagged than `spike_threshold`, REFUSE the whole step (a spike is
+        an upstream break, not a real discovery need) - 0 grounded requests spent.
+      - BUDGET: otherwise ground at most `max_grounded` rows, cheapest-first (soonest deadline).
+    """
+    flagged = [o for o in outcomes if o.action == "flag"]
+    if not flagged:
+        return outcomes, "grounded step: nothing flagged - not needed"
+    if len(flagged) > spike_threshold:
+        return outcomes, (f"grounded step REFUSED: {len(flagged)} rows flagged (> spike guard "
+                          f"{spike_threshold}) - a spike means an upstream break, not discovery. "
+                          f"0 grounded requests spent; investigate before grounding.")
+    grounded = 0
+    for o in sorted(flagged, key=lambda o: o.deadline)[:max_grounded]:
+        if pace:
+            pace()
+        res = verifier.verify(o.name, o.deadline, o.url)
+        grounded += 1
+        o.evidence = res.evidence
+        if res.confirmed:
+            o.action, o.method, o.quote, o.url, o.reason = "confirm", res.method, res.quote, res.url, ""
+        elif res.status == "unavailable":
+            o.reason = "grounded search unavailable (quota/outage) - still needs a person"
+        else:
+            o.reason = "grounded search found no source stating the claimed deadline - needs a person"
+    return outcomes, f"grounded step: {len(flagged)} flagged, grounded {grounded} (budget {max_grounded})"
+
+
 def render(outcomes: list[RowOutcome]) -> str:
     by = {}
     for o in outcomes:
@@ -248,4 +325,4 @@ def to_records(outcomes: list[RowOutcome]) -> list[dict]:
     """The machine trail: one record per row, each carrying its method (provenance)."""
     return [{"kind": "self_heal", "phase": 1, "event_id": o.event_id, "name": o.name,
              "deadline": o.deadline, "url": o.url, "action": o.action, "method": o.method,
-             "quote": o.quote, "reason": o.reason} for o in outcomes]
+             "quote": o.quote, "reason": o.reason, "evidence": o.evidence} for o in outcomes]
