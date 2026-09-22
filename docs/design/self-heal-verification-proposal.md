@@ -52,6 +52,19 @@ the grounding trail already records:
 So a self-heal never writes a bare "verified" - it writes a URL and a verbatim quote, exactly
 what the gate demands of any citation. Evidence in, evidence stored.
 
+## Provenance - know what produced each piece of evidence (operator, 2026-09-22)
+
+Every result and every stored confirmation carries a **`method`** label, so we always know how
+a fact was verified and can trust it accordingly (mirrors `evidence.origin`):
+
+- `fetch:date-context` - the deadline was found on the row's already-cited page (free, Phase 1).
+- `ask+verify:grounded` - grounded search found the page, which was then fetched and the quote
+  proven (the throttled fallback).
+- future methods name themselves; an un-labelled confirmation is a defect.
+
+The self-heal trail and the report group by method, so "what produced this evidence, and by
+which route" is answerable for any row.
+
 ## The problem
 
 The QBD layer now produces signals that end at "a person should look": a composed-URL flag
@@ -121,6 +134,27 @@ and does not re-open the quota problem.
 A specific question can still return a confident wrong answer; the fetch-and-verify step is the
 guard, exactly as it is for research. If the source cannot be fetched, the row stays flagged for
 a person - an outage is never written as a finding (2.5/2.6).
+
+## Phase 1 finding (measured 2026-09-22, report-only)
+
+Built report-only and run over all 34 not_found rows that carry a deadline + a cited URL.
+**Result: 0 confirmable** - 21 flagged (the plain page did not state the deadline in a
+submission context), 13 unreadable (403/JS). This is not a failure, it is the lesson: those rows
+are `not_found` BECAUSE `verify_grounding` already ran the same cheap `fetch_text` on them.
+Re-running the identical primitive reproduces the identical wall.
+
+So the value is NOT in re-verifying with the free primitive - it is in ESCALATING past what
+already failed:
+- **the 13 unreadable** -> the BROWSER LADDER (investigate_event's real-Chrome fetch), still
+  verification, still free / no quota. Read the JS pages plain HTTP cannot.
+- **the 21 flagged** -> the cited URL is likely stale; the GROUNDED FALLBACK finds the CURRENT
+  page (the quota path), and the answer is then fetched-and-verified as usual.
+
+Correction to the architecture note above: "verification-first is the free common case" holds
+for a FRESH row, but NOT for the not_found backlog, which by definition already spent the free
+check. The escalation plugs into the same `Verifier` seam - a better verifier, same contract.
+The report-only foundation (row selection, customer guard, method provenance, trail, report)
+stands; the next build is the escalating verifier.
 
 ## Motivating cases
 
