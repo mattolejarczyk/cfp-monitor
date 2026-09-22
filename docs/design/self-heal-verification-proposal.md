@@ -34,6 +34,24 @@ So "ask Google a specific question" is the exception, and the common case is a f
 fetch. The reusable core exposes both: `verify_claim(claim, url|site)` and, behind the budget,
 `ask_then_verify(question)`.
 
+## Evidence capture from the grounded step (QBD - operator, 2026-09-22)
+
+The grounded ask is not just an answer, it is EVIDENCE, and it is captured - the same signals
+the grounding trail already records:
+
+- **Queries + sources go into a self-heal trail** (like `<output>.grounding.jsonl`): what was
+  asked, what came back, which page was fetched, the verbatim quote found (or why it failed).
+  Every attempt is auditable, and the residue feeds `grounding_review`.
+- **The sources ARE the verify targets, and the citation we keep.** `grounding_chunks[].web`
+  gives the real domain in `.title` and a Google redirect in `.uri`; **the redirect resolves to
+  the actual deep page**, so following it yields the precise URL to fetch, verify, and store as
+  the citation. This is the redirect-host fix from the trail work, reused: the ask hands us the
+  page, the fetch proves the sentence, and the confirmed URL+quote becomes the evidence on the
+  row. One unbroken chain: ask -> capture source URLs -> fetch -> prove -> confirm with citation.
+
+So a self-heal never writes a bare "verified" - it writes a URL and a verbatim quote, exactly
+what the gate demands of any citation. Evidence in, evidence stored.
+
 ## The problem
 
 The QBD layer now produces signals that end at "a person should look": a composed-URL flag
