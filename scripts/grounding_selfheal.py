@@ -21,7 +21,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.cfp_monitor.self_heal import (                                 # noqa: E402
-    DateContextVerifier, render, resolve_rows, select_unconfirmed, to_records)
+    BrowserLadderVerifier, DateContextVerifier, render, resolve_rows,
+    select_unconfirmed, to_records)
 
 
 def human_pace(delay: float):
@@ -39,6 +40,8 @@ def main() -> int:
                     help="budget: rows to check this run (small first, grow with proof)")
     ap.add_argument("--delay", type=float, default=8.0,
                     help="seconds between checks, human-paced and sequential")
+    ap.add_argument("--no-browser", action="store_true",
+                    help="plain fetch only; skip the real-Chrome escalation (free but slower)")
     ap.add_argument("--trail", help="write the machine trail (jsonl) here")
     a = ap.parse_args()
 
@@ -49,7 +52,10 @@ def main() -> int:
         return 0
     print(f"SELF-HEAL: checking {len(rows)} of the not_found+cited rows "
           f"(budget --max-rows {a.max_rows}), one at a time...\n")
-    outcomes = resolve_rows(con, rows, DateContextVerifier(), pace=human_pace(a.delay))
+    verifiers = [DateContextVerifier()]
+    if not a.no_browser:
+        verifiers.append(BrowserLadderVerifier())    # free escalation for JS/403 pages
+    outcomes = resolve_rows(con, rows, verifiers, pace=human_pace(a.delay))
     print(render(outcomes))
 
     trail = Path(a.trail) if a.trail else Path(a.db).with_name("self_heal.jsonl")

@@ -18,8 +18,9 @@ from __future__ import annotations
 
 import re
 import sqlite3
-from dataclasses import dataclass, field
-from datetime import date
+from dataclasses import dataclass
+
+from src.cfp_monitor.verify_methods import BROWSER_LADDER, FETCH_PLAIN
 
 # A row the customer is actively working is SURFACED, never auto-resolved: their in-flight
 # state (a verbal agreement, a submission past the shown deadline) is truth no page shows.
@@ -82,12 +83,20 @@ class VerifyResult:
     status: str = "checked"     # 'checked' | 'unavailable' (an outage is not a finding, 2.5)
 
 
+def _decide(method: str, url: str, text: str, deadline_iso: str) -> VerifyResult:
+    """Given page text, decide confirmed / not / unavailable - shared by both verifiers so the
+    match logic never diverges between the plain and browser paths."""
+    if not (text or "").strip():
+        # A 403/JS-only/dead page yields no text - an outage, not a disproof (2.5).
+        return VerifyResult(False, method, url, status="unavailable")
+    found, quote = find_deadline_sentence(text, deadline_iso)
+    return VerifyResult(found, method, url, quote=quote)
+
+
 class DateContextVerifier:
-    """The default Phase-1 verifier: fetch the row's cited page and locate the deadline on it.
-    Produces method='fetch:date-context'. Fetching is imported lazily so the module and its
-    tests do not need the network; tests exercise `find_deadline_sentence` and a fake verifier.
-    """
-    method = "fetch:date-context"
+    """FREE, floor method (fetch-plain+regex): a plain HTTP GET, deadline located on the page.
+    Fetching is imported lazily so the module and its tests do not need the network."""
+    method = FETCH_PLAIN
 
     def verify(self, event_name: str, deadline_iso: str, url: str) -> VerifyResult:
         if not url:
@@ -97,11 +106,29 @@ class DateContextVerifier:
             text, _note = fetch_text(url)          # (visible text, note); note is set on failure
         except Exception:                                                # noqa: BLE001
             return VerifyResult(False, self.method, url, status="unavailable")
-        if not (text or "").strip():
-            # A 403/JS-only/dead page yields no text - an outage, not a disproof (2.5).
+        return _decide(self.method, url, text, deadline_iso)
+
+
+class BrowserLadderVerifier:
+    """FREE escalation (browser-ladder+regex): read the SAME page in the real signed-in Chrome
+    on :9222 (investigate_event.render_targets), for the JS/403 pages a plain GET cannot. No
+    grounded quota; slower. The match logic is identical - only the fetch is stronger."""
+    method = BROWSER_LADDER
+
+    def verify(self, event_name: str, deadline_iso: str, url: str) -> VerifyResult:
+        if not url:
             return VerifyResult(False, self.method, url, status="unavailable")
-        found, quote = find_deadline_sentence(text, deadline_iso)
-        return VerifyResult(found, self.method, url, quote=quote)
+        try:
+            import importlib.util
+            from pathlib import Path
+            spec = importlib.util.spec_from_file_location(
+                "_ie", Path(__file__).resolve().parents[2] / "scripts" / "investigate_event.py")
+            ie = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(ie)
+            text = (ie.render_targets([url]) or {}).get(url, "")
+        except Exception:                                                # noqa: BLE001
+            return VerifyResult(False, self.method, url, status="unavailable")
+        return _decide(self.method, url, text, deadline_iso)
 
 
 @dataclass
@@ -144,7 +171,13 @@ def customer_working_status(con: sqlite3.Connection, event_id: str) -> str:
     return ""
 
 
-def resolve_rows(con: sqlite3.Connection, rows, verifier, pace=None) -> list[RowOutcome]:
+def resolve_rows(con: sqlite3.Connection, rows, verifiers, pace=None) -> list[RowOutcome]:
+    """`verifiers` is an ordered list, cheapest first. We ESCALATE only on 'unavailable' - a page
+    we could not read. A page we CAN read but that does not state the deadline is a real 'flag';
+    escalating to a stronger fetch of the same page would not change that. The recorded method is
+    whichever verifier produced the decisive result. A single verifier may be passed for tests."""
+    if not isinstance(verifiers, (list, tuple)):
+        verifiers = [verifiers]
     out: list[RowOutcome] = []
     for row in rows:
         eid, name, dl, url = row["event_id"], row["name"], row["deadline"], row["url"]
@@ -153,12 +186,16 @@ def resolve_rows(con: sqlite3.Connection, rows, verifier, pace=None) -> list[Row
             out.append(RowOutcome(eid, name, dl, url, "skip:customer-working",
                                   reason=f"customer status '{working}' - surface, do not heal"))
             continue
-        if pace:
-            pace()
-        res = verifier.verify(name, dl, url)
+        res = None
+        for v in verifiers:
+            if pace:
+                pace()
+            res = v.verify(name, dl, url)
+            if res.status != "unavailable":
+                break                       # got a readable page - decide on it, do not escalate
         if res.status == "unavailable":
             out.append(RowOutcome(eid, name, dl, url, "skip:no-page", res.method,
-                                  reason="page could not be read - an outage is not a finding"))
+                                  reason="page could not be read by any method - an outage is not a finding"))
         elif res.confirmed:
             out.append(RowOutcome(eid, name, dl, url, "confirm", res.method, res.quote))
         else:
@@ -177,9 +214,9 @@ def render(outcomes: list[RowOutcome]) -> str:
              f"{len(by.get('skip:customer-working', []))} left to the customer, "
              f"{len(by.get('skip:no-page', []))} unreadable", ""]
     if by.get("confirm"):
-        lines.append("CONFIRMABLE (deadline located on the cited page) [method: fetch:date-context]")
+        lines.append("CONFIRMABLE (deadline located on the cited page)")
         for o in by["confirm"]:
-            lines.append(f"- {o.name[:52]}  deadline {o.deadline}")
+            lines.append(f"- {o.name[:52]}  deadline {o.deadline}  [method: {o.method}]")
             lines.append(f"    {o.url}")
             lines.append(f"    quote: \"{o.quote[:150]}\"")
     for label, head in (("flag", "STILL NEED A PERSON (cited page did not confirm the deadline)"),

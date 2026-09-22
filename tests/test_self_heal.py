@@ -89,10 +89,28 @@ def test_customer_working_row_is_surfaced_not_healed():
     assert res[0].action == "skip:customer-working" and "Drafting Abstract" in res[0].reason
 
 
-def test_every_record_carries_its_method():
+def test_every_record_carries_a_registered_method():
+    from src.cfp_monitor import verify_methods as vm
     con = _db_with([("a", "A", "2026-10-19", "not_found", "http://a")])
     rows = sh.select_unconfirmed(con, 0)
-    res = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(True, "fetch:date-context", "http://a", "deadline October 19, 2026")))
+    res = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(True, vm.FETCH_PLAIN, "http://a", "deadline October 19, 2026")))
     recs = sh.to_records(res)
-    assert recs[0]["method"] == "fetch:date-context" and recs[0]["action"] == "confirm"
-    assert "fetch:date-context" in sh.render(res)
+    assert recs[0]["method"] == vm.FETCH_PLAIN and vm.is_method(recs[0]["method"])
+    assert recs[0]["action"] == "confirm" and vm.FETCH_PLAIN in sh.render(res)
+    # the shipped verifiers name registered methods
+    assert vm.is_method(sh.DateContextVerifier.method) and vm.is_method(sh.BrowserLadderVerifier.method)
+
+
+def test_escalation_tries_the_browser_only_when_the_plain_page_is_unreadable():
+    from src.cfp_monitor import verify_methods as vm
+    con = _db_with([("a", "A", "2026-10-19", "not_found", "http://a")])
+    rows = sh.select_unconfirmed(con, 0)
+    plain_blind = _Fake(sh.VerifyResult(False, vm.FETCH_PLAIN, "http://a", status="unavailable"))
+    browser_ok = _Fake(sh.VerifyResult(True, vm.BROWSER_LADDER, "http://a", "abstract deadline October 19, 2026"))
+    res = sh.resolve_rows(con, rows, [plain_blind, browser_ok])
+    assert res[0].action == "confirm" and res[0].method == vm.BROWSER_LADDER   # escalated
+
+    # a plain page we CAN read but that lacks the date is a real flag - do not escalate past it
+    plain_flag = _Fake(sh.VerifyResult(False, vm.FETCH_PLAIN, "http://a"))
+    res2 = sh.resolve_rows(con, rows, [plain_flag, browser_ok])
+    assert res2[0].action == "flag" and res2[0].method == vm.FETCH_PLAIN

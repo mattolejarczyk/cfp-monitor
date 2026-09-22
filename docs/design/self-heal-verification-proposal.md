@@ -65,6 +65,23 @@ a fact was verified and can trust it accordingly (mirrors `evidence.origin`):
 The self-heal trail and the report group by method, so "what produced this evidence, and by
 which route" is answerable for any row.
 
+### The method vocabulary (one definition: `src/cfp_monitor/verify_methods.py`)
+
+Every result names its method from this registry - a label not registered here is a defect.
+Categorised on three axes so the data slices any way: SOURCE (how the page was got), MATCH (how
+the claim was confirmed), COST (what it spends).
+
+| id | source | match | cost | when it applies |
+|---|---|---|---|---|
+| `fetch-plain+regex` | plain-http | date-context-regex | **free** | The floor: a plain GET, deadline located in a submission context. A `not_found` row already failed this, so it re-confirms little. |
+| `browser-ladder+regex` | real-browser | date-context-regex | **free** | Escalation for JS/403 pages a plain GET cannot read - the signed-in Chrome on :9222 (`render_targets`). No grounded quota; slower. |
+| `llm-verbatim` | real-browser | llm-verbatim | llm | The model finds the sentence stating the known deadline; it must be a literal substring of the fetched page. For date forms the regex misses. OpenRouter, not grounded quota. |
+| `grounded-search+verify` | grounded-search | date-context-regex | **grounded** | The throttled exception: grounded Google search finds the CURRENT page when the cited one is stale; the answer is then fetched and the quote proven. Budgeted, human-paced. |
+| `upstream-grounding` | upstream | none | grounded | The original citation from upstream's grounded research (`evidence.origin=grounding`). Recorded for provenance; not produced by self-heal. |
+
+Phase 1 ships the two **free** methods and escalates plain -> browser only when a page is
+unreadable. The two paid methods (`llm-verbatim`, `grounded-search+verify`) are later phases.
+
 ## The problem
 
 The QBD layer now produces signals that end at "a person should look": a composed-URL flag
