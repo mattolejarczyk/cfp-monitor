@@ -43,6 +43,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.cfp_monitor.run_health import HEALTH                        # noqa: E402
 from src.cfp_monitor.publish_guard import check_publish_fresh        # noqa: E402
+from src.cfp_monitor.grounding_review import load_outcomes, build_review, render  # noqa: E402
 
 PY = sys.executable
 MARKETS_DIR = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
@@ -244,6 +245,39 @@ def main() -> int:
     HEALTH.note("invariants", "hold" if done.returncode == 0 else "VIOLATED")
     print(f"\ninvariants: {'hold' if done.returncode == 0 else 'VIOLATED'} "
           f"(2d_invariants.log)")
+
+    # ---- REVIEW SIGNALS (advisory - recorded every cycle, never blocks the publish) ------
+    # These were tools a person had to remember to run. Embedding them here means a new
+    # duplicate, a composed citation, or a customer action surfaces in the weekly record on
+    # its own. None DEGRADES the run: a duplicate is a data-hygiene review, and a composed URL
+    # that is actually wrong fails the gate anyway - neither is a reason to withhold the page.
+    dup = subprocess.run([str(PY), str(ROOT / "scripts/find_duplicate_events.py"), "--db", a.db],
+                         capture_output=True, text=True,
+                         env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+    (work / "2e_duplicates.log").write_text(dup.stdout + dup.stderr, encoding="utf-8")
+    dup_clean = "nothing outstanding" in dup.stdout
+    HEALTH.note("duplicates", "clean" if dup_clean else "REVIEW - see 2e_duplicates.log")
+    print(f"duplicates: {'clean' if dup_clean else 'REVIEW NEEDED'} (2e_duplicates.log)")
+
+    trails = sorted(md.glob("*.grounding.jsonl"))
+    if trails:
+        parts, composed = [], 0
+        for t in trails:
+            rev = build_review(load_outcomes(t))
+            composed += len(rev["composed"])
+            parts.append(render(rev, t.name))
+        (work / "2f_grounding_review.md").write_text("\n\n".join(parts), encoding="utf-8")
+        HEALTH.note("grounding_review",
+                    "clean" if composed == 0 else f"{composed}_citation(s)_to_check")
+        print(f"grounding review: {composed} citation(s) to check (2f_grounding_review.md)")
+    else:
+        print("grounding review: no trail found for this cycle")
+
+    cc = subprocess.run([str(PY), str(ROOT / "scripts/customer_context.py"), "--all-acted",
+                         "--db", a.db], capture_output=True, text=True,
+                        env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+    (work / "2g_customer_context.log").write_text(cc.stdout + cc.stderr, encoding="utf-8")
+    print("customer context (what the client has acted on) -> 2g_customer_context.log")
 
     # 4 + 5. The two pages. --reconcile adds the "check against your sheet" view.
     if combined:
