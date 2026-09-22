@@ -5,6 +5,53 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-22 - quality by design: verification provenance, self-heal, evidence matrix
+
+All on main in both repos, pushed as built. Theme: every step ends in a fix or a decision-ready
+prompt, and every piece of evidence says HOW it was produced.
+
+- **Grounding evidence trail** on every `run_market_audit` run (conference AND awards - shared
+  `audit_conference` path): `<output>.grounding.jsonl` + `.health.json` + a GROUNDING TRAIL line.
+  New signal `citation-host-not-in-sources` = a composed URL (source host read from
+  `web.title`; `web.uri` is a vertexaisearch redirect). `grounding_review.py` turns it into a
+  review action (verify or withdraw, never invent).
+- **Promote guard (Step 4a), the last silent-failure path closed.** `promote_delivery.py` refuses
+  a delivery the gate did not ACCEPT and writes a signed manifest; `weekly_deliverable` calls
+  `publish_guard.check_publish_fresh` and goes DEGRADED (nothing publishes) on a stale/unmanifested/
+  tampered/week-old `.final.csv`.
+- **validate_market_output awards-aware** (R8 45-col; rule 3 SUBMISSION DATE VERIFIED is a status
+  on awards; rule 2 CFP MODEL TYPE may be blank on awards; conferences stay strict).
+- **Bucket A wired into the Monday build** (advisory, never blocks): `find_duplicate_events`
+  (detection now runs weekly - it was not embedded before), `grounding_review`,
+  `customer_context --all-acted`, and the evidence matrix.
+- **Resolved 2 duplicate conflicts** the embedded detection surfaced: ACT Expo 2027 (spurious
+  Nov 1 dup dropped, kept the customer-joined Sept 10 which has passed) and 19th ICCCIR
+  Johannesburg (the Oct 19 / Dec 20 "conflict" was two submission ROUNDS). Merged via
+  `merge_duplicate_events` (survivor = customer-joined row); `check_invariants` held.
+- **Self-heal Phase 1.** `verify_methods.py` = the one method ladder (L1 upstream AI search /
+  L2 code verify / L3 deadline-passed / L4 plain / L5 browser / L6 grounded AI $). `self_heal.py`
+  resolves not_found rows cheapest-first, report-only by default; `--apply` writes ONLY proven
+  confirmations (verify_state->verified + verbatim quote + resolved URL + verify_detail), backs up,
+  logs, never touches a customer field. Ran `--apply` live: RSA Conference 2027 + IWLPC
+  not_found->verified. Grounded step is the gated LAST resort (spike guard + budget + human-paced,
+  off by default) and shells to `Markets/grounded_ask.py` (cfp-monitor never imports google-genai).
+- **verify_dates.py** extends verbatim proof to conference DATES. LOW YIELD: ~3 of 374 clear a
+  strict bar (a lenient one gave false positives, reverted); most dates honestly stay `unv`. Real
+  date coverage needs browser+LLM.
+- **evidence_matrix.py**: flat filterable heatmap (by customer / market / cost / depth) where each
+  row expands to its full per-field evidence card. Wired into the Monday build (`--refresh`) ->
+  `runs_out`, advisory.
+
+Findings: automating Google search is not viable (it bot-walls automation, not the input method;
+scraping risks the signed-in account) - the grounded API is the sanctioned form. L1 upstream
+research costs money but it is upstream's, untracked; only L6 (our grounded) is incremental to us.
+Detection belongs embedded - the first weekly run found ~15 outstanding duplicate groups, 2 with
+conflicting deadlines. Git: consolidated onto main (had drifted 53 commits ahead on
+`feat/fetch-customer-sheet` with no PR); deleted merged branches. Standing prefs: work on main
+directly (no feature branches unless asked); add a plain description when sharing an error code.
+
+---
+
 ## 2026-09-20 - a run that wrote guesses as research, and the week that finally reached the customer
 
 **This week's data is IMPORTED and all invariants hold.** Monday 07:00 publishes 58
