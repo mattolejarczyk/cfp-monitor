@@ -1,6 +1,38 @@
 # Self-heal via targeted verification (proposal)
 
-Status: PROPOSAL, 2026-09-22. Not built. Scope it like the promote guard before building.
+Status: SCOPED + APPROVED, 2026-09-22. Phase 1 next, built report-only first. The builder does
+not grade itself - a separate pass verifies each phase before it earns `--apply`.
+
+## Decisions (operator, 2026-09-22)
+
+1. **Auto-apply only on DEFINITIVE evidence** - a verbatim quote located on a page we fetched.
+   Anything short of that stays a person's call.
+2. **Budget ramps with proof.** 2-3 rows the first run, expand toward ~10 once it is shown
+   correct against the gate. Grounded requests (the fallback below) are **sequential and
+   human-paced** - a random multi-second gap between requests, one at a time, never hammered -
+   reusing the existing rate limiter, never a private one.
+3. **A reusable capability, callable anywhere.** The core is "construct a specific question,
+   get evidence, verify it" - usable at any point the data needs confirmation, not one wired
+   step. It is wired into the workflow at the review stage to start, and exposed as a library
+   function others can call.
+
+## Architecture refinement (from the discovery/verification boundary)
+
+`cfp-monitor`'s half is VERIFICATION, not grounded search (see `investigate_event.py` header,
+and contract 5). So self-heal is **verification-first**:
+
+- **Primary - VERIFY (free, no grounded request).** For a flagged row, fetch its candidate page
+  through the ladder (`investigate_event`'s machinery) and confirm the claim is a literal
+  substring. Most `not_found` rows have a page; re-grounding one we can fetch is "paying for the
+  wrong thing".
+- **Fallback - ASK (grounded, throttled, upstream's half).** Only when verification has no page
+  to check does the specific question go to grounded search. The 2-3->10 budget and the
+  human-paced spacing govern THIS path. A grounded answer is never trusted until its cited page
+  is fetched and the quote confirmed.
+
+So "ask Google a specific question" is the exception, and the common case is a free, checkable
+fetch. The reusable core exposes both: `verify_claim(claim, url|site)` and, behind the budget,
+`ask_then_verify(question)`.
 
 ## The problem
 
