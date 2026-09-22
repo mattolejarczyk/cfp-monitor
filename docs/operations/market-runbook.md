@@ -321,6 +321,47 @@ criteria 7 (no row wearing another event's evidence) and 8 (open rows always lab
 
 ---
 
+## 4b. PROMOTE the accepted file to `<Market>_audited.final.csv`
+
+**The gate saying ACCEPTED is not what makes a file the week's delivery. The filename is.**
+
+```bash
+cd "/c/Users/matts/Desktop/Nicolia-PR-Prime/Markets"
+cp "<Market>_audited.final.csv" "<Market>_audited.final.pre-$(date +%Y%m%d).bak.csv"
+cp "<the accepted file>" "<Market>_audited.final.csv"
+```
+
+`weekly_deliverable.py` - the Monday 07:00 job that builds what the customer reads - does not
+search for the newest accepted delivery, and does not build from the database. It has the two
+paths hardcoded:
+
+```python
+sources = [md / "Cybersecurity_audited.final.csv", md / "Utility_audited.final.csv"]
+```
+
+So a delivery can be researched, gated ACCEPTED, imported and fully reconciled, and the
+customer will still be shown the previous cycle - silently, with every check passing, because
+nothing in the pipeline ever asks whether those two filenames point at this week's work.
+
+**Measured 2026-09-21.** Both markets passed the gate on 2026-09-20 and were imported with all
+invariants holding. The 07:00 job then ran against `.final.csv` files dated 2026-09-12 and
+2026-09-13 and would have published a fortnight-old page. The only symptom beforehand was in
+the import QA report, which said 30 delivered rows were "NOT in the database" - it was
+comparing the database against the STALE file, and the accusation pointed the wrong way.
+
+Two things follow:
+
+- **Promote immediately after the gate accepts**, in the same sitting. It is one copy, and it
+  is the step with no tool, no check and no reminder attached to it.
+- **Check the dates before believing a publish.** `ls -la *_audited.final.csv` costs a second.
+  If they are not from this cycle, nothing downstream of here is about this cycle.
+
+The backup copy matters as much as the promotion: it is the only record of what the customer
+was shown last week, and a page nobody can reconstruct is a page nobody can answer questions
+about.
+
+---
+
 ## 5. Read the customer view
 
 ```bash
@@ -496,6 +537,14 @@ cp cfp_monitor.db "cfp_monitor.backup-pre-M-$(date +%Y%m%d-%H%M%S).db"
 
 # 5  reconcile the DB against the delivery - catches rows lost during import
 ./venv/Scripts/python.exe scripts/check_invariants.py --db cfp_monitor.db
+
+# 6  PROMOTE - the step with no tool and no check attached to it (see section 4b)
+#    weekly_deliverable.py builds the customer page from these two FILENAMES, hardcoded.
+#    Skip this and Monday publishes the PREVIOUS cycle while every check still passes.
+cd "/c/Users/matts/Desktop/Nicolia-PR-Prime/Markets"
+cp "M_audited.final.csv" "M_audited.final.pre-$(date +%Y%m%d).bak.csv"
+cp "<the accepted file>" "M_audited.final.csv"
+ls -la *_audited.final.csv        # dates MUST be from this cycle. One second, every time.
 ```
 
 ---
@@ -541,6 +590,51 @@ Digest lands in `runs_out\weekly_verify_<stamp>.md`. Email only happens if `CFP_
 
 Both tasks have `StartWhenAvailable` and `AllowStartIfOnBatteries` set. Without those a
 01:00 job on a sleeping or unplugged machine silently never runs.
+
+---
+
+## The grounding evidence trail (every research run writes it)
+
+RUN HEALTH says a run was HEALTHY or DEGRADED; it never said *why* per row, and nothing was
+left on disk to root-cause it after the fact. Since 2026-09-22 every `run_market_audit.py` run
+- conference or awards, scheduled or by hand - drops two files beside its output, and adds one
+line to the end-of-run banner. Built in `run_market_audit.py` (`GroundingTrail`); tests in
+`Markets/test_grounding_trail.py`.
+
+**What lands, beside `<output>.csv`:**
+
+| File | What it holds |
+|---|---|
+| `<output>.grounding.jsonl` | One line per attempt (search queries, source titles AND uris, searched yes/no, failure class, `finish_reason`/`response_id`) and one line per row (chosen citation host, confidence, the row's `opportunity_type` and market). |
+| `<output>.health.json` | The run verdict + reasons, `CallHealth` counts, and the trail summary - a durable, comparable record so grounding quality can be read week over week instead of grepped from a log. |
+
+Both are git-ignored (regenerable per-run data), so they sit in the working area and never enter
+the repo.
+
+**The banner line:**
+
+```
+GROUNDING TRAIL: 3 rows | 2 grounded, 1 no-search | 1 citation-host-not-in-sources (ASTORS ...)
+```
+
+- **no-search** rows are the ones the ungrounded guard refused - named here, not just counted.
+- **citation-host-not-in-sources** is the signal to watch: the row searched, but the evidence
+  URL it wrote is on a host that was never among the sources it searched - the signature of a
+  COMPOSED citation. It is diagnostic, NEVER an acceptance input; `accept_delivery.py` still
+  decides what ships.
+
+**Two things it already caught, so they are documented not rediscovered:**
+
+- The source host is read from each grounding chunk's `web.title` (the real publisher domain),
+  NOT `web.uri` - Gemini returns a `vertexaisearch.cloud.google.com` REDIRECT in the uri, so
+  keying off the uri makes every grounded row look like it only ever searched Google.
+- Awards and conference rows are tagged per row (`opportunity_type`), and the summary splits
+  by type, so a mixed input is never counted as one schema.
+
+Reading it after a DEGRADED run: `no-search` with a `finish_reason` and `http_504` in the
+attempts means the grounding backend was timing out (504 = Gateway Timeout, the service did not
+respond in time - transient, retry); a high `citation-host-not-in-sources` count means the model
+is composing URLs and the citations need a harder look before they go out.
 
 ---
 
