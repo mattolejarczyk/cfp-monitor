@@ -562,6 +562,18 @@ ls -la "/c/Users/matts/Desktop/Nicolia-PR-Prime/Markets/"*_audited.final.csv   #
 | **CFP Monthly Re-Research (prospect markets)** | every 4th Wednesday 02:00 | the same script over the other six markets | ~280 requests |
 | **CFP Weekly Verification** | Sunday 01:00 | `run_weekly.bat` -> `weekly_verify.py`: layers 0/1/2 across every market, browser recheck, invariants, digest of what CHANGED. Starts CDP Chrome first. | none |
 
+**Where to look after a research run (2026-09-27).** Every `run_monthly.ps1` run writes
+`Markets\logs\run_monthly_<stamp>.log`, ending in `=== run_monthly exit code: N ===`. Read that
+first. Before this, the job wrote only to a console nobody sees at 02:00. It runs a 5-row canary
+(`run_canary.ps1`) before the full run and stops if the canary fails; a canary pass is stamped in
+`Markets\canary\LAST-PASS.txt`. The 2026-09-26 Saturday run stopped in its canary. Fixing it on
+2026-09-27 turned up three canary bugs: a stale progress ledger, `check_invariants` pointed at no
+seed sheets, and stage D judging a 5-row sample by full-delivery rules, so any NEW or renamed row
+failed it. Stage D now runs invariants before and after the import on the copy, and stops only if
+the import broke a row that was already there. `run_canary.ps1 -ReplayLastOutput` re-judges the
+last canary output through stages B-D for free (no API calls, no pass stamp). If the canary stops
+a run, read the stage it names in the log before re-running.
+
 **Split by whether a market has a customer (2026-08-31).** Only Cybersecurity (Arnica) and
 Utility (Utility Global) have one; the other six are speculative coverage and do not earn weekly
 quota. That roughly halved the weekly spend, and the half kept is the half with a customer
