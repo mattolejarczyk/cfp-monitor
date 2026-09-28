@@ -139,24 +139,32 @@ def main() -> int:
     class _S:
         path = a.db
     up_to_canon, _roots = _ar._seed_map(_S())
-    canon_to_up: dict[str, str] = {}
+    # EVERY upstream id an event has carried, not the first one found (2026-09-28). Since
+    # identity is carried through research, a renamed event keeps ONE canonical id but gains a
+    # new upstream id each time its name changes. Picking one alias - usually an old one - left
+    # the page, which joins on THIS week's upstream id, finding 10 of 36 checked conferences on
+    # 2026-09-28 and showing the rest "not checked". A row per alias costs nothing: the page
+    # matches whichever id its delivery carries, and the others match nothing.
+    canon_to_ups: dict[str, list[str]] = {}
     for up, canon in up_to_canon.items():
-        canon_to_up.setdefault(canon, up)
-    if not canon_to_up:
+        canon_to_ups.setdefault(canon, []).append(up)
+    if not canon_to_ups:
         print("REFUSING: no EVENT_ID map beside the database. The page matches on upstream "
               "ids; emitting canonical ones gives a file that matches nothing.")
         return 2
 
-    out, unmapped = [], 0
+    out, unmapped, events = [], 0, []
     for eid, r in sorted(best.items()):
-        up = canon_to_up.get(eid)
-        if not up:
+        ups = canon_to_ups.get(eid)
+        if not ups:
             unmapped += 1
             continue
-        out.append({"EVENT_ID": up, "CHECK": r["verdict"],
-                    "CHECK_URL": r["source_url"] or "",
-                    "CHECK_QUOTE": (r["found_quote"] or r["quote"] or "")[:400],
-                    "CHECK_DETAIL": (r["detail"] or "")[:300]})
+        events.append(r)
+        for up in sorted(set(ups)):
+            out.append({"EVENT_ID": up, "CHECK": r["verdict"],
+                        "CHECK_URL": r["source_url"] or "",
+                        "CHECK_QUOTE": (r["found_quote"] or r["quote"] or "")[:400],
+                        "CHECK_DETAIL": (r["detail"] or "")[:300]})
 
     with open(a.output, "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=list(COLUMNS))
@@ -164,10 +172,10 @@ def main() -> int:
         w.writerows(out)
 
     from collections import Counter
-    c = Counter(r["CHECK"] for r in out)
+    c = Counter(r["verdict"] for r in events)          # per EVENT, not per alias row
     need = c["contradicted"] + c["no_quote"] + c["unreadable"]
     print(f"{len(rows)} deadline claim(s) -> {len(fresh)} against the cited page "
-          f"-> {len(best)} event(s) -> {len(out)} written")
+          f"-> {len(best)} event(s) -> {len(out)} row(s) written (one per upstream id)")
     if set_aside:
         print(f"  {set_aside} verdict(s) SET ASIDE: recorded against a url the row no "
               f"longer cites. Those rows get no badge rather than a stale one.")

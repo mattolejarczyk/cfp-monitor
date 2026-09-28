@@ -143,10 +143,13 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 
 1. **[Safety check]** **Records the starting point** - what Saturday's automatic load left in the database, so any
    change later in this run can be spotted. *(qa_import.py)*
-2. **[Update]** **Re-reads every cited web page** and confirms each deadline is still written there. No AI
-   requests. *(audit_evidence.py)*
+2. **[Update]** **Registers this week's links, then re-reads every cited web page** and confirms each
+   deadline is still written there. Registering first matters: until 2026-09-28 the links Saturday's
+   load wrote were registered after the re-read, so they were never opened. No AI requests.
+   *(build_evidence.py, audit_evidence.py)*
 3. **[Update]** **Updates the verdicts the pages show** ("verified" / "needs checking"), so the pages never
-   show last week's labels. *(export_checks.py)*
+   show last week's labels. Each result is filed under every research ID the event has had, so a
+   renamed event still finds its result. *(export_checks.py)*
 4. **[Update]** **Does the same for awards** - award deadlines and their links. *(check_award_deadlines.py,
    link_check_awards.py)*
 5. **[Update]** **Re-checks links** and flags any "submit here" link that has stopped working, so the customer
@@ -185,6 +188,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-09-28** - Monday registers this week's links before re-reading them, and results are filed under every research ID (renamed events had lost their results).
 - **2026-09-28** - Friday weekly awards research added, same machinery as Saturday. Monday uses the approved awards file. Customer pages hide Closed rows by default in the four work-queue views.
 - **2026-09-28** - Monday's review list separates changes to already-past dates from what needs a look, and a copy is saved beside the published pages.
 - **2026-09-28** - Sunday's search for new calls applies what it proves word for word, with Saturday's safety net; its findings are in the Sunday recap. The last manual step in the weekly chain is gone.

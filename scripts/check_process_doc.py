@@ -46,6 +46,7 @@ DESCRIBED = {
     "scripts/weekly_deliverable.py": ROOT / "scripts" / "weekly_deliverable.py",
     "scripts/qa_build.py": ROOT / "scripts" / "qa_build.py",
     "scripts/import_awards.py": ROOT / "scripts" / "import_awards.py",
+    "scripts/export_checks.py": ROOT / "scripts" / "export_checks.py",
 }
 
 

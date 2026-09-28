@@ -4,6 +4,7 @@
         [--skip-evidence] [--markets "Cybersecurity,Utility"]
 
 WHAT IT DOES, in the runbook's order (section 5):
+    1a. build_evidence.py                             register this week's citations first
     1. audit_evidence.py --field deadline --recheck   re-read every cited page   (no API cost)
     2. export_checks.py                               verdicts -> the CSV the page reads
     2a. check_award_deadlines.py --apply              BOTH of the above, for awards (no API cost)
@@ -131,6 +132,14 @@ def main() -> int:
 
     # 1 + 2. Evidence, then the export that turns it into what the page reads.
     if not a.skip_evidence:
+        # 1a. REGISTER THIS WEEK'S CITATIONS FIRST (2026-09-28). audit_evidence re-reads the pages
+        # in the `evidence` table; this week's new citations only reached that table when the
+        # evidence matrix ran build_evidence at the END of this build - after the re-read. On
+        # 2026-09-28 that left 26 conferences' current citations registered "unchecked" and never
+        # opened. Registering first keeps every existing verdict and adds the new citations, so
+        # the re-read covers them. Free: no AI calls.
+        step("register citations", [PY, ROOT / "scripts/build_evidence.py", "--db", a.db],
+             work / "0_build_evidence.log")
         step("evidence re-read", [PY, ROOT / "scripts/audit_evidence.py", "--db", a.db,
                                   "--field", "deadline", "--recheck"], work / "1_evidence.log")
     # ALWAYS exported, even with --skip-evidence: this is the step that gets missed, it costs a
