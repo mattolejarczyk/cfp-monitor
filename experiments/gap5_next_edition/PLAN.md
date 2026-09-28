@@ -1,6 +1,6 @@
 # Gap 5 - next year's editions are not picked up
 
-**Status:** theory written 2026-09-28, not started. Found while checking gap 4a.
+**Status:** 5a MEASURED 2026-09-28 (RESULT_5a.md): 12 of 44 past events already publish next year's dates on their own site; one next-year call is open now (CCUS 2027); one "discontinued" label is contradicted. 5b/5c not started. Found while checking gap 4a.
 **Priority:** the most customer-relevant gap - "when does the next one open?" is the question the
 customer actually plans around. Sits UPSTREAM of gap 4a: design this first, then switch 4a on as
 part of it, not before.

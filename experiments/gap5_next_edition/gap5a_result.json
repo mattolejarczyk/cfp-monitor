@@ -1,0 +1,364 @@
+{
+  "today": "2026-09-28",
+  "watching": 44,
+  "tally": {
+    "YEAR": 3,
+    "DATED": 12,
+    "NONE": 27,
+    "UNREAD": 2
+  },
+  "rows": [
+    {
+      "market": "Cybersecurity",
+      "conference": "Wild West Hackin' Fest @ Mile High 2026",
+      "ran": "2026-02-11",
+      "signal": "YEAR",
+      "page": "https://wildwesthackinfest.com/mile-high/",
+      "evidence": "akers Speakers Hands-On Labs Cyberdeck Competition Sponsors Villages SkillBit - CTF Location/Hotel Info Airport Con Shuttle Justification Letter WWHF Mile High 2027 Conference Registration Pre-Con Training Location Call for Volunteers Call for Papers Call for Workshops Call for Villages Sponsorships Contact Us Home \u00bb M"
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "Troopers 2026",
+      "ran": "2026-06-22",
+      "signal": "YEAR",
+      "page": "https://troopers.de/",
+      "evidence": "S18 TROOPERS17 TROOPERS16 TROOPERS15 TROOPERS14 TROOPERS13 TROOPERS12 TROOPERS11 TROOPERS10 TROOPERS09 TROOPERS08 shield-ghosts June 21st to June 25th TROOPERS 2027 Trainings: June 21st to 22nd Conference: June 23rd to 25th TROOPERS two-day Trainings 2 Days of TROOPERS Trainings 2690 \u20ac Sign up TROOPERS All Inclusive Al"
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "CYBERUK 2026",
+      "ran": "2026-04-21",
+      "signal": "DATED",
+      "page": "https://www.cyberuk.uk/",
+      "evidence": "n About Overview Sustainability at CYBERUK FAQs Contact Sponsor & Exhibit Why sponsor or exhibit CYBERUK ONLINE VIEW SPONSOR AND EXHIBITOR BROCHURE 11 - 13 MAY 2027, LIVERPOOL EXPERIENCE CAMPUS CYBERUK 2027 IS COMING TO LIVERPOOL_ CYBERUK is the UK government's flagship cyber security event, hosted by the National Cybe"
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "Black Hat Asia 2026",
+      "ran": "2026-04-21",
+      "signal": "NONE",
+      "page": "https://www.blackhat.com/asia-26/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "Google Cloud Next '26",
+      "ran": "2026-04-22",
+      "signal": "NONE",
+      "page": "https://cloud.withgoogle.com/next",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "DEF CON Singapore 2026 (Inaugural Edition)",
+      "ran": "2026-04-28",
+      "signal": "NONE",
+      "page": "https://defcon.org/html/defcon-singapore/dc-singapore-index.html",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "OffensiveCon Berlin 2026",
+      "ran": "2026-05-15",
+      "signal": "NONE",
+      "page": "https://www.offensivecon.org/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "Gartner Security & Risk Management Summit EMEA 2026",
+      "ran": "2026-09-22",
+      "signal": "DATED",
+      "page": "https://www.gartner.com/en/conferences/emea/security-risk-management-uk",
+      "evidence": "r-logo-white.png) ](https://www.gartner.com/en/conferences/emea/security-risk-management-uk) [ Gartner Cybersecurity & Risk Management Summit 21 \u2013 23 September 2027 London, U.K. ](https://www.gartner.com/en/conferences/emea/security-risk-management-uk) [Register Now](https://www.gartner.com/en/conferences/emea/security"
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "Gartner Security & Risk Management Summit 2026",
+      "ran": "2026-06-01",
+      "signal": "DATED",
+      "page": "https://www.gartner.com/en/conferences/na/security-risk-management-us",
+      "evidence": "gartner-logo-white.png) ](https://www.gartner.com/en/conferences/na/security-risk-management-us) [ Gartner Cybersecurity & Risk Management Summit June 14 \u2013 16, 2027 National Harbor, MD ](https://www.gartner.com/en/conferences/na/security-risk-management-us) [Register Now](https://www.gartner.com/en/conferences/na/secur"
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "IEEE Symposium on Security & Privacy 2026 (47th IEEE S&P / Oakland)",
+      "ran": "2026-05-18",
+      "signal": "NONE",
+      "page": "https://sp2026.ieee-security.org/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "FIRST 38th Annual Conference 2026",
+      "ran": "2026-06-14",
+      "signal": "NONE",
+      "page": "https://www.first.org/conference/2026/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "Infosecurity Europe 2026",
+      "ran": "2026-06-02",
+      "signal": "DATED",
+      "page": "https://www.infosecurityeurope.com/",
+      "evidence": "Europe&#39;s Leading Cyber Security Event | Infosecurity Europe Skip to content 8-10 June 2027 Excel London Register interest Exhibitor enquiry About Advisory council Partners History Visit Prepare to visit Venue and travel Book accommodation SANS In"
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "OWASP Italy Day 2026",
+      "ran": "2026-06-17",
+      "signal": "NONE",
+      "page": "https://owasp.org/www-chapter-italy/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "Area41 Security Conference 2026",
+      "ran": "2026-06-18",
+      "signal": "NONE",
+      "page": "https://area41.io/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "OWASP Global AppSec EU 2026",
+      "ran": "2026-06-25",
+      "signal": "NONE",
+      "page": "https://owasp.org/events/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "Gartner Security & Risk Management Summit Japan 2026",
+      "ran": "2026-07-22",
+      "signal": "DATED",
+      "page": "https://www.gartner.com/en/conferences/apac/security-risk-management-japan",
+      "evidence": "ner-logo-white.png) ](https://www.gartner.com/en/conferences/apac/security-risk-management-japan) [ Gartner Cybersecurity & Risk Management Summit 21 \u2013 23 July 2027 Tokyo, Japan ](https://www.gartner.com/en/conferences/apac/security-risk-management-japan) [Register Now](https://www.gartner.com/en/conferences/apac/secur"
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "Black Hat USA 2026",
+      "ran": "2026-08-01",
+      "signal": "NONE",
+      "page": "https://www.blackhat.com/us-26/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "BSides Las Vegas 2026",
+      "ran": "2026-08-03",
+      "signal": "YEAR",
+      "page": "https://bsideslv.org/",
+      "evidence": "nd Training Ground Evening Entertainment Daytime Events Pros vs Joes CTF Venue Health Information Room Block Conference Map Shuttles Info Schedule Sponsor BSLV 2027 Donor Drive Closed Support BSLV Year-Round Thank you for making BSides Las Vegas 2026 a wonderful event! Check out our YouTube channel for individual sessi"
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "DEF CON 34",
+      "ran": "2026-08-06",
+      "signal": "DATED",
+      "page": "https://defcon.org/",
+      "evidence": "n.org/html/defcon-singapore/dc-singapore-index.html) * [Las Vegas](https://defcon.org/html/defcon-34/dc-34-cfi.html) * * ### DEF CON 35 **Aug. 5-8, 2027 at LVCC West Hall** Stay tuned for details * * ### [Start Here.](https://defcon.org/) New to DEF CON? Find out what it's all about! DEF CON"
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "AppSec Village at DEF CON 34",
+      "ran": "2026-08-07",
+      "signal": "NONE",
+      "page": "https://www.appsecvillage.com/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "USENIX Security Symposium 2026 (35th USENIX Security '26)",
+      "ran": "2026-08-12",
+      "signal": "NONE",
+      "page": "https://www.usenix.org/conference/usenixsecurity26",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "CrowdStrike Fal.Con 2026",
+      "ran": "2026-08-31",
+      "signal": "NONE",
+      "page": "https://www.crowdstrike.com/en-us/events/fal-con/las-vegas/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "17th Annual Billington CyberSecurity Summit",
+      "ran": "2026-09-08",
+      "signal": "NONE",
+      "page": "https://billingtoncybersummit.com/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "LabsCon 2026",
+      "ran": "2026-09-16",
+      "signal": "NONE",
+      "page": "https://www.labscon.io/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "OWASP AppSec Days France 2026",
+      "ran": "2026-09-24",
+      "signal": "NONE",
+      "page": "https://owaspappsecdays.fr/2026/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "fwd:cloudsec North America 2026",
+      "ran": "2026-06-01",
+      "signal": "NONE",
+      "page": "https://fwdcloudsec.org/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "SecureWorld St. Louis 2026",
+      "ran": "2026-09-02",
+      "signal": "NONE",
+      "page": "https://www.secureworld.io/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "SecureWorld Detroit 2026",
+      "ran": "2026-09-17",
+      "signal": "NONE",
+      "page": "https://www.secureworld.io/events/detroit-2026",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "SecureWorld Quantum Cryptography 2026",
+      "ran": "2026-09-23",
+      "signal": "NONE",
+      "page": "https://www.secureworld.io/events",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "SecureWorld Atlanta 2026",
+      "ran": "2026-09-24",
+      "signal": "NONE",
+      "page": "https://events.secureworld.io/details/atlanta-ga-2026/",
+      "evidence": ""
+    },
+    {
+      "market": "Cybersecurity",
+      "conference": "German OWASP Day 2026 (AppSec Karlsruhe)",
+      "ran": "2026-09-23",
+      "signal": "NONE",
+      "page": "https://god.owasp.de/2026/",
+      "evidence": ""
+    },
+    {
+      "market": "Utility",
+      "conference": "American Hydrogen & CCUS Forum 2026",
+      "ran": "2026-04-22",
+      "signal": "NONE",
+      "page": "https://ushydrogenforum.com/",
+      "evidence": ""
+    },
+    {
+      "market": "Utility",
+      "conference": "Connecting Hydrogen Europe 2026",
+      "ran": "2026-06-17",
+      "signal": "NONE",
+      "page": "https://www.connectinghydrogeneurope.com/",
+      "evidence": ""
+    },
+    {
+      "market": "Utility",
+      "conference": "Reuters Events: Global Energy Forum 2026",
+      "ran": "2026-06-23",
+      "signal": "UNREAD",
+      "page": "",
+      "evidence": ""
+    },
+    {
+      "market": "Utility",
+      "conference": "World Fuel Cell Conference 2026",
+      "ran": "2026-07-29",
+      "signal": "NONE",
+      "page": "https://www.iage-net.org/wfcc2026",
+      "evidence": ""
+    },
+    {
+      "market": "Utility",
+      "conference": "Asia Pacific Hydrogen Summit & Exhibition 2026",
+      "ran": "2026-09-03",
+      "signal": "UNREAD",
+      "page": "",
+      "evidence": ""
+    },
+    {
+      "market": "Utility",
+      "conference": "Gastech 2026",
+      "ran": "2026-09-14",
+      "signal": "DATED",
+      "page": "https://www.gastechevent.com/",
+      "evidence": "Gastech Exhibition & Conference 2027 | Houston --> EXHIBITION & CONFERENCE 14 - 17 SEPTEMBER 2027 HOUSTON, UNITED STATES Book A Stand BOOK YOUR DELEGATE PASS EXHIBITION & CONFERENCE 14 - 17 SE"
+    },
+    {
+      "market": "Utility",
+      "conference": "Climate Week NYC 2026",
+      "ran": "2026-09-20",
+      "signal": "DATED",
+      "page": "https://www.climateweeknyc.org/",
+      "evidence": "anized by Climate Group Watch sessions on demand Watch climate leaders share insights Climate Week NYC 2026 has come to a close, we'll be back September 19\u201326, 2027 This year's Climate Week NYC is focusing on the energy, the impact , and the action that we drive together. Climate Week NYC is organized by Climate Group"
+    },
+    {
+      "market": "Utility",
+      "conference": "Decarb Connect UK 2026",
+      "ran": "2026-04-15",
+      "signal": "DATED",
+      "page": "https://decarbconnectuk.com/",
+      "evidence": "ers Content &#038; Insights Join the Waitlist Industrial Competitiveness | UK Infrastructure and Energy Systems | Tech Innovation and Investment 13 - 15 April, 2027 London, UK Join the Waitlist Suggest a Speaker for 2027 Download 2026 Post Show Report Hydrogen Sponsor Sponsor Sponsor Sponsor Sponsor Sponsor Sponsor Exh"
+    },
+    {
+      "market": "Utility",
+      "conference": "Hydrogen Technology Expo MENA 2026",
+      "ran": "2026-06-09",
+      "signal": "DATED",
+      "page": "https://www.hydrogenccs-menaexpo.com/",
+      "evidence": "Show submenu for: News Latest News Contact Your browser does not support the video tag. MENA's First Hydrogen & CCUS Trade Fair Two co-located events 8-9 June 2027, ADNEC Centre, Abu Dhabi Register now Exhibit now Hydrogen Technology Expo MENA Carbon Capture Technology Expo MENA About us Discover Key Solutions & Techn"
+    },
+    {
+      "market": "Utility",
+      "conference": "World Hydrogen Energy Conference 2026 (WHEC 2026)",
+      "ran": "2026-06-22",
+      "signal": "NONE",
+      "page": "https://whec2026.org/",
+      "evidence": ""
+    },
+    {
+      "market": "Utility",
+      "conference": "The 4th International & Indonesia Carbon Capture and Storage (IICCS) Forum 2026",
+      "ran": "2026-08-26",
+      "signal": "NONE",
+      "page": "https://iiccsforum.com/",
+      "evidence": ""
+    },
+    {
+      "market": "Utility",
+      "conference": "Carbon Capture, Utilization, and Storage (CCUS) 2026",
+      "ran": "2026-03-30",
+      "signal": "DATED",
+      "page": "https://ccusevent.org/2026/",
+      "evidence": "Home Page - CCUS 2026 About Code of Conduct Contact Us Exhibit & Sponsor Exhibit & Sponsor Sponsoring Organizations April 12\u201314, 2027 The Westin Houston, Memorial City Houston, TX CCUS 2027 Call for Abstracts is now Open! SUBMIT NOW Call for Abstracts for CCUS 2027 is now open Whether you"
+    },
+    {
+      "market": "Utility",
+      "conference": "Oil & Gas Decarbonisation Congress 2026 (DECARBON 2026)",
+      "ran": "2026-02-09",
+      "signal": "DATED",
+      "page": "https://decarboncongress.com/",
+      "evidence": "ous trends and advancements such as AI, advanced analytics and data science, collaborations and partnerships, sustainability, and other relevant topics. LNGCON 2027 13th International LNG Congress 1-2 March 2027 Amsterdam LNGCON 2027 is a closed-door B2B event bringing together the whole LNG value chain globally. For o"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+﻿44 Watching row(s) - reading their own pages (no AI)
+24 page(s) need the browser ladder ...
+  [1/24] https://billingtoncybersummit.com/speakers/ -> playwright-fallback (6222c)
+  [2/24] https://decarbconnectuk.com/get-involved/ -> playwright-fallback (2118c)
+  [3/24] https://defcon.org/ -> crawl4ai (38897c)
+  [4/24] https://defcon.org/html/defcon-34/dc-34-cfp.html -> playwright-fallback (11508c)
+  [5/24] https://defcon.org/html/defcon-singapore/dc-singapore-inde -> crawl4ai (12520c)
+  [6/24] https://events.reutersevents.com/energy/global-energy-foru -> still unreadable (skipped-antibot)
+  [7/24] https://fwdcloudsec.org/cfp/ -> playwright-fallback (225c)
+  [8/24] https://god.owasp.de/2026/cfp/ -> playwright-fallback (19290c)
+  [9/24] https://sessionize.com/owasp-global-appsec-eu-2026-cfp/ -> crawl4ai (256c)
+  [10/24] https://troopers.de/troopers26/cfp/ -> playwright-fallback (345c)
+  [11/24] https://www.asia-pacific-hydrogen-summit.com/ -> still unreadable (playwright-fallback)
+  [12/24] https://www.blackhat.com/asia-26/ -> crawl4ai (12915c)
+  [13/24] https://www.blackhat.com/briefings/cfp.html -> crawl4ai (6184c)
+  [14/24] https://www.blackhat.com/us-26/ -> crawl4ai (15221c)
+  [15/24] https://www.blackhat.com/us-26/call-for-papers.html -> crawl4ai (6663c)
+  [16/24] https://www.climateweeknyc.org/take-part -> crawl4ai (256c)
+  [17/24] https://www.connectinghydrogeneurope.com/ -> playwright-fallback (313c)
+  [18/24] https://www.gartner.com/en/conferences/apac/security-risk- -> crawl4ai (32816c)
+  [19/24] https://www.gartner.com/en/conferences/emea/security-risk- -> crawl4ai (30995c)
+  [20/24] https://www.gartner.com/en/conferences/na/security-risk-ma -> crawl4ai (30641c)
+  [21/24] https://www.gartner.com/en/conferences/speaker-proposals -> crawl4ai (2094c)
+  [22/24] https://www.gastechevent.com/conference/call-for-papers/ -> crawl4ai (5711c)
+  [23/24] https://www.secureworld.io/call-for-speakers -> crawl4ai (2536c)
+  [24/24] https://www.secureworld.io/events/detroit-2026 -> crawl4ai (2538c)
+{'YEAR': 3, 'DATED': 12, 'NONE': 27, 'UNREAD': 2}
+DATED  | Cyber | ran 2026-04-21 | CYBERUK 2026
+         https://www.cyberuk.uk/
+         "n About Overview Sustainability at CYBERUK FAQs Contact Sponsor & Exhibit Why sponsor or exhibit CYBERUK ONLINE VIEW SPONSOR AND EXHIBITOR BROCHURE 11 - 13 MAY 2027, LIVERPOOL EXPERIENCE CAMPUS CYBERUK 2027 IS COMING TO LIVERPOOL_"
+DATED  | Cyber | ran 2026-09-22 | Gartner Security & Risk Management Summit EMEA 2026
+         https://www.gartner.com/en/conferences/emea/security-risk-management-uk
+         "r-logo-white.png) ](https://www.gartner.com/en/conferences/emea/security-risk-management-uk) [ Gartner Cybersecurity & Risk Management Summit 21 – 23 September 2027 London, U.K. ](https://www.gartner.com/en/conferences/emea/securi"
+DATED  | Cyber | ran 2026-06-01 | Gartner Security & Risk Management Summit 2026
+         https://www.gartner.com/en/conferences/na/security-risk-management-us
+         "gartner-logo-white.png) ](https://www.gartner.com/en/conferences/na/security-risk-management-us) [ Gartner Cybersecurity & Risk Management Summit June 14 – 16, 2027 National Harbor, MD ](https://www.gartner.com/en/conferences/na/s"
+DATED  | Cyber | ran 2026-06-02 | Infosecurity Europe 2026
+         https://www.infosecurityeurope.com/
+         "Europe&#39;s Leading Cyber Security Event | Infosecurity Europe Skip to content 8-10 June 2027 Excel London Register interest Exhibitor enquiry About Advisory council Partners History Visit Prepare to visit Venue and travel Book a"
+DATED  | Cyber | ran 2026-07-22 | Gartner Security & Risk Management Summit Japan 2026
+         https://www.gartner.com/en/conferences/apac/security-risk-management-japan
+         "ner-logo-white.png) ](https://www.gartner.com/en/conferences/apac/security-risk-management-japan) [ Gartner Cybersecurity & Risk Management Summit 21 – 23 July 2027 Tokyo, Japan ](https://www.gartner.com/en/conferences/apac/securi"
+DATED  | Cyber | ran 2026-08-06 | DEF CON 34
+         https://defcon.org/
+         "n.org/html/defcon-singapore/dc-singapore-index.html) * [Las Vegas](https://defcon.org/html/defcon-34/dc-34-cfi.html) * * ### DEF CON 35 **Aug. 5-8, 2027 at LVCC West Hall** Stay tuned for details * * ### [Start Here.](https://defc"
+DATED  | Utili | ran 2026-09-14 | Gastech 2026
+         https://www.gastechevent.com/
+         "Gastech Exhibition & Conference 2027 | Houston --> EXHIBITION & CONFERENCE 14 - 17 SEPTEMBER 2027 HOUSTON, UNITED STATES Book A Stand BOOK YOUR DELEGATE PASS EXHIBITION & CONFERENCE 14 - 17 SE"
+DATED  | Utili | ran 2026-09-20 | Climate Week NYC 2026
+         https://www.climateweeknyc.org/
+         "anized by Climate Group Watch sessions on demand Watch climate leaders share insights Climate Week NYC 2026 has come to a close, we'll be back September 19–26, 2027 This year's Climate Week NYC is focusing on the energy, the impac"
+DATED  | Utili | ran 2026-04-15 | Decarb Connect UK 2026
+         https://decarbconnectuk.com/
+         "ers Content &#038; Insights Join the Waitlist Industrial Competitiveness | UK Infrastructure and Energy Systems | Tech Innovation and Investment 13 - 15 April, 2027 London, UK Join the Waitlist Suggest a Speaker for 2027 Download "
+DATED  | Utili | ran 2026-06-09 | Hydrogen Technology Expo MENA 2026
+         https://www.hydrogenccs-menaexpo.com/
+         "Show submenu for: News Latest News Contact Your browser does not support the video tag. MENA's First Hydrogen & CCUS Trade Fair Two co-located events 8-9 June 2027, ADNEC Centre, Abu Dhabi Register now Exhibit now Hydrogen Technol"
+DATED  | Utili | ran 2026-03-30 | Carbon Capture, Utilization, and Storage (CCUS) 2026
+         https://ccusevent.org/2026/
+         "Home Page - CCUS 2026 About Code of Conduct Contact Us Exhibit & Sponsor Exhibit & Sponsor Sponsoring Organizations April 12–14, 2027 The Westin Houston, Memorial City Houston, TX CCUS 2027 Call for Abstracts is now Open! SUBMIT N"
+DATED  | Utili | ran 2026-02-09 | Oil & Gas Decarbonisation Congress 2026 (DECARBON 20
+         https://decarboncongress.com/
+         "ous trends and advancements such as AI, advanced analytics and data science, collaborations and partnerships, sustainability, and other relevant topics. LNGCON 2027 13th International LNG Congress 1-2 March 2027 Amsterdam LNGCON 2"
+YEAR   | Cyber | ran 2026-02-11 | Wild West Hackin' Fest @ Mile High 2026
+         https://wildwesthackinfest.com/mile-high/
+         "akers Speakers Hands-On Labs Cyberdeck Competition Sponsors Villages SkillBit - CTF Location/Hotel Info Airport Con Shuttle Justification Letter WWHF Mile High 2027 Conference Registration Pre-Con Training Location Call for Volunt"
+YEAR   | Cyber | ran 2026-06-22 | Troopers 2026
+         https://troopers.de/
+         "S18 TROOPERS17 TROOPERS16 TROOPERS15 TROOPERS14 TROOPERS13 TROOPERS12 TROOPERS11 TROOPERS10 TROOPERS09 TROOPERS08 shield-ghosts June 21st to June 25th TROOPERS 2027 Trainings: June 21st to 22nd Conference: June 23rd to 25th TROOPE"
+YEAR   | Cyber | ran 2026-08-03 | BSides Las Vegas 2026
+         https://bsideslv.org/
+         "nd Training Ground Evening Entertainment Daytime Events Pros vs Joes CTF Venue Health Information Room Block Conference Map Shuttles Info Schedule Sponsor BSLV 2027 Donor Drive Closed Support BSLV Year-Round Thank you for making B"
+NONE   | Cyber | ran 2026-04-21 | Black Hat Asia 2026
+NONE   | Cyber | ran 2026-04-22 | Google Cloud Next '26
+NONE   | Cyber | ran 2026-04-28 | DEF CON Singapore 2026 (Inaugural Edition)
+NONE   | Cyber | ran 2026-05-15 | OffensiveCon Berlin 2026
+NONE   | Cyber | ran 2026-05-18 | IEEE Symposium on Security & Privacy 2026 (47th IEEE
+NONE   | Cyber | ran 2026-06-14 | FIRST 38th Annual Conference 2026
+NONE   | Cyber | ran 2026-06-17 | OWASP Italy Day 2026
+NONE   | Cyber | ran 2026-06-18 | Area41 Security Conference 2026
+NONE   | Cyber | ran 2026-06-25 | OWASP Global AppSec EU 2026
+NONE   | Cyber | ran 2026-08-01 | Black Hat USA 2026
+NONE   | Cyber | ran 2026-08-07 | AppSec Village at DEF CON 34
+NONE   | Cyber | ran 2026-08-12 | USENIX Security Symposium 2026 (35th USENIX Security
+NONE   | Cyber | ran 2026-08-31 | CrowdStrike Fal.Con 2026
+NONE   | Cyber | ran 2026-09-08 | 17th Annual Billington CyberSecurity Summit
+NONE   | Cyber | ran 2026-09-16 | LabsCon 2026
+NONE   | Cyber | ran 2026-09-24 | OWASP AppSec Days France 2026
+NONE   | Cyber | ran 2026-06-01 | fwd:cloudsec North America 2026
+NONE   | Cyber | ran 2026-09-02 | SecureWorld St. Louis 2026
+NONE   | Cyber | ran 2026-09-17 | SecureWorld Detroit 2026
+NONE   | Cyber | ran 2026-09-23 | SecureWorld Quantum Cryptography 2026
+NONE   | Cyber | ran 2026-09-24 | SecureWorld Atlanta 2026
+NONE   | Cyber | ran 2026-09-23 | German OWASP Day 2026 (AppSec Karlsruhe)
+NONE   | Utili | ran 2026-04-22 | American Hydrogen & CCUS Forum 2026
+NONE   | Utili | ran 2026-06-17 | Connecting Hydrogen Europe 2026
+NONE   | Utili | ran 2026-07-29 | World Fuel Cell Conference 2026
+NONE   | Utili | ran 2026-06-22 | World Hydrogen Energy Conference 2026 (WHEC 2026)
+NONE   | Utili | ran 2026-08-26 | The 4th International & Indonesia Carbon Capture and
+UNREAD | Utili | ran 2026-06-23 | Reuters Events: Global Energy Forum 2026
+UNREAD | Utili | ran 2026-09-03 | Asia Pacific Hydrogen Summit & Exhibition 2026
