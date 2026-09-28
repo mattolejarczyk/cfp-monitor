@@ -16,6 +16,7 @@ what it means for the next run.
 
 | When | Job | Costs AI requests? |
 |---|---|---|
+| Friday 2:00 AM | Weekly awards research + automatic load (Arnica, Utility Global) | Yes, about 130-300 |
 | Saturday 2:00 AM | Weekly research + automatic load (Arnica, Utility Global) | Yes, about 120-290 |
 | Sunday 1:00 AM | Weekly link and deadline check (all markets) | A few (about 10-20) |
 | Monday 7:00 AM | Customer pages | No |
@@ -39,6 +40,30 @@ Most **[Safety check]** steps sit straight after a **[Load]** or **[Update]**, o
 jobs: each job checks what the previous one left instead of trusting it.
 
 ---
+
+## Friday 2:00 AM - Weekly awards research (Arnica + Utility Global)
+
+*Scheduled task "CFP Weekly Awards Research" -> `Markets\run_monthly.ps1 -Markets Awards` - the Saturday
+job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
+
+1. **[Setup]** **Starts a log file** in `Markets\logs\`. *(run_monthly.ps1)*
+2. **[Safety check]** **Checks the AI key is present.**
+3. **[Update]** **Adds permanent IDs to the awards list**, from last week's awards page, exact names only.
+   *(stamp_input_ids.py)*
+4. **[Safety check]** **Runs a 5-row test** - researches 5 awards and checks real Google searches
+   happened. If not, the job stops before spending the full budget. *(run_canary.ps1 -ResearchOnly)*
+5. **[Setup]** **Files away last week's awards research** into the archive.
+6. **[Research]** **Researches every award** - dates, entry windows and links, each with its cited page.
+   Awards listed twice on the customer sheets are researched once. *(run_market_audit.py)*
+7. **[Safety check]** **Checks the output's format.** *(validate_market_output.py)*
+8. **[Safety check]** **Runs the approval check with the row-by-row rule** - the same rule as Saturday.
+   *(weekend_import.py -> accept_delivery.py)*
+9. **[Load]** **Backs up the database, then loads each award onto its permanent ID.** *(import_awards.py --ids)*
+10. **[Safety check]** **Runs the database health check** (its awards half); anything wrong and
+    everything is undone from the backup. *(check_invariants.py)*
+11. **[Publish]** **Approves the awards file for Monday.** *(promote_delivery.py)*
+12. **[Report]** **Emails the Friday recap.** A failed Friday never stops Monday's conferences page;
+    Monday's summary says loudly if the awards page is not this week's. *(weekend_recap.py friday)*
 
 ## Saturday 2:00 AM - Weekly research (Arnica + Utility Global)
 
@@ -160,6 +185,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-09-28** - Friday weekly awards research added, same machinery as Saturday. Monday uses the approved awards file. Customer pages hide Closed rows by default in the four work-queue views.
 - **2026-09-28** - Monday's review list separates changes to already-past dates from what needs a look, and a copy is saved beside the published pages.
 - **2026-09-28** - Sunday's search for new calls applies what it proves word for word, with Saturday's safety net; its findings are in the Sunday recap. The last manual step in the weekly chain is gone.
 - **2026-09-28** - category label added to every step, with a key at the top.

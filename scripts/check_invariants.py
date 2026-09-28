@@ -186,6 +186,9 @@ def main() -> int:
                                        "compares CITATIONS between the database and the "
                                        "delivery - the two stores drifted on 176 rows in "
                                        "August and nothing noticed")
+    ap.add_argument("--awards-seed", help="the awards list the delivery was researched from "
+                                          "(its DUP_OF column); default: Awards_seed_*.csv "
+                                          "beside the delivery")
     ap.add_argument("--awards-delivery", help="the awards delivery CSV. Enables "
                                              "checks 14 and 15, which reconcile the "
                                              "awards table against it")
@@ -417,7 +420,12 @@ def main() -> int:
                 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
                 from scripts.import_awards import duplicate_names     # noqa: PLC0415
                 names = {r["name"] for r in aw}
-                seed = next(iter(sorted(d.parent.glob("Awards_seed_*.csv"))), None)
+                # --awards-seed names the list explicitly (2026-09-28). Guessing "beside the
+                # delivery" found nothing when weekend_import checked its working copy, and six
+                # deliberate DUP_OF exclusions then read as lost awards - a path fault
+                # impersonating a data fault, the thing identity.seed_roots warns about.
+                seed = (Path(a.awards_seed) if a.awards_seed else
+                        next(iter(sorted(d.parent.glob("Awards_seed_*.csv"))), None))
                 for nm, target in (duplicate_names(seed, names) or {}).items():
                     for row in csv.DictReader(open(d, encoding="utf-8-sig", newline="")):
                         if (row.get("CONFERENCE") or "").strip() == nm:

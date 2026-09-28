@@ -135,3 +135,42 @@ def test_stamp_prefers_last_weeks_page_and_refuses_stale_twins():
     assert resolve("WFES 2027", "", known, [final, seeds, {}], published)[0] == "2027-wfes"
     # an id already stamped and still known is never changed
     assert resolve("WFES 2027", "2026-wfes", known, [final, seeds, {}], published) == ("2026-wfes", "kept")
+
+
+# ---------------------------------------------------------------- awards (Friday run, 2026-09-28)
+def test_rows_labelled_duplicate_are_not_counted_as_missing(tmp_path):
+    import csv as _csv
+    import os as _os
+    from scripts.weekend_import import check_research
+    with open(tmp_path / "Awards_input.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["CONFERENCE", "DUP_OF"])
+        w.writerows([["A", ""], ["B", ""], ["B again", "B"]])
+    with open(tmp_path / "Awards_audited.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["CONFERENCE"])
+        w.writerows([["A"], ["B"]])
+    assert check_research("Awards", tmp_path, 0) is None           # 2 of 2 real rows: complete
+    _os.remove(tmp_path / "Awards_audited.csv")
+    assert "no research output" in check_research("Awards", tmp_path, 0)
+
+
+def test_award_ids_come_from_the_awards_table_not_the_conference_seeds(tmp_path):
+    import sqlite3 as _sq
+    import csv as _csv
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from stamp_input_ids import build_award_sources, resolve
+    db = tmp_path / "cfp_monitor.db"
+    con = _sq.connect(db)
+    con.execute("create table award_grounding_facts (event_id text, upstream_event_id text, name text)")
+    con.execute("insert into award_grounding_facts values ('2026-ours-awards', '2026-theirs-x-awards', 'Stevie Awards')")
+    con.commit(); con.close()
+    with open(tmp_path / "Awards_20260905_out.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["EVENT_ID", "CONFERENCE"])
+        w.writerow(["2026-theirs-x-awards", "Stevie Awards - American Business Awards"])
+    known, sources = build_award_sources(tmp_path, db)
+    published = set().union(*sources[0].values())
+    # last week's page names it -> our id, through upstream_event_id (5.4), never the raw id
+    assert resolve("Stevie Awards - American Business Awards", "", known, sources, published) \
+        == ("2026-ours-awards", "last week's file")

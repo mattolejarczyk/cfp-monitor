@@ -64,6 +64,11 @@ LIVE = Path(os.environ.get("LOCALAPPDATA", "")) / "CFP-Monitor"
 # market -> (seed file name in market_sheets, upstream label for verify_grounding, canonical).
 # Seed file names come from identity.SEED_FILES: the seed format has one owner.
 MARKETS = {m: (SEED_FILES[m], m, m) for m in ("Cybersecurity", "Utility")}
+# AWARDS (Friday 02:00, operator 2026-09-28) run the same rule through their own importer and
+# tables (import_awards.py -> award_grounding_facts). No seed sheet: award_grounding_facts keeps
+# upstream's id beside ours (upstream_event_id), and that column is the crossing.
+MARKETS["Awards"] = (None, "Awards", "Awards")
+AWARDS = "Awards"
 # The gate truncates CONFERENCE to 40 characters (38 in two checks) at the front of a failure.
 NAME_PREFIX = 38
 MAX_ROUNDS = 3
@@ -207,7 +212,10 @@ def check_research(market: str, markets_dir: Path, research_exit: int | None) ->
     if age_h > MAX_OUTPUT_AGE_H:
         return f"{out.name} is {age_h:.0f}h old - this weekend's research did not write it"
     if inp.exists():
-        n_in, n_out = len(read_csv(inp)[1]), len(read_csv(out)[1])
+        # rows labelled DUP_OF are skipped by the audit on purpose (one award listed twice), so
+        # they are not "missing" - the awards list carries 14
+        n_in = sum(1 for r in read_csv(inp)[1] if not (r.get("DUP_OF") or "").strip())
+        n_out = len(read_csv(out)[1])
         if n_out < n_in:
             return f"{out.name} holds {n_out} rows for {n_in} input rows - the run stopped short"
     return None
@@ -220,6 +228,13 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     res: dict = {"market": market, "status": "FAILED", "decisions": []}
     src = markets_dir / f"{market}_audited.csv"
     prior_path = markets_dir / f"{market}_audited.final.csv"
+    if market == AWARDS:
+        # Before the first Friday run the awards page was built from the newest dated research
+        # output, never promoted; that file is last week's accepted version for the row rule.
+        from scripts.stamp_input_ids import published_awards
+        prior_path = published_awards(markets_dir) or prior_path
+        up_to_canon = award_lookup(db)
+    res["input"] = str(markets_dir / f"{market}_input.csv")
     cols, new_rows = read_csv(src)
     res["rows"] = len(new_rows)
     res["stubs"] = sum(1 for r in new_rows if "Audit Exception" in (r.get("STATUS DETAILS") or ""))
@@ -250,7 +265,7 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     # last week's version or holds it back. Nothing is ever loaded under an id derived from a
     # name the model may have changed.
     identity = load_identity(markets_dir, market, read_csv(src)[1])
-    known = db_ids(db)
+    known = award_ids(db) if market == AWARDS else db_ids(db)
     canon_of: dict[str, str] = {}
     pre_bad: dict[int, list[str]] = {}
     seen_canon: set[str] = set()
@@ -274,8 +289,18 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
                                        res["decisions"])
     # Last week's events that no row of this week's research covers stay on the page as they were.
     claimed = {to_canonical(r.get("EVENT_ID", ""), lookup) for r in rows}
+    # One EVENT_ID per market in a file (gate R8c). A carried-over row whose id another row
+    # already holds would make the whole file unacceptable, so it is held back and listed.
+    taken = {((r.get("Market") or "").strip(), (r.get("EVENT_ID") or "").strip()) for r in rows}
     for c, pr in prior_by_canon.items():
+        slot = ((pr.get("Market") or "").strip(), (pr.get("EVENT_ID") or "").strip())
+        if c not in claimed and slot in taken:
+            res["decisions"].append({"conference": pr.get("CONFERENCE", ""), "canonical": c,
+                                     "reasons": ["another row in this week's file already uses its id"],
+                                     "action": "held-back", "why_no_prior": "id collision"})
+            continue
         if c not in claimed:
+            taken.add(slot)
             rows.append(pr)
             sources.append("prior")
             res["decisions"].append({"conference": pr.get("CONFERENCE", ""), "canonical": c,
@@ -333,6 +358,14 @@ def load_identity(markets_dir: Path, market: str, out_rows: list[dict]) -> dict[
     names = [l.strip() for l in ledger.read_text(encoding="utf-8").splitlines() if l.strip()]
     if len(names) != len(out_rows):
         return {}          # the pairing is only exact when the two line up one-to-one
+    # ...and only when the ORDER still holds. A file patched after the run (rows added,
+    # re-cut, reordered - the 2026-09-05 awards file was) keeps the same length with every pair
+    # shifted, and a positional pairing then hands awards each other's ids (found in the first
+    # awards rehearsal, 2026-09-28). Research renames some rows but keeps most names, so fewer
+    # than half matching exactly means the order is gone: trust nothing, guess nothing.
+    same = sum(1 for o, n in zip(out_rows, names) if (o.get("CONFERENCE") or "").strip() == n)
+    if same * 2 < len(names):
+        return {}
     by_name = {r["CONFERENCE"].strip(): (r.get("EVENT_ID_CANON") or "").strip()
                for r in read_csv(inp)[1]}
     return {(o.get("EVENT_ID") or "").strip(): by_name.get(n, "") for o, n in zip(out_rows, names)}
@@ -369,6 +402,26 @@ def db_ids(db: Path) -> set[str]:
     con = sqlite3.connect(str(db))
     try:
         return {r[0] for r in con.execute("select event_id from grounding_facts")}
+    finally:
+        con.close()
+
+
+def award_ids(db: Path) -> set[str]:
+    import sqlite3
+    con = sqlite3.connect(str(db))
+    try:
+        return {r[0] for r in con.execute("select event_id from award_grounding_facts")}
+    finally:
+        con.close()
+
+
+def award_lookup(db: Path) -> dict[str, str]:
+    """upstream EVENT_ID -> our award id, from the column import_awards keeps for this (5.4)."""
+    import sqlite3
+    con = sqlite3.connect(str(db))
+    try:
+        return {(u or "").strip(): e for e, u in
+                con.execute("select event_id, upstream_event_id from award_grounding_facts") if u}
     finally:
         con.close()
 
@@ -413,6 +466,18 @@ def load_markets(resolved: list[dict], db: Path, data_root: Path, log: list[str]
         m = res["market"]
         seed_name, label, canon = MARKETS[m]
         cand = Path(res["candidate"])
+        if m == AWARDS:
+            # import_awards re-reads the gate's own JSON and refuses anything not ACCEPTED, and
+            # lands each row on its carried id. Awards have no verify_grounding / fix_edition /
+            # conference-criteria pass; Monday re-checks their deadlines and links
+            # (check_award_deadlines, link_check_awards), and invariants 10-15 reconcile them.
+            rc = run([PY, ROOT / "scripts" / "import_awards.py", cand, "--db", db,
+                      "--gate-json", res["accept_json"], "--seed", res["input"],
+                      "--ids", res["ids_csv"], "--source-list",
+                      f"weekly-awards-{datetime.now():%Y%m%d}", "--apply"], data_root, log)
+            if rc != 0:
+                return f"{m}: import_awards exited {rc}"
+            continue
         rc = run([PY, ROOT / "scripts" / "import_grounding.py", cand,
                   "--out", f"market_sheets/{seed_name}", "--seed", db,
                   "--ids", res["ids_csv"]], data_root, log)
@@ -449,10 +514,15 @@ def load_markets(resolved: list[dict], db: Path, data_root: Path, log: list[str]
         log.append(f"declared {n} held-back row(s) in held_rows.txt")
 
     seed_dir = data_root / "market_sheets"
+    awards_cand = [r["candidate"] for r in resolved if r["market"] == AWARDS]
+    awards_seed = [r["input"] for r in resolved if r["market"] == AWARDS]
     for attempt in (1, 2):
         out: list[str] = []
-        rc = run([PY, ROOT / "scripts" / "check_invariants.py", "--db", db,
-                  "--seed-dir", seed_dir], data_root, out)
+        inv = [PY, ROOT / "scripts" / "check_invariants.py", "--db", db, "--seed-dir", seed_dir]
+        if awards_cand:
+            # checks 14-15, the awards half; --awards-seed so its DUP_OF exclusions are known
+            inv += ["--awards-delivery", awards_cand[0], "--awards-seed", awards_seed[0]]
+        rc = run(inv, data_root, out)
         log.extend(out)
         if rc == 0:
             return None
@@ -543,7 +613,8 @@ def main() -> int:
         return finish("FAILED", "no market reached an accepted file - the database was not touched")
 
     saved = backup([db, data_root / "market_sheets" / "held_rows.txt"]
-                   + [data_root / "market_sheets" / MARKETS[r["market"]][0] for r in resolved], stamp)
+                   + [data_root / "market_sheets" / MARKETS[r["market"]][0] for r in resolved
+                      if MARKETS[r["market"]][0]], stamp)
     report["backup"] = str(saved.get(db, ""))
     why = load_markets(resolved, db, data_root, log)
     if why:

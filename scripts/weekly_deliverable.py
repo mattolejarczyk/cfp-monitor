@@ -222,7 +222,25 @@ def main() -> int:
         HEALTH.ok("weekly_step")
         print(f"\ncombined {n_rows} row(s) -> {combined.name}")
 
-    awards_in = Path(a.awards_input) if a.awards_input else newest("Awards_*_out.csv", md)
+    # AWARDS (2026-09-28): the Friday run promotes Awards_audited.final.csv, exactly as Saturday
+    # promotes the conference files. Prefer it. Unlike conferences, a stale awards file does NOT
+    # stop the conferences page - the Friday run is its own job - but it is said loudly in the
+    # manifest and the build QA, never published silently as current.
+    awards_note = ""
+    awards_final = md / "Awards_audited.final.csv"
+    if a.awards_input:
+        awards_in = Path(a.awards_input)
+    elif awards_final.exists():
+        awards_in = awards_final
+        ok, reason = check_publish_fresh(awards_final)
+        if not ok:
+            awards_note = f"AWARDS PAGE IS NOT THIS WEEK'S RESEARCH: {reason}"
+            HEALTH.note("awards_freshness", "stale")
+            print(f"  [STALE AWARDS] {reason}")
+    else:
+        awards_in = newest("Awards_*_out.csv", md)
+        awards_note = (f"Awards page built from {awards_in.name if awards_in else '(none)'} - "
+                       f"no promoted awards file yet (the Friday awards run promotes one)")
     conf_page = work / f"Conference Review {stamp} - Live Markets.html"
     awards_page = work / f"Awards Review {stamp}.html"
 
@@ -323,6 +341,8 @@ def main() -> int:
     lines += HEALTH.report_lines() + ["", f"conference rows: {n_rows}",
                                       f"awards input: {awards_in.name if awards_in else '(none)'}",
                                       f"checks CSV: {checks.name}", ""]
+    if awards_note:
+        lines += [f"**{awards_note}**", ""]
     if status == "HEALTHY":
         published.mkdir(parents=True, exist_ok=True)
         for page in (conf_page, awards_page):

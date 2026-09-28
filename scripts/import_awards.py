@@ -150,8 +150,15 @@ def duplicate_names(seed: Path | None, known_names: set[str]) -> dict[str, str]:
     return out
 
 
-def plan(delivery: Path, db: str,
-         seed: Path | None = None) -> tuple[list[dict], list[str], list[str]]:
+def plan(delivery: Path, db: str, seed: Path | None = None,
+         ids: dict | None = None) -> tuple[list[dict], list[str], list[str]]:
+    """`ids` (2026-09-28): delivery EVENT_ID -> the permanent id the row was researched as.
+
+    Minting from the name made every rename a second record - the same defect the conference
+    import had, found when one weekend's research would have created 24 duplicates. The Friday
+    awards run carries identity from its input (stamp_input_ids.py --markets Awards) and passes
+    it here. A row not in the map is minted exactly as before."""
+    ids = ids or {}
     with open(delivery, encoding="utf-8-sig", newline="") as fh:
         rows = list(csv.DictReader(fh))
     dups = duplicate_names(seed, {(_g(r, 'CONFERENCE')) for r in rows})
@@ -170,8 +177,8 @@ def plan(delivery: Path, db: str,
         if name in dups:
             skipped.append(f"{name[:46]}: labelled DUP_OF {dups[name][:40]!r} in the seed")
             continue
-        canonical = mint_event_id(name, _g(r, "EDITION"), _g(r, "CITY"),
-                                  _g(r, "LOCATION"), opportunity)
+        canonical = ids.get(_g(r, "EVENT_ID")) or mint_event_id(
+            name, _g(r, "EDITION"), _g(r, "CITY"), _g(r, "LOCATION"), opportunity)
         if canonical in seen:
             problems.append(f"two rows mint the same id {canonical!r}: "
                             f"{seen[canonical][:40]!r} and {name[:40]!r}. If they are the "
@@ -273,7 +280,16 @@ def main() -> int:
     ap.add_argument("--seed", help="the awards seed CSV, read for its DUP_OF column")
     ap.add_argument("--source-list", default="awards-batch-1")
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--ids", help="CSV of EVENT_ID -> EVENT_ID_CANON: land each row on the id "
+                                  "it was researched as instead of minting one from its name")
     a = ap.parse_args()
+
+    ids = {}
+    if a.ids:
+        with open(a.ids, newline="", encoding="utf-8-sig") as fh:
+            ids = {r["EVENT_ID"].strip(): r["EVENT_ID_CANON"].strip()
+                   for r in csv.DictReader(fh) if r.get("EVENT_ID") and r.get("EVENT_ID_CANON")}
+        print(f"carrying {len(ids)} permanent id(s) from {Path(a.ids).name}")
 
     delivery, gate_json = Path(a.delivery), Path(a.gate_json)
     ok, why = gate_says_accepted(gate_json, delivery)
@@ -283,7 +299,7 @@ def main() -> int:
         return 2
 
     planned, problems, skipped = plan(delivery, a.db,
-                                     Path(a.seed) if a.seed else None)
+                                     Path(a.seed) if a.seed else None, ids)
     if problems:
         print("\nREFUSED\n")
         for p in problems:

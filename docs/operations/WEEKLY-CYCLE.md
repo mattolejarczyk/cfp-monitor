@@ -10,6 +10,7 @@ step with the scripts by `scripts/check_process_doc.py` (the test suite fails wh
 The cycle exists to produce one thing: **two HTML files in Nicolia's hands on Monday morning**,
 good enough that his team can work from them all week. Everything else is in service of that.
 
+    FRI  awards: stamp ids, research, load + promote (automatic) + recap email   (from 2026-10-02)
     SAT  intake their week, stamp ids, research ours, then load + promote it (automatic) + recap email
     SUN  verify what we hold - which is now THIS weekend's research - + recap email
     MON  build and publish

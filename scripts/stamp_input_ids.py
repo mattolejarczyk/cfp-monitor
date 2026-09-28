@@ -90,7 +90,42 @@ def resolve(name: str, current: str, known: set[str], sources: list[dict[str, se
     return "", "no exact match to an event on last week's page"
 
 
+def published_awards(markets_dir: Path) -> Path | None:
+    """The awards file the customer page was last built from: the promoted final if there is
+    one, else the newest dated research output (how Monday picked it before 2026-09-28)."""
+    final = markets_dir / "Awards_audited.final.csv"
+    if final.exists():
+        return final
+    dated = sorted(markets_dir.glob("Awards_2*_out.csv"))
+    return dated[-1] if dated else None
+
+
+def build_award_sources(markets_dir: Path, db: Path) -> tuple[set[str], list[dict]]:
+    """Awards live in award_grounding_facts, which keeps upstream's id beside ours
+    (upstream_event_id), so that column - not the conference seed sheets - is the crossing."""
+    con = sqlite3.connect(str(db))
+    try:
+        rows = list(con.execute("select event_id, upstream_event_id, name from award_grounding_facts"))
+    finally:
+        con.close()
+    known = {r[0] for r in rows}
+    up = {(r[1] or "").strip(): r[0] for r in rows if r[1]}
+    final, dbn = {}, {}
+    pub = published_awards(markets_dir)
+    if pub:
+        with open(pub, encoding="utf-8-sig", newline="") as fh:
+            for r in csv.DictReader(fh):
+                c = up.get((r.get("EVENT_ID") or "").strip())
+                if c:
+                    final.setdefault(norm(r.get("CONFERENCE", "")), set()).add(c)
+    for eid, _up, name in rows:
+        dbn.setdefault(norm(name), set()).add(eid)
+    return known, [final, {}, dbn]
+
+
 def build_sources(market: str, markets_dir: Path, db: Path) -> tuple[set[str], list[dict]]:
+    if market == "Awards":
+        return build_award_sources(markets_dir, db)
     up_to_canon, roots = seed_map(str(db))
     assert_mapped(up_to_canon, roots, minimum=50)
     con = sqlite3.connect(str(db))

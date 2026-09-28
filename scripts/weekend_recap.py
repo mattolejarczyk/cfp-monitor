@@ -165,7 +165,10 @@ def monthly_recap(log: str) -> tuple[str, str, str]:
     return subject, text, html_
 
 
-def saturday_recap(log: str, imp: dict | None, markets_dir: Path) -> tuple[str, str, str]:
+def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
+                   kind: str = "saturday") -> tuple[str, str, str]:
+    """`kind='friday'` is the awards run (2026-09-28): same research, load and table, but the
+    next steps are Monday's AWARDS page - Sunday's check covers conferences only."""
     s = parse_saturday(log)
     research_ok = s["exit"] == "0" and bool(s["markets"])
     head = ["", *s["markets"].keys()]
@@ -204,21 +207,30 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path) -> tuple[str, 
         db_line = "The automatic load into the database did not run."
 
     # What it means next
-    sunday = ("Sunday 1 AM check: will check THIS weekend's research."
-              if imp and imp.get("database") == "updated" else
-              "Sunday 1 AM check: will run, but on LAST week's information.")
-    monday = []
-    for m, ok, why in monday_outlook(markets_dir):
-        who = CUSTOMER.get(m, m)
-        monday.append(f"Monday 7 AM page ({who}): " + (
-            f"will publish - {why}" if ok else f"will NOT publish - {why}"))
+    if kind == "friday":
+        ok, why = check_publish_fresh(markets_dir / "Awards_audited.final.csv")
+        sunday = ("Sunday's check covers conferences; award deadlines and links are re-checked "
+                  "by Monday's build.")
+        monday = ["Monday 7 AM awards page: " + (
+            f"will use THIS research - {why}" if ok else
+            f"will NOT show this week's research - {why}. The conferences page is not affected.")]
+    else:
+        sunday = ("Sunday 1 AM check: will check THIS weekend's research."
+                  if imp and imp.get("database") == "updated" else
+                  "Sunday 1 AM check: will run, but on LAST week's information.")
+        monday = []
+        for m, ok, why in monday_outlook(markets_dir):
+            who = CUSTOMER.get(m, m)
+            monday.append(f"Monday 7 AM page ({who}): " + (
+                f"will publish - {why}" if ok else f"will NOT publish - {why}"))
 
     good = research_ok and imp and imp.get("status") == "DONE"
     status = ("WORKED" if good else "PARTLY WORKED" if research_ok else "FAILED")
-    subject = f"CFP Saturday research {status} - {datetime.now():%a %b %d}"
+    label = "Friday awards research" if kind == "friday" else "Saturday research"
+    subject = f"CFP {label} {status} - {datetime.now():%a %b %d}"
 
     html_parts = [f'<div style="{CSS}">',
-                  f"<h2 style='margin:0 0 8px'>Saturday research: {status}</h2>",
+                  f"<h2 style='margin:0 0 8px'>{label}: {status}</h2>",
                   table(head, rows) if s["markets"] else "<p><b>No market was researched.</b></p>",
                   "<ul>" + "".join(f"<li>{H.escape(f)}</li>" for f in facts) + "</ul>",
                   "<h3 style='margin:14px 0 4px'>Loaded into the database automatically</h3>"]
@@ -230,7 +242,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path) -> tuple[str, 
     html_parts += ["<h3 style='margin:14px 0 4px'>What this means next</h3>",
                    "<ul>" + "".join(f"<li>{H.escape(x)}</li>" for x in [sunday] + monday) + "</ul>",
                    "</div>"]
-    text = "\n\n".join([f"Saturday research: {status}",
+    text = "\n\n".join([f"{label}: {status}",
                         text_table(head, rows) if s["markets"] else "No market was researched.",
                         "\n".join("- " + f for f in facts),
                         "Loaded into the database automatically:\n"
@@ -304,7 +316,7 @@ def sunday_recap(log: str, digest: str, markets_dir: Path,
 # ============================================================================ main
 def main() -> int:
     ap = argparse.ArgumentParser(description="Email a plain-English weekend run recap.")
-    ap.add_argument("kind", choices=["saturday", "sunday", "monthly"])
+    ap.add_argument("kind", choices=["saturday", "sunday", "monthly", "friday"])
     ap.add_argument("--log", required=True)
     ap.add_argument("--import-json", help="weekend_import.py's report (saturday)")
     ap.add_argument("--digest", help="weekly_verify's markdown digest (sunday)")
@@ -315,11 +327,11 @@ def main() -> int:
     md = Path(a.markets_dir)
     try:
         log = Path(a.log).read_text(encoding="utf-8-sig", errors="replace")
-        if a.kind == "saturday":
+        if a.kind in ("saturday", "friday"):
             imp = None
             if a.import_json and Path(a.import_json).exists():
                 imp = json.loads(Path(a.import_json).read_text(encoding="utf-8"))
-            subject, text, html_ = saturday_recap(log, imp, md)
+            subject, text, html_ = saturday_recap(log, imp, md, a.kind)
         elif a.kind == "monthly":
             subject, text, html_ = monthly_recap(log)
         else:
