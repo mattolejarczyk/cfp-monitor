@@ -574,6 +574,14 @@ the import broke a row that was already there. `run_canary.ps1 -ReplayLastOutput
 last canary output through stages B-D for free (no API calls, no pass stamp). If the canary stops
 a run, read the stage it names in the log before re-running.
 
+**Saturday no longer stops at "NEXT, BY HAND" (2026-09-27).** After the research, `run_monthly.ps1`
+runs `weekend_import.py` (sections 1-4b below, unattended, with the row-by-row rule and a
+rollback) and then emails `weekend_recap.py`. Sunday's `run_weekly.bat` ends with its own recap.
+Identity is carried: `stamp_input_ids.py` puts `EVENT_ID_CANON` on the research input, the audit
+writes `<Market>_audited.identity.csv`, and `import_grounding.py --ids` lands each row on that id
+- a rename changes a name, never an identity. Sections 1-4b remain the manual procedure for a
+run that has to be repaired by hand.
+
 **Split by whether a market has a customer (2026-08-31).** Only Cybersecurity (Arnica) and
 Utility (Utility Global) have one; the other six are speculative coverage and do not earn weekly
 quota. That roughly halved the weekly spend, and the half kept is the half with a customer
