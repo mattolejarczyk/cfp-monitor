@@ -103,6 +103,17 @@ if defined WE_STARTED_CHROME (
   venv\Scripts\python.exe scripts\cdp_ctl.py stop >> "%LOG%" 2>&1
 )
 
+REM ---------------------------------------------------------------------------
+REM Plain-English recap email (2026-09-27): worked or failed, the numbers, and what it
+REM means for Monday's customer page. Sent to CFP_RECAP_TO. It never changes %RC% - a recap
+REM that cannot be sent is written beside the log instead. The newest weekly_verify_*.md is
+REM this run's digest. Runs the DEV repo's recap script and interpreter: it is new, reads only,
+REM and must agree with the Monday build, which also runs from the dev repo.
+REM ---------------------------------------------------------------------------
+set "DIGEST="
+for /f "delims=" %%F in ('dir /b /o:d "%LOGDIR%\weekly_verify_*.md" 2^>nul') do set "DIGEST=%LOGDIR%\%%F"
+"%USERPROFILE%\cfp-monitor\.venv\Scripts\python.exe" "%USERPROFILE%\cfp-monitor\scripts\weekend_recap.py" sunday --log "%LOG%" --digest "%DIGEST%" --exit-code %RC% >> "%LOG%" 2>&1
+
 echo Finished with exit code %RC%. Log: %LOG%
 exit /b %RC%
 

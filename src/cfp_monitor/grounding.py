@@ -282,14 +282,21 @@ _COL = {
 }
 
 
-def normalize_rows(raw_rows: Iterable[dict], today: Optional[date] = None
-                   ) -> tuple[list[GroundingRow], dict]:
+def normalize_rows(raw_rows: Iterable[dict], today: Optional[date] = None,
+                   ids: Optional[dict] = None) -> tuple[list[GroundingRow], dict]:
     """Normalize + dedupe grounding rows, returning (rows, report).
 
     Dedupe is on (event_id, market): the SAME event legitimately appears once per market it
     serves, so only an exact event+market repeat is a true duplicate.
+
+    `ids` maps a delivery row's EVENT_ID to the canonical id it must land on (2026-09-27).
+    Without it the canonical id is derived from the name, so a renamed event minted a second
+    record - 24 rows in one weekend's research. With it, identity is CARRIED from the event the
+    research was asked about, and a rename only changes the name. Rows not in the map derive
+    their id exactly as before.
     """
     today = today or date.today()
+    ids = ids or {}
     rows: list[GroundingRow] = []
     seen: set[tuple[str, str]] = set()
     report = {"input": 0, "kept": 0, "duplicates": 0, "city_repaired": 0,
@@ -311,8 +318,9 @@ def normalize_rows(raw_rows: Iterable[dict], today: Optional[date] = None
         if model_in and model != model_in:
             report["model_normalized"] += 1
 
+        carried = ids.get((raw.get("EVENT_ID") or "").strip())
         row = GroundingRow(
-            event_id=event_id(v("name"), v("edition"), city, location, v("opportunity")),
+            event_id=carried or event_id(v("name"), v("edition"), city, location, v("opportunity")),
             name=v("name"), url=v("url"), market=v("market"), edition=v("edition"),
             city=city, state=v("state"), country=v("country"),
             deadline=v("deadline"), submission_url=v("submission_url"),
@@ -359,9 +367,10 @@ def normalize_rows(raw_rows: Iterable[dict], today: Optional[date] = None
     return rows, report
 
 
-def load_master_csv(path: str, today: Optional[date] = None) -> tuple[list[GroundingRow], dict]:
+def load_master_csv(path: str, today: Optional[date] = None,
+                    ids: Optional[dict] = None) -> tuple[list[GroundingRow], dict]:
     with open(path, newline="", encoding="utf-8-sig") as fh:
-        return normalize_rows(list(csv.DictReader(fh)), today)
+        return normalize_rows(list(csv.DictReader(fh)), today, ids)
 
 
 # ---------------------------------------------------------------------- seed --

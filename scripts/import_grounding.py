@@ -35,10 +35,20 @@ def main() -> int:
     ap.add_argument("--out", default="grounding_seed.csv")
     ap.add_argument("--issues-only", action="store_true", help="write only rows with an issue")
     ap.add_argument("--seed", metavar="DB", help="also seed the discovery table in this DB")
+    ap.add_argument("--ids", help="CSV of EVENT_ID -> EVENT_ID_CANON: land each row on the "
+                                  "canonical id it was researched as, instead of deriving one "
+                                  "from its (possibly renamed) name")
     a = ap.parse_args()
 
+    ids = {}
+    if a.ids:
+        with open(a.ids, newline="", encoding="utf-8-sig") as fh:
+            ids = {r["EVENT_ID"].strip(): r["EVENT_ID_CANON"].strip()
+                   for r in csv.DictReader(fh) if r.get("EVENT_ID") and r.get("EVENT_ID_CANON")}
+        print(f"Carrying {len(ids)} canonical id(s) from {Path(a.ids).name}")
+
     today = date.today()
-    rows, rep = load_master_csv(a.csv_path, today)
+    rows, rep = load_master_csv(a.csv_path, today, ids)
 
     print("Normalized {} row(s) from {}".format(rep["input"], Path(a.csv_path).name))
     print("  kept                 {}".format(rep["kept"]))

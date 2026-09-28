@@ -74,6 +74,32 @@ def seed_map(db_path: str) -> tuple[dict[str, str], list[Path]]:
     return up_to_canon, roots
 
 
+# The seed file each customer market imports into. The SHORT names are established; writing
+# cybersecurity_seed.csv creates a second, ignored file beside the real one (runbook, 2026-09-20).
+SEED_FILES = {"Cybersecurity": "cyber_seed.csv", "Utility": "utility_seed.csv"}
+
+
+def seed_names(db_path: str) -> dict[str, set[str]]:
+    """Every CONFERENCE name the seed files have held -> the canonical ids it was stored under.
+
+    The name-keyed companion to seed_map, for linking a list that carries names but no ids (the
+    research input) to our ids. Exact names only; the caller decides what to do with a name that
+    maps to several ids. Kept here so the seed format has one reader (test_identity_join).
+    Reads every seed generation (*_seed*.csv, including dated backups), because an input list
+    can lag the latest delivery by weeks.
+    """
+    out: dict[str, set[str]] = {}
+    for root in seed_roots(db_path):
+        for seed in sorted(root.glob("*_seed*.csv")):
+            with open(seed, encoding="utf-8-sig", newline="") as fh:
+                for row in csv.DictReader(fh):
+                    canon = (row.get("EVENT_ID_CANON") or "").strip()
+                    name = " ".join((row.get("CONFERENCE") or "").lower().split())
+                    if canon and name:
+                        out.setdefault(name, set()).add(canon)
+    return out
+
+
 def to_canonical(event_id: str, up_to_canon: dict[str, str]) -> str:
     """Translate one delivery id into ours. Unknown ids pass through unchanged.
 

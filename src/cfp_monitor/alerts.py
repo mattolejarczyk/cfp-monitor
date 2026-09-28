@@ -102,22 +102,33 @@ def digest_markdown(alerts: list[Alert], title: str = "PR Monitor — Alerts") -
     return "\n".join(lines)
 
 
-def maybe_send_email(subject: str, body: str, config: Optional[dict] = None) -> bool:
+def maybe_send_email(subject: str, body: str, config: Optional[dict] = None,
+                     html: Optional[str] = None, to_env: str = "CFP_ALERT_TO") -> bool:
     """Send the digest via SMTP IF fully configured (env CFP_SMTP_*). Returns True if sent,
-    False if not configured (a no-op so scheduled runs don't fail without creds)."""
+    False if not configured (a no-op so scheduled runs don't fail without creds).
+
+    `html` adds an HTML part beside the plain one. `to_env` names the recipient variable, so the
+    weekend recaps (CFP_RECAP_TO) can be switched on without also switching on every older
+    sender that reads CFP_ALERT_TO."""
     import os
     import smtplib
+    from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
 
     c = config or {
         "host": os.getenv("CFP_SMTP_HOST"), "port": int(os.getenv("CFP_SMTP_PORT", "587")),
         "user": os.getenv("CFP_SMTP_USER"), "password": os.getenv("CFP_SMTP_PASS"),
-        "to": os.getenv("CFP_ALERT_TO"),
+        "to": os.getenv(to_env),
         "from": os.getenv("CFP_SMTP_FROM") or os.getenv("CFP_SMTP_USER"),
     }
     if not all([c.get("host"), c.get("user"), c.get("password"), c.get("to")]):
         return False
-    msg = MIMEText(body, "plain", "utf-8")
+    if html:
+        msg = MIMEMultipart("alternative")
+        msg.attach(MIMEText(body, "plain", "utf-8"))
+        msg.attach(MIMEText(html, "html", "utf-8"))
+    else:
+        msg = MIMEText(body, "plain", "utf-8")
     msg["Subject"], msg["From"], msg["To"] = subject, c["from"], c["to"]
     with smtplib.SMTP(c["host"], c["port"]) as s:
         s.starttls()
