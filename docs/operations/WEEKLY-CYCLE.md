@@ -4,6 +4,9 @@
 this and anyone's memory disagree, this wins; where this and the contract disagree, the contract
 wins.
 
+**The plain-English version for the operator is [`WEEKEND-PROCESS.md`](WEEKEND-PROCESS.md)**, kept in
+step with the scripts by `scripts/check_process_doc.py` (the test suite fails when they drift).
+
 The cycle exists to produce one thing: **two HTML files in Nicolia's hands on Monday morning**,
 good enough that his team can work from them all week. Everything else is in service of that.
 

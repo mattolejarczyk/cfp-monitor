@@ -2,6 +2,7 @@
 
     python scripts/weekend_recap.py saturday --log <run_monthly log> [--import-json <json>]
     python scripts/weekend_recap.py sunday   --log <weekly log> --digest <weekly_verify md>
+    python scripts/weekend_recap.py monthly  --log <run_monthly log>   (prospect markets)
         [--dry-run]   write the recap beside the log, send nothing
 
 WHY. The weekend jobs ran at 02:00 and 01:00 and reported to a console nobody watched. The
@@ -129,6 +130,41 @@ def pct(a, b) -> str:
         return str(a)
 
 
+def monthly_recap(log: str) -> tuple[str, str, str]:
+    """The monthly prospect sweep (every 4th Wednesday). Same research as Saturday, but these
+    markets have no customer page, so nothing is loaded and nothing downstream changes."""
+    s = parse_saturday(log)
+    ok = s["exit"] == "0" and bool(s["markets"])
+    status = "WORKED" if ok else "FAILED"
+    head = ["Market", "Rows done", "Researched with real searches", "Not researched",
+            "AI requests"]
+    rows = [[n, f"{m['written']} of {m['rows_in']}", pct(m["grounded"], m["rows_in"]),
+             m["stubs"], m["requests"]] for n, m in s["markets"].items()]
+    total_req = sum(int(m["requests"] or 0) for m in s["markets"].values())
+    facts = [f"5-row test before the run: {s['canary']}.",
+             f"AI requests in total: about {total_req}."]
+    if s["timeouts"]:
+        facts.append(f"Google was slow: {s['timeouts']} '504' timeouts (Google's server took "
+                     f"too long to answer and gave up). Each retry costs a request.")
+    if s["stopped"]:
+        facts.append(f"The run stopped early: {s['stopped']}")
+    means = ["These markets have no customer page, so the results stay in the Markets folder "
+             "and are NOT loaded into the database - by design.",
+             "Nothing changes for Arnica or Utility Global, Sunday's check or Monday's pages."]
+    subject = f"CFP monthly research (prospect markets) {status} - {datetime.now():%a %b %d}"
+    html_ = "".join([f'<div style="{CSS}">',
+                     f"<h2 style='margin:0 0 8px'>Monthly research, markets without a customer: {status}</h2>",
+                     table(head, rows) if rows else "<p><b>No market was researched.</b></p>",
+                     "<ul>" + "".join(f"<li>{H.escape(f)}</li>" for f in facts) + "</ul>",
+                     "<h3 style='margin:14px 0 4px'>What this means next</h3>",
+                     "<ul>" + "".join(f"<li>{H.escape(x)}</li>" for x in means) + "</ul></div>"])
+    text = "\n\n".join([f"Monthly research, markets without a customer: {status}",
+                        text_table(head, rows) if rows else "No market was researched.",
+                        "\n".join("- " + f for f in facts),
+                        "What this means next:\n" + "\n".join("- " + x for x in means)])
+    return subject, text, html_
+
+
 def saturday_recap(log: str, imp: dict | None, markets_dir: Path) -> tuple[str, str, str]:
     s = parse_saturday(log)
     research_ok = s["exit"] == "0" and bool(s["markets"])
@@ -244,7 +280,7 @@ def sunday_recap(log: str, digest: str, markets_dir: Path,
 # ============================================================================ main
 def main() -> int:
     ap = argparse.ArgumentParser(description="Email a plain-English weekend run recap.")
-    ap.add_argument("kind", choices=["saturday", "sunday"])
+    ap.add_argument("kind", choices=["saturday", "sunday", "monthly"])
     ap.add_argument("--log", required=True)
     ap.add_argument("--import-json", help="weekend_import.py's report (saturday)")
     ap.add_argument("--digest", help="weekly_verify's markdown digest (sunday)")
@@ -260,6 +296,8 @@ def main() -> int:
             if a.import_json and Path(a.import_json).exists():
                 imp = json.loads(Path(a.import_json).read_text(encoding="utf-8"))
             subject, text, html_ = saturday_recap(log, imp, md)
+        elif a.kind == "monthly":
+            subject, text, html_ = monthly_recap(log)
         else:
             digest = Path(a.digest).read_text(encoding="utf-8") if a.digest and Path(a.digest).exists() else ""
             subject, text, html_ = sunday_recap(log, digest, md, a.exit_code)

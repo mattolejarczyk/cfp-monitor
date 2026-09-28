@@ -1,0 +1,16 @@
+{
+  "document": "WEEKEND-PROCESS.md",
+  "scripts": {
+    "run_monthly.ps1": "9e7e7a9a4b8f5a207efe8b52ede2740923e281634961d17bcf0ae020f442f84a",
+    "run_canary.ps1": "46e7431641fb57f621d1e8deb7bef889031e9fac5cbde7c2c53ecf2726d2bad2",
+    "run_overnight.ps1": "3a9695ca0707743e933272f816450710c7eb7c598b8b895cc2b0b9005dbcd2ee",
+    "run_all.ps1": "e7ae4f68ff580d1551e45cd7c2fb8d121c3678180afdbd32f09ae906ade2fda1",
+    "scripts/weekly_intake.py": "c3950f4925cd61963837d03f304b3b697ea784572ba736f4c915c3424ba7710b",
+    "scripts/stamp_input_ids.py": "76683cc5ce026bbdc2ff5625242345aa9efe7cafb9b53a86d4ac477ddc841f91",
+    "scripts/weekend_import.py": "d9a9b823e6d6286c809fdabff7cc4130156e73227498160e51b96ace93196d55",
+    "scripts/weekend_recap.py": "e022542df631c1edfd8dbe62c76ad60ed30f8a6d610df8120fde5e10682ef21e",
+    "scripts/run_weekly.bat": "2eca3447af5bc09763f630a828ebe5f7a0943c03e1fe9a15c82270e96c625373",
+    "scripts/weekly_verify.py": "7f6b260f6ab1c574dee2c67df517f0fee07d6d3d0fab8871bbc3f4abb2ffdd68",
+    "scripts/weekly_deliverable.py": "82432cc9c42db93f3f6f27930b5f9ab8bea27ead3387f472730775b1c64ab0cc"
+  }
+}
