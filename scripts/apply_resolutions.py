@@ -323,11 +323,48 @@ def withdraw_citations(store, csv_path: str, apply: bool) -> int:
     return 0 if not missed else 1
 
 
-def merge_citations(store, csv_path: str, apply: bool) -> int:
-    """Decide which proposed citations are safe to take. Reports; writes only with apply."""
+def deadline_in_quote(quote: str, deadline: str) -> bool:
+    """Is this deadline written, in any usual form, inside this quote? (2026-09-28)
+
+    The unattended Sunday merge takes a finding only when the NEW deadline itself is on the
+    re-read page word for word - not merely a sentence that starts the same way. A quote that
+    names no date, or a different one, proves nothing about the date being written back."""
+    import re as _re
+
+    from src.cfp_monitor.alerts import parse_deadline
+    from src.cfp_monitor.verify import date_variants, normalize_text
+    s = (deadline or "").strip()
+    # 12/4/2026 is April 12 or December 4. A proof cannot rest on a guess, so refuse it.
+    m = _re.fullmatch(r"(\d{1,2})[/-](\d{1,2})[/-](\d{4})", s)
+    if m and int(m.group(1)) <= 12 and int(m.group(2)) <= 12 and m.group(1) != m.group(2):
+        return False
+    d = parse_deadline(s)
+    if not d:
+        return False
+    # "Due September 30 ... Extended to October 15": the old date IS on the page, but it is no
+    # longer the deadline. Seen in the 2026-09-28 discovery output. Never auto-apply those.
+    if _re.search(r"\bextend|\bpostpone|\bmoved to\b|\bnew deadline\b", quote or "", _re.I):
+        return False
+    q = normalize_text(quote)
+    forms = date_variants(d)
+    forms += [f.replace("/", "-") for f in forms]      # "closes 10-15-2026"
+    return any(f and f in q for f in forms)
+
+
+def merge_citations(store, csv_path: str, apply: bool, strict_deadline: bool = False,
+                    protect_ids: set | None = None, report_json: str | None = None) -> int:
+    """Decide which proposed citations are safe to take. Reports; writes only with apply.
+
+    strict_deadline (the unattended Sunday merge, 2026-09-28): the WHOLE quote must be on the
+    re-read page, not its first 60 characters, and the row's deadline - the new one when it
+    changes - must be written inside that quote. protect_ids: rows on a customer's approved page;
+    they are reported and left for Saturday's research, so the published file and the database
+    never disagree. report_json: every decision, for the Sunday recap email."""
     import csv as _csv
+    import json as _json
 
     from src.cfp_monitor.verify import fetch_text, normalize_text
+    protect_ids = protect_ids or set()
 
     with open(csv_path, encoding="utf-8-sig", newline="") as fh:
         proposed = list(_csv.DictReader(fh))
@@ -360,6 +397,10 @@ def merge_citations(store, csv_path: str, apply: bool) -> int:
         # than saying so - that is how a merge reports success having changed nothing.
         if cur is None:
             rejected.append((name, f"cannot match EVENT_ID to a row we hold ({raw_id[:40]})"))
+            continue
+
+        if eid in protect_ids:
+            skipped.append((name, "on a customer's approved page - left for Saturday's research"))
             continue
 
         # RULE 1 - a blank never overwrites something we hold.
@@ -411,6 +452,16 @@ def merge_citations(store, csv_path: str, apply: bool) -> int:
         if normalize_text(quote[:60]) not in normalize_text(text):
             rejected.append((name, "quote is not on the proposed page"))
             continue
+        if strict_deadline:
+            new_or_kept = ((p.get("SUBMISSION DEADLINE") or "").strip()
+                           if p.get("DATE_CHANGED", "") == "yes" else "") or cur.get("deadline", "")
+            if normalize_text(quote) not in normalize_text(text):
+                rejected.append((name, "only part of the quote is on the page"))
+                continue
+            if not deadline_in_quote(quote, new_or_kept):
+                rejected.append((name, f"the deadline ({new_or_kept or 'blank'}) is not written "
+                                       f"in the quote on the page"))
+                continue
 
         accepted.append((eid, name, url, quote, p.get("DATE_CHANGED", ""),
                          (p.get("SUBMISSION DEADLINE") or "").strip(),
@@ -430,6 +481,18 @@ def merge_citations(store, csv_path: str, apply: bool) -> int:
         print(f"              -> {url[:58]}")
         if changed == "yes" and newdl != olddl:
             print(f"            DATE {olddl} -> {newdl}   (declared)")
+
+    if report_json:
+        with open(report_json, "w", encoding="utf-8") as fh:
+            _json.dump({
+                "proposed": len(proposed), "applied": bool(apply),
+                "accepted": [{"conference": n, "event_id": eid, "old_url": ou, "new_url": url,
+                              "old_deadline": od,
+                              "new_deadline": nd if ch == "yes" and nd else od,
+                              "quote": q[:300]}
+                             for eid, n, url, q, ch, nd, ou, od in accepted],
+                "rejected": [{"conference": n, "why": w} for n, w in rejected],
+                "kept": [{"conference": n, "why": w} for n, w in skipped]}, fh, indent=2)
 
     if not apply:
         print("\nreport only - re-run with --apply to write")
@@ -460,6 +523,11 @@ def main() -> int:
     ap.add_argument("--db", default="cfp_monitor.db")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--citations", help="CSV of replacement citations from upstream")
+    ap.add_argument("--strict-deadline", action="store_true",
+                    help="whole quote on the page AND the deadline written inside it (unattended)")
+    ap.add_argument("--protect-delivery", nargs="*",
+                    help="approved customer files; their rows are left for Saturday")
+    ap.add_argument("--report-json", help="write every decision here (for the recap email)")
     ap.add_argument("--withdraw-citation",
                     help="CSV (EVENT_ID, CONFERENCE, REASON) - R1: keep the deadline, drop the "
                          "citation and quote, mark projected. For rows whose cited page is gone "
@@ -478,8 +546,18 @@ def main() -> int:
         raise SystemExit(rc)
 
     if a.citations:
+        import csv as _csv
         store = Store(a.db)
-        rc = merge_citations(store, a.citations, a.apply)
+        protect = set()
+        if a.protect_delivery:
+            up_to_canon, _ = _seed_map(store)
+            for f in a.protect_delivery:
+                with open(f, encoding="utf-8-sig", newline="") as fh:
+                    for r in _csv.DictReader(fh):
+                        e = (r.get("EVENT_ID") or "").strip()
+                        protect.add(up_to_canon.get(e, e))
+        rc = merge_citations(store, a.citations, a.apply, strict_deadline=a.strict_deadline,
+                             protect_ids=protect, report_json=a.report_json)
         store.close()
         return rc
 

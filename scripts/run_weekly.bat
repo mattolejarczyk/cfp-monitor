@@ -164,9 +164,16 @@ REM run unattended, and nine rows a week is small enough that review costs almos
 REM The customer promise is that a new call is CAUGHT within a week, and a digest on Sunday
 REM applied on Monday keeps that true. Decided 2026-08-12; revisit once this has run clean
 REM for a few weeks.
-echo Weekly discovery starting - REPORT ONLY, merge is a human step >> "%LOG%"
+REM
+REM SUPERSEDED 2026-09-28, operator decision: no manual steps in the weekly chain. Findings now
+REM merge unattended under a STRICTER bar than the human merge had - the whole quote must be on
+REM the re-read page with the deadline written inside it - behind a database backup, the
+REM invariants and an automatic rollback. Rows on a customer's approved page are left for
+REM Saturday. Every decision goes to weekly_discovery_result_<date>.json and the recap email.
+echo Weekly discovery starting - AUTO-APPLY (strict, backed up, rolled back on failure) >> "%LOG%"
 venv\Scripts\python.exe scripts\weekly_discovery.py --db cfp_monitor.db ^
   --source "%AUDITED%" --out-dir "%LOGDIR%" --max-rows 25 ^
-  --discovery-script "%DISCOVERY%" --run-discovery >> "%LOG%" 2>&1
+  --discovery-script "%DISCOVERY%" --run-discovery --auto-apply ^
+  --protect-delivery "%D1%" "%D2%" >> "%LOG%" 2>&1
 echo Discovery finished with exit code %ERRORLEVEL% >> "%LOG%"
 exit /b 0

@@ -41,6 +41,8 @@ DESCRIBED = {
     "scripts/weekend_recap.py": ROOT / "scripts" / "weekend_recap.py",
     "scripts/run_weekly.bat": ROOT / "scripts" / "run_weekly.bat",
     "scripts/weekly_verify.py": ROOT / "scripts" / "weekly_verify.py",
+    "scripts/weekly_discovery.py": ROOT / "scripts" / "weekly_discovery.py",
+    "scripts/apply_resolutions.py": ROOT / "scripts" / "apply_resolutions.py",
     "scripts/weekly_deliverable.py": ROOT / "scripts" / "weekly_deliverable.py",
 }
 

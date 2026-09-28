@@ -101,14 +101,16 @@ jobs: each job checks what the previous one left instead of trusting it.
 4. **[Safety check]** **Runs the database health check** against Saturday's approved files. *(check_invariants.py)*
 5. **[Report]** **Writes a summary of what changed this week** - newly broken links, database items to watch,
    and older broken links still waiting.
-6. **[Review]** **Looks for new calls for speakers** on rows whose deadline is unconfirmed and still in
-   the future. In practice these are almost all in the six monthly markets - Saturday's weekly
-   research already keeps Arnica's and Utility Global's rows confirmed (0 customer rows in the last
-   three runs). It gives those six markets a weekly look instead of waiting up to 4 weeks. A small
-   number of AI requests (about 10-20; hard cap 25 rows); report only - what it finds is listed,
-   nothing is changed automatically. *(weekly_discovery.py)*
-7. **[Report]** **Emails the Sunday recap** - worked or failed, the counts, and whether Monday's pages will
-   publish. *(weekend_recap.py sunday)*
+6. **[Update]** **Looks for new calls for speakers - and applies what it can prove.** Covers rows whose
+   deadline is unconfirmed and still in the future - in practice almost all in the six monthly
+   markets (Saturday keeps Arnica's and Utility Global's rows confirmed). A finding is applied
+   ONLY when the re-read page carries the whole quote with the deadline written inside it, word
+   for word. Never applied: a quote that mentions an extension, a date without a year, or an
+   ambiguous date like 12/4/2026. Rows on a customer's approved page are left for Saturday. The
+   database is backed up first and restored automatically if the health check then fails.
+   About 10-20 AI requests (hard cap 25 rows). *(weekly_discovery.py, apply_resolutions.py)*
+7. **[Report]** **Emails the Sunday recap** - worked or failed, the counts, every new call applied (before
+   and after), and whether Monday's pages will publish. *(weekend_recap.py sunday)*
 
 ## Monday 7:00 AM - Customer pages
 
@@ -153,6 +155,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-09-28** - Sunday's search for new calls applies what it proves word for word, with Saturday's safety net; its findings are in the Sunday recap. The last manual step in the weekly chain is gone.
 - **2026-09-28** - category label added to every step, with a key at the top.
 - **2026-09-28** - document created. Monthly run gains its recap email.
 - **2026-09-27** - Saturday gains the automatic load, permanent IDs and recap email; Sunday gains

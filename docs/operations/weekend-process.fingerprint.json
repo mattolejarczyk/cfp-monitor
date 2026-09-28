@@ -8,9 +8,11 @@
     "scripts/weekly_intake.py": "c3950f4925cd61963837d03f304b3b697ea784572ba736f4c915c3424ba7710b",
     "scripts/stamp_input_ids.py": "76683cc5ce026bbdc2ff5625242345aa9efe7cafb9b53a86d4ac477ddc841f91",
     "scripts/weekend_import.py": "d9a9b823e6d6286c809fdabff7cc4130156e73227498160e51b96ace93196d55",
-    "scripts/weekend_recap.py": "e022542df631c1edfd8dbe62c76ad60ed30f8a6d610df8120fde5e10682ef21e",
-    "scripts/run_weekly.bat": "2eca3447af5bc09763f630a828ebe5f7a0943c03e1fe9a15c82270e96c625373",
+    "scripts/weekend_recap.py": "5b7fe3287cdbf80203fd10cde0a68afd76b5b0f320524b1dc9bb8157e633260d",
+    "scripts/run_weekly.bat": "e34d53e10c3282e23d78d56cb9314dceff5e15db411d35e644f0a33c4d3d49de",
     "scripts/weekly_verify.py": "7f6b260f6ab1c574dee2c67df517f0fee07d6d3d0fab8871bbc3f4abb2ffdd68",
+    "scripts/weekly_discovery.py": "28e7247f63c4b85782117dfd1f3f154989b32853ed2cce7cc5014a7724c3d811",
+    "scripts/apply_resolutions.py": "2cfbc3ca44666eba4c03b4fbed4f251714eeeee9ad9437cad0f70dc54800b9eb",
     "scripts/weekly_deliverable.py": "82432cc9c42db93f3f6f27930b5f9ab8bea27ead3387f472730775b1c64ab0cc"
   }
 }

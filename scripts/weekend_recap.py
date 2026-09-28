@@ -241,8 +241,25 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path) -> tuple[str, 
     return subject, text, "".join(html_parts)
 
 
+def discovery_section(disc: dict | None) -> tuple[list[str], list[list[str]]]:
+    """(plain lines, table rows) for the Sunday search for new calls (2026-09-28)."""
+    if not disc:
+        return (["Search for new calls: did not run this week (no result file)."], [])
+    acc, rej, kept = disc.get("accepted", []), disc.get("rejected", []), disc.get("kept", [])
+    status = disc.get("status", "")
+    lines = [f"Search for new calls: looked at {disc.get('proposed', 0)} row(s) - "
+             f"{len(acc)} applied, {len(rej)} not proven word for word (left as they were), "
+             f"{len(kept)} kept as they were."]
+    if status == "ROLLED BACK":
+        lines.append(f"Nothing was applied: {disc.get('why', '')}. The database was restored "
+                     f"from its backup.")
+    rows = [[a["conference"], a.get("old_deadline") or "-", a.get("new_deadline") or "-",
+             a.get("new_url", "")[:60]] for a in acc] if status == "APPLIED" else []
+    return lines, rows
+
+
 def sunday_recap(log: str, digest: str, markets_dir: Path,
-                 exit_code: str | None = None) -> tuple[str, str, str]:
+                 exit_code: str | None = None, disc: dict | None = None) -> tuple[str, str, str]:
     # run_weekly.bat echoes its exit code to the console, not the log, so the caller passes it.
     exit_code = exit_code if exit_code is not None else first(r"Finished with exit code (-?\d+)", log)
     glance = parse_digest(digest)
@@ -264,15 +281,22 @@ def sunday_recap(log: str, digest: str, markets_dir: Path,
     subject = f"CFP Sunday link check {status} - {datetime.now():%a %b %d}"
     facts = ([f"{needs} item(s) need someone to act." if glance else
               "The check wrote no summary - see the log."] + fresh)
+    d_lines, d_rows = discovery_section(disc)
+    d_head = ["Conference", "Deadline before", "Deadline now", "Proven on page"]
     html_ = "".join([f'<div style="{CSS}">',
                      f"<h2 style='margin:0 0 8px'>Sunday link and deadline check: {status}</h2>",
                      table(["What", "Count", "What happens"], rows) if rows else "",
                      "<ul>" + "".join(f"<li>{H.escape(f)}</li>" for f in facts) + "</ul>",
+                     "<h3 style='margin:14px 0 4px'>New calls found and applied</h3>",
+                     "<ul>" + "".join(f"<li>{H.escape(x)}</li>" for x in d_lines) + "</ul>",
+                     table(d_head, d_rows) if d_rows else "",
                      "<h3 style='margin:14px 0 4px'>What this means next</h3>",
                      "<ul>" + "".join(f"<li>{H.escape(x)}</li>" for x in monday) + "</ul></div>"])
     text = "\n\n".join([f"Sunday link and deadline check: {status}",
                         text_table(["What", "Count", "What happens"], rows) if rows else "",
                         "\n".join("- " + f for f in facts),
+                        "New calls found and applied:\n" + "\n".join("- " + x for x in d_lines)
+                        + ("\n" + text_table(d_head, d_rows) if d_rows else ""),
                         "What this means next:\n" + "\n".join("- " + x for x in monday)])
     return subject, text, html_
 
@@ -300,7 +324,14 @@ def main() -> int:
             subject, text, html_ = monthly_recap(log)
         else:
             digest = Path(a.digest).read_text(encoding="utf-8") if a.digest and Path(a.digest).exists() else ""
-            subject, text, html_ = sunday_recap(log, digest, md, a.exit_code)
+            # this run's discovery result: newest in the digest's folder, and only if written
+            # in the last day - a stale file must not be reported as this week's findings
+            disc = None
+            folder = Path(a.digest).parent if a.digest else Path(a.log).parent
+            res = sorted(folder.glob("weekly_discovery_result_*.json"), key=lambda p: p.stat().st_mtime)
+            if res and (datetime.now().timestamp() - res[-1].stat().st_mtime) < 86400:
+                disc = json.loads(res[-1].read_text(encoding="utf-8"))
+            subject, text, html_ = sunday_recap(log, digest, md, a.exit_code, disc)
     except Exception as e:                       # a recap must never break the run it reports on
         subject = f"CFP {a.kind} run - recap could not be built"
         text = f"The {a.kind} run finished, but its recap failed: {type(e).__name__}: {e}\nLog: {a.log}"

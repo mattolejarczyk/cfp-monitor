@@ -148,6 +148,50 @@ def discovery_python(explicit: str | None) -> list[str]:
         "  Pass --discovery-python pointing at one that does.")
 
 
+def auto_apply(a, merge_cmd: list[str], out_dir: Path, stamp: str, env: dict) -> int:
+    """The unattended Sunday merge, with Saturday's safety net (operator, 2026-09-28).
+
+    Takes a finding ONLY when the re-read page carries the whole quote with the deadline written
+    inside it (apply_resolutions --strict-deadline). Rows on a customer's approved page are left
+    for Saturday. The database is backed up first; if check_invariants then fails, the backup is
+    restored and nothing stands. Every decision lands in weekly_discovery_result_<stamp>.json,
+    which the Sunday recap email reads.
+    """
+    import json
+    result_path = out_dir / f"weekly_discovery_result_{stamp}.json"
+    merge_json = out_dir / f"weekly_discovery_merge_{stamp}.json"
+    db = Path(a.db).resolve()
+    backup = db.with_name(f"{db.stem}.pre-discovery-{datetime.now():%Y%m%d-%H%M%S}.db")
+    shutil.copy2(db, backup)
+    cmd = [*merge_cmd, "--apply", "--strict-deadline", "--report-json", str(merge_json)]
+    if a.protect_delivery:
+        cmd += ["--protect-delivery", *a.protect_delivery]
+    rc = subprocess.run(cmd, cwd=str(ROOT), text=True, env=env).returncode
+    merge = json.loads(merge_json.read_text(encoding="utf-8")) if merge_json.exists() else {}
+    status, why = "APPLIED", ""
+    if rc != 0 or not merge:
+        status, why = "ROLLED BACK", f"the merge did not complete (exit {rc})"
+    else:
+        inv = [sys.executable, str(ROOT / "scripts" / "check_invariants.py"), "--db", str(db),
+               "--seed-dir", str(db.parent / "market_sheets")]
+        if a.protect_delivery:
+            inv += ["--delivery", *a.protect_delivery]
+        irc = subprocess.run(inv, cwd=str(ROOT), text=True, env=env).returncode
+        if irc != 0:
+            status, why = "ROLLED BACK", f"the database health check failed after the merge (exit {irc})"
+    if status == "ROLLED BACK":
+        shutil.copy2(backup, db)
+        print(f"\nROLLED BACK - {why}. Database restored from {backup.name}.")
+    elif not merge.get("accepted"):
+        status = "NOTHING TO APPLY"
+    result_path.write_text(json.dumps({"status": status, "why": why, "backup": backup.name,
+                                       **merge}, indent=2), encoding="utf-8")
+    print(f"\nSunday discovery: {status}"
+          + (f" - {len(merge.get('accepted', []))} finding(s) applied" if status == "APPLIED" else "")
+          + f"\nresult    {result_path.name}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Weekly discovery for rows whose call is still shut.")
     ap.add_argument("--db", required=True)
@@ -167,6 +211,11 @@ def main() -> int:
                          "google-genai and pandas. Auto-detected if omitted.")
     ap.add_argument("--apply", action="store_true",
                     help="merge anything that survives the gate. Reports only without it.")
+    ap.add_argument("--auto-apply", action="store_true",
+                    help="unattended merge: strict word-for-word deadline check, backup, "
+                         "invariants, rollback on failure, result JSON for the recap")
+    ap.add_argument("--protect-delivery", nargs="*",
+                    help="approved customer files; their rows are left for Saturday")
     a = ap.parse_args()
 
     today = date.today()
@@ -250,6 +299,8 @@ def main() -> int:
     print("\n--- merge guard ---")
     cmd = [sys.executable, str(ROOT / "scripts" / "apply_resolutions.py"),
            "--db", a.db, "--citations", str(extracted)]
+    if a.auto_apply:
+        return auto_apply(a, cmd, out_dir, stamp, env)
     if a.apply:
         cmd.append("--apply")
     subprocess.run(cmd, cwd=str(ROOT), text=True, env=env)
