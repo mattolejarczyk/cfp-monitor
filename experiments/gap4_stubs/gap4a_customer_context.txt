@@ -1,0 +1,43 @@
+  [TRACKED  ] DEF CON 34 (DC34)  (arnica)
+      date verification: Internal Estimate; their deadline field: 02/06/2027; priority=Low
+  [MOOT     ] Climate Week NYC 2026  (utility-global)
+      status=Submitted; date verified by their team; WITHDRAWN by customer; their deadline field: 06/29/2026
+  [UNTRACKED] Gartner Security & Risk Management Summit EMEA 2
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] Black Hat USA 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] BSides Las Vegas 2026 (BSidesLV)
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] AppSec Village at DEF CON 34
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] USENIX Security Symposium 2026 (35th USENIX Secu
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] CrowdStrike Fal.Con 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] Billington 17th Annual CyberSecurity Summit 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] LabsCon 2026 (SentinelOne LabsCon)
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] OWASP AppSec Days France 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] SecureWorld St. Louis 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] SecureWorld Detroit 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] SecureWorld Quantum Cryptography 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] SecureWorld Atlanta 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] WFCC 2026 (World Fuel Cell Conference)
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] Asia Pacific Hydrogen Summit & Exhibition 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] Gastech 2026
+      on no client sheet - industry coverage, nobody is acting on it
+  [UNTRACKED] Hydrogen Technology Expo MENA 2026
+      on no client sheet - industry coverage, nobody is acting on it
+
+LIVE      the deadline matters today - get this right first
+TRACKED   on their sheet, not yet acted on
+MOOT      already submitted, accepted or declined - a deadline fix has no consumer
+UNTRACKED nobody is acting on it

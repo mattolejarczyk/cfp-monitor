@@ -1,6 +1,6 @@
 # Gap 4 - rows never researched
 
-**Status:** theory written, not started.
+**Status:** 4a MEASURED 2026-09-28 - see RESULT_4a.md (saves 45 requests / 16%, avoids 4 failed rows, nothing of value lost, no LIVE customer row). Awaiting the operator's decision to wire it in. 4b not started (waits on gap 3).
 
 ## What happens today
 24 of 113 rows came back "not researched" after 4 tries each. 9 of the 24 were events that had

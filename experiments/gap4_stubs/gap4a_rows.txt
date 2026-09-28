@@ -1,0 +1,26 @@
+Cyber | Watching     | STUB | requests 4 | changed: - | Gartner Security & Risk Management Summit EMEA 2026 (London)
+Cyber | Watching     | ok   | requests 1 | changed: - | Black Hat USA 2026
+Cyber | Watching     | STUB | requests 4 | changed: - | BSides Las Vegas 2026 (BSidesLV)
+Cyber | Watching     | ok   | requests 3 | changed: - | DEF CON 34
+Cyber | Watching     | ok   | requests 4 | changed: - | AppSec Village at DEF CON 34
+Cyber | Watching     | STUB | requests 4 | changed: - | USENIX Security Symposium 2026 (35th USENIX Security '26)
+Cyber | Watching     | ok   | requests 1 | changed: CONFERENCE DATES | CrowdStrike Fal.Con 2026
+        CONFERENCE DATES: 'August 31 - September 03, 2026' -> 'August 31 - September 3, 2026'
+Cyber | Watching     | ok   | requests 1 | changed: - | Billington 17th Annual CyberSecurity Summit 2026
+Cyber | Watching     | ok   | requests 1 | changed: - | LabsCon 2026 (SentinelOne LabsCon)
+Cyber | Watching     | ok   | requests 1 | changed: - | OWASP AppSec Days France 2026
+Cyber | Watching     | ok   | requests 1 | changed: SUBMISSION DEADLINE, STATUS | SecureWorld St. Louis 2026
+        SUBMISSION DEADLINE: '2026-07-08' -> ''
+        STATUS: 'Needs Verification' -> 'Closed'
+Cyber | Watching     | ok   | requests 3 | changed: - | SecureWorld Detroit 2026
+Cyber | Watching     | ok   | requests 3 | changed: SUBMISSION DEADLINE | SecureWorld Quantum Cryptography 2026
+        SUBMISSION DEADLINE: '2026-08-09' -> ''
+Cyber | Watching     | ok   | requests 1 | changed: - | SecureWorld Atlanta 2026
+Utili | Watching     | ok   | requests 2 | changed: - | WFCC 2026 (World Fuel Cell Conference)
+Utili | Watching     | STUB | requests 4 | changed: - | Asia Pacific Hydrogen Summit & Exhibition 2026
+Utili | Watching     | ok   | requests 4 | changed: - | Gastech 2026
+Utili | Watching     | ok   | requests 2 | changed: - | Climate Week NYC 2026
+Utili | Discontinued | ok   | requests 1 | changed: CONFERENCE DATES, START DATE, STATUS | Hydrogen Technology Expo MENA 2026
+        CONFERENCE DATES: '' -> 'June 09 - June 10, 2026'
+        START DATE: '' -> '2026-06-09'
+        STATUS: 'Needs Verification' -> 'Closed'

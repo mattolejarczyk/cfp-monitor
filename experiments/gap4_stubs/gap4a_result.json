@@ -1,0 +1,21 @@
+{
+  "run_day": "2026-09-26",
+  "markets": {
+    "Cybersecurity": {
+      "researched (tree says quota or active)": 42,
+      "no last-week row to assess (researched as today)": 3,
+      "SKIPPED by the tree": 14,
+      "requests saved": 32,
+      "of which were failed (stub) rows": 3,
+      "of which research CHANGED a shown field": 3
+    },
+    "Utility": {
+      "researched (tree says quota or active)": 41,
+      "no last-week row to assess (researched as today)": 8,
+      "SKIPPED by the tree": 5,
+      "requests saved": 13,
+      "of which were failed (stub) rows": 1,
+      "of which research CHANGED a shown field": 1
+    }
+  }
+}
