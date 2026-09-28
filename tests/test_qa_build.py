@@ -85,6 +85,28 @@ def test_a_deadline_moving_earlier_is_flagged_and_later_is_not():
     assert any("SecTor" in f for f in res["flags"])
 
 
+def test_changes_to_dates_already_past_are_listed_apart_not_flagged():
+    """2026-09-28: 17 of 20 flags were deadlines that had passed before the change."""
+    res = _run([_row("Old Lost", dl="2026-03-01"), _row("Old Earlier", dl="2026-06-02"),
+                _row("Future Earlier", dl="2026-12-15"), _row("Into The Past", dl="2026-10-01")],
+               [_row("Old Lost", dl=""), _row("Old Earlier", dl="2026-05-25"),
+                _row("Future Earlier", dl="2026-11-26"), _row("Into The Past", dl="2026-09-15")])
+    assert any("Old Lost" in p for p in res["past"]) and any("Old Earlier" in p for p in res["past"])
+    assert any("Future Earlier" in f for f in res["flags"])
+    # a deadline moving from the future INTO the past is exactly what must not be buried
+    assert any("Into The Past" in f for f in res["flags"])
+    assert not any("Old" in f for f in res["flags"])
+
+
+def test_the_past_section_renders_under_its_own_heading():
+    rep = qa_report.new_report("build", ON)
+    rep["flags"], rep["past"] = ["a real one"], ["an old one"]
+    md = qa_report.to_markdown(qa_report.finish(rep, "ok"), "Build QA")
+    assert "## Look at" in md and "## Changed, but the old date had already passed" in md
+    assert md.index("a real one") < md.index("## Changed") < md.index("an old one")
+    assert "1 thing(s) to look at; 1 change(s)" in md
+
+
 def test_an_open_row_with_a_passed_deadline_is_flagged():
     res = _run(None, [_row("Late Call", s="Open", dl="2026-09-15")])
     assert any("shows Open with a deadline 6 day(s) past" in f for f in res["flags"])

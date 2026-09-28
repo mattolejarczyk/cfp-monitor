@@ -146,7 +146,11 @@ def same_event(gone: list[tuple], new: list[tuple], pb: dict, cb: dict) -> list[
 
 
 def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: str) -> dict:
-    report_rows, flags, changes = [], [], []
+    # `past` (operator, 2026-09-28): a deadline change where last week's date had ALREADY passed
+    # cannot affect a call anyone can still act on. On the 2026-09-28 build 17 of 20 flags were
+    # that, burying the 3 worth a look. They are listed separately, not dropped. A deadline that
+    # moves from the future INTO the past stays a flag - someone planning to the old date misses it.
+    report_rows, flags, changes, past = [], [], [], []
     now = shows(cur_rows, on)
     before = shows(prev_rows, on) if prev_rows is not None else {}
     for k in list(now) + [k for k in before if k not in now]:
@@ -199,16 +203,18 @@ def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: 
                     changes.append([c["n"], c["m"], what, p.get(field) or "(blank)",
                                     c.get(field) or "(blank)"])
             pd_, cd_ = parse_loose_date(p.get("dl") or ""), parse_loose_date(c.get("dl") or "")
+            already_past = bool(pd_) and pd_ < on
             if pd_ and cd_ and cd_ < pd_:
-                flags.append(f"{label}: {c['n']} ({c['m']}) deadline moved EARLIER, "
-                             f"{pd_.isoformat()} -> {cd_.isoformat()}")
+                (past if already_past else flags).append(
+                    f"{label}: {c['n']} ({c['m']}) deadline moved EARLIER, "
+                    f"{pd_.isoformat()} -> {cd_.isoformat()}")
             if pd_ and not cd_:
-                flags.append(f"{label}: {c['n']} ({c['m']}) lost its deadline "
-                             f"({pd_.isoformat()} last week)")
+                (past if already_past else flags).append(
+                    f"{label}: {c['n']} ({c['m']}) lost its deadline ({pd_.isoformat()} last week)")
             for k, what in (("urldead", "submission link"), ("evdead", "evidence link")):
                 if not _yes(p.get(k)) and _yes(c.get(k)):
                     changes.append([c["n"], c["m"], f"{what} died", "", ""])
-    return {"counts": report_rows, "changes": changes, "flags": flags}
+    return {"counts": report_rows, "changes": changes, "flags": flags, "past": past}
 
 
 def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool | None) -> dict:
@@ -233,6 +239,7 @@ def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool 
             "rows": sorted(res["changes"], key=lambda x: (x[2], x[1], x[0])),
             "flags": res["flags"]})
         rep["flags"] += res["flags"]
+        rep["past"] = rep.get("past", []) + res["past"]
     return qa_report.finish(rep, "nothing on the pages needs a look before sending")
 
 

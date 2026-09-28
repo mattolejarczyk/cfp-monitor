@@ -137,6 +137,11 @@ jobs: each job checks what the previous one left instead of trusting it.
 10. **[Publish]** **Publishes, only if everything above went well.** Both pages go into today's folder under
     `handoff-files\weekly\`, with a summary file listing what is in them. Otherwise the pages stay
     in a work folder, the summary says why, and nothing is published.
+11. **[Report]** **Writes the "before you send" review list** - what changed on the pages since last time.
+    "Look at" holds only what needs a person; deadline changes where the old date had already
+    passed are listed separately under "no action needed". A copy named
+    `INTERNAL - Build QA <date> (do not send).md` goes in the same folder as the pages; the
+    original is in `AppData\Local\CFP-Monitor\runs_out\qa\<date>\build.md`. *(qa_build.py)*
 
 ## Every 4th Wednesday 2:00 AM - Monthly research (markets without a customer)
 
@@ -155,6 +160,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-09-28** - Monday's review list separates changes to already-past dates from what needs a look, and a copy is saved beside the published pages.
 - **2026-09-28** - Sunday's search for new calls applies what it proves word for word, with Saturday's safety net; its findings are in the Sunday recap. The last manual step in the weekly chain is gone.
 - **2026-09-28** - category label added to every step, with a key at the top.
 - **2026-09-28** - document created. Monthly run gains its recap email.

@@ -13,6 +13,7 @@
     "scripts/weekly_verify.py": "7f6b260f6ab1c574dee2c67df517f0fee07d6d3d0fab8871bbc3f4abb2ffdd68",
     "scripts/weekly_discovery.py": "28e7247f63c4b85782117dfd1f3f154989b32853ed2cce7cc5014a7724c3d811",
     "scripts/apply_resolutions.py": "2cfbc3ca44666eba4c03b4fbed4f251714eeeee9ad9437cad0f70dc54800b9eb",
-    "scripts/weekly_deliverable.py": "82432cc9c42db93f3f6f27930b5f9ab8bea27ead3387f472730775b1c64ab0cc"
+    "scripts/weekly_deliverable.py": "7666e12cb3179f9b9a2e16d5f9f8625f4cfd6c5c0cf10c7fcb9ef10daef6ad97",
+    "scripts/qa_build.py": "d2298ebb54a8aed9fb63c5dad657ecf3cc3dc55e2875fd25736a4f64c01817e4"
   }
 }

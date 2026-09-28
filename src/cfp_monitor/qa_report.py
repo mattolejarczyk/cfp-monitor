@@ -46,6 +46,9 @@ def finish(report: dict, summary_pass: str) -> dict:
     report["status"] = "FLAG" if report["flags"] else "PASS"
     report["summary"] = summary_pass if not report["flags"] else \
         f"{len(report['flags'])} thing(s) to look at"
+    if report.get("past"):
+        report["summary"] += (f"; {len(report['past'])} change(s) to dates that had already "
+                              f"passed, listed separately")
     return report
 
 
@@ -61,6 +64,11 @@ def to_markdown(report: dict, title: str) -> str:
            f"ran {report['ran_at']}", ""]
     if report["flags"]:
         out += ["## Look at", ""] + [f"- {f}" for f in report["flags"]] + [""]
+    if report.get("past"):
+        out += ["## Changed, but the old date had already passed - no action needed", "",
+                "These deadlines were already in the past last week, so the change cannot affect "
+                "a call anyone can still act on. Listed for the record.", ""]
+        out += [f"- {f}" for f in report["past"]] + [""]
     for s in report["sections"]:
         out += [f"## {s['title']}", ""]
         if s.get("note"):

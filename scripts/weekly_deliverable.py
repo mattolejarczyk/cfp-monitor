@@ -350,8 +350,21 @@ def main() -> int:
             verdict = first.replace("**", "").strip() or f"did not run (exit {qa.returncode})"
         except Exception as exc:                                     # noqa: BLE001
             verdict = f"did not run ({type(exc).__name__})"
+        # A COPY BESIDE THE PAGES (operator, 2026-09-28). The original sits in a hidden AppData
+        # folder the manifest used to name only as "runs_out/qa/<cycle>/build.md", and the operator
+        # could not find it. Named INTERNAL so it is never mistaken for something to send.
+        from src.cfp_monitor.qa_report import QA_ROOT, cycle_of
+        qa_md = QA_ROOT / cycle_of(date.fromisoformat(stamp)).isoformat() / "build.md"
+        where = []
+        if qa_md.exists():
+            name = f"INTERNAL - Build QA {stamp} (do not send).md"
+            for folder in ([published] if status == "HEALTHY" else []) + [work]:
+                shutil.copy2(qa_md, folder / name)
+                where.append(folder / name)
         lines += ["## Build QA", "", f"    {verdict}", "",
-                  "Read runs_out/qa/<cycle>/build.md before sending.", ""]
+                  (f"Read it before sending: `{where[0]}`" if where else
+                   "Read the build QA report before sending."),
+                  f"A duplicate copy is at: `{qa_md}`", ""]
     (work / "MANIFEST.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
     print(f"\nwork folder: {work}")
