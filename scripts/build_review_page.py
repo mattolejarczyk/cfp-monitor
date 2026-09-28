@@ -439,6 +439,10 @@ a{color:var(--accent)}
     <div class="sechd">Timing</div>
     <div class="views" id="views"></div>
     <div class="subs" id="subs" style="display:none"></div>
+    <label style="display:block;margin-top:8px;font-size:13px;color:var(--muted);cursor:pointer">
+      <input type="checkbox" id="showclosed"> Show closed rows in <i>Deadline confirmed</i>,
+      <i>Need to Verify</i>, <i>Submit Link Missing</i> and <i>Check against your sheet</i>
+      (hidden by default - a closed call cannot be acted on)</label>
   </section>
 
   <section class="sec">
@@ -579,6 +583,16 @@ const VIEWS = [
   f:r=>r.rec && r.rec.length},
  {k:'all', t:'Everything', d:'full list', f:r=>true},
 ].filter(v=>!v.kinds||v.kinds.indexOf(KIND)>=0);
+// CLOSED ROWS ARE HIDDEN BY DEFAULT IN THE WORK-QUEUE VIEWS (operator, 2026-09-28). These four
+// are lists someone works through - confirm a deadline, fix a citation, replace a link, reconcile
+// a sheet - and a Closed row is a call nobody can act on any more, so it only buries the ones
+// that matter. Not removed: the box under the views brings them back, and every other view,
+// "Everything" and the Status filter are unchanged. The counts follow, because the filter is
+// wrapped into each view's own test rather than applied afterwards.
+const HIDE_CLOSED_IN = ['checked','unconfirmed','broken','reconcile'];
+let showClosed = false;
+VIEWS.forEach(v=>{ if(HIDE_CLOSED_IN.indexOf(v.k)>=0){ const base=v.f;
+  v.f = r => base(r) && (showClosed || r.s!=='Closed'); } });
 // "Closing this month" is the right landing view when something IS closing this month. On a
 // per-client page it often is not - Arnica had none - and the page then opened on "Nothing
 // matches those filters", which reads as a broken product rather than a quiet month.
@@ -814,6 +828,7 @@ $('mk').onclick=e=>{const b=e.target.closest('[data-m]'); if(!b)return;
   const m=b.dataset.m; active.has(m)?active.delete(m):active.add(m);
   b.classList.toggle('on'); render();};
 ['q','fs','ff','fc','fe'].forEach(i=>$(i).oninput=render);
+$('showclosed').onchange=()=>{ showClosed = $('showclosed').checked; render(); };
 // The date box drives SINCE, so the "Updated since" count changes with it rather than being
 // fixed at build time. Falls back to the built-in default when cleared - an empty box would
 // otherwise make every row match and the view would silently become "everything".
