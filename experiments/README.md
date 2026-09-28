@@ -23,6 +23,7 @@ change's effect cannot be confused with another's.
 | 1 | Made-up links | 27 of 89 researched rows cite a page on a site the search never visited | `gap1_real_links/` |
 | 2 | Paraphrased quotes | quotes rewritten rather than copied; unprovable word for word | `gap2_verbatim_quotes/` |
 | 3 | Answering from memory | 89 of 178 successful answers ran no search (~32% of spend) | `gap3_search_every_time/` |
-| 4 | Rows never researched | 24 of 113 (9 events already over; ~98 Google 504 timeouts) | `gap4_stubs/` |
+| 4 | Rows never researched | 24 of 113 (4 avoidable by the tree; ~98 Google 504 timeouts) | `gap4_stubs/` |
+| 5 | Next year's editions not picked up | 41 past events re-researched as the old edition; successors visible but not captured (contract R13-R15 never built) | `gap5_next_edition/` |
 
 Status of each is kept in its `PLAN.md` and reported in every update until resolved.
