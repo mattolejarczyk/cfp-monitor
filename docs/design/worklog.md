@@ -5,6 +5,26 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-28 - Friday awards run, Sunday auto-apply, verification coverage fix, quality-gap experiments
+
+- **Monday verification coverage** (102 of 112 rows "not checked"): Saturday's new citations were
+  registered by build_evidence only at the END of the Monday build, after audit_evidence; and
+  export_checks wrote one upstream id per event, which the page (joining on this week's id) missed for
+  renamed events. weekly_deliverable now registers first; export_checks writes a row per alias
+  (test_export_checks_aliases). The 2026-09-28 page was re-checked and rebuilt 13:47 - page of record.
+- **Sunday discovery auto-applies** under apply_resolutions --strict-deadline (whole quote on the
+  re-read page, deadline inside it; refuses extensions, yearless and ambiguous dates) with backup,
+  invariants, rollback and --protect-delivery; findings in the Sunday recap.
+- **Friday awards research** (task added, 16h limit): run_monthly -Markets Awards; stamp_input_ids and
+  import_awards carry ids; weekend_import handles Awards; check_invariants --awards-seed; Monday prefers
+  Awards_audited.final.csv. Two rehearsal-caught bugs fixed (scrambled ledger pairing refused; DUP_OF
+  seed path). A one-time live test was stopped at award 32 (52% failures, pace beyond 10h).
+- **Build QA**: already-past date changes listed apart; copy saved beside the published pages.
+  **Customer pages**: Closed rows hidden by default in four work-queue views. **Monthly recap** added.
+- **WEEKEND-PROCESS.md** (plain English, category label per step) + check_process_doc fingerprints.
+- **experiments/**: gaps 1-5 as isolated plans; 4a and 5a measured (no AI). Gap 5 found contract
+  R13-R15 never built - 12 of 44 past events already announce next year; CCUS 2027 call open now.
+
 ## 2026-09-27 - the weekend runs finish the job: auto-load, carried identity, recap emails
 
 - **Saturday 09-26 failed in its canary** (first scheduled canary run): stale progress ledger
