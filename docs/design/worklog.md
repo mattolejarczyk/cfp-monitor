@@ -5,6 +5,32 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-27 - the weekend runs finish the job: auto-load, carried identity, recap emails
+
+- **Saturday 09-26 failed in its canary** (first scheduled canary run): stale progress ledger
+  (cleanup deleted the wrong name), stage D invariants with no `--seed-dir`, and stage D judging a
+  5-row sample by full-delivery rules. All fixed; stage D now stops only on damage to EXISTING
+  rows (before/after diff). `run_canary.ps1 -ReplayLastOutput` re-judges for free. The Saturday job
+  now logs to `Markets\logs\`. A one-time clone of the registered task re-ran it 09-27: canary
+  passed, 113/113 rows, 89 grounded, ~290 requests (Google 504s + ungrounded retries).
+- **`weekend_import.py`** - runbook steps 1-4b unattended, called by `run_monthly.ps1`. Row-by-row
+  rule (operator): gate judges the whole file; failing/stub/unidentifiable rows take last week's
+  accepted version or are held back; uncovered events carry over. Backup, rollback on failed
+  reconcile, promote only ACCEPTED. `--sandbox` rehearsal. Practice run 1 rolled back correctly
+  (24 would-be duplicates from renames); run 2 and the live run passed: 0 duplicates, 0 lost.
+- **Identity carried, not rebuilt.** Research minted EVENT_ID from the name and import re-derived
+  the canonical id from the name - R9 was a promise nothing enforced. `stamp_input_ids.py`
+  (EVENT_ID_CANON on the input, exact names, restricted to last week's page to avoid stale twins),
+  `<output>.identity.csv` from `run_market_audit`, `import_grounding --ids`,
+  `grounding.normalize_rows(ids=)`, `identity.seed_names`/`SEED_FILES`. 45-column schema unchanged.
+- **`weekend_recap.py`** emails a plain-English recap after Saturday and Sunday to `CFP_RECAP_TO`;
+  `alerts.maybe_send_email` gains an HTML part. Wired into `run_monthly.ps1` and `run_weekly.bat`.
+- **Sunday fixes:** the live build was 59 files behind the repo - synced (backup
+  `_pre-sync-backup-20260927-233404`), smoke-tested with its own venv. `run_weekly.bat` compared
+  the DB against an August delivery for invariant 9; now both promoted `.final.csv` files.
+- `run_end_to_end.ps1` (08-31) marked superseded - never scheduled, stops on any rejection.
+- Pre-existing: `test_no_reimplemented_crawling` flags `evidence_matrix.py`; spun off.
+
 ## 2026-09-22 - quality by design: verification provenance, self-heal, evidence matrix
 
 All on main in both repos, pushed as built. Theme: every step ends in a fix or a decision-ready

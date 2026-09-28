@@ -7,11 +7,16 @@ wins.
 The cycle exists to produce one thing: **two HTML files in Nicolia's hands on Monday morning**,
 good enough that his team can work from them all week. Everything else is in service of that.
 
-    SAT  intake their week, then research ours
-    SUN  verify what we hold
-    SUN/MON  review, resolve, promote, import
+    SAT  intake their week, stamp ids, research ours, then load + promote it (automatic) + recap email
+    SUN  verify what we hold - which is now THIS weekend's research - + recap email
     MON  build and publish
     then repeat
+
+**Since 2026-09-27 there is no manual step between Saturday and Monday.** `weekend_import.py` runs
+Step 4 at the end of the Saturday job, applying the rule below row by row, and both weekend jobs
+email a plain-English recap (worked or failed, and what it means for the next run). Before this,
+the research sat in the Markets folder until someone loaded it, so Sunday verified last week's
+data and Monday published last week's file.
 
 ## The rule that governs a bad week
 
@@ -155,9 +160,16 @@ row on suspicion - discovery is innocent until proven guilty (2.1).
 
 ---
 
-## Step 4 - PROMOTE AND IMPORT (Monday morning, before the build)
+## Step 4 - PROMOTE AND IMPORT (automatic, end of the Saturday job, since 2026-09-27)
 
-**The step most easily forgotten, and the one that fails invisibly.**
+**The step most easily forgotten, and the one that fails invisibly - so it no longer waits for a
+person.** `scripts/weekend_import.py` runs the commands below in order after the research. Rows
+that pass ship; a row that fails, was not researched, or cannot be tied to a permanent id takes
+last week's accepted version or is held back (declared in `held_rows.txt`); events the research
+did not cover carry over. Identity is CARRIED from the research input (`stamp_input_ids.py`,
+`<Market>_audited.identity.csv`, `import_grounding --ids`), so a rename cannot create a duplicate.
+A reconciliation failure restores the database from the backup taken first, and nothing is
+promoted. First run 2026-09-27: both markets promoted, invariants held, zero duplicates.
 
     promote   scripts/promote_delivery.py    the accepted delivery becomes <Market>_audited.final.csv
     import    scripts/import_grounding.py
