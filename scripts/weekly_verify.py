@@ -495,9 +495,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Weekly re-verification sweep (no API calls).")
     ap.add_argument("--db", default="cfp_monitor.db")
     ap.add_argument("--seed-dir", default="market_sheets")
-    ap.add_argument("--delivery", default="", help="the current delivery CSV. Enables the "
-                                                   "citation-agreement invariant, which is "
-                                                   "SKIPPED without it")
+    ap.add_argument("--delivery", nargs="*", default=[], help="the current delivery CSV(s) - "
+                                                   "the promoted <Market>_audited.final.csv "
+                                                   "files. Enables the citation-agreement "
+                                                   "invariant, which is SKIPPED without it")
     ap.add_argument("--out-dir", default="runs_out")
     ap.add_argument("--layers", default="012")
     ap.add_argument("--no-browser", action="store_true",
@@ -549,7 +550,7 @@ def main() -> int:
     # nothing compared them. Given a path, the weekly job asks the question every Sunday.
     inv_cmd = [py, "scripts/check_invariants.py", "--db", a.db, "--seed-dir", a.seed_dir]
     if a.delivery:
-        inv_cmd += ["--delivery", a.delivery]
+        inv_cmd += ["--delivery", *a.delivery]
     inv = subprocess.run(inv_cmd, cwd=str(cwd), capture_output=True, text=True)
     print(inv.stdout.rstrip())
     invariants_ok = inv.returncode == 0

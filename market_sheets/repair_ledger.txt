@@ -56,3 +56,28 @@
 2026-09-20	Utility	World Hydrogen 2027 Summit & Exhibition	SUBMISSION URL	D	https://www.world-hydrogen-summit.com/speaker-hub/		Utility_audited.csv
 2026-09-20	Utility	World Hydrogen 2027 Summit & Exhibition	CFP_SUBMISSION_URL	D	https://www.world-hydrogen-summit.com/speaker-hub/		Utility_audited.csv
 2026-09-20	Utility	World Hydrogen 2027 Summit & Exhibition	DEADLINE_EVIDENCE_URL	D	https://www.world-hydrogen-summit.com/speaker-hub/		Utility_audited.csv
+2026-09-27	Cybersecurity	Wild West Hackin' Fest @ Mile High 2026	SUBMISSION URL	D	https://wildwesthackinfest.com/mile-high-cfp/		Cybersecurity_audited.csv
+2026-09-27	Cybersecurity	Wild West Hackin' Fest @ Mile High 2026	CFP_SUBMISSION_URL	D	https://wildwesthackinfest.com/mile-high-cfp/		Cybersecurity_audited.csv
+2026-09-27	Cybersecurity	CYBERUK 2026	DEADLINE_EVIDENCE_URL	D	https://www.cyberscotland.com/cyberuk-2026-in-glasgow/		Cybersecurity_audited.csv
+2026-09-27	Cybersecurity	CYBERUK 2026	DEADLINE_QUOTE	D	CYBERUK 2026 was held at the SEC in Glasgow between 21-23 April 2026.		Cybersecurity_audited.csv
+2026-09-27	Cybersecurity	CYBERUK 2026	IS_PROJECTED	D	false	true	Cybersecurity_audited.csv
+2026-09-27	Cybersecurity	CYBERUK 2026	GROUNDING_CONFIDENCE	D	Verified (2026)	Projected (2026)	Cybersecurity_audited.csv
+2026-09-27	Cybersecurity	OffensiveCon Berlin 2026	VENUE_EVIDENCE_URL	D	https://www.offensivecon.org/venue/		Cybersecurity_audited.csv
+2026-09-27	Cybersecurity	Infosecurity Europe 2026	IS_PROJECTED	D	false	true	Cybersecurity_audited.csv
+2026-09-27	Cybersecurity	Infosecurity Europe 2026	GROUNDING_CONFIDENCE	D	Verified (2026)	Projected (2026)	Cybersecurity_audited.csv
+2026-09-27	Cybersecurity	it-sa Expo & Congress 2026	DEADLINE_QUOTE	D	The supporting programme for it-sa Expo&Congress 2026 is expected to be available from September.		Cybersecurity_audited.csv
+2026-09-27	Utility	Carbon Capture Technology Expo MENA 2026	STATUS DETAILS	C	The 2026 edition of the Carbon Capture Technology Expo MENA, originally scheduled for June 9-10, 2026, has been rescheduled to June 8-9, 2027. This finding contradicts the prior record of November 10-	The 2026 edition of the Carbon Capture Technology Expo MENA, originally scheduled for June 9-10, 2026, has been rescheduled to June 8-9, 2027. This finding contradicts the prior record of November 10-	Utility_audited.csv
+2026-09-27	Utility	Carbon Capture Technology World Expo 2026	VENUE_EVIDENCE_URL	D	https://www.hamburg-messe.com/en/event-details/event/carbon-capture-technology-world-expo		Utility_audited.csv
+2026-09-27	Utility	India Energy Week 2027	DEADLINE_EVIDENCE_URL	D	https://www.indiaenergyweek.com/conference/technical-conference/call-for-papers/		Utility_audited.csv
+2026-09-27	Utility	India Energy Week 2027	DEADLINE_QUOTE	D	Wednesday, 30 September 2026		Utility_audited.csv
+2026-09-27	Utility	India Energy Week 2027	IS_PROJECTED	D	false	true	Utility_audited.csv
+2026-09-27	Utility	India Energy Week 2027	GROUNDING_CONFIDENCE	D	Verified (2027)	Projected (2027)	Utility_audited.csv
+2026-09-27	Utility	Innovation Zero 2027	SUBMISSION URL	D	https://www.innovationzero.com/apply-to-speak		Utility_audited.csv
+2026-09-27	Utility	Innovation Zero 2027	CFP_SUBMISSION_URL	D	https://www.innovationzero.com/apply-to-speak		Utility_audited.csv
+2026-09-27	Utility	Innovation Zero 2027	DEADLINE_EVIDENCE_URL	D	https://www.innovationzero.com/apply-to-speak		Utility_audited.csv
+2026-09-27	Utility	Innovation Zero 2027	DEADLINE_QUOTE	D	If you would like to be featured in the content programme for Innovation Zero World 2027, please complete the form below and we will be in touch if there is a suitable place for you on our agenda.		Utility_audited.csv
+2026-09-27	Utility	Innovation Zero 2027	IS_PROJECTED	D	false	true	Utility_audited.csv
+2026-09-27	Utility	Innovation Zero 2027	GROUNDING_CONFIDENCE	D	Verified (2027)	Projected (2027)	Utility_audited.csv
+2026-09-27	Utility	Hydrogen Technology Expo MENA 2026	SUBMISSION URL	D	https://www.hydrogenccs-menaexpo.com/call-for-speakers		Utility_audited.csv
+2026-09-27	Utility	Hydrogen Technology Expo MENA 2026	CFP_SUBMISSION_URL	D	https://www.hydrogenccs-menaexpo.com/call-for-speakers		Utility_audited.csv
+2026-09-27	Utility	Hydrogen Technology Expo Europe 2027	VENUE_EVIDENCE_URL	D	https://www.hamburg-messe.de/en/event-details/-/event/hydrogen-technology-world-expo		Utility_audited.csv

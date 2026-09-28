@@ -182,7 +182,7 @@ ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 def main() -> int:
     ap = argparse.ArgumentParser(description="Check database integrity invariants.")
     ap.add_argument("--db", default="cfp_monitor.db")
-    ap.add_argument("--delivery", help="the current delivery CSV. Enables check 9, which "
+    ap.add_argument("--delivery", nargs="+", help="the current delivery CSV(s). Enables check 9, which "
                                        "compares CITATIONS between the database and the "
                                        "delivery - the two stores drifted on 176 rows in "
                                        "August and nothing noticed")
@@ -314,7 +314,9 @@ def main() -> int:
     # ROWS are here; this asks whether the two stores say the same thing about one of them.
     con.close()
     if a.delivery:
-        drift = citation_drift(a.db, Path(a.delivery))
+        # One file per customer market since the weekly promotes one final.csv each; the
+        # check runs over all of them (2026-09-27 - it had been fed an August file).
+        drift = [d for f in a.delivery for d in citation_drift(a.db, Path(f))]
         res.add("9  citations agree with the delivery",
                 "watch: the database and the delivery disagree about a cited page",
                 drift, fatal=False)
