@@ -34,7 +34,7 @@ Stage 0 diagnose (done) - 1 narrow Gemini prompt (grounding proven, quality and 
 - Before any new script: check `docs/operations/TOOLING.md` and say `USING EXISTING:` or `NEW CODE: searched ... found nothing`.
 
 ## The wisdom pattern (added 2026-10-01, operator's principle)
-When a code solution grows complex or keeps failing, **try a cheap or free model first** (DeepSeek, Hermes free capacity), with code verifying its output and an answer key scoring it, before spending more weeks on rules. Evidence so far: a rules reader took days and failed a fresh test (0.33); one DeepSeek call read the same table correctly for $0.0009. This is a hypothesis under test, not yet a result: `docs/design/whole-page-reader-experiment.md`.
+When a code solution grows complex or keeps failing, **try a cheap or free model first** (DeepSeek, Hermes free capacity), with code verifying its output and an answer key scoring it, before spending more weeks on rules. Evidence so far: a rules reader took days and failed a fresh test (0.33); one DeepSeek call read the same table correctly for $0.0009. Result so far (10-01): promising, not proven. As run precision 0.85 / recall 9 of 12 on 27 fresh pages; 0 wrong-purpose in 69 accepted dates; post-hoc 0.875 / 11 of 12. Needs a larger fresh test before wiring: `experiments/whole_page_reader/RESULT.md`.
 
 ## Rule for presenting rounds (operator, 2026-10-01)
 Show both dates when a call has rounds. The DEADLINE is the first round that has not passed. Later rounds go in `STATUS DETAILS` (upstream's field; `NOTES` is the customer's, contract v2.0.1), in the order the conference states them. When the first round passes, the next becomes the deadline.

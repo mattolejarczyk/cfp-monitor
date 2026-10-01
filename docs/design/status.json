@@ -1,14 +1,14 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "All four upstream corrections are in the live database. A one-page DeepSeek test read the Climate Change table correctly. Hermes browser read test is running.",
+ "now": "Whole-page reader experiment finished: promising, not yet proven. Hermes browser read test passed. Claude crashed mid-run; nothing was lost.",
  "decisions": [
   {
-   "text": "Go for the whole-page reader experiment? Cap 60 requests / $0.50 (est. $0.05 actual): develop on 15 labelled pages, then one run on the 10-page holdout and a fresh set.",
-   "file": "C:/Users/matts/cfp-monitor/docs/design/whole-page-reader-experiment.md"
+   "text": "Next step for the whole-page reader: build the 40-event benchmark (hand brief 01 to Hermes, whose browser test passed) so the reader gets a fresh, larger test before any wiring. OK?",
+   "file": "C:/Users/matts/cfp-monitor/experiments/whole_page_reader/RESULT.md"
   },
   {
-   "text": "Global Energy Show: the real submit link is https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login (confirmed live by you and by our browser). Our row still holds the dead page. Carry the new link through upstream, or use the mechanical dead-link repair?",
+   "text": "Global Energy Show's real submit link (the dmgeventsconferences.com login URL) is still not on our row. Carry it through upstream, or use the mechanical dead-link repair?",
    "file": ""
   },
   {
@@ -132,20 +132,20 @@
    "note": "Fitted 24/24 on labelled pages. Only 2 labels in holdout. Advisory only."
   },
   {
+   "step": "Whole-page model reader (DeepSeek)",
+   "metric": "Holdout + fresh, as run",
+   "result": "precision 0.85, recall 9/12",
+   "verdict": "warn",
+   "date": "10-01",
+   "note": "0 wrong-purpose. Post-hoc fixes: 0.875 / 11 of 12. Only 12 labels; needs the benchmark."
+  },
+  {
    "step": "Purpose audit",
    "metric": "Stored deadlines confirmed",
    "result": "9 of 39",
    "verdict": "warn",
    "date": "10-01",
    "note": "Reproduced the known Climate Change error independently."
-  },
-  {
-   "step": "Whole-page model reader",
-   "metric": "Not run",
-   "result": "no data yet",
-   "verdict": "none",
-   "date": "",
-   "note": "Needs the benchmark."
   },
   {
    "step": "Platform census",
@@ -166,6 +166,12 @@
  ],
  "agents": [
   {
+   "name": "Hermes browser read test (Global Energy Show)",
+   "who": "Hermes",
+   "status": "passed 10-01",
+   "budget": "free"
+  },
+  {
    "name": "Build the 40-event benchmark",
    "who": "Hermes",
    "status": "brief ready",
@@ -176,12 +182,6 @@
    "who": "Hermes",
    "status": "brief ready",
    "budget": "free"
-  },
-  {
-   "name": "Whole-page model reader",
-   "who": "Codex or Hermes",
-   "status": "waits on benchmark",
-   "budget": "about 1 USD"
   }
  ],
  "spend": [
@@ -197,6 +197,11 @@
    "label": "OpenRouter test budget used",
    "usd": 0.045,
    "cap": 1.0
+  },
+  {
+   "label": "OpenRouter, whole-page reader experiment",
+   "usd": 0.082,
+   "cap": 0.5
   }
  ],
  "objective": {
@@ -334,8 +339,8 @@
     {
      "kind": "experiment",
      "t": "Can a model label every date on a whole page?",
-     "r": "1-page demo (Climate Change table, DeepSeek, $0.0009): Regular 10-19 and Late 12-20 right, registration kept apart, Early row mislabelled. Real test waits on the benchmark.",
-     "s": "todo"
+     "r": "As run: precision 0.85, recall 9 of 12 (fails the 0.95 / 0.80 bar). Post-hoc fixes: precision 0.875 (1.00 counting 2 of my own labelling errors it caught), recall 11 of 12. 0 wrong-purpose in 69 accepted. Promising, not proven; needs a larger test.",
+     "s": "done"
     }
    ]
   },
@@ -408,7 +413,7 @@
    "name": "Hermes",
    "how": "CLI one-shot (hermes -z)",
    "state": "works",
-   "note": "Test 10-01 (2 events of brief 01, web tools only): 2m14s. Format and honest blanks right; read search snippets, not pages (its page-read tool is broken); one wrong side claim. Not yet fit for brief 01 as is."
+   "note": "Browser test 10-01 passed: full page, exact sentence, correct link target, no clicks (4m10s). Web-only mode reads search snippets, not pages. The MCP link still times out."
   },
   {
    "name": "OpenClaw",

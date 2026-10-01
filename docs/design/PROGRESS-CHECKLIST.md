@@ -58,3 +58,6 @@ Stages 4 and 5 not started. Rough share of the work finished: about one third (a
 ## 2026-10-01 later
 - [x] Global Energy Show applied by operator ruling (operator confirmed the sentence on the live page; our built-in browser pane also read it and the Submit link `https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login`). Guard run with today's rendered page text because plain fetch and our browser rungs were walled; backup `cfp_monitor.pre-ges-20261001.db`; far-side check passed.
 - [x] Whole-page model reader, ONE-page demo: DeepSeek chat on the Climate Change call page, 21 s, $0.0009: Regular 2026-10-19 and Late 2026-12-20 labelled submission, the three Registration rows labelled registration, every unit_text verbatim on the page. Early row mislabelled 'opens'. Not a measurement; the real test is brief 03 against the benchmark.
+
+- [x] Whole-page reader experiment (approved cap 60 requests / 0.50 USD; spent 56 / 0.082): see `experiments/whole_page_reader/RESULT.md`. As run: precision 0.85, recall 9/12 on holdout + fresh (fails the 0.95 / 0.80 bar); 0 wrong-purpose in 69 accepted. Post-hoc: 0.875 / 11 of 12. Promising, not proven. Next: 40-event benchmark.
+- [x] Hermes browser-toolset read test (Global Energy Show): passed, full page, exact sentence, correct link target (4m10s).

@@ -24,9 +24,9 @@ MAX_REQUESTS, MAX_USD = 60, 0.50
 LOG = HERE / "llm_log.jsonl"
 PAGE_CAP = 16000
 TODAY = date(2026, 10, 1)
-sp.MAXTOK[0] = 6000
+sp.MAXTOK[0] = 3000
 
-PROMPT_VERSION = "v2"
+PROMPT_VERSION = "v2b"   # POST-HOC: adds an item cap against runaway output; used only on pages that failed to parse under v2
 SYSTEM = """You read ONE web page about a conference. List EVERY date or date range on it.
 For each, return:
   "heading": the nearest heading or label line above it, copied exactly;
@@ -39,7 +39,7 @@ Rules:
 - The heading above a table or list decides what its dates are for. Dates under a registration or ticket heading are registration, not submission.
 - Opening dates ("call opens", "submissions open"), notification, review, camera-ready, hotel, booth, exhibitor, sponsor, payment, and post-acceptance upload dates are NOT submission deadlines.
 - A date range for the event itself is event_dates. Do NOT list event dates, times of day (such as 10:00 - 17:00), copyright years, or dates of past news items: only dates tied to a call, submission, registration, notification, review, opening, payment, booth or exhibitor activity.
-Return ONLY JSON: {"dates":[{"heading":"","unit_text":"","closing_date":"","label":"","round":""}]}. If the page has no dates, return {"dates":[]}."""
+Return at most 40 items and never repeat an item. Return ONLY JSON: {"dates":[{"heading":"","unit_text":"","closing_date":"","label":"","round":""}]}. If the page has no dates, return {"dates":[]}."""
 
 
 def spent():
@@ -134,6 +134,27 @@ def run(setname, only=None):
         print(f"{setname} {url[-55:]:<55} {secs:>5}s ${cost:.5f}", flush=True)
 
 
+def parse_items(content, tolerant=False):
+    """The model's date items. tolerant=True (POST-HOC) recovers the complete leading objects when the output was cut off mid-string."""
+    try:
+        return json.loads(content)["dates"]
+    except Exception:                                                      # noqa: BLE001
+        if not tolerant or not content:
+            return None
+    items, dec, i = [], json.JSONDecoder(), content.find("[")
+    i = i + 1 if i >= 0 else 0
+    while True:
+        j = content.find("{", i)
+        if j < 0:
+            break
+        try:
+            obj, end = dec.raw_decode(content, j)
+        except Exception:                                                  # noqa: BLE001
+            break
+        items.append(obj); i = end
+    return items or None
+
+
 def latest(setname):
     out = {}
     for line in (LOG.read_text(encoding="utf-8").splitlines() if LOG.exists() else []):
@@ -148,9 +169,8 @@ def score(setname):
     runs = latest(setname)
     acc, rejects, unparse, tiers = {}, {}, 0, {}
     for url, r in runs.items():
-        try:
-            data = json.loads(r["content"])["dates"]
-        except Exception:                                                  # noqa: BLE001
+        data = parse_items(r["content"], tolerant="--tolerant" in sys.argv)
+        if data is None:
             unparse += 1; continue
         text = (pages.get(url) or {}).get("text") or ""
         keep = []
