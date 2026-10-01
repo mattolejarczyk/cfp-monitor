@@ -326,6 +326,12 @@
      "t": "Six sites return no usable links",
      "r": "4 alias sites, 2 script-built menus",
      "s": "todo"
+    },
+    {
+     "kind": "decision",
+     "t": "Refresh pages by event lifecycle (idea from the operator)",
+     "r": "Designed 10-01: 6 categories, counts from our data, no fetch for 45 days after an event; not built",
+     "s": "todo"
     }
    ]
   },
