@@ -1,0 +1,259 @@
+{
+ "about": "FRESH answer key for the whole-page reader (docs/design/whole-page-reader-experiment.md). 17 pages from the purpose-audit page store, not used for development or the holdout; pages over 16,000 characters excluded (IEEE S&P, USENIX). Labelled by reading each page's date lines BEFORE any model request on this set; sha256 in fresh_labels.sha256. Only 10 submission labels, below the 20 planned: low power. Sample is skewed to security events and to pages whose call has closed.",
+ "pages": {
+  "https://defcon.org/html/defcon-34/dc-34-cfp.html": {
+   "labels": [
+    {
+     "date": "2026-06-15",
+     "class": "NOT_CFP"
+    },
+    {
+     "date": "2026-07-15",
+     "class": "NOT_CFP"
+    },
+    {
+     "date": "2026-08-06",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-08-09",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://sessionize.com/appsecil-2026": {
+   "labels": [
+    {
+     "date": "2026-03-06",
+     "class": "SUB"
+    },
+    {
+     "date": "2026-01-01",
+     "class": "OPEN"
+    },
+    {
+     "date": "2026-05-18",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://area41.io/": {
+   "labels": [
+    {
+     "date": "2026-06-18",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-06-19",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-05-21",
+     "class": "NOT_CFP"
+    }
+   ]
+  },
+  "https://bsideslv.org/cfp/": {
+   "labels": [
+    {
+     "date": "2026-05-08",
+     "class": "SUB"
+    },
+    {
+     "date": "2026-04-01",
+     "class": "OPEN"
+    },
+    {
+     "date": "2026-05-15",
+     "class": "NOTIF"
+    },
+    {
+     "date": "2026-05-25",
+     "class": "NOTIF"
+    }
+   ]
+  },
+  "https://www.labscon.io/": {
+   "labels": [
+    {
+     "date": "2026-09-16",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-09-19",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://god.owasp.de/2026/en/cfp.html": {
+   "labels": [
+    {
+     "date": "2026-06-21",
+     "class": "SUB"
+    },
+    {
+     "date": "2026-07-13",
+     "class": "NOTIF"
+    },
+    {
+     "date": "2026-09-24",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-09-23",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://god.owasp.de/2026/cfp.html": {
+   "labels": []
+  },
+  "https://sessionize.com/owasp-appsec-days-france-2026/": {
+   "labels": [
+    {
+     "date": "2026-05-07",
+     "class": "SUB"
+    },
+    {
+     "date": "2026-03-08",
+     "class": "OPEN"
+    },
+    {
+     "date": "2026-09-24",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://www.conferenceabstracts.com/cfp2/login.asp?EventKey=ETGHBBMK": {
+   "labels": [
+    {
+     "date": "2023-09-20",
+     "class": "SUB"
+    }
+   ]
+  },
+  "https://www.iage-net.org/wfcc2026": {
+   "labels": [
+    {
+     "date": "2026-07-15",
+     "class": "SUB"
+    },
+    {
+     "date": "2026-07-08",
+     "class": "SUB"
+    },
+    {
+     "date": "2026-05-31",
+     "class": "REG"
+    },
+    {
+     "date": "2026-07-29",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-08-01",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://ccusevent.org/": {
+   "labels": [
+    {
+     "date": "2026-10-27",
+     "class": "SUB"
+    },
+    {
+     "date": "2027-04-12",
+     "class": "EVENT"
+    },
+    {
+     "date": "2027-04-14",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://industrylink.eu/": {
+   "labels": []
+  },
+  "https://www.all-energy.com.au/en-gb/conference/speak.html": {
+   "labels": [
+    {
+     "date": "2026-10-28",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-10-29",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://bit.ly/4yuBPgO": {
+   "labels": [
+    {
+     "date": "2026-10-15",
+     "class": "SUB"
+    },
+    {
+     "date": "2026-11-15",
+     "class": "NOT_CFP"
+    },
+    {
+     "date": "2027-01-28",
+     "class": "EVENT"
+    },
+    {
+     "date": "2027-01-31",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://www.hydrogen-expo.com/call-for-speakers": {
+   "labels": [
+    {
+     "date": "2027-02-10",
+     "class": "EVENT"
+    },
+    {
+     "date": "2027-02-11",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-06-10",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-10-22",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://www.actexpo.com/speakers/call-for-speakers": {
+   "labels": [
+    {
+     "date": "2027-05-20",
+     "class": "EVENT"
+    },
+    {
+     "date": "2027-05-19",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://whec2026.org/abstract-submission-guidelines/": {
+   "labels": [
+    {
+     "date": "2026-02-27",
+     "class": "SUB"
+    },
+    {
+     "date": "2026-03-15",
+     "class": "NOTIF"
+    },
+    {
+     "date": "2026-03-31",
+     "class": "REG"
+    }
+   ]
+  }
+ }
+}
