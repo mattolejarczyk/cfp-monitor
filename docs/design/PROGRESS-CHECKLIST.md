@@ -46,6 +46,7 @@ status details, start date, projected flag. Which fields were measured, on 12 ea
 - [x] Status board published (private Artifact), generated from `docs/design/status.json` by `scripts/status_dashboard.py`.
 - [x] Standing strategy file `docs/design/STRATEGY.md` with the 5-line opener.
 - [x] Agent brief template and three briefs: `docs/agents/`.
+- [x] Agent channels checked 2026-10-01: Hermes works through `hermes -z` (one-shot, about 46 s); its MCP link timed out. OpenClaw installed, `openclaw agent -m` exists, not messaged yet.
 - [ ] Benchmark built and spot-checked (brief 01). [ ] Platform census run (brief 02).
 
 ## Progress at 2026-10-01

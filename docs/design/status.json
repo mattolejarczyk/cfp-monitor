@@ -82,139 +82,6 @@
    "source": "client_conferences joined to grounding_facts, 2026-10-01"
   }
  },
- "stages": [
-  {
-   "name": "0 Diagnose",
-   "items": [
-    {
-     "t": "Root cause of grounding failures found",
-     "s": "done"
-    },
-    {
-     "t": "Billing reconciled by SKU",
-     "s": "done"
-    },
-    {
-     "t": "Prospect-market tasks disabled",
-     "s": "done"
-    }
-   ]
-  },
-  {
-   "name": "1 Narrow prompt",
-   "items": [
-    {
-     "t": "Grounding reliability measured (24/24 vs 9/24)",
-     "s": "done"
-    },
-    {
-     "t": "Deadline and start date match stored values",
-     "s": "done"
-    },
-    {
-     "t": "Quote quality measured with real verifiers",
-     "s": "todo"
-    },
-    {
-     "t": "Hard cases: closed, renamed, successor",
-     "s": "todo"
-    },
-    {
-     "t": "Decide and validate the other ~24 fields",
-     "s": "todo"
-    }
-   ]
-  },
-  {
-   "name": "2 Prove the date ourselves",
-   "items": [
-    {
-     "t": "Page discovery designed and tested",
-     "s": "done"
-    },
-    {
-     "t": "Sentence picking tested (precision 1.00)",
-     "s": "done"
-    },
-    {
-     "t": "Heading reader Phase 1 (result: not reliable)",
-     "s": "done"
-    },
-    {
-     "t": "Whole-page model reader vs benchmark",
-     "s": "todo"
-    },
-    {
-     "t": "Fix inventory gaps (aliases, menus, language)",
-     "s": "todo"
-    }
-   ]
-  },
-  {
-   "name": "3 Clean existing data",
-   "items": [
-    {
-     "t": "Purpose audit of 39 stored deadlines",
-     "s": "done"
-    },
-    {
-     "t": "Correct 4 rows (package drafted, not sent)",
-     "s": "doing"
-    },
-    {
-     "t": "Review the 16 absent and 12 unreadable rows",
-     "s": "todo"
-    }
-   ]
-  },
-  {
-   "name": "4 Spend less",
-   "items": [
-    {
-     "t": "Sponsorship carry-forward designed and tested",
-     "s": "todo"
-    }
-   ]
-  },
-  {
-   "name": "5 Wire it in",
-   "items": [
-    {
-     "t": "Plan, tests, budget, shadow run, switch",
-     "s": "todo"
-    },
-    {
-     "t": "Re-enable disabled tasks (only if wanted)",
-     "s": "todo"
-    }
-   ]
-  },
-  {
-   "name": "6 Project control",
-   "items": [
-    {
-     "t": "Status board (this page) built and published",
-     "s": "done"
-    },
-    {
-     "t": "Standing strategy file and 5-line opener",
-     "s": "done"
-    },
-    {
-     "t": "Agent brief template and 3 briefs written",
-     "s": "done"
-    },
-    {
-     "t": "Benchmark built and spot-checked (brief 01)",
-     "s": "todo"
-    },
-    {
-     "t": "Platform census run (brief 02)",
-     "s": "todo"
-    }
-   ]
-  }
- ],
  "methods": [
   {
    "step": "Narrow grounded prompt",
@@ -322,6 +189,211 @@
    "label": "OpenRouter test budget used",
    "usd": 0.045,
    "cap": 1.0
+  }
+ ],
+ "objective": {
+  "what": "Give each customer one trustworthy date per conference - the date they can submit by - with the page that proves it.",
+  "why": "Customers act on that date. Today some stored dates are wrong or unprovable, the weekend research fails most of its Gemini calls, September cost $134, and too much hand work is needed to keep it going.",
+  "good": [
+   {
+    "label": "Provable submission dates",
+    "now": "0 of 3 open rows (9 of 39 overall)",
+    "target": "90% of open-call rows; the rest honestly blank, never guessed"
+   },
+   {
+    "label": "Agreement with customer-verified dates",
+    "now": "50% (20 of 40)",
+    "target": "90%"
+   },
+   {
+    "label": "Weekend research that completes",
+    "now": "about 27% of calls grounded (September run)",
+    "target": "95% of calls"
+   },
+   {
+    "label": "Gemini cost per month",
+    "now": "$134 in September",
+    "target": "under $50"
+   }
+  ],
+  "note": "Targets are proposed, not agreed. Edit them in docs/design/status.json."
+ },
+ "pipeline": [
+  {
+   "id": "A",
+   "name": "Ask Gemini",
+   "job": "Find each conference's date and the page it came from.",
+   "items": [
+    {
+     "kind": "experiment",
+     "t": "Why did research fail?",
+     "r": "Prompt size and our own 120 s timeout, not quota",
+     "s": "done"
+    },
+    {
+     "kind": "experiment",
+     "t": "Does a short prompt make grounding reliable?",
+     "r": "24 of 24 calls vs 9 of 24",
+     "s": "done"
+    },
+    {
+     "kind": "experiment",
+     "t": "Do its dates match what we hold?",
+     "r": "33 of 33 (weak: our own values were the key)",
+     "s": "done"
+    },
+    {
+     "kind": "experiment",
+     "t": "Are its quotes really on the page?",
+     "r": "Not measured properly yet",
+     "s": "todo"
+    },
+    {
+     "kind": "experiment",
+     "t": "Does it cope with closed, renamed, successor events?",
+     "r": "Not tested",
+     "s": "todo"
+    },
+    {
+     "kind": "decision",
+     "t": "How do the other ~24 fields get filled?",
+     "r": "Open: keep, carry forward, or a second call",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "id": "B",
+   "name": "Find the right pages",
+   "job": "On each of 84 sites, get to the page that states the call.",
+   "items": [
+    {
+     "kind": "experiment",
+     "t": "Can sitemap plus menu find the call page?",
+     "r": "31 of 84 sites; 364 pages in total",
+     "s": "done"
+    },
+    {
+     "kind": "experiment",
+     "t": "Do many sites use a standard platform we can read directly?",
+     "r": "Census not run (brief 02)",
+     "s": "todo"
+    },
+    {
+     "kind": "fix",
+     "t": "Six sites return no usable links",
+     "r": "4 alias sites, 2 script-built menus",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "id": "C",
+   "name": "Read and label the date",
+   "job": "From the page text, pick the submission deadline and reject registration, event and notification dates.",
+   "items": [
+    {
+     "kind": "experiment",
+     "t": "Can a cheap model pick the deadline sentence?",
+     "r": "Precision 1.00; recall 12 of 24 (tables missed)",
+     "s": "done"
+    },
+    {
+     "kind": "experiment",
+     "t": "Can fixed rules read tables and schedules?",
+     "r": "No: fitted 24/24, fresh test 0.33",
+     "s": "done"
+    },
+    {
+     "kind": "build",
+     "t": "Benchmark: the answer key every method is scored on",
+     "r": "40 events, brief 01, not run",
+     "s": "todo"
+    },
+    {
+     "kind": "experiment",
+     "t": "Can a model label every date on a whole page?",
+     "r": "Waits on the benchmark (brief 03)",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "id": "D",
+   "name": "Check and clean stored data",
+   "job": "Make what is already in the sheet right, and show it as unconfirmed when we cannot prove it.",
+   "items": [
+    {
+     "kind": "experiment",
+     "t": "How many stored deadlines are provable today?",
+     "r": "9 of 39; reproduced the known Climate Change error",
+     "s": "done"
+    },
+    {
+     "kind": "fix",
+     "t": "Correct 4 rows",
+     "r": "Package drafted, not yet sent upstream",
+     "s": "doing"
+    },
+    {
+     "kind": "fix",
+     "t": "Review the 16 absent and 12 unreadable rows",
+     "r": "Mostly passed deadlines",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "id": "E",
+   "name": "Spend less and run weekly",
+   "job": "Cut cost and wire the proven steps into the weekend job.",
+   "items": [
+    {
+     "kind": "experiment",
+     "t": "What drives the cost?",
+     "r": "Searches 73%; sponsorship passes about 70% of a weekend",
+     "s": "done"
+    },
+    {
+     "kind": "build",
+     "t": "Sponsorship carry-forward",
+     "r": "Agreed in principle; no design yet",
+     "s": "todo"
+    },
+    {
+     "kind": "build",
+     "t": "Wire in: plan, tests, budget, shadow run, switch",
+     "r": "Not started",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "id": "F",
+   "name": "Project control",
+   "job": "So the work stays visible and agents can help.",
+   "items": [
+    {
+     "kind": "build",
+     "t": "Status board, strategy file, agent briefs",
+     "r": "Done 10-01",
+     "s": "done"
+    }
+   ]
+  }
+ ],
+ "channels": [
+  {
+   "name": "Hermes",
+   "how": "CLI one-shot (hermes -z)",
+   "state": "works",
+   "note": "Tested 10-01, replied READY in 46 s. The MCP link timed out at session start."
+  },
+  {
+   "name": "OpenClaw",
+   "how": "CLI agent command (openclaw agent -m)",
+   "state": "untested",
+   "note": "Installed (2026.8.2). Gateway status unknown; not messaged yet."
   }
  ]
 }

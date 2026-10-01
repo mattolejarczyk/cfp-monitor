@@ -64,6 +64,22 @@ td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
 .meter{height:6px;background:var(--mute-bg);border-radius:3px;overflow:hidden;grid-column:1/-1}.meter i{display:block;height:100%;background:var(--accent)}
 .agent{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
 .agent:last-child{border-bottom:0}.agent small{color:var(--ink2)}
+.obj{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px 28px}
+.obj p{margin:0 0 6px}.obj .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);font-weight:700;display:block;margin-bottom:2px}
+.good-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+.good-tbl td{padding:6px 8px;border-top:1px solid var(--line);vertical-align:top}.good-tbl td:first-child{font-weight:500;min-width:150px}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.step{border:1px solid var(--line);border-radius:5px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.step h3{margin:0;font-size:15px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.step .job{color:var(--ink2);font-size:12.5px;margin:0}
+.step .letter{font-family:var(--f-data);color:var(--accent);margin-right:6px}
+.it{display:grid;grid-template-columns:14px 1fr;gap:8px;font-size:13px;padding-top:8px;border-top:1px solid var(--line)}
+.it .res{color:var(--ink2);font-size:12.5px;margin-top:1px}
+.kind{display:inline-block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;padding:0 6px;border-radius:3px;margin-right:6px;font-weight:700;vertical-align:1px}
+.kind.experiment{background:var(--accent-bg);color:var(--accent)}.kind.fix{background:var(--warn-bg);color:var(--warn)}
+.kind.build{background:var(--mute-bg);color:var(--ink2)}.kind.decision{background:var(--bad-bg);color:var(--bad)}
+.arrow{color:var(--ink2);font-size:12px;margin:0 0 8px}
+.chan{font-size:13px;display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 button.theme{font:inherit;font-size:12px;color:var(--ink2);background:none;border:1px solid var(--line);border-radius:4px;padding:3px 9px;cursor:pointer}
 button.theme:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
@@ -82,27 +98,37 @@ function headline(h, big) {
     ${h.open_rows != null ? `<div class="callout"><b class="num">${h.open_confirmed} of ${h.open_rows}</b> rows with a deadline still ahead are provable. ${esc(h.note)}</div>` : `<p class="def">${esc(h.note)}</p>`}
     <p class="def">${esc(h.definition)}</p></section>`;
 }
-function stage(s) {
+function step(s) {
   const done = s.items.filter(i => i.s === 'done').length;
-  return `<div class="stage"><h3><span>${esc(s.name)}</span><span class="num">${done}/${s.items.length}</span></h3>
-    <div class="mini">${s.items.map(i => `<i class="${i.s}"></i>`).join('')}</div>
-    <ul>${s.items.map(i => `<li><span class="box ${i.s}"></span><span>${esc(i.t)}</span></li>`).join('')}</ul></div>`;
+  return `<div class="step"><h3><span><span class="letter">${esc(s.id)}</span>${esc(s.name)}</span><span class="num">${done}/${s.items.length}</span></h3>
+    <p class="job">${esc(s.job)}</p>
+    ${s.items.map(i => `<div class="it"><span class="box ${i.s}"></span><div><span class="kind ${i.kind}">${esc(i.kind)}</span>${esc(i.t)}<div class="res">${i.s === 'done' ? 'Result: ' : ''}${esc(i.r)}</div></div></div>`).join('')}</div>`;
+}
+function objective(o) {
+  return `<section class="band"><h2>Project objective</h2><div class="obj">
+    <div><p><span class="lbl">What</span>${esc(o.what)}</p><p><span class="lbl">Why</span>${esc(o.why)}</p></div>
+    <div><span class="lbl">What good looks like</span><table class="good-tbl"><tbody>${o.good.map(g => `<tr><td>${esc(g.label)}</td><td class="num">${esc(g.now)}</td><td>${esc(g.target)}</td></tr>`).join('')}</tbody></table>
+    <p class="def">Columns: measure, now, target. ${esc(o.note)}</p></div></div></section>`;
 }
 function render() {
-  const items = D.stages.flatMap(s => s.items);
+  const items = D.pipeline.flatMap(s => s.items);
   const done = items.filter(i => i.s === 'done').length;
   document.getElementById('app').innerHTML = `
     <div class="top"><div><h1>CFP Status Board</h1><div class="sub">${esc(D.scope)}</div></div>
       <div class="sub"><span class="num">as of ${esc(D.as_of)}</span> &nbsp; <button class="theme" id="tg" type="button">Theme</button></div></div>
+    ${objective(D.objective)}
     <div class="now"><b>Working on</b>${esc(D.now)}
       <ul class="dec">${D.decisions.map(d => `<li><b style="display:inline;color:var(--warn);text-transform:none;letter-spacing:0;font-size:inherit">Waiting on you.</b> ${esc(d.text)}${d.file ? ` <span class="sub num">${esc(d.file)}</span>` : ''}</li>`).join('')}</ul></div>
     <div class="two">${headline(D.headline.provable)}${headline(D.headline.customer)}</div>
-    <section class="band"><h2>Build progress &nbsp;<span class="num">${done} of ${items.length} items done</span></h2><div class="stages">${D.stages.map(stage).join('')}</div>
-      <p class="def">Counted by item, not by effort: the unfinished items include the largest piece (wiring it in), so the item count overstates how close we are.</p></section>
+    <section class="band"><h2>Build progress &nbsp;<span class="num">${done} of ${items.length} items done</span></h2>
+      <p class="arrow">How the work connects: each step below is a stage of the production process. An <span class="kind experiment">experiment</span> asks one question about that step and records the answer; a <span class="kind fix">fix</span> corrects data; a <span class="kind build">build</span> makes a thing; a <span class="kind decision">decision</span> is open for you. A step is finished when its question is answered and the winner is wired in.</p>
+      <div class="flow">${D.pipeline.map(step).join('')}</div>
+      <p class="def">Counted by item, not by effort: the unfinished items include the largest piece (wiring in), so the count overstates how close we are.</p></section>
     <section class="band"><h2>Data quality by step</h2><div class="tbl"><table><thead><tr><th>Step</th><th>Measure</th><th>Result</th><th></th><th>Run</th></tr></thead><tbody>
       ${D.methods.map(m => `<tr><td><b>${esc(m.step)}</b><div class="sub">${esc(m.note)}</div></td><td>${esc(m.metric)}</td><td class="num">${esc(m.result)}</td><td><span class="pill ${m.verdict}">${({good:'good',warn:'partial',bad:'failed',none:'not run'})[m.verdict]}</span></td><td class="num">${esc(m.date)}</td></tr>`).join('')}
     </tbody></table></div></section>
-    <div class="two"><section class="band"><h2>Agent tasks</h2>${D.agents.map(a => `<div class="agent"><span><b>${esc(a.name)}</b></span><span class="pill none">${esc(a.status)}</span><small>${esc(a.who)}</small><small class="num">${esc(a.budget)}</small></div>`).join('')}</section>
+    <div class="two"><section class="band"><h2>Agent tasks</h2>${D.agents.map(a => `<div class="agent"><span><b>${esc(a.name)}</b></span><span class="pill none">${esc(a.status)}</span><small>${esc(a.who)}</small><small class="num">${esc(a.budget)}</small></div>`).join('')}
+      <div class="chan"><b>Agent channels</b>${D.channels.map(c => `<div><b>${esc(c.name)}</b> <span class="pill ${c.state === 'works' ? 'good' : 'none'}">${esc(c.state)}</span><div class="sub">${esc(c.how)}. ${esc(c.note)}</div></div>`).join('')}</div></section>
     <section class="band"><h2>Spend</h2><div class="spend">${D.spend.map(s => `<div class="srow"><span>${esc(s.label)}</span><span class="num">$${s.usd.toFixed(s.usd < 1 ? 3 : 2)}${s.cap ? ' of $' + s.cap.toFixed(2) : ''}</span>${s.cap ? `<div class="meter"><i style="width:${100 * s.usd / s.cap}%"></i></div>` : ''}</div>`).join('')}</div></section></div>`;
   document.getElementById('tg').onclick = () => {
     const r = document.documentElement, dark = r.getAttribute('data-theme') === 'dark' || (!r.getAttribute('data-theme') && matchMedia('(prefers-color-scheme:dark)').matches);
