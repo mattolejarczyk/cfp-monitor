@@ -32,7 +32,7 @@ status details, start date, projected flag. Which fields were measured, on 12 ea
 
 ## Stage 3 - Clean the data we already hold
 - [x] Purpose audit of 39 stored deadlines: 9 confirmed, 1 mismatch, 16 absent, 12 unreadable. Three live rows written up.
-- [ ] Correct the Climate Change row and the three live rows (SecureWorld Gov & CI, India Energy Week 2027, Global Energy Show Canada 2027). BLOCKED on a decision: the contract bars downstream from changing what a claim says.
+- [ ] Correct the Climate Change row and the three live rows (SecureWorld Gov & CI, India Energy Week 2027, Global Energy Show Canada 2027). Path chosen 2026-10-01: contract path. DRAFTED: `experiments/purpose_audit/CORRECTION-PACKAGE.md`. NOT YET: sent to upstream, applied, imported.
 - [ ] Review the rest: 16 absent and 12 unreadable rows, almost all with passed deadlines; check which were never confirmed by a date (8 of the 12 status-layer-verified rows).
 
 ## Stage 4 - Spend less
@@ -43,5 +43,5 @@ status details, start date, projected flag. Which fields were measured, on 12 ea
 - [ ] Re-enable the disabled tasks only if and when the prospect markets are wanted again.
 
 ## Progress at 2026-10-01
-Stage 0 done. Stage 1: the speed and grounding half is proven, the quality and field-coverage half is not. Stage 2: three of five items done. Stage 3: audit done, correction blocked on a decision.
+Stage 0 done. Stage 1: the speed and grounding half is proven, the quality and field-coverage half is not. Stage 2: three of five items done. Stage 3: audit done, correction package drafted, awaiting send and apply.
 Stages 4 and 5 not started. Rough share of the work finished: about one third (an estimate, not a measurement).
