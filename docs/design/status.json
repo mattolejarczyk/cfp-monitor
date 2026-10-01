@@ -1,15 +1,11 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Hermes benchmark staged: 3-event test passed (3 of 3 right). Waiting on your go for the 5-event stage. All four upstream corrections are in the live database.",
+ "now": "Global Energy Show link fixed (operator edit, verified, logged). Hermes benchmark stage 2 (5 new events) is running.",
  "decisions": [
   {
    "text": "RECOMMEND YES: run the 5-event stage of the benchmark (new events, I check all 5 against the pages), then 10, then the rest.",
    "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
-  },
-  {
-   "text": "RECOMMEND YES: fix the Global Energy Show submit link now with a one-field operator edit (backup, log, far-side check) so Monday's page links to the working login URL. The lasting fix still has to come from upstream, because Saturday's load can bring the old link back.",
-   "file": ""
   },
   {
    "text": "RECOMMEND SEND: the round-2 note to upstream (five follow-ups; the Saturday one matters most: apply the 4 corrections to their approved files before Saturday 02:00).",
@@ -174,7 +170,7 @@
   {
    "name": "Benchmark stage 2: 5 new events",
    "who": "Hermes",
-   "status": "awaiting your go",
+   "status": "running since 11:37",
    "budget": "free"
   },
   {
