@@ -9,7 +9,7 @@
 | B | Event within 6 months, call closed or no deadline stored | 38 | **every 2 weeks**; weekly when no deadline is stored | These are the rows where a missing or stale date is still costing something; the event date can also move. |
 | C1 | Event ended in the last 60 days (or is happening now) | 15 | **do not fetch** for 45 days after the event ends | Operator's rule: nothing useful changes just after an event. |
 | C2 | Event ended more than 60 days ago | 25 | **monthly**, to catch the NEXT edition's announcement and call | Organisers usually post the next call soon after the event; we need to see the first sign of it. |
-| D | Event more than 6 months away, call closed or no deadline | 10 | **monthly when the call, speaker and abstract-submission dates are known; when they are not known, wait 45 days, then monthly until they are** (operator's refinement; my reading, see decision 2) | Low urgency, but dates and calls appear. |
+| D | Event more than 6 months away, call closed or no deadline | 10 | **monthly when the call, speaker and abstract-submission dates are known; when they are not known, wait 45 days, then every 2 weeks until they are** (operator's decision, 2026-10-01) | Low urgency, but dates and calls appear. |
 | E | Unknown, TBD or not-announced dates | 4 | **EXCEPTION BATCH, troubleshot weekly** (operator's decision, replacing the back-off idea): not a fetch schedule but a short list a person or agent works through each week to find out why no date is known (wrong page, no sitemap entry, site behind a wall, genuinely TBD) | These rows will not fix themselves by refetching; the cause has to be found. |
 | F | Discontinued or retired | n/a | **quarterly; once a row has been discontinued for more than 2 years, never crawl it again** and mark it discontinued | A revival is rare; after 2 years it is not worth the visits. |
 These counts come from stored start dates and deadlines. 11 rows read "Needs Verification" and 11 "Upcoming"; those belong in B or E depending on whether a date is stored.
@@ -21,7 +21,7 @@ These counts come from stored start dates and deadlines. 11 rows read "Needs Ver
 
 ## Open decisions
 1. Cooling-off after an event: 45 days (inside your 30 to 60 range). Confirm.
-2. Category D, my reading of your line: dates known gives monthly; dates not known gives no fetch for 45 days, then monthly until known. Is that what you meant, or should unknown-date rows in D go to the exception batch like E?
+2. (Settled 2026-10-01) Category D: dates known gives monthly; dates not known gives no fetch for 45 days, then every 2 weeks (not monthly) until known.
 3. 6-month horizon for B: keep 6 months (your wording) unless the first shadow week shows it is too wide.
 
 ## Build order (after the first full fetch finishes and its report is read)
