@@ -47,6 +47,7 @@ status details, start date, projected flag. Which fields were measured, on 12 ea
 - [x] Standing strategy file `docs/design/STRATEGY.md` with the 5-line opener.
 - [x] Agent brief template and three briefs: `docs/agents/`.
 - [x] Agent channels checked 2026-10-01: Hermes works through `hermes -z` (one-shot, about 46 s); its MCP link timed out. OpenClaw installed, `openclaw agent -m` exists, not messaged yet.
+- [x] Hermes 2-event test of brief 01 (`hermes -t web -z`, 2026-10-01): format right, blanks honest, trap dates avoided, consistent with our records; BUT only search snippets (page-read tool broken) and one wrong claim (called a redirecting URL a China mirror; it redirects to the Hamburg event site). 2 rows is not the 10-row success test.
 - [ ] Benchmark built and spot-checked (brief 01). [ ] Platform census run (brief 02).
 
 ## Progress at 2026-10-01

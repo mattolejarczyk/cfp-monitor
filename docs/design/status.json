@@ -1,7 +1,7 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Status board, strategy file and 3 agent briefs are done. Next: hand briefs 01 and 02 to Hermes; correction package waits on you.",
+ "now": "Hermes 2-event test done: usable format, but it cannot read full pages with web tools only. Deciding how to hand it pages. Correction package still waits on you.",
  "decisions": [
   {
    "text": "Forward the correction package (4 rows) to upstream.",
@@ -193,7 +193,7 @@
  ],
  "objective": {
   "what": "Give each customer one trustworthy date per conference - the date they can submit by - with the page that proves it.",
-  "why": "Customers act on that date. Today some stored dates are wrong or unprovable, the weekend research fails most of its Gemini calls, September cost $134, and too much hand work is needed to keep it going.",
+  "why": "Customers act on these dates and fields. Today we cannot tell which of them to trust.",
   "good": [
    {
     "label": "Provable submission dates",
@@ -216,7 +216,20 @@
     "target": "under $50"
    }
   ],
-  "note": "Targets are proposed, not agreed. Edit them in docs/design/status.json."
+  "note": "Targets are proposed, not agreed. Edit them in docs/design/status.json.",
+  "why_points": [
+   "The date can be wrong while labelled verified: one stored deadline was a registration date, and 12 of 39 stored deadlines read 'verified' on call status alone, not on the date.",
+   "Everything else we collect (organiser, sponsorship, categories, overview, about 24 fields) arrives at varying quality, from different sources, and none of it has been measured.",
+   "There is no method yet that proves a field's quality, so improvements are judged by feel and we correct after the customer complains.",
+   "The weekend research fails about 73% of its Gemini calls, September cost $134, and weeks of building still need manual rescue."
+  ],
+  "why_close": "So the project is as much a way to prove quality, field by field and step by step, as it is a way to collect data.",
+  "ladder": [
+   "Stated: a model or page says so",
+   "Supported: it appears on the cited page",
+   "Proven: page and purpose checked by code",
+   "Customer-confirmed: their team agrees"
+  ]
  },
  "pipeline": [
   {
@@ -387,7 +400,7 @@
    "name": "Hermes",
    "how": "CLI one-shot (hermes -z)",
    "state": "works",
-   "note": "Tested 10-01, replied READY in 46 s. The MCP link timed out at session start."
+   "note": "Test 10-01 (2 events of brief 01, web tools only): 2m14s. Format and honest blanks right; read search snippets, not pages (its page-read tool is broken); one wrong side claim. Not yet fit for brief 01 as is."
   },
   {
    "name": "OpenClaw",
