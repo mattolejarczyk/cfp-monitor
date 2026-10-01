@@ -1,0 +1,4 @@
+audit_pages.json
+purpose_audit.json
+*_log.txt
+__pycache__/
