@@ -54,3 +54,7 @@ status details, start date, projected flag. Which fields were measured, on 12 ea
 ## Progress at 2026-10-01
 Stage 0 done. Stage 1: the speed and grounding half is proven, the quality and field-coverage half is not. Stage 2: three of five items done. Stage 3: audit done, correction package drafted, awaiting send and apply.
 Stages 4 and 5 not started. Rough share of the work finished: about one third (an estimate, not a measurement).
+
+## 2026-10-01 later
+- [x] Global Energy Show applied by operator ruling (operator confirmed the sentence on the live page; our built-in browser pane also read it and the Submit link `https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login`). Guard run with today's rendered page text because plain fetch and our browser rungs were walled; backup `cfp_monitor.pre-ges-20261001.db`; far-side check passed.
+- [x] Whole-page model reader, ONE-page demo: DeepSeek chat on the Climate Change call page, 21 s, $0.0009: Regular 2026-10-19 and Late 2026-12-20 labelled submission, the three Registration rows labelled registration, every unit_text verbatim on the page. Early row mislabelled 'opens'. Not a measurement; the real test is brief 03 against the benchmark.
