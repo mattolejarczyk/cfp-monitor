@@ -1,18 +1,18 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Upstream accepted the 4-row correction. I checked it: India Energy Week cites the wrong page. Reply to upstream drafted; waiting for you to send it and for their re-emit.",
+ "now": "Applied 3 of 4 upstream corrections to the live database (verified from the far side). Global Energy Show waits: its page is behind an anti-bot wall right now.",
  "decisions": [
   {
-   "text": "Send the reply to upstream: their India Energy Week correction cites a page that does not contain the quote (our gate would fail it).",
-   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/REPLY-TO-UPSTREAM.md"
-  },
-  {
-   "text": "Climate Change: our date check cannot read '19 October (26)'. Extend the check (small code change, tests) or accept 'not_found' on that row for now?",
+   "text": "Global Energy Show Canada: quote is on the live page (read earlier today) but no tool can read it right now. Retry later, or rule it verified and apply by hand?",
    "file": ""
   },
   {
-   "text": "Monday 10-05 07:00: India Energy Week shows Closed unless the corrected row is imported first. Tell the customer directly as well?",
+   "text": "Send upstream a short note: IS_PROJECTED is still true on the corrected rows; the 2026 India Energy Week duplicate row still exists; a pass that changes dates is a re-research pass (needs a manifest), not an R6 correction.",
+   "file": ""
+  },
+  {
+   "text": "Saturday 02:00 re-research may overwrite the corrected rows. Check the Saturday diff before Monday's customer page.",
    "file": ""
   }
  ],
@@ -55,7 +55,7 @@
    ],
    "open_rows": 3,
    "open_confirmed": 0,
-   "note": "Of the 3 rows whose deadline has not passed, none is provable yet. They are the three live rows in the correction package.",
+   "note": "Of the 3 rows whose deadline had not passed, India Energy Week is now verified on its cited page (applied 10-01); Climate Change is applied but its '(26)' date format is not yet readable; SecureWorld is withdrawn to projected; Global Energy Show is pending.",
    "source": "experiments/purpose_audit/RESULT.md"
   },
   "customer": {
@@ -349,7 +349,7 @@
     {
      "kind": "fix",
      "t": "Correct 4 rows",
-     "r": "Upstream accepted 10-01; their re-emit has 2 defects, reply drafted; not yet imported",
+     "r": "3 of 4 applied 10-01 (India Energy Week, Climate Change, SecureWorld); Global Energy Show blocked by anti-bot wall",
      "s": "doing"
     },
     {

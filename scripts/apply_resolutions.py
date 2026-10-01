@@ -136,6 +136,21 @@ def _strict_ok(url: str) -> tuple[bool, str]:
         return False, f"unreachable: {type(e).__name__}"
 
 
+_BLOCK_MARKERS = ("incapsula", "request unsuccessful", "access denied", "just a moment", "attention required",
+                  "pardon our interruption", "enable javascript and cookies", "verify you are human")
+
+
+def _is_block_page(text: str) -> bool:
+    """True when the plain fetch got an anti-bot wall instead of the page.
+
+    Found 2026-10-01: Global Energy Show's quote is on its live page, but a plain fetch returns an 84-character
+    Incapsula notice. That is non-empty, so `if not text` never escalated to the browser and the correct quote
+    was rejected as "not on the proposed page". A block page is short; a real page that merely mentions one of
+    these phrases is long, so the length cap keeps this from firing on real content."""
+    t = (text or "").strip().lower()
+    return bool(t) and len(t) < 600 and any(m in t for m in _BLOCK_MARKERS)
+
+
 def _seed_map(store) -> tuple[dict[str, str], list]:
     """upstream EVENT_ID -> our canonical id, plus the directories it was read from.
 
@@ -208,7 +223,7 @@ def retire_deadlines(store, csv_path: str, apply: bool) -> int:
         if quote:
             from src.cfp_monitor.verify import fetch_text, normalize_text
             text, _ = fetch_text(url)
-            if not text:
+            if not text or _is_block_page(text):
                 try:
                     import asyncio as _aio
                     import importlib.util as _ilu2
@@ -435,7 +450,7 @@ def merge_citations(store, csv_path: str, apply: bool, strict_deadline: bool = F
         # discard citations for being defended against automation rather than for being wrong -
         # the same error as treating a 403 as a dead link.
         text, _ = fetch_text(url)
-        if not text:
+        if not text or _is_block_page(text):
             try:
                 import asyncio as _aio
                 import importlib.util as _ilu

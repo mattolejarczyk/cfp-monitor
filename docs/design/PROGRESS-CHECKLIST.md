@@ -32,7 +32,8 @@ status details, start date, projected flag. Which fields were measured, on 12 ea
 
 ## Stage 3 - Clean the data we already hold
 - [x] Purpose audit of 39 stored deadlines: 9 confirmed, 1 mismatch, 16 absent, 12 unreadable. Three live rows written up.
-- [ ] Correct the Climate Change row and the three live rows (SecureWorld Gov & CI, India Energy Week 2027, Global Energy Show Canada 2027). Path chosen 2026-10-01: contract path. DRAFTED: `experiments/purpose_audit/CORRECTION-PACKAGE.md`. NOT YET: sent to upstream, applied, imported.
+- [~] 2026-10-01: upstream accepted and re-emitted; our merge guard (report mode on a DB copy) then applied to the live DB after backup (`cfp_monitor.pre-r6-20261001.db`): India Energy Week 2027 (date 10-15, verified by the audit), Climate Change (date 10-19), SecureWorld citation withdrawn. Far-side check passed; invariants pass. Global Energy Show pending (anti-bot wall). IS_PROJECTED unchanged on corrected rows; 2026 India Energy Week duplicate row remains. Tool fix: `scripts/apply_resolutions.py` now escalates on a block page (`tests/test_apply_resolutions_block_page.py`).
+- [ ] (original line) Correct the Climate Change row and the three live rows (SecureWorld Gov & CI, India Energy Week 2027, Global Energy Show Canada 2027). Path chosen 2026-10-01: contract path. DRAFTED: `experiments/purpose_audit/CORRECTION-PACKAGE.md`. NOT YET: sent to upstream, applied, imported.
 - [ ] Review the rest: 16 absent and 12 unreadable rows, almost all with passed deadlines; check which were never confirmed by a date (8 of the 12 status-layer-verified rows).
 
 ## Stage 4 - Spend less
