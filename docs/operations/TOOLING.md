@@ -210,3 +210,9 @@ Not in this repo, but part of the same pipeline. Path is machine-specific; see t
 4. **Never widen a schema without checking `EXPECTED_COLS`.** Adding `FORMAT` as column 36
    silently made the gate reject every delivery on check 1 while a parallel validator
    reported PASS.
+
+## Page library (added 2026-10-01)
+
+| Tool | What it does | Notes |
+|---|---|---|
+| `scripts/page_library.py` | **Offline page library.** Fetches each page of the v3.1 plan (364 pages, 70 sites; `experiments/sitemap_discovery`) once through `fetch._render_with_consent`, stores text, anchors, sha256 and timestamp in `page_library/page_library.db` (git-ignored), and keeps older versions when a page changes. Readers call `load_text(url)` instead of re-fetching. | `--build [--limit N] [--only HOST] [--refresh-older-than DAYS]`, `--report`. Resumable; hosts interleaved, 2 s apart. Set `CFP_CDP_URL=http://localhost:9222` (start the dedicated Chrome with `scripts/launch_chrome_cdp.bat`) so anti-bot sites are read through a real browser. Run it with `.venv/Scripts/python.exe`. Tests: `tests/test_page_library.py`. Writes nothing to the conference database, deliveries or customer sheets. |

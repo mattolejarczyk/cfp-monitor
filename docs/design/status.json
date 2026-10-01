@@ -1,7 +1,7 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Global Energy Show link fixed. Hermes benchmark stage 2 is blocked: its browser and page reader were both down on two tries (honest 'unknown' x5, zero data).",
+ "now": "Building the offline page library (364 planned pages, fetched once through real Chrome). Hermes benchmark stage 2 is paused on its tool setup.",
  "decisions": [
   {
    "text": "Unblock Hermes' page reading: its browser expects Chrome with a debug port on 127.0.0.1:9222 and nothing is listening; its page reader is set to a search-only backend and no Firecrawl, Tavily or Exa key exists. RECOMMEND: I start a separate, empty-profile Chrome on port 9222 for Hermes only.",
@@ -300,6 +300,12 @@
      "t": "Can sitemap plus menu find the call page?",
      "r": "31 of 84 sites; 364 pages in total",
      "s": "done"
+    },
+    {
+     "kind": "build",
+     "t": "Offline page library: fetch the 364 planned pages once, keep text with timestamps and versions",
+     "r": "Built and tested 10-01; full fetch running",
+     "s": "doing"
     },
     {
      "kind": "experiment",
