@@ -1,0 +1,138 @@
+{
+ "about": "HOLDOUT answer key for the heading-aware reader (Phase 1b). Written by reading each page's text BEFORE the reader was run on any page; sha256 in holdout_labels.sha256. Same classes and scoring as experiments/sentence_picking/labels.json. 10 pages from sites not read by earlier steps; 8 carry no submission deadline (thin pages, login pages, an error page, event-dates only), so this holdout has only 2 SUB labels and little statistical power.",
+ "pages": {
+  "https://www.techshowlondon.co.uk/apply-to-speak-2027": {
+   "labels": [
+    {
+     "date": "2027-03-10",
+     "class": "EVENT"
+    },
+    {
+     "date": "2027-03-11",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://decarbconnectnorthamerica.com/awards/next-gen-awards-submission/": {
+   "labels": []
+  },
+  "https://www.shmoocon.org/cfp/": {
+   "labels": [
+    {
+     "date": "2017-09-18",
+     "class": "NOT_CFP"
+    },
+    {
+     "date": "2025-01-10",
+     "class": "EVENT"
+    },
+    {
+     "date": "2025-01-12",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://lascon.org/cfp-now-closed/": {
+   "labels": []
+  },
+  "https://www.indiaenergyweek.com/conference/call-for-papers/": {
+   "labels": [
+    {
+     "date": "2025-09-19",
+     "class": "SUB"
+    },
+    {
+     "date": "2025-07-07",
+     "class": "OPEN"
+    },
+    {
+     "date": "2025-10-06",
+     "class": "NOTIF"
+    },
+    {
+     "date": "2025-10-10",
+     "class": "NOTIF"
+    },
+    {
+     "date": "2026-01-05",
+     "class": "NOT_CFP"
+    },
+    {
+     "date": "2027-01-28",
+     "class": "EVENT"
+    },
+    {
+     "date": "2027-01-31",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://www.crowdstrike.com/en-us/events/fal-con/las-vegas/call-for-papers/": {
+   "labels": [],
+   "note": "event dates 'August 31 - September 3' carry no year on the page"
+  },
+  "https://www.offensivecon.org/cfp.html": {
+   "labels": []
+  },
+  "https://www.innovationzero.com/event-partners/cfp-green-buildings": {
+   "labels": [
+    {
+     "date": "2026-11-23",
+     "class": "EVENT"
+    },
+    {
+     "date": "2027-04-27",
+     "class": "EVENT"
+    },
+    {
+     "date": "2027-04-28",
+     "class": "EVENT"
+    }
+   ]
+  },
+  "https://www.hydrogenexpo.com/awards/submit-your-nomination/": {
+   "labels": []
+  },
+  "https://nullcon.net/event/nullcon-goa-2026/cfp/": {
+   "labels": [
+    {
+     "date": "2025-11-20",
+     "class": "SUB"
+    },
+    {
+     "date": "2025-09-19",
+     "class": "OPEN"
+    },
+    {
+     "date": "2025-12-12",
+     "class": "NOTIF"
+    },
+    {
+     "date": "2026-02-25",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-02-27",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-03-02",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-03-04",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-02-28",
+     "class": "EVENT"
+    },
+    {
+     "date": "2026-03-01",
+     "class": "EVENT"
+    }
+   ],
+   "note": "dates sit in a COLUMN table: a line of column labels, then a line of dates in the same order"
+  }
+ }
+}

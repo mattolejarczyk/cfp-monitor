@@ -1,0 +1,4 @@
+holdout_pages.json
+scored_*.json
+*_log.txt
+__pycache__/
