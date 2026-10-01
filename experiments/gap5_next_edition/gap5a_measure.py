@@ -23,6 +23,7 @@ import asyncio
 import csv
 import importlib.util
 import json
+import os
 import re
 import sys
 from collections import Counter
@@ -38,7 +39,7 @@ _s = importlib.util.spec_from_file_location("_ae", ROOT / "scripts" / "audit_evi
 _ae = importlib.util.module_from_spec(_s)
 _s.loader.exec_module(_ae)
 
-MARKETS_DIR = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
+MARKETS_DIR = Path(os.environ.get("CFP_MARKETS_DIR", "."))   # upstream Markets working folder: set CFP_MARKETS_DIR (kept out of this public repo)
 TODAY = date(2026, 9, 28)
 OUT = Path(__file__).resolve().parent
 MONTH = (r"(jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|"

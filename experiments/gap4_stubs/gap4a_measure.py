@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import subprocess
 import sys
 from collections import Counter
@@ -29,7 +30,7 @@ sys.path.insert(0, str(ROOT))
 from src.cfp_monitor import lifecycle                                   # noqa: E402
 from src.cfp_monitor.identity import seed_map, to_canonical            # noqa: E402
 
-MARKETS_DIR = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
+MARKETS_DIR = Path(os.environ.get("CFP_MARKETS_DIR", "."))   # upstream Markets working folder: set CFP_MARKETS_DIR (kept out of this public repo)
 LIVE_DB = Path(r"C:\Users\matts\AppData\Local\CFP-Monitor\cfp_monitor.db")
 RUN_DAY = date(2026, 9, 26)          # the Saturday the research belongs to
 LAST_WEEK = {"Cybersecurity": "Cybersecurity_audited.final.pre-promote-20260927-221106.csv",
