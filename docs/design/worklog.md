@@ -5,6 +5,12 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-01 - purpose audit and heading reader Phase 1 (experiments only; nothing wired)
+
+- Purpose audit (`experiments/purpose_audit/`): 39 stored deadlines in the two customer markets; 9 CONFIRMED, 1 MISMATCH (Climate Change), 16 ABSENT, 12 NO_PAGE, 1 UNCLEAR. Reproduced the known registration-date error independently. Three live rows written up for review in `LIVE-ROWS-REVIEW.md` (no data changed).
+- Heading reader Phase 1 (`experiments/heading_reader/`): first run as designed 22/24 recall, precision 0.65; after four general rule fixes 24/24, precision 1.00 on the labelled pages (fitted); fresh locked 10-page holdout, one run: precision 0.33 (4 wrong), recall 2/2. Cause: heading-inherited purpose on date-above-label layouts and bare dates. Own-words judgments 19/19. Conclusion: advisory only.
+- Gotcha: the shell tool turns `` in heredoc/patch strings into a backspace character (third time); use the Edit tool or chr(92) and check with a count of chr(8).
+
 ## 2026-09-30 (into 10-01) - grounding reliability, page discovery, sentence picking (experiments only; nothing wired)
 
 - **Monthly prospect-markets run read and stopped** after Semiconductor finished (Robotics 59 of 79 calls failed, Semiconductor 82 of 113: 56 timeouts, 26 answers with no

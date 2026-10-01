@@ -4,6 +4,11 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **2026-10-01 (later) - purpose audit + heading reader Phase 1 (experiments only; nothing changed).** `experiments/purpose_audit/` (RESULT.md, LIVE-ROWS-REVIEW.md): of 39 stored
+> customer-market deadlines, 9 confirmed as submission dates on their cited page, 1 mismatch (Climate Change, above), 16 absent, 12 with no readable page; 3 not-yet-passed rows need a
+> person (SecureWorld Gov & CI, India Energy Week 2027, Global Energy Show Canada 2027: see LIVE-ROWS-REVIEW.md). `experiments/heading_reader/RESULT.md`: tuned on the 15 labelled pages 24/24,
+> but the fresh 10-page holdout FAILED (precision 0.33; only 2 submission labels). Own-words judgments safe (19/19); heading-inherited ones not. Advisory use only; needs a revised rule and a fresh holdout.
+>
 > **2026-10-01 - OPEN DATA FINDING, review before the next customer send: Climate Change conference deadline (on-climate.com).** Stored
 > `grounding_facts.deadline` = 2026-12-19, `verify_state` = `verified`, but the detail reads "[L0s] the page itself states the call is open": the CALL STATUS was
 > confirmed, not the date. On the call page (`/2027-conference/call-for-papers`) 2026-12-19 is the end of the REGISTRATION regular period. The PROPOSAL periods end
