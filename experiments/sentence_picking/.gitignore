@@ -1,0 +1,7 @@
+# local data: raw model responses with third-party page excerpts
+llm_log.jsonl
+run_*.txt
+prelabel_windows.txt
+scored*.json
+__pycache__/
+*.pyc

@@ -1,0 +1,83 @@
+{
+  "about": "PRE-REGISTERED ANSWER KEY for the sentence-picking test. Written by reading each page's text BEFORE any model request; its sha256 is recorded in labels.sha256 before the run and checked after. No model output influenced it.",
+  "classes": {
+    "SUB": "a deadline for SUBMITTING something to a call of the event (paper, abstract, proposal, speaker application, nomination, entry), any call, open or closed",
+    "SUB_RECURRING": "a submission deadline given as a recurring day and month with no year (journal rounds); a weak, never auto-accepted case",
+    "OPEN": "the date a call or period opens",
+    "NOTIF": "notification, review, approval or confirmation date",
+    "EVENT": "dates of the event itself",
+    "REG": "a REGISTRATION period or registration deadline",
+    "NOT_CFP": "a deadline that is not a call submission: exhibitor booth application, payment, exhibitor document upload, post-acceptance material upload"
+  },
+  "scoring": "An accepted candidate is CORRECT if its date equals a SUB label on that page; WRONG-PURPOSE if it equals an OPEN/NOTIF/EVENT/REG/NOT_CFP label; UNLABELLED otherwise. Recall = SUB labels (not SUB_RECURRING) recovered by an accepted candidate with the same date.",
+  "db_flags": [
+    "on-climate.com: our stored 'verified' deadline 2026-12-19 equals the end of the REGISTRATION regular period on the call page, not a proposal deadline. Proposal periods end 2026-06-19 (early), 2026-10-19 (regular), 2026-12-20 (late)."
+  ],
+  "pages": {
+    "https://www.actexpo.com/fleet-awards/": {"site": "actexpo.com", "labels": [
+      {"date": "2026-11-20", "class": "SUB", "call": "Fleet Awards nominations", "edition": 2026, "note": "Nominations are due by 5 p.m. PT on Friday, November 20, 2026 (stated twice)"}]},
+    "https://blackhat.com/call-for-papers.html": {"site": "blackhat.com", "labels": [
+      {"date": "2026-10-20", "class": "SUB", "call": "Black Hat Asia 2027 Call for Briefings", "edition": 2027, "note": "Closes: 20 October 2026"},
+      {"date": "2026-07-22", "class": "SUB", "call": "Black Hat Europe 2026 Call for Briefings", "edition": 2026, "note": "Closed: 22 July 2026"},
+      {"date": "2026-05-26", "class": "SUB", "call": "SecTor 2026 Call for Briefings", "edition": 2026, "note": "Closed: May 26 (no year written)"},
+      {"date": "2026-03-23", "class": "SUB", "call": "Black Hat USA 2026 Call for Briefings", "edition": 2026, "note": "Closed: March 23, 2026"},
+      {"date": "2026-09-04", "class": "OPEN"}, {"date": "2026-06-03", "class": "OPEN"}, {"date": "2026-04-01", "class": "OPEN"}, {"date": "2026-01-27", "class": "OPEN"},
+      {"date": "2027-01-05", "class": "NOTIF"}, {"date": "2026-09-25", "class": "NOTIF"}, {"date": "2026-07-24", "class": "NOTIF"}, {"date": "2026-05-22", "class": "NOTIF"},
+      {"date": "2027-03-02", "class": "EVENT"}, {"date": "2026-12-09", "class": "EVENT"}, {"date": "2026-10-07", "class": "EVENT"}, {"date": "2026-08-05", "class": "EVENT"}]},
+    "https://blackhat.com/html/call-for-sessions.html": {"site": "blackhat.com", "labels": [
+      {"date": "2026-10-12", "class": "SUB", "call": "Black Hat Asia 2027 Call for Summits Sessions", "edition": 2027, "note": "Close date: 12 October 2026"},
+      {"date": "2026-07-20", "class": "SUB", "call": "Black Hat Europe 2026 Call for Sessions", "edition": 2026, "note": "Close date: 20 July, 2026"},
+      {"date": "2026-06-15", "class": "SUB", "call": "SecTor 2026 Call for Summits Sessions", "edition": 2026, "note": "Closes: June 15, 2026"},
+      {"date": "2026-04-01", "class": "SUB", "call": "Black Hat USA 2026 Call for Summits Sessions", "edition": 2026, "note": "Closed: April 1, 2026"},
+      {"date": "2026-08-31", "class": "OPEN"}, {"date": "2026-06-08", "class": "OPEN"}, {"date": "2026-05-13", "class": "OPEN"}, {"date": "2026-02-23", "class": "OPEN"},
+      {"date": "2027-03-01", "class": "EVENT"}, {"date": "2026-12-08", "class": "EVENT"}, {"date": "2026-10-06", "class": "EVENT"}, {"date": "2026-08-04", "class": "EVENT"}]},
+    "https://www.globalenergyshow.com/conferences/2027-call-for-submissions/": {"site": "globalenergyshow.com", "labels": [
+      {"date": "2026-12-04", "class": "SUB", "call": "2027 conference abstracts", "edition": 2027, "note": "all submissions must be completed through the online submission form by the December 4, 2026 deadline"}]},
+    "https://www.h2meet.com/html/en/exhibitors_guide.php": {"site": "h2meet.com", "labels": [
+      {"date": "2026-10-17", "class": "NOT_CFP", "note": "exhibitor document submission via the Exhibitor Preparation Portal"},
+      {"date": "2026-07-31", "class": "NOT_CFP", "note": "booth application period end / balance payment"},
+      {"date": "2026-06-14", "class": "NOT_CFP", "note": "early-bird booth application end"}]},
+    "https://www.h2meet.com/html/en/program_innovation.php": {"site": "h2meet.com", "labels": [
+      {"date": "2026-09-30", "class": "SUB", "call": "H2 Global Award application", "edition": 2026, "note": "Application Submission deadline: By September 30 (Wed), 2026"}]},
+    "https://www.h2meet.com/html/en/speaker.php": {"site": "h2meet.com", "labels": [
+      {"date": "2026-09-30", "class": "SUB", "call": "speaker registration (2nd period)", "edition": 2026, "note": "Speaker Registration Period 2nd: Sep. 1 - Sep. 30, 2026"},
+      {"date": "2026-08-31", "class": "SUB", "call": "speaker registration (1st period) / profile and abstract", "edition": 2026, "note": "1st: Jul. 1 - Aug. 31, 2026; Submission of Speaker Profile & Abstract 8/1 ~ 8/31"},
+      {"date": "2026-09-13", "class": "NOT_CFP", "note": "post-acceptance: detailed presentation materials 9/1 ~ 9/13"},
+      {"date": "2026-09-14", "class": "NOTIF", "note": "final confirmation 9/14 ~ 9/30"},
+      {"date": "2026-11-04", "class": "EVENT"}]},
+    "https://on-climate.com/2027-conference": {"site": "on-climate.com", "labels": [
+      {"date": "2027-01-20", "class": "EVENT", "note": "20-22 January 2027; no deadline stated on this page"}]},
+    "https://on-climate.com/2027-conference/call-for-papers": {"site": "on-climate.com", "labels": [
+      {"date": "2026-06-19", "class": "SUB", "call": "proposals, early period", "edition": 2027, "note": "Proposal Periods: Early Launch to 19 June (26)"},
+      {"date": "2026-10-19", "class": "SUB", "call": "proposals, regular period", "edition": 2027, "note": "Regular 20 June (26) to 19 October (26)"},
+      {"date": "2026-12-20", "class": "SUB", "call": "proposals, late period", "edition": 2027, "note": "Late 20 October (26) to 20 December (26)"},
+      {"date": "2026-07-19", "class": "REG", "note": "Registration Periods early"},
+      {"date": "2026-12-19", "class": "REG", "note": "Registration Periods regular: 20 July (26) to 19 December (26) - equals our stored deadline"},
+      {"date": "2027-01-20", "class": "REG", "note": "registration late end / also the event start date"}]},
+    "https://on-climate.com/2027-conference/emerging-scholar-awards": {"site": "on-climate.com", "labels": [
+      {"date": "2026-06-06", "class": "SUB", "call": "Emerging Scholar Awards, early", "edition": 2027, "note": "Early Deadline: 6 June 2026"},
+      {"date": "2026-10-06", "class": "SUB", "call": "Emerging Scholar Awards, final", "edition": 2027, "note": "Final Deadline: 6 October 2026"}]},
+    "https://on-climate.com/2028-conference": {"site": "on-climate.com", "labels": [
+      {"date": "2028-01-26", "class": "EVENT", "note": "26-28 January 2028; no deadline stated on this page"}]},
+    "https://on-climate.com/2028-conference/call-for-papers": {"site": "on-climate.com", "labels": [
+      {"date": "2027-06-25", "class": "SUB", "call": "proposals, early period", "edition": 2028, "note": "Early Launch to 25 June (27)"},
+      {"date": "2027-10-25", "class": "SUB", "call": "proposals, regular period", "edition": 2028, "note": "Regular 26 June (27) to 25 October (27)"},
+      {"date": "2027-12-26", "class": "SUB", "call": "proposals, late period", "edition": 2028, "note": "Late 26 October (27) to 26 December (27)"},
+      {"date": "2027-07-25", "class": "REG"}, {"date": "2027-12-25", "class": "REG"}, {"date": "2028-01-26", "class": "REG"}]},
+    "https://on-climate.com/journal/call-for-papers": {"site": "on-climate.com", "labels": [
+      {"month_day": "01-15", "class": "SUB_RECURRING", "call": "journal submission round 1"},
+      {"month_day": "04-15", "class": "SUB_RECURRING", "call": "journal submission round 2"},
+      {"month_day": "07-15", "class": "SUB_RECURRING", "call": "journal submission round 3"},
+      {"month_day": "10-15", "class": "SUB_RECURRING", "call": "journal submission round 4"}]},
+    "https://www.sans.org/cyber-security-summit/speak-at-a-summit": {"site": "sans.org", "labels": [
+      {"date": "2026-10-19", "class": "SUB", "call": "Cyber Threat Intelligence and OSINT summits calls for presentations", "edition": 2027, "note": "Deadline for submission is October 19, 2026"},
+      {"date": "2027-02-01", "class": "EVENT", "note": "summits Feb 1 and 2, 2027"}]},
+    "https://troopers.de/troopers27/contribute/": {"site": "troopers.de", "labels": [
+      {"date": "2027-03-31", "class": "SUB", "call": "TROOPERS27 Call for Papers", "edition": 2027, "note": "CfP ends on: March 31st, 2027"},
+      {"date": "2027-02-28", "class": "SUB", "call": "TROOPERS27 Call for Trainings", "edition": 2027, "note": "CfT end: February 28th, 2027"},
+      {"date": "2027-04-14", "class": "NOTIF", "note": "Final notification (talks)"},
+      {"date": "2027-03-17", "class": "NOTIF", "note": "Final notification (trainings)"},
+      {"date": "2027-06-23", "class": "EVENT"}, {"date": "2027-06-21", "class": "EVENT"}]}
+  },
+  "pages_skipped_by_prefilter_checked_by_hand": "25 pages: none carries a submission deadline (agenda/event dates, sponsor and exhibitor pages, a 404 page, sans sponsorship). One page, on-climate.com 2027-conference/registration, lists REGISTRATION periods only."
+}

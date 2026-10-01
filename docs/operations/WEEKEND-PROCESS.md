@@ -22,6 +22,13 @@ what it means for the next run.
 | Monday 7:00 AM | Customer pages | No |
 | Every 4th Wednesday 2:00 AM | Monthly research (the six markets without a customer) | Yes, about 280 |
 
+**Status, 2026-09-30: two of these jobs are switched OFF by the operator.** The Friday awards job
+(`CFP Weekly Awards Research`, its first run was due 2026-10-02) and the monthly job (`CFP Monthly
+Re-Research (prospect markets)`; those six markets are speculative and have no customer) are
+**Disabled** in Windows Task Scheduler. Nothing else changed: Saturday, Sunday and Monday still run.
+The sections below describe what each job does WHEN it is enabled. To turn one back on, run
+`Enable-ScheduledTask -TaskName '<name>'` in an elevated (Administrator) PowerShell window.
+
 **What the labels on each step mean**
 
 | Label | Meaning |

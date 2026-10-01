@@ -5,6 +5,27 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-09-30 (into 10-01) - grounding reliability, page discovery, sentence picking (experiments only; nothing wired)
+
+- **Monthly prospect-markets run read and stopped** after Semiconductor finished (Robotics 59 of 79 calls failed, Semiconductor 82 of 113: 56 timeouts, 26 answers with no
+  search; 51 usable of 192 calls). Outputs kept, not imported. Operator then DISABLED `CFP Monthly Re-Research (prospect markets)` and `CFP Weekly Awards Research`.
+- **Billing reconciled** (Cloud Billing by SKU plus AI Studio): Aug 72.79 and Sep 134.06 USD; search queries 73% of September, exactly 14 USD per 1,000; failed calls cost
+  almost nothing in searches (1,871 billed vs 1,817 logged on 09-27). The sponsorship passes make about 14 searches per call, about 70% of a weekend's searches, and re-ask
+  nearly every row because the research input has no SPONSOR_* columns. "Charges not specific to a model" was a console filter artifact (empty URL parameters).
+- **The "504" is our own 120 s client timeout**, sent to Google as a server deadline (`X-Server-Timeout`). Narrow-prompt test (`experiments/grounding_reliability/`, 48 calls,
+  about 2.25 USD): full prompt 9 of 24 grounded, 8 hit the 120 s deadline, 7 skipped the search; narrow prompt 24 of 24, median 16 s vs 28 s; deadlines matched 33 of 33.
+- **Page discovery for the two customer markets** (`experiments/sitemap_discovery/`, design `docs/design/sitemap-discovery-design.md`): 84 sites, 48 with a sitemap (Cybersecurity
+  14 of 38, Utility 34 of 46). Crawl-priority rules v3.1 select 364 pages in all (median 4 per site; v1 would have crawled 1,463), a call page at 31 of 84 sites, the menu finding it
+  at 12 sites the sitemap misses. Real crawling exposed three defects, all fixed: relative menu links resolved against the wrong base (h2meet redirects to /html/ko/), a site's home
+  folder treated as a profile directory, and four redirect aliases. Date reader v2 reads year-less, range, East-Asian and European forms and rejects another edition's year.
+- **Sentence picking** (`experiments/sentence_picking/`): a model picks the sentence, code proves it is on the page; answer key locked before any request. Precision 1.00 for
+  deepseek-v4.1-flash and deepseek-chat, no fabricated sentence, recall 12 of 24 as designed (16 of 24 after two post-hoc gate changes); deepseek-chat cost about one eighth.
+  The misses are tables and schedules, so the next design is `docs/design/heading-aware-reader-design.md`.
+- **Data finding, logged in HANDOFF:** the stored deadline for the Climate Change conference (2026-12-19, "verified") is a REGISTRATION date; 13 of 48 stored deadlines in the two
+  customer markets are "verified" only through the call-status layer. The earlier recall-test "hit" for that event was wrong and is corrected.
+- Also: `WEEKEND-PROCESS.md` notes the two disabled tasks; experiment scripts no longer hardcode private paths (`CFP_MARKETS_DIR`); local-only data (a 25 MB inventory database, saved
+  third-party page text, raw model logs) is git-ignored. `gap4a_measure.py` and `gap5a_measure.py` (earlier sessions) still hardcode the private Markets path.
+
 ## 2026-09-28 - Friday awards run, Sunday auto-apply, verification coverage fix, quality-gap experiments
 
 - **Monday verification coverage** (102 of 112 rows "not checked"): Saturday's new citations were

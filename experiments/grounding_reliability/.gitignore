@@ -1,0 +1,15 @@
+# local data: per-call logs and saved answers, page text, database-derived samples
+calls.jsonl
+page_cache.json
+scored.json
+sample.json
+rescored_fields.json
+run_log.txt
+__pycache__/
+*.pyc
+# older quote-verification runs: bulky logs and results holding third-party page text
+*_log.txt
+browser_trace.json
+browser_verify.json
+loosened_match.json
+trace_inspect.json

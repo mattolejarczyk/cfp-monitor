@@ -4,6 +4,28 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **2026-10-01 - OPEN DATA FINDING, review before the next customer send: Climate Change conference deadline (on-climate.com).** Stored
+> `grounding_facts.deadline` = 2026-12-19, `verify_state` = `verified`, but the detail reads "[L0s] the page itself states the call is open": the CALL STATUS was
+> confirmed, not the date. On the call page (`/2027-conference/call-for-papers`) 2026-12-19 is the end of the REGISTRATION regular period. The PROPOSAL periods end
+> 2026-06-19 (early), 2026-10-19 (regular) and 2026-12-20 (late). The `evidence` table's own deadline claim is 2026-12-20 with verdict `no_quote` ("claim stands"), one
+> day off the stored value. Under R23 the date a person can act on now is 2026-10-19. NOTHING WAS CHANGED. To do: check how the customer page shows this row (confirmed or
+> not) and whether it reaches the next send. **Same class, measured:** of 48 stored deadlines in the two customer markets, 13 have a `verified` state that came from the L0s
+> status layer (call open or closed), not from the date, and 5 more are `verified` with no evidence page at all. A deadline's own `verify_detail` and evidence verdict should be
+> read before treating `verified` as "date confirmed". Found while pre-labelling pages for the sentence-picking test; the evidence is in
+> `experiments/sentence_picking/labels.json` (`db_flags`) and `RESULT.md`. An earlier note in `experiments/sitemap_discovery/RESULT.md` (UPDATE 6) counted this event as a recall
+> HIT; that was wrong (a registration date was matched) and is corrected there.
+> **2026-09-30 / 10-01 experiments (all in `experiments/`, nothing wired into a scheduled job):** `grounding_reliability/` (narrow prompt: 24 of 24 grounded vs 9 of 24; the
+> "504" is our own 120 s timeout enforced by Google); `sitemap_discovery/` (site page inventory, crawl-priority rules v3.1, menu-vs-map, date reader v2, bounded crawl and fair
+> recall tests); `sentence_picking/` (model picks the sentence, code proves it; deepseek-chat matched deepseek-v4.1-flash at about one eighth of the cost; precision 1.00 for both,
+> recall 16 of 24 post-hoc; the misses are tables and schedules, so the next step is a heading-aware reader). Designs in `docs/design/` (`grounding-reliability-test-plan.md`,
+> `sitemap-discovery-design.md`, `sentence-picking-design.md`). **Scheduled tasks DISABLED by the operator 2026-09-30:** `CFP Monthly Re-Research (prospect markets)` (prospect markets are
+> speculative; no customers) and `CFP Weekly Awards Research` (first run was due 2026-10-02; re-enable with `Enable-ScheduledTask` in an elevated shell). The Saturday, Sunday and Monday
+> jobs are unchanged.
+> **NEXT (each needs an operator decision):** (1) review the Climate Change row above and how the customer page shows it; (2) heading-aware reader: Phase 1 on the 15 labelled
+> pages plus a 10-page holdout labelled and locked first, then the purpose audit of the 48 stored deadlines (`docs/design/heading-aware-reader-design.md`, section 8);
+> (3) sponsorship carry-forward (agreed in principle: sponsorship passes are about 70% of a weekend's search spend and re-ask nearly every row because the research input has no
+> `SPONSOR_*` columns); (4) a per-site preferred language for h2meet.com (its English twin read 3 of 5 useful pages against 0 of 5 in Korean) and six inventory sites to fix
+> (four redirect aliases, two script-built menus). `docs/operations/WEEKEND-PROCESS.md` now notes the two disabled tasks.
 > **Where the work stands, end of 2026-09-28.** Five scheduled jobs, every one ending in a recap email (see `docs/operations/WEEKEND-PROCESS.md`, test-guarded against drift). NEW TODAY: Friday 02:00 weekly awards research (limit 16h, first run Fri 2026-10-02); Sunday discovery auto-applies findings proven word for word (strict, backed up, rolled back on failure); monthly recap; Monday build QA splits already-past date changes out of "Look at" and saves a copy beside the pages; customer pages hide Closed rows by default in the four work-queue views; Monday verification coverage FIXED (register citations before the re-read; results written under every upstream id).
 > **MOST URGENT - GAP 5, next year's editions are never picked up.** Contract R13-R15 (v1.3) agreed "research the successor, not the concluded edition" and it was never built. 5a (free) found 12 of 44 past events already publishing next year's dates on their own site; **CCUS 2027 (Utility) has its call for abstracts OPEN now and we do not show it**; Hydrogen Technology Expo MENA is labelled discontinued but 2027 is announced. See `experiments/gap5_next_edition/`. Trap: weekend_import holds back any row without a permanent id, so a genuine successor needs an id minted only after R14 + R15 pass.
 > **The gaps (experiments/ - theory and isolated tests only; nothing wired until proven, operator rule; report all in every update):** 4a measured (skip 19 rows, save 45 requests, nothing lost) - ON HOLD, folds into gap 5. Gap 3 (answers from memory) - postponed, Google badly degraded 09-28. Gap 1 (made-up links) - no AI needed, can run anytime. Gap 2 after 1; 4b after 3.

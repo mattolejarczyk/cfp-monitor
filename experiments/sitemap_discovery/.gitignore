@@ -1,0 +1,14 @@
+# local data, not for the public repo: third-party page text, a 25 MB inventory database, and result files naming events
+site_inventory.db
+site_inventory.db-*
+crawl_pages.json
+customer_markets.json
+analysis*.json
+measure.json
+redirects.json
+recall_test.json
+crawl_test*.json
+rescore_dates.json
+*_log*.txt
+__pycache__/
+*.pyc
