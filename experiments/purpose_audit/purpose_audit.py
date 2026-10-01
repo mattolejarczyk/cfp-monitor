@@ -30,30 +30,37 @@ MARKETS = ("Cybersecurity", "Utility")
 
 # ---- purpose vocabulary. NOTIF / OPEN override SUB ("paper notification", "submission opens"); REG is SUB only with speaker wording.
 NOTIF = re.compile(r"notif|acceptance|accepted|decision|camera[- ]?ready|final (version|paper)|author response|rebuttal|review", re.I)
-OPEN = re.compile(r"\bopens?\b|opening|launch|starts?\b|\bfrom\b", re.I)
+OPEN = re.compile(r"\bopen(s|ed)?\b|opening|starts?\b", re.I)
 SPEAKER = re.compile(r"speaker|presenter|author", re.I)
 REG = re.compile(r"registration|register|attendee|ticket|early[- ]?bird|\bpass(es)?\b|hotel|accommodation|booking|payment", re.I)
 SUB = re.compile(r"submi|proposal|abstract|\bpapers?\b|call for|\bcfp\b|cfs|nominat|\bentr(y|ies)\b|applica|\bapply\b|deadline|closes?|closing|briefing|poster|talks?\b", re.I)
-EVENT = re.compile(r"conference dates|event dates|\bheld\b|venue|dates of|exhibition|show dates", re.I)
+EVENT = re.compile(r"conference dates|event dates|\bheld\b|venue|dates of|exhibition|show (dates|days)|dates\s*/\s*location|dates and location|\blocation\b|main conference|the conference|\btrainings?\b|on-site", re.I)
 NOT_CFP = re.compile(r"sponsor|exhibit|booth|vendor|press|media", re.I)
+TIERWORDS = re.compile(r"\b(early|regular|late|standard|launch|round\s*\d+)\b", re.I)
 TIER_ONLY = re.compile(r"^\W*(early|regular|late|standard|final|round\s*\d|\d(st|nd|rd|th)|phase\s*\d|launch|stage\s*\d)\W*$", re.I)
+
+
+CTX_NOT_CFP = False      # set per page by the caller: the page URL names exhibitors / sponsors / booths
+WEAK_SUB = re.compile(r"applica|\bapply\b|deadline|closes?|closing|\bentr(y|ies)\b", re.I)
+STRONG_SUB = re.compile(r"call for|\bcfp\b|abstract|\bpapers?\b|proposal|speaker|briefing|nominat|poster|\btalks?\b|submi", re.I)
 
 
 def classes(text):
     """Set of purpose classes whose words appear in `text`, after the override rules."""
-    t = text or ""
+    t = TIERWORDS.sub(" ", text or "")
     got = set()
     if NOTIF.search(t):
         got.add("NOTIF")
-    if re.search(r"submissions?\s+(open|start)|opens?\s+for\s+submission|call\s+(opens|open)", t, re.I):
-        got.add("OPEN")
-    elif OPEN.search(t) and not SUB.search(re.sub(r"\bopens?\b|opening|launch|\bfrom\b|starts?\b", "", t, flags=re.I)):
+    if OPEN.search(t) and not re.search(r"\b(until|through|till|closes?|closing|deadline|due)\b", t, re.I):
         got.add("OPEN")
     if REG.search(t):
         speaker_reg = SPEAKER.search(t) and re.search(r"registration|register", t, re.I) and not re.search(r"attendee|ticket|early[- ]?bird", t, re.I)
         got.add("SUB" if speaker_reg else "REG")
     if SUB.search(t) and not got & {"NOTIF", "OPEN"} and "REG" not in got:
         got.add("SUB")
+    if CTX_NOT_CFP and "SUB" in got and WEAK_SUB.search(t) and not STRONG_SUB.search(t):
+        got.discard("SUB")
+        got.add("NOT_CFP")
     if EVENT.search(t):
         got.add("EVENT")
     if NOT_CFP.search(t) and not SUB.search(t):
@@ -128,6 +135,11 @@ def dated(page_text, u, k):
             return sp.iso(d, int(m[-1])), "heading"
     y = sp.nearby_year(page_text, u["pos"])
     return (sp.iso(d, y), "nearby") if y else (None, "needs-year")
+
+
+def set_page_context(url):
+    global CTX_NOT_CFP
+    CTX_NOT_CFP = bool(re.search(r"exhibit|sponsor|booth|vendor", url or "", re.I))
 
 
 def classify_page(text, target):
@@ -224,6 +236,7 @@ def report(rows):
                 shells += 1
                 continue
             read += 1
+            set_page_context(u)
             f, a = classify_page(t, r["deadline"])
             hits += [dict(h, url=u) for h in f]
             alts += [dict(h, url=u) for h in a]
