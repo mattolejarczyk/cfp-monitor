@@ -1,11 +1,11 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Global Energy Show link fixed (operator edit, verified, logged). Hermes benchmark stage 2 (5 new events) is running.",
+ "now": "Global Energy Show link fixed. Hermes benchmark stage 2 is blocked: its browser and page reader were both down on two tries (honest 'unknown' x5, zero data).",
  "decisions": [
   {
-   "text": "RECOMMEND YES: run the 5-event stage of the benchmark (new events, I check all 5 against the pages), then 10, then the rest.",
-   "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
+   "text": "Unblock Hermes' page reading: its browser expects Chrome with a debug port on 127.0.0.1:9222 and nothing is listening; its page reader is set to a search-only backend and no Firecrawl, Tavily or Exa key exists. RECOMMEND: I start a separate, empty-profile Chrome on port 9222 for Hermes only.",
+   "file": ""
   },
   {
    "text": "RECOMMEND SEND: the round-2 note to upstream (five follow-ups; the Saturday one matters most: apply the 4 corrections to their approved files before Saturday 02:00).",
@@ -170,7 +170,7 @@
   {
    "name": "Benchmark stage 2: 5 new events",
    "who": "Hermes",
-   "status": "running since 11:37",
+   "status": "blocked 10-01: Hermes tools down (2 tries, 0 of 5 read)",
    "budget": "free"
   },
   {
@@ -415,7 +415,7 @@
    "name": "Hermes",
    "how": "CLI one-shot (hermes -z)",
    "state": "works",
-   "note": "3-event test 10-01 passed: dates, statuses and evidence quotes right (2 of 3 quotes verified on pages by me; the third is on its page). Its browser tool failed that run and it fell back to its fetch tool. About 2 min for 3 events. The MCP link still times out."
+   "note": "Stage 2 (5 events) failed twice with its browser (no listener on 9222) and page reader (search-only backend) down; it marked all 5 unknown rather than guess from snippets. In the 3-event run its fetch tool worked, so the backends are intermittent. Config: cdp_url http://127.0.0.1:9222; no extractor key set."
   },
   {
    "name": "OpenClaw",
