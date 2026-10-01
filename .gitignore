@@ -49,3 +49,5 @@ pilot*_out.csv
 pilot*_recovered*.csv
 rerun_*.csv
 menu_followups*.csv
+dashboard/
+docs/agents/results/

@@ -1,0 +1,327 @@
+{
+ "as_of": "2026-10-01",
+ "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
+ "now": "Status board, strategy file and 3 agent briefs are done. Next: hand briefs 01 and 02 to Hermes; correction package waits on you.",
+ "decisions": [
+  {
+   "text": "Forward the correction package (4 rows) to upstream.",
+   "file": "experiments/purpose_audit/CORRECTION-PACKAGE.md"
+  },
+  {
+   "text": "Tell the customer India Energy Week may still be open: the page now says 15 Oct 2026; their sheet has 09/30.",
+   "file": ""
+  }
+ ],
+ "headline": {
+  "provable": {
+   "label": "Provable submission date",
+   "definition": "Stored deadline is on the cited page AND code labels that date a submission date. A correct answer is enough; a word-for-word quote is not required.",
+   "rows": 39,
+   "levels": [
+    {
+     "key": "confirmed",
+     "label": "Date on cited page, purpose = submission",
+     "n": 9,
+     "tone": "good"
+    },
+    {
+     "key": "unclear",
+     "label": "Date on page, purpose undecided",
+     "n": 1,
+     "tone": "warn"
+    },
+    {
+     "key": "mismatch",
+     "label": "Date on page, wrong purpose",
+     "n": 1,
+     "tone": "bad"
+    },
+    {
+     "key": "absent",
+     "label": "Date not on the cited page",
+     "n": 16,
+     "tone": "bad"
+    },
+    {
+     "key": "nopage",
+     "label": "No readable page",
+     "n": 12,
+     "tone": "mute"
+    }
+   ],
+   "open_rows": 3,
+   "open_confirmed": 0,
+   "note": "Of the 3 rows whose deadline has not passed, none is provable yet. They are the three live rows in the correction package.",
+   "source": "experiments/purpose_audit/RESULT.md"
+  },
+  "customer": {
+   "label": "Agreement with customer-verified dates",
+   "definition": "Rows where the customer's team marked the date Verified and has a date: does ours match? Rough first reading, not cleaned for editions or passed rows.",
+   "rows": 40,
+   "levels": [
+    {
+     "key": "agree",
+     "label": "Same date",
+     "n": 20,
+     "tone": "good"
+    },
+    {
+     "key": "blank",
+     "label": "Our deadline blank",
+     "n": 12,
+     "tone": "warn"
+    },
+    {
+     "key": "differ",
+     "label": "Different date",
+     "n": 8,
+     "tone": "bad"
+    }
+   ],
+   "note": "Source is the weekly customer-sheet snapshot already in the database. This is the number the customer would feel.",
+   "source": "client_conferences joined to grounding_facts, 2026-10-01"
+  }
+ },
+ "stages": [
+  {
+   "name": "0 Diagnose",
+   "items": [
+    {
+     "t": "Root cause of grounding failures found",
+     "s": "done"
+    },
+    {
+     "t": "Billing reconciled by SKU",
+     "s": "done"
+    },
+    {
+     "t": "Prospect-market tasks disabled",
+     "s": "done"
+    }
+   ]
+  },
+  {
+   "name": "1 Narrow prompt",
+   "items": [
+    {
+     "t": "Grounding reliability measured (24/24 vs 9/24)",
+     "s": "done"
+    },
+    {
+     "t": "Deadline and start date match stored values",
+     "s": "done"
+    },
+    {
+     "t": "Quote quality measured with real verifiers",
+     "s": "todo"
+    },
+    {
+     "t": "Hard cases: closed, renamed, successor",
+     "s": "todo"
+    },
+    {
+     "t": "Decide and validate the other ~24 fields",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "name": "2 Prove the date ourselves",
+   "items": [
+    {
+     "t": "Page discovery designed and tested",
+     "s": "done"
+    },
+    {
+     "t": "Sentence picking tested (precision 1.00)",
+     "s": "done"
+    },
+    {
+     "t": "Heading reader Phase 1 (result: not reliable)",
+     "s": "done"
+    },
+    {
+     "t": "Whole-page model reader vs benchmark",
+     "s": "todo"
+    },
+    {
+     "t": "Fix inventory gaps (aliases, menus, language)",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "name": "3 Clean existing data",
+   "items": [
+    {
+     "t": "Purpose audit of 39 stored deadlines",
+     "s": "done"
+    },
+    {
+     "t": "Correct 4 rows (package drafted, not sent)",
+     "s": "doing"
+    },
+    {
+     "t": "Review the 16 absent and 12 unreadable rows",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "name": "4 Spend less",
+   "items": [
+    {
+     "t": "Sponsorship carry-forward designed and tested",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "name": "5 Wire it in",
+   "items": [
+    {
+     "t": "Plan, tests, budget, shadow run, switch",
+     "s": "todo"
+    },
+    {
+     "t": "Re-enable disabled tasks (only if wanted)",
+     "s": "todo"
+    }
+   ]
+  },
+  {
+   "name": "6 Project control",
+   "items": [
+    {
+     "t": "Status board (this page) built and published",
+     "s": "done"
+    },
+    {
+     "t": "Standing strategy file and 5-line opener",
+     "s": "done"
+    },
+    {
+     "t": "Agent brief template and 3 briefs written",
+     "s": "done"
+    },
+    {
+     "t": "Benchmark built and spot-checked (brief 01)",
+     "s": "todo"
+    },
+    {
+     "t": "Platform census run (brief 02)",
+     "s": "todo"
+    }
+   ]
+  }
+ ],
+ "methods": [
+  {
+   "step": "Narrow grounded prompt",
+   "metric": "Calls that grounded",
+   "result": "24/24 (full prompt 9/24)",
+   "verdict": "good",
+   "date": "09-30",
+   "note": "Median 16 s vs 28 s. Truth was our own stored value, so weak on purpose."
+  },
+  {
+   "step": "Narrow grounded prompt",
+   "metric": "Quote word for word on page",
+   "result": "8/24 (our own quotes: 4/12)",
+   "verdict": "warn",
+   "date": "09-30",
+   "note": "Checker was weak. Unresolved."
+  },
+  {
+   "step": "Page discovery",
+   "metric": "Sites with a call page found",
+   "result": "31 of 84 sites, 364 pages",
+   "verdict": "good",
+   "date": "09-30",
+   "note": "Median 4 pages per site. Most others have no open call."
+  },
+  {
+   "step": "Sentence picking (cheap model)",
+   "metric": "Precision / recall",
+   "result": "1.00 / 12 of 24",
+   "verdict": "good",
+   "date": "10-01",
+   "note": "About 5 cents per run. Misses tables."
+  },
+  {
+   "step": "Heading reader (rules)",
+   "metric": "Fresh holdout precision",
+   "result": "0.33 (2 of 2 recalled)",
+   "verdict": "bad",
+   "date": "10-01",
+   "note": "Fitted 24/24 on labelled pages. Only 2 labels in holdout. Advisory only."
+  },
+  {
+   "step": "Purpose audit",
+   "metric": "Stored deadlines confirmed",
+   "result": "9 of 39",
+   "verdict": "warn",
+   "date": "10-01",
+   "note": "Reproduced the known Climate Change error independently."
+  },
+  {
+   "step": "Whole-page model reader",
+   "metric": "Not run",
+   "result": "no data yet",
+   "verdict": "none",
+   "date": "",
+   "note": "Needs the benchmark."
+  },
+  {
+   "step": "Platform census",
+   "metric": "Not run",
+   "result": "no data yet",
+   "verdict": "none",
+   "date": "",
+   "note": "Count Sessionize, Pretalx, PaperCall, OpenConf sites."
+  },
+  {
+   "step": "Firecrawl fetch layer",
+   "metric": "Not run",
+   "result": "no data yet",
+   "verdict": "none",
+   "date": "",
+   "note": "Fetching only; same extractor."
+  }
+ ],
+ "agents": [
+  {
+   "name": "Build the 40-event benchmark",
+   "who": "Hermes",
+   "status": "brief ready",
+   "budget": "free"
+  },
+  {
+   "name": "Platform census",
+   "who": "Hermes",
+   "status": "brief ready",
+   "budget": "free"
+  },
+  {
+   "name": "Whole-page model reader",
+   "who": "Codex or Hermes",
+   "status": "waits on benchmark",
+   "budget": "about 1 USD"
+  }
+ ],
+ "spend": [
+  {
+   "label": "Gemini, August",
+   "usd": 72.79
+  },
+  {
+   "label": "Gemini, September",
+   "usd": 134.06
+  },
+  {
+   "label": "OpenRouter test budget used",
+   "usd": 0.045,
+   "cap": 1.0
+  }
+ ]
+}

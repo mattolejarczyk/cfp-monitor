@@ -42,6 +42,12 @@ status details, start date, projected flag. Which fields were measured, on 12 ea
 - [ ] A written plan, tests and a budget; a shadow run beside the current weekend job; compare; then switch.
 - [ ] Re-enable the disabled tasks only if and when the prospect markets are wanted again.
 
+## Stage 6 - Project control (so the operator can stay zoomed out)
+- [x] Status board published (private Artifact), generated from `docs/design/status.json` by `scripts/status_dashboard.py`.
+- [x] Standing strategy file `docs/design/STRATEGY.md` with the 5-line opener.
+- [x] Agent brief template and three briefs: `docs/agents/`.
+- [ ] Benchmark built and spot-checked (brief 01). [ ] Platform census run (brief 02).
+
 ## Progress at 2026-10-01
 Stage 0 done. Stage 1: the speed and grounding half is proven, the quality and field-coverage half is not. Stage 2: three of five items done. Stage 3: audit done, correction package drafted, awaiting send and apply.
 Stages 4 and 5 not started. Rough share of the work finished: about one third (an estimate, not a measurement).

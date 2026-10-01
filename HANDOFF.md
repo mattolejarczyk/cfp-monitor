@@ -4,6 +4,8 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **READ FIRST: `docs/design/STRATEGY.md` (standing brief and the 5-line session opener), `docs/design/PROGRESS-CHECKLIST.md`, and the status board (`scripts/status_dashboard.py`, data in `docs/design/status.json`). Agent briefs: `docs/agents/`.**
+>
 > **2026-10-01 (later) - purpose audit + heading reader Phase 1 (experiments only; nothing changed).** `experiments/purpose_audit/` (RESULT.md, LIVE-ROWS-REVIEW.md): of 39 stored
 > customer-market deadlines, 9 confirmed as submission dates on their cited page, 1 mismatch (Climate Change, above), 16 absent, 12 with no readable page; 3 not-yet-passed rows need a
 > person (SecureWorld Gov & CI, India Energy Week 2027, Global Energy Show Canada 2027: see LIVE-ROWS-REVIEW.md). `experiments/heading_reader/RESULT.md`: tuned on the 15 labelled pages 24/24,
