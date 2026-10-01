@@ -1,22 +1,22 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Whole-page reader experiment finished: promising, not yet proven. Hermes browser read test passed. Claude crashed mid-run; nothing was lost.",
+ "now": "Hermes benchmark staged: 3-event test passed (3 of 3 right). Waiting on your go for the 5-event stage. All four upstream corrections are in the live database.",
  "decisions": [
   {
-   "text": "Next step for the whole-page reader: build the 40-event benchmark (hand brief 01 to Hermes, whose browser test passed) so the reader gets a fresh, larger test before any wiring. OK?",
-   "file": "C:/Users/matts/cfp-monitor/experiments/whole_page_reader/RESULT.md"
+   "text": "RECOMMEND YES: run the 5-event stage of the benchmark (new events, I check all 5 against the pages), then 10, then the rest.",
+   "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
   },
   {
-   "text": "Global Energy Show's real submit link (the dmgeventsconferences.com login URL) is still not on our row. Carry it through upstream, or use the mechanical dead-link repair?",
+   "text": "RECOMMEND YES: fix the Global Energy Show submit link now with a one-field operator edit (backup, log, far-side check) so Monday's page links to the working login URL. The lasting fix still has to come from upstream, because Saturday's load can bring the old link back.",
    "file": ""
   },
   {
-   "text": "Send upstream the short note: IS_PROJECTED still true on corrected rows; 2026 India Energy Week duplicate row still exists; a date-changing pass is a re-research pass needing a manifest.",
-   "file": ""
+   "text": "RECOMMEND SEND: the round-2 note to upstream (five follow-ups; the Saturday one matters most: apply the 4 corrections to their approved files before Saturday 02:00).",
+   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-2.md"
   },
   {
-   "text": "Saturday 02:00 re-research may overwrite the corrected rows. Check the Saturday diff before Monday's 07:00 page build.",
+   "text": "RECOMMEND: after Saturday's load I diff the 5 affected rows against today's backups and tell you what changed, before Monday 07:00. No action needed from you now.",
    "file": ""
   }
  ],
@@ -166,15 +166,21 @@
  ],
  "agents": [
   {
-   "name": "Hermes browser read test (Global Energy Show)",
+   "name": "Benchmark stage 1: 3 events with known answers",
    "who": "Hermes",
-   "status": "passed 10-01",
+   "status": "passed 10-01 (3 of 3)",
    "budget": "free"
   },
   {
-   "name": "Build the 40-event benchmark",
+   "name": "Benchmark stage 2: 5 new events",
    "who": "Hermes",
-   "status": "brief ready",
+   "status": "awaiting your go",
+   "budget": "free"
+  },
+  {
+   "name": "Benchmark stages 3-4: 10, then the remaining ~22",
+   "who": "Hermes",
+   "status": "after stage 2",
    "budget": "free"
   },
   {
@@ -413,7 +419,7 @@
    "name": "Hermes",
    "how": "CLI one-shot (hermes -z)",
    "state": "works",
-   "note": "Browser test 10-01 passed: full page, exact sentence, correct link target, no clicks (4m10s). Web-only mode reads search snippets, not pages. The MCP link still times out."
+   "note": "3-event test 10-01 passed: dates, statuses and evidence quotes right (2 of 3 quotes verified on pages by me; the third is on its page). Its browser tool failed that run and it fell back to its fetch tool. About 2 min for 3 events. The MCP link still times out."
   },
   {
    "name": "OpenClaw",
