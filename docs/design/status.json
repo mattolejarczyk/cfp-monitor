@@ -5,10 +5,10 @@
  "decisions": [
   {
    "text": "Forward the correction package (4 rows) to upstream.",
-   "file": "experiments/purpose_audit/CORRECTION-PACKAGE.md"
+   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/CORRECTION-PACKAGE.md"
   },
   {
-   "text": "Tell the customer India Energy Week may still be open: the page now says 15 Oct 2026; their sheet has 09/30.",
+   "text": "India Energy Week on Monday 10-05: the page shows Closed (stored 09/30 has passed) unless the corrected date, 15 Oct, reaches our database before the 07:00 run. Customer is told through that page, so the correction must land first, or you rule how to handle this one row.",
    "file": ""
   }
  ],

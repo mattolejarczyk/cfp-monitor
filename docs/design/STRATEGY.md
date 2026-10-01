@@ -37,6 +37,6 @@ Stage 0 diagnose (done) - 1 narrow Gemini prompt (grounding proven, quality and 
 Write every task as a brief (`docs/agents/README.md`: ten parts, success test fixed in advance). One question per brief. The agent proposes, we verify. Results are advisory files, never database writes. Briefs ready: 01 benchmark, 02 platform census, 03 whole-page reader (starts only after 01 passes its spot-check).
 
 ## Open decisions (keep this list to what is genuinely open)
-1. Send the four-row correction package upstream (`experiments/purpose_audit/CORRECTION-PACKAGE.md`).
-2. Tell the customer India Energy Week may still be open (page says 15 Oct 2026; their sheet has 09/30).
+1. Send the four-row correction package upstream (`C:/Users/matts/cfp-monitor/experiments/purpose_audit/CORRECTION-PACKAGE.md`).
+2. India Energy Week: the customer learns of the 15 Oct date through Monday 10-05's customer page (the Monday send). Display gating shows a passed deadline as Closed, so the corrected date must reach our database before the 07:00 run, or the page will say Closed.
 3. After benchmark and census results: build a platform parser, a whole-page model reader, or both; and whether Firecrawl is worth a fetch-layer test.
