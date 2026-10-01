@@ -1,14 +1,18 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Hermes 2-event test done: usable format, but it cannot read full pages with web tools only. Deciding how to hand it pages. Correction package still waits on you.",
+ "now": "Upstream accepted the 4-row correction. I checked it: India Energy Week cites the wrong page. Reply to upstream drafted; waiting for you to send it and for their re-emit.",
  "decisions": [
   {
-   "text": "Forward the correction package (4 rows) to upstream.",
-   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/CORRECTION-PACKAGE.md"
+   "text": "Send the reply to upstream: their India Energy Week correction cites a page that does not contain the quote (our gate would fail it).",
+   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/REPLY-TO-UPSTREAM.md"
   },
   {
-   "text": "India Energy Week on Monday 10-05: the page shows Closed (stored 09/30 has passed) unless the corrected date, 15 Oct, reaches our database before the 07:00 run. Customer is told through that page, so the correction must land first, or you rule how to handle this one row.",
+   "text": "Climate Change: our date check cannot read '19 October (26)'. Extend the check (small code change, tests) or accept 'not_found' on that row for now?",
+   "file": ""
+  },
+  {
+   "text": "Monday 10-05 07:00: India Energy Week shows Closed unless the corrected row is imported first. Tell the customer directly as well?",
    "file": ""
   }
  ],
@@ -345,7 +349,7 @@
     {
      "kind": "fix",
      "t": "Correct 4 rows",
-     "r": "Package drafted, not yet sent upstream",
+     "r": "Upstream accepted 10-01; their re-emit has 2 defects, reply drafted; not yet imported",
      "s": "doing"
     },
     {
