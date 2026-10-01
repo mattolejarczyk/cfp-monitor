@@ -1,10 +1,14 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Page library fetch is running: 80 of 364 pages stored at 12:19, 79 usable, none blocked. Expect it to finish about 13:40. Hermes benchmark is paused on its tool setup.",
+ "now": "Offline page library is complete: 360 pages, 350 usable. Refresh-policy design settled. Waiting on your go for the next steps below.",
  "decisions": [
   {
-   "text": "Hermes benchmark: its page reading needs a debug Chrome on port 9222, which is now running (started for the page library). OK to retry stage 2 (5 events) after the library fetch finishes, so the two do not share the browser?",
+   "text": "RECOMMEND YES: run the whole-page reader (DeepSeek) offline over all 360 saved pages. About 36 cents. It gives the first full-library view of submission dates and tests the reader on far more pages than the 27 so far. Advisory only, nothing written to the database.",
+   "file": "C:/Users/matts/cfp-monitor/docs/design/whole-page-reader-experiment.md"
+  },
+  {
+   "text": "Retry Hermes benchmark stage 2 (5 events)? The library fetch no longer needs Chrome, so the debug port is free for Hermes.",
    "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
   },
   {
@@ -113,11 +117,11 @@
   },
   {
    "step": "Offline page library",
-   "metric": "Planned pages stored and usable (in progress)",
-   "result": "79 of 80 stored so far; 0 blocked",
+   "metric": "Planned pages stored and usable",
+   "result": "350 of 360 usable (97%)",
    "verdict": "good",
    "date": "10-01",
-   "note": "Fetched once through real Chrome; later steps read saved text. Full 364 expected about 13:40."
+   "note": "0 blocked, 0 errors. 10 thin or soft-404 pages (e.g. Climate Week NYC, CrowdStrike). Later steps read saved text, not the browser."
   },
   {
    "step": "Sentence picking (cheap model)",
@@ -178,7 +182,7 @@
   {
    "name": "Benchmark stage 2: 5 new events",
    "who": "Hermes",
-   "status": "paused: retry after page library fetch",
+   "status": "paused: awaiting your go to retry stage 2",
    "budget": "free"
   },
   {
@@ -312,8 +316,8 @@
     {
      "kind": "build",
      "t": "Offline page library: fetch the 364 planned pages once, keep text with timestamps and versions",
-     "r": "Built, 6 tests pass. Fetch in progress: 80 of 364 stored, 79 usable, 0 blocked, 0 errors (12:19). Resumable.",
-     "s": "doing"
+     "r": "Done 10-01: 364 planned pages = 360 distinct URLs, all stored; 350 usable (97%), 10 thin or soft-404, 0 blocked, 0 errors; 69 of 69 sites have a usable page. 2.6 MB of text. Fetched once through real Chrome.",
+     "s": "done"
     },
     {
      "kind": "experiment",
@@ -330,7 +334,7 @@
     {
      "kind": "decision",
      "t": "Refresh pages by event lifecycle (idea from the operator)",
-     "r": "Designed 10-01: 6 categories, counts from our data, no fetch for 45 days after an event; not built",
+     "r": "Designed and settled 10-01: A weekly, B every 2 weeks, C1 none for 45 days, C2 monthly, D monthly (unknown dates: 45 days then every 2 weeks), E weekly exception batch, F quarterly then stop after 2 years; multi-customer rule. Not built.",
      "s": "todo"
     }
    ]
