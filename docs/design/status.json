@@ -4,6 +4,10 @@
  "now": "All four upstream corrections are in the live database. A one-page DeepSeek test read the Climate Change table correctly. Hermes browser read test is running.",
  "decisions": [
   {
+   "text": "Go for the whole-page reader experiment? Cap 60 requests / $0.50 (est. $0.05 actual): develop on 15 labelled pages, then one run on the 10-page holdout and a fresh set.",
+   "file": "C:/Users/matts/cfp-monitor/docs/design/whole-page-reader-experiment.md"
+  },
+  {
    "text": "Global Energy Show: the real submit link is https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login (confirmed live by you and by our browser). Our row still holds the dead page. Carry the new link through upstream, or use the mechanical dead-link repair?",
    "file": ""
   },

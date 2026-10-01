@@ -33,6 +33,12 @@ Stage 0 diagnose (done) - 1 narrow Gemini prompt (grounding proven, quality and 
 - Public repo: no customer data, credentials or private paths. A patch or heredoc that contains a backslash-b turns into a backspace character on this machine: use the Edit tool.
 - Before any new script: check `docs/operations/TOOLING.md` and say `USING EXISTING:` or `NEW CODE: searched ... found nothing`.
 
+## The wisdom pattern (added 2026-10-01, operator's principle)
+When a code solution grows complex or keeps failing, **try a cheap or free model first** (DeepSeek, Hermes free capacity), with code verifying its output and an answer key scoring it, before spending more weeks on rules. Evidence so far: a rules reader took days and failed a fresh test (0.33); one DeepSeek call read the same table correctly for $0.0009. This is a hypothesis under test, not yet a result: `docs/design/whole-page-reader-experiment.md`.
+
+## Rule for presenting rounds (operator, 2026-10-01)
+Show both dates when a call has rounds. The DEADLINE is the first round that has not passed. Later rounds go in `STATUS DETAILS` (upstream's field; `NOTES` is the customer's, contract v2.0.1), in the order the conference states them. When the first round passes, the next becomes the deadline.
+
 ## Agents (Hermes free capacity, Codex subscriptions)
 Write every task as a brief (`docs/agents/README.md`: ten parts, success test fixed in advance). One question per brief. The agent proposes, we verify. Results are advisory files, never database writes. Briefs ready: 01 benchmark, 02 platform census, 03 whole-page reader (starts only after 01 passes its spot-check).
 
