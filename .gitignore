@@ -64,3 +64,6 @@ experiments/purpose_audit/sparse_*.csv
 experiments/purpose_audit/readback_*.py
 docs/qa/upstream-canary/_answer_key_do_not_share.txt
 experiments/purpose_audit/upstream_seven_in_scope_*.csv
+experiments/purpose_audit/upstream_seven_merged_*.csv
+experiments/purpose_audit/upstream_sparse_patch2_*.csv
+experiments/purpose_audit/mr7/

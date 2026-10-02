@@ -1,11 +1,15 @@
 {
   "as_of": "2026-10-02",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built. Late 10-02: date-reader fix applied (suite 1,327 green), sponsorship option A built and wired, upstream QA canary ready.",
+  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built. Late 10-02: date-reader fix applied (suite 1,327 green), sponsorship option A built and wired, upstream QA canary ready. Late 10-02: headline numbers re-based on LIVE deadlines (provable 6 of 10; customer agreement 4 of 9, 44%, with the cause named); upstream's final sparse patch gated: only quote wording left.",
   "decisions": [
     {
-      "text": "Send NOTE-TO-UPSTREAM-15 (it replaces 13 and 14 for the seven events): their sparse patch checked against live pages (3 good, CODASPY wrong page, Fuel Ethanol wrongly changed from the correct 2027-02-12), plus OUR page reads for them to apply literally. Triangle closes tonight, WSED 10-09.",
-      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-15.md"
+      "text": "Send NOTE-TO-UPSTREAM-16: their final sparse patch passes every gate check except one, quote wording. Three quotes have a stray trailing period the pages do not have (Triangle, GC&E, Fuel Ethanol) and BASC is a script-built page the gate cannot read. Also corrects what the patch did not touch: GC&E is Minneapolis MN, the 31st conference, June 7-10, 2027 (not Reston VA, 29th); CODASPY is June 14-17. Triangle closes tonight.",
+      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-16.md"
+    },
+    {
+      "text": "Extend the acceptance gate so a script-built page (a plain fetch sees almost no text, e.g. basconf.org 52 characters) is reported as 'quote not checked' instead of failing check 3, as already done for anti-bot walls? RECOMMEND YES: BASC's quote is verbatim in a real browser and the gate currently rejects a correct row. Small change with tests.",
+      "file": "C:/Users/matts/cfp-monitor/scripts/accept_delivery.py"
     },
     {
       "text": "Send NOTE-TO-UPSTREAM-12: 13 customer-tracked events with a verified, still-open date that we do not research (9 Urgent; six close within about two weeks). Asks which are in scope and to add the in-scope ones to the research lists.",
@@ -26,77 +30,71 @@
   ],
   "headline": {
     "provable": {
-      "label": "Provable submission date",
-      "definition": "Stored deadline is on the cited page AND code labels that date a submission date. A correct answer is enough; a word-for-word quote is not required.",
-      "rows": 39,
+      "label": "Provable submission date (live deadlines)",
+      "definition": "Deadlines still ahead for events on the Cybersecurity and Utility market lists. Proven = our verifier found the stored date on the cited page and a citation exists. A deadline that has already passed is not scored: its page moves on to the next edition.",
+      "rows": 10,
       "levels": [
         {
           "key": "confirmed",
-          "label": "Date on cited page, purpose = submission",
-          "n": 11,
+          "label": "Date on the cited page",
+          "n": 6,
           "tone": "good"
         },
         {
-          "key": "unclear",
-          "label": "Date on page, purpose undecided",
+          "key": "withdrawn",
+          "label": "Citation withdrawn by agreement (honestly unproven)",
           "n": 1,
           "tone": "warn"
         },
         {
-          "key": "mismatch",
-          "label": "Date on page, wrong purpose",
+          "key": "nopage",
+          "label": "Cited page blocks our plain reader (a browser read would settle it)",
+          "n": 3,
+          "tone": "mute"
+        },
+        {
+          "key": "absent",
+          "label": "Page read, date not on it",
           "n": 0,
           "tone": "bad"
         },
         {
-          "key": "absent",
-          "label": "Date not on the cited page",
-          "n": 15,
+          "key": "mismatch",
+          "label": "Page read, shows a different date",
+          "n": 0,
           "tone": "bad"
-        },
-        {
-          "key": "nopage",
-          "label": "No readable page",
-          "n": 12,
-          "tone": "mute"
         }
       ],
-      "open_rows": 3,
-      "open_confirmed": 2,
-      "note": "Re-audited 10-01 after the corrections: Climate Change (was a registration-date mismatch) and Global Energy Show (was unreadable) are now confirmed; SecureWorld has no citation after its withdrawal. India Energy Week is verified separately (the audit counts one row per conference and picks its stale 2026 duplicate).",
-      "source": "experiments/purpose_audit/RESULT.md"
+      "open_rows": 10,
+      "open_confirmed": 6,
+      "note": "The earlier 28% (11 of 39) counted every stored deadline, including 44 of 48 that had already passed; the purpose audit itself said 15 of 16 'absent' and 11 of 12 'unreadable' rows were already-passed deadlines, 'not errors'. On live deadlines the unproven ones are a deliberate citation withdrawal and pages that refuse a plain fetch, not wrong dates.",
+      "source": "scripts/board_metrics.py provable_live, 2026-10-02; experiments/purpose_audit/RESULT.md for the all-rows audit"
     },
     "customer": {
-      "label": "Agreement with customer-verified dates",
-      "definition": "Rows where the customer's team marked the date Verified and has a date: does ours match? Rough first reading, not cleaned for editions or passed rows.",
-      "rows": 34,
+      "label": "Agreement with customer-verified dates (live rows)",
+      "definition": "Rows where the customer's team marked the date Verified and has a date, the customer has not withdrawn the row, and the customer's date or ours is still ahead: does ours match? Rows whose dates have both passed are not scored here.",
+      "rows": 9,
       "levels": [
         {
           "key": "agree",
           "label": "Same date",
-          "n": 17,
+          "n": 4,
           "tone": "good"
         },
         {
           "key": "blank",
           "label": "Our deadline blank",
-          "n": 9,
+          "n": 3,
           "tone": "warn"
         },
         {
           "key": "differ",
           "label": "Different date",
-          "n": 7,
+          "n": 2,
           "tone": "bad"
-        },
-        {
-          "key": "unreadable",
-          "label": "Customer date unreadable",
-          "n": 1,
-          "tone": "none"
         }
       ],
-      "note": "Source is the weekly customer-sheet snapshot already in the database. This is the number the customer would feel.",
+      "note": "All rows, rough (includes past dates and old editions): 17 of 33 agree. Of the live rows that do not agree today, most are fixed by loads already done (Nullcon, Troopers 2027, Black Hat Asia) but the customer's row still points at the previous edition's event; Climate Change is the customer holding the earlier round's date.",
       "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-02; customer-withdrawn rows excluded"
     }
   },
@@ -305,12 +303,12 @@
     "good": [
       {
         "label": "Provable submission dates",
-        "now": "2 of 3 open rows, plus India Energy Week verified separately (11 of 39 overall, up from 9)",
+        "now": "6 of 10 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
         "target": "90% of open-call rows; the rest honestly blank, never guessed"
       },
       {
         "label": "Agreement with customer-verified dates",
-        "now": "50% (20 of 40)",
+        "now": "4 of 9 live rows today (44%); 17 of 33 counting past dates and old editions",
         "target": "90%"
       },
       {
@@ -531,7 +529,7 @@
         {
           "kind": "decision",
           "t": "Coverage gap: the customer tracks 41 verified, dated events we have no matching event for",
-          "r": "Found by scripts/board_metrics.py 10-02: 29 Arnica, 12 Utility Global. Mostly older or out-of-scope events; needs a look at which are live.",
+          "r": "Found by scripts/board_metrics.py 10-02: 29 Arnica, 12 Utility Global. Mostly older or out-of-scope events; needs a look at which are live. Upstream answered 10-02: 7 in scope (delivery being finished, see note 16), 6 out of scope (AAIML, ICRAI, RAAI, AI Con USA, AppWorld, ODSC); three of the out-of-scope were Urgent for Arnica and close 10-10 to 10-18: the customer should be told we do not cover them.",
           "s": "todo"
         }
       ]
