@@ -27,6 +27,8 @@ what it means for the next run.
 Re-Research (prospect markets)`; those six markets are speculative and have no customer) are
 **Disabled** in Windows Task Scheduler. Nothing else changed: Saturday, Sunday and Monday still run.
 
+*2026-10-02:* sponsorship answers are no longer lost to an Unknown or a blank (step 2).
+
 *2026-10-01:* the approved files that Saturday's load falls back to for rows that fail the approval check (`Markets/Utility_audited.final.csv`, `Markets/Cybersecurity_audited.final.csv`) were patched by hand so four corrected rows (India Energy Week 2027, Climate Change, SecureWorld, Global Energy Show) keep their corrected values; upstream acknowledged these local copies as the master for Saturday. Until upstream's re-research delivery is imported, a fallback to these files is safe for those rows. An operator edit to either file is logged in `experiments/purpose_audit/OPERATOR-EDITS-LOG.md`.
 The sections below describe what each job does WHEN it is enabled. To turn one back on, run
 `Enable-ScheduledTask -TaskName '<name>'` in an elevated (Administrator) PowerShell window.
@@ -108,6 +110,10 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 1. **[Safety check]** **Stops if research failed.** Nothing is loaded and the database stays exactly as it was.
 2. **[Update]** **Fixes wording-only problems** - for example a quote copied slightly wrong from the cited
    page. It never changes a date, a status or which page is cited. *(mechanical_repairs.py)*
+   Then, for sponsorship only: if this week's research comes back "Unknown" or blank for an event whose sponsorship
+   answer we already hold for the same year's edition, last week's answer is kept together with its page; blank cells
+   are filled, a fresh answer is never replaced, and a Yes-versus-No difference is left for a person. Every value
+   kept is listed in the report. *(sponsor_carry.py)*
 3. **[Safety check]** **Runs the approval check with the row-by-row rule.** Rows that pass use this week's research.
    Rows that fail, were not researched, or cannot be matched to an event with certainty keep last
    week's approved version. Events not covered this week carry over, so nothing disappears from

@@ -307,6 +307,17 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
                                      "reasons": ["not covered by this week's research"],
                                      "action": "carried-over"})
 
+    # 1b. SPONSORSHIP CARRY-FORWARD (option A, operator 2026-10-02, docs/design/sponsorship-carry-forward.md).
+    # Do not let an Unknown or a blank replace a sponsorship answer we already hold for the SAME edition: keep last
+    # week's resolved answer with its page, fill only blank cells, never override a fresh answer. Every carry is in
+    # the report so a carried value is never mistaken for fresh research. A Yes/No difference is reported, not carried.
+    from scripts.sponsor_carry import carry_sponsorship
+    rows, sp = carry_sponsorship(rows, sources, prior_by_canon, lookup, to_canonical)
+    res["sponsor_carried"] = sp
+    if sp["carried"] or sp["disagreements"]:
+        log.append(f"[{market}] sponsorship carry-forward: {len(sp['carried'])} row(s) kept last week's answer, "
+                   f"{len(sp['disagreements'])} Yes/No difference(s) left for a person")
+
     # 2. gate -> row rule -> gate, until ACCEPTED
     cand = work / f"{market}_audited.candidate.csv"
     for rnd in range(1, MAX_ROUNDS + 1):

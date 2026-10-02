@@ -1,15 +1,19 @@
 {
   "as_of": "2026-10-02",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built.",
+  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built. Late 10-02: date-reader fix applied (suite 1,327 green), sponsorship option A built and wired, upstream QA canary ready.",
   "decisions": [
+    {
+      "text": "Send the three-question QA canary to upstream (positive page, a page that does not exist, a real third-party sentence) and note how long they take. It tells us whether their chat replies come from reading pages or from memory. Text in docs/qa/UPSTREAM-QA-PROTOCOL.md.",
+      "file": "C:/Users/matts/cfp-monitor/docs/qa/UPSTREAM-QA-PROTOCOL.md"
+    },
+    {
+      "text": "Send NOTE-TO-UPSTREAM-13: the seven in-scope events were rejected by the gate (format again, 3 dead cited pages, 3 non-verbatim quotes, 1 deadline not on its page, CODASPY venue wrong). Re-send the fixes as a sparse patch.",
+      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-13.md"
+    },
     {
       "text": "Send NOTE-TO-UPSTREAM-12: 13 customer-tracked events with a verified, still-open date that we do not research (9 Urgent; six close within about two weeks). Asks which are in scope and to add the in-scope ones to the research lists.",
       "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-12.md"
-    },
-    {
-      "text": "Sponsorship carry-forward: choose A now and B after a shadow week (recommended), A only, or leave as is; set the TTL (suggest 90 days). Measured: the fact is stable (1 change in 76 rows) but wording and URL churn weekly and a known cost came back blank 4 times.",
-      "file": "C:/Users/matts/cfp-monitor/docs/design/sponsorship-carry-forward.md"
     },
     {
       "text": "Tell upstream (courtesy): the new Utility awards file (Awards_20261002_out.csv) still carries 6 passed-deadline rows marked Open and one dead Clinton Global Initiative link, so it is not gate-accepted; ask them to re-emit those rows' status. The two new award rows are fine.",
@@ -380,6 +384,18 @@
           "t": "How do the other ~24 fields get filled?",
           "r": "Open: keep, carry forward, or a second call",
           "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "Is the research really searching? Saturday logs: only about 35% of calls were genuine grounded searches",
+          "r": "Measured 10-02 from the grounding logs: Cybersecurity 49 of 141 grounded, 52 timed out, 36 answered with no search; Utility 40 of 139. Discarded answers leave rows on last week's data. Narrow prompt grounded 24 of 24 (09-30 test) but is not wired in.",
+          "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "Do upstream's chat replies read pages or answer from memory? (canary test)",
+          "r": "Test and scoring written (docs/qa/UPSTREAM-QA-PROTOCOL.md); waiting for you to send it to upstream.",
+          "s": "todo"
         }
       ]
     },
@@ -538,8 +554,8 @@
         {
           "kind": "build",
           "t": "Sponsorship carry-forward",
-          "r": "Design written 10-02 with measurements and a recommendation (A now, B after a shadow week); waiting on your three decisions. docs/design/sponsorship-carry-forward.md",
-          "s": "todo"
+          "r": "Option A BUILT and wired into the weekend import 10-02 (scripts/sponsor_carry.py, 14 tests; rehearsal clean): never lose a known answer. Rescues 4 Cybersecurity + 1 Utility rows on last week's real data. Option B (stop re-asking while fresh) not built, after a measured shadow week.",
+          "s": "doing"
         },
         {
           "kind": "build",
