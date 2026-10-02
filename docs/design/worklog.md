@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-02 (evening) - narrow research prompt tested and wired for Saturday
+
+- Patched Markets/run_market_audit.py (backup run_market_audit.pre-narrow-20261002.py; patch script experiments/purpose_audit/patch_narrow_prompt.py): CFP_PROMPT_MODE=narrow-first, 3,092-char prompt (awards 3,819) vs 11,885 (12,662); default stays full. Why: Saturday 09-27 grounded ~a third of calls; 09-30 experiment grounded 24 of 24 narrow.
+- Real test through the production script, 7 calls (~$0.50): 7 of 7 grounded, 0 full-prompt fallbacks, 0 stubs, one award 504 retried OK. SANS 2026-10-19 and TROOPERS 2027-03-31 correct with verbatim quotes; ShmooCon Needs Verification (final event held); ACT Expo Fleet returned no citation (gate would flag).
+- Set the default in Markets/run_monthly.ps1 (backup run_monthly.pre-narrow-20261002.ps1); the canary runs inside it and inherits. Not run end to end; first real use Saturday 02:00. Awards job still disabled (operator to enable elevated).
+- Open caveat: non-deadline fields are carried from the input row, not re-researched.
+
 ## 2026-10-02 - benchmark locked, models compared, upstream's new rows loaded, R11 defect fixed, gate walled-page fix
 
 - Benchmark: Hermes ran all 40 events (free model space-bunny-alpha, $0): 9 of 9 first spot-checks right, 8 of 10 on the formal sample (misses B28, B37, both self-flagged low confidence). Comparison on the 10 hard rows: gpt-6.1-sol medium 6/10, free 4/10, gpt xhigh 4/9, DeepSeek v4.1 flash 3/10 ($0.016); cause was mostly the brief not naming the edition. Rule 7a added; reruns on free and DeepSeek flash agree on B26/B27/B28. Key locked with 9 hand labels (B38 -> open, B13 -> not_yet_announced under the rule; B37 stays unknown).

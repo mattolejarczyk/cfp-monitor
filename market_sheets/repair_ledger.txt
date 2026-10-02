@@ -81,3 +81,5 @@
 2026-09-27	Utility	Hydrogen Technology Expo MENA 2026	SUBMISSION URL	D	https://www.hydrogenccs-menaexpo.com/call-for-speakers		Utility_audited.csv
 2026-09-27	Utility	Hydrogen Technology Expo MENA 2026	CFP_SUBMISSION_URL	D	https://www.hydrogenccs-menaexpo.com/call-for-speakers		Utility_audited.csv
 2026-09-27	Utility	Hydrogen Technology Expo Europe 2027	VENUE_EVIDENCE_URL	D	https://www.hamburg-messe.de/en/event-details/-/event/hydrogen-technology-world-expo		Utility_audited.csv
+2026-10-02	Utility	29th Annual Green Chemistry & Engineering Conference (GC&E)	DEADLINE_QUOTE	A	Call for Symposia: Deadline October 13, 2026.	700+ Attendees 400+ Presentations 20+ Exhibitors Announcements Timeline Call for Symposia: Deadline October 13, 2026 Help us shape the conference by proposing sessions	seven.csv
+2026-10-02	Utility	Fuel Ethanol Workshop and Expo & Sustainable Fuels Summit	DEADLINE_QUOTE	A	Presentation abstracts will be accepted for the 2027 Sustainable Fuels Summit: SAF, Renewable Diesel, Biodiesel through February 12, 2027.	Sustainable Fuels Summit: SAF, Renewable Diesel, Biodiesel through February 12, 2027	seven.csv
