@@ -59,6 +59,18 @@ def normalize_cfp_model(value: Optional[str]) -> str:
 
 
 # ------------------------------------------------------------------ location --
+
+def _precedes_region(city: str, location: str, state: str, country: str) -> bool:
+    """True when `city` is the LOCATION fragment directly before a state or country fragment."""
+    parts = [p.strip().lower() for p in re.split(r"[,/]", location or "") if p.strip()]
+    c = (city or "").strip().lower()
+    if c not in parts or parts.index(c) + 1 >= len(parts):
+        return False
+    nxt = parts[parts.index(c) + 1]
+    regions = {(state or "").strip().lower(), (country or "").strip().lower(), "usa", "us", "united states", "uk", "united kingdom"} - {""}
+    return nxt in regions or bool(re.fullmatch(r"[a-z]{2}", nxt))
+
+
 def clean_city(location: str, city: str = "", state: str = "", country: str = "") -> str:
     """Best-effort real settlement name for a row.
 
@@ -89,6 +101,13 @@ def clean_city(location: str, city: str = "", state: str = "", country: str = ""
     # Contract 2.5: decline rather than guess. A delivered city we cannot fault beats a
     # heuristic that silently substitutes a state, a country or a hotel.
     if city and not _VENUE_HINT.search(city):
+        return city
+    # A PLACE NAME THAT CONTAINS "PARK" (Park City, Park Ridge) IS NOT A VENUE WHEN IT SITS DIRECTLY BEFORE THE STATE OR
+    # COUNTRY IN LOCATION ("Blair Education Center, Park City, UT, USA"). Found 2026-10-02: the venue hint matched "park", the
+    # fallback below kept the state, and the database held city "UT" for a correctly delivered "Park City". Narrow on purpose:
+    # only the word "park" is excused, and only in the "..., City, State/Country" position, so "Hyde Park, London, UK" and
+    # "Olympic Park, Salt Lake City, UT" are still read as venues.
+    if city and {w.lower() for w in _VENUE_HINT.findall(city)} == {"park"} and _precedes_region(city, location, state, country):
         return city
     parts = [p.strip() for p in re.split(r"[,/]", location or "") if p.strip()]
     countries = {(country or "").strip().lower(), "usa", "us", "united states",

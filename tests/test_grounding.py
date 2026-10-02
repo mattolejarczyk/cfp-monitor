@@ -249,3 +249,16 @@ def test_a_true_duplicate_is_still_collapsed():
                                 dict(base, OPPORTUNITY_TYPE="Awards")])
     assert rep["duplicates"] == 1
     assert len(rows) == 1
+
+
+# ---- a place called "... Park ..." is not a venue in the City, State position (2026-10-02) ----------------
+def test_park_city_utah_is_a_city_not_a_venue():
+    from src.cfp_monitor.grounding import clean_city
+    assert clean_city("Blair Education Center, Park City, UT, USA", "Park City", "UT", "USA") == "Park City"
+    assert clean_city("Park City, UT, USA", "Park City", "UT", "USA") == "Park City"
+
+
+def test_a_park_venue_is_still_a_venue():
+    from src.cfp_monitor.grounding import clean_city
+    assert clean_city("Olympic Park, Salt Lake City, UT, USA", "Olympic Park", "UT", "USA") == "Salt Lake City"
+    assert clean_city("Hyde Park, London, UK", "Hyde Park", "", "UK") == "London"

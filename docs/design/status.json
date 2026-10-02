@@ -1,12 +1,8 @@
 {
   "as_of": "2026-10-02",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built. Late 10-02: date-reader fix applied (suite 1,327 green), sponsorship option A built and wired, upstream QA canary ready. Late 10-02: headline numbers re-based on LIVE deadlines (provable 6 of 10; customer agreement 4 of 9, 44%, with the cause named); upstream's final sparse patch gated: only quote wording left.",
+  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built. Late 10-02: date-reader fix applied (suite 1,327 green), sponsorship option A built and wired, upstream QA canary ready. Late 10-02: headline numbers re-based on LIVE deadlines (provable 6 of 10; customer agreement 4 of 9, 44%, with the cause named); upstream's final sparse patch gated: only quote wording left. Six more events loaded (Triangle, WSED, GC&E, CODASPY, Apres-Cyber, Fuel Ethanol); BASC waits on the gate decision.",
   "decisions": [
-    {
-      "text": "Send NOTE-TO-UPSTREAM-16: their final sparse patch passes every gate check except one, quote wording. Three quotes have a stray trailing period the pages do not have (Triangle, GC&E, Fuel Ethanol) and BASC is a script-built page the gate cannot read. Also corrects what the patch did not touch: GC&E is Minneapolis MN, the 31st conference, June 7-10, 2027 (not Reston VA, 29th); CODASPY is June 14-17. Triangle closes tonight.",
-      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-16.md"
-    },
     {
       "text": "Extend the acceptance gate so a script-built page (a plain fetch sees almost no text, e.g. basconf.org 52 characters) is reported as 'quote not checked' instead of failing check 3, as already done for anti-bot walls? RECOMMEND YES: BASC's quote is verbatim in a real browser and the gate currently rejects a correct row. Small change with tests.",
       "file": "C:/Users/matts/cfp-monitor/scripts/accept_delivery.py"
@@ -511,7 +507,7 @@
         {
           "kind": "fix",
           "t": "Load upstream's new rows (4 speaking + 2 awards) on permanent IDs",
-          "r": "Done 10-02: gate accepted 22/22; 4 speaking rows in grounding_facts (409 -> 413), input list and seed updated, Saturday rehearsal ships all four; 2 award rows in the awards tables (119 -> 121). Invariants hold. Awards routing settled with upstream: input list stamped, Awards_20261002_out.csv placed, page preview shows both rows.",
+          "r": "Done 10-02: gate accepted 22/22; 4 speaking rows in grounding_facts (409 -> 413), input list and seed updated, Saturday rehearsal ships all four; 2 award rows in the awards tables (119 -> 121). Invariants hold. Awards routing settled with upstream: input list stamped, Awards_20261002_out.csv placed, page preview shows both rows. Second batch 10-02: 6 more events (gate ACCEPTED, 6 of 6 verified, 413 -> 419); OWASP BASC held for the gate decision.",
           "s": "done"
         },
         {
@@ -531,6 +527,12 @@
           "t": "Coverage gap: the customer tracks 41 verified, dated events we have no matching event for",
           "r": "Found by scripts/board_metrics.py 10-02: 29 Arnica, 12 Utility Global. Mostly older or out-of-scope events; needs a look at which are live. Upstream answered 10-02: 7 in scope (delivery being finished, see note 16), 6 out of scope (AAIML, ICRAI, RAAI, AI Con USA, AppWorld, ODSC); three of the out-of-scope were Urgent for Arnica and close 10-10 to 10-18: the customer should be told we do not cover them.",
           "s": "todo"
+        },
+        {
+          "kind": "fix",
+          "t": "Our city cleaning read 'Park City' as a venue and stored 'UT'",
+          "r": "Fixed 10-02 (src/cfp_monitor/grounding.py, narrow 'park' exception, tests); the live row re-imported; golden-master derivation unchanged.",
+          "s": "done"
         }
       ]
     },
