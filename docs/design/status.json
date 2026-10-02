@@ -1,15 +1,11 @@
 {
   "as_of": "2026-10-02",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. Waiting on you: send two notes to upstream (about the Utility awards file).",
+  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open.",
   "decisions": [
     {
-      "text": "Send NOTE-TO-UPSTREAM-8: 'Utility_Awards_master.csv' is not on this machine; asks where it lives and how to add the two award rows. Until a Utility awards file is approved, the two award rows (Climate Change closes 10-06, ACT Expo) are in the database but may not appear on any page.",
-      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-8.md"
-    },
-    {
-      "text": "Send NOTE-TO-UPSTREAM-7 (FYI: seven rows accepted, what we loaded, the R11 fix on our side). Upstream already confirmed all seven IDs permanent; this note is courtesy and can be skipped if you prefer.",
-      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-7.md"
+      "text": "Tell upstream (courtesy): the new Utility awards file (Awards_20261002_out.csv) still carries 6 passed-deadline rows marked Open and one dead Clinton Global Initiative link, so it is not gate-accepted; ask them to re-emit those rows' status. The two new award rows are fine.",
+      "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/Awards_20261002_out.csv"
     },
     {
       "text": "H2 MEET 2026 (Utility approved file): deadline 2026-09-30 passed but STATUS still says Open, so the approved Utility file fails gate check 6. STATUS is customer-owned; decide who corrects it before Saturday's fallback (RECOMMEND: ask upstream to re-emit the row's status through their normal path).",
@@ -463,7 +459,7 @@
         {
           "kind": "fix",
           "t": "Load upstream's new rows (4 speaking + 2 awards) on permanent IDs",
-          "r": "Done 10-02: gate accepted 22/22; 4 speaking rows in grounding_facts (409 -> 413), input list and seed updated, Saturday rehearsal ships all four; 2 award rows in the awards tables (119 -> 121). Invariants hold. Utility awards file question open.",
+          "r": "Done 10-02: gate accepted 22/22; 4 speaking rows in grounding_facts (409 -> 413), input list and seed updated, Saturday rehearsal ships all four; 2 award rows in the awards tables (119 -> 121). Invariants hold. Awards routing settled with upstream: input list stamped, Awards_20261002_out.csv placed, page preview shows both rows.",
           "s": "done"
         },
         {
