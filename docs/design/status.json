@@ -1,8 +1,12 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Whole-page reader is running over the offline library: 162 of 347 pages read at 19:39, $0.25 of a $0.60 cap, 0 errors. Hermes benchmark stage 2 is waiting on your go.",
+ "now": "Whole-page reader finished over the whole library (347 pages, $0.45): 18 submission deadlines still ahead on 9 sites; 5 time-sensitive findings to review. Hermes benchmark stage 2 waits on your go.",
  "decisions": [
+  {
+   "text": "TIME-SENSITIVE leads from the library: Climate Change Emerging Scholar Awards final deadline 6 Oct; Black Hat Asia 2027 summit sessions 12 Oct; SANS CTI/OSINT summits 19 Oct; Nullcon Goa 2027 call closes 30 Oct (our row is blank). Draft a findings note to upstream (they own research and the prospect-market discovery is switched off)?",
+   "file": "C:/Users/matts/cfp-monitor/experiments/whole_page_reader/LIBRARY-RUN-RESULT.md"
+  },
   {
    "text": "Retry Hermes benchmark stage 2 (5 events)? The library fetch no longer needs Chrome, so the debug port is free for Hermes.",
    "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
@@ -136,6 +140,14 @@
    "note": "Fitted 24/24 on labelled pages. Only 2 labels in holdout. Advisory only."
   },
   {
+   "step": "Whole-page reader over the full library",
+   "metric": "Accepted deadlines still ahead, hand-checked",
+   "result": "16 of 18 look right; 2 false positives",
+   "verdict": "warn",
+   "date": "10-01",
+   "note": "Rough, not a score. False positives: an awards-ceremony date and a post-acceptance full-paper date. Needs the benchmark."
+  },
+  {
    "step": "Whole-page model reader (DeepSeek)",
    "metric": "Holdout + fresh, as run",
    "result": "precision 0.85, recall 9/12",
@@ -215,7 +227,7 @@
   },
   {
    "label": "OpenRouter, whole-page reader over the library",
-   "usd": 0.247,
+   "usd": 0.453,
    "cap": 0.6
   }
  ],
@@ -372,8 +384,8 @@
     {
      "kind": "experiment",
      "t": "Run the whole-page reader over the offline library (347 usable pages)",
-     "r": "Running 10-01: 162 of 347 read, $0.25 spent, 0 errors. Results are advisory; compared with stored deadlines after it finishes.",
-     "s": "doing"
+     "r": "Done 10-01: 347 pages read, 0 errors, $0.453. 40 pages state a submission deadline (123 accepted dates, 18 sites). 18 still ahead on 9 sites; hand-checked 6: 5 real, 1 false positive (ceremony date). Found an open Nullcon Goa 2027 call that our row lacks. No answer key, so not an accuracy score.",
+     "s": "done"
     }
    ]
   },

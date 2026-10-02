@@ -88,12 +88,15 @@ def summarize():
         r = json.loads(line)
         if r.get("content"):
             latest[r["url"]] = r
-    res, unparse, labels = {}, 0, {}
+    res, unparse, labels, malformed = {}, 0, {}, 0
     for url, r in latest.items():
         items = R.parse_items(r["content"], tolerant=True)
         if items is None:
             unparse += 1; continue
         host, text = pages[url]
+        bad = sum(1 for d in items if not isinstance(d, dict))      # the model sometimes returns a bare string instead of an object
+        malformed += bad
+        items = [d for d in items if isinstance(d, dict)]
         acc = []
         for d in items:
             labels[d.get("label")] = labels.get(d.get("label"), 0) + 1
@@ -110,7 +113,7 @@ def summarize():
     print(f"pages with at least one accepted submission deadline: {len(acc_pages)}; accepted dates: {len(allacc)}; on {len({x[0] for x in allacc})} sites")
     print(f"accepted dates still ahead of {TODAY}: {len(future)} on {len({x[0] for x in future})} sites")
     print("model labels:", dict(sorted(labels.items(), key=lambda x: -x[1])))
-    print("truncated pages:", sum(1 for v in res.values() if v["truncated"]))
+    print("truncated pages:", sum(1 for v in res.values() if v["truncated"]), "| malformed items skipped:", malformed)
 
 
 if __name__ == "__main__":
