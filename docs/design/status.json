@@ -1,22 +1,18 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Approved market files patched and verified (Saturday safeguard closed for 3 of 4 fields). One cell still open: the Global Energy Show submit link in the approved file. Reply to upstream drafted.",
+ "now": "Saturday safeguard closed: approved files and our database hold the corrected values, including the Global Energy Show link. Upstream acknowledged our files as master. Nullcon Goa patch is ready for your go.",
  "decisions": [
   {
-   "text": "Global Energy Show: the approved file still holds the dead link in CFP_SUBMISSION_URL (the patch tool protects that field). RECOMMEND: I edit that one cell by operator ruling (backup, read-back, logged), as I did in our database, so Saturday's fallback cannot bring the 404 back. Yes?",
-   "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/Utility_audited.final.csv"
-  },
-  {
-   "text": "SEND the round-4 note to upstream: their Nullcon Goa key 2027-nullcon-goa-goa matches no existing row; the files on our machine were unchanged (we patched them tonight); the Global Energy Show link still needs to come from their delivery.",
-   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-4.md"
+   "text": "Apply upstream's Nullcon Goa 2027 payload to the approved Cybersecurity file (deadline 2026-10-30, evidence, quote, IS_PROJECTED false)? Report mode is clean (4 fields, one row, key matches the existing row). RECOMMEND YES; their STATUS value is refused by the tool by design.",
+   "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/apply_row_patch.py"
   },
   {
    "text": "Retry Hermes benchmark stage 2 (5 events)? Needs the debug Chrome restarted first.",
    "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
   },
   {
-   "text": "No action: after Saturday's load I diff the corrected rows against today's backups and report before Monday 07:00.",
+   "text": "No action: upstream's re-research delivery (7 new rows, IS_PROJECTED flags, IEW retirement) is expected; I verify it when it arrives. After Saturday's load I diff the corrected rows against today's backups before Monday 07:00.",
    "file": ""
   }
  ],
@@ -403,7 +399,7 @@
     {
      "kind": "fix",
      "t": "Correct 4 rows",
-     "r": "Done 10-01: applied to our database AND to the approved market files Saturday reads (patched, backed up, read back). Open: Global Energy Show link cell in the approved file; upstream's re-research delivery (new rows) not yet received.",
+     "r": "Done 10-01: applied to our database and to the approved files (incl. the Global Energy Show link cell, by your ruling). Upstream acknowledged our files as master. Their re-research delivery (new rows) is pending.",
      "s": "done"
     },
     {
