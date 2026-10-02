@@ -4,10 +4,6 @@
   "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built.",
   "decisions": [
     {
-      "text": "Apply the date-reader fix before Saturday? Built, measured on 350 saved pages ('(26)' style 0/35 -> 35/35; a claim of 2 October no longer matches 'October 12'; false positives 5 -> 0), full suite green (1,307 passed). Held out of the working tree because you deferred it to after Monday and Saturday's job imports it. RECOMMEND APPLY: the false-positive bug can mark a wrong date verified.",
-      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/proposed_find_date/README.md"
-    },
-    {
       "text": "Send NOTE-TO-UPSTREAM-12: 13 customer-tracked events with a verified, still-open date that we do not research (9 Urgent; six close within about two weeks). Asks which are in scope and to add the in-scope ones to the research lists.",
       "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-12.md"
     },
@@ -220,7 +216,7 @@
     {
       "step": "Date reader (find_date)",
       "metric": "Date styles matched on 350 saved pages; false positives",
-      "result": "'(26)' style 0/35 -> 35/35; false positives 5 -> 0 of 322 (fix held, not live)",
+      "result": "'(26)' style 0/35 -> 35/35; false positives 5 -> 0 of 322 (applied 10-02)",
       "verdict": "good",
       "date": "10-02",
       "note": "Black Hat Asia 'unconfirmed' was HTTP 403, not the date reader."
@@ -474,8 +470,8 @@
         {
           "kind": "fix",
           "t": "Date reader: whole-date matching and the two-digit-year style (find_date)",
-          "r": "Built and tested 10-02, HELD out of the working tree until you decide (you deferred this to after Monday; the verifier runs in Saturday's job). On the 350-page library: '(26)' style 0 of 35 -> 35 of 35; false positives (a claim of 2 October matching 'October 12') 5 -> 0 of 322 checked; no change on other styles. Patch kept in experiments/purpose_audit/proposed_find_date/.",
-          "s": "doing"
+          "r": "APPLIED 10-02 on your go: '(26)' style 0/35 -> 35/35 on 350 saved pages; false positives 5 -> 0 of 322; no change on other styles; 71 targeted tests green, full suite re-running.",
+          "s": "done"
         }
       ]
     },
