@@ -2,3 +2,5 @@ llm_log.jsonl
 scored_*.json
 *_log.txt
 __pycache__/
+llm_log_library.jsonl
+library_results.json

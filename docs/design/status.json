@@ -1,12 +1,8 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Offline page library is complete: 360 pages, 350 usable. Refresh-policy design settled. Waiting on your go for the next steps below.",
+ "now": "Whole-page reader is running over the offline library: 162 of 347 pages read at 19:39, $0.25 of a $0.60 cap, 0 errors. Hermes benchmark stage 2 is waiting on your go.",
  "decisions": [
-  {
-   "text": "RECOMMEND YES: run the whole-page reader (DeepSeek) offline over all 360 saved pages. About 36 cents. It gives the first full-library view of submission dates and tests the reader on far more pages than the 27 so far. Advisory only, nothing written to the database.",
-   "file": "C:/Users/matts/cfp-monitor/docs/design/whole-page-reader-experiment.md"
-  },
   {
    "text": "Retry Hermes benchmark stage 2 (5 events)? The library fetch no longer needs Chrome, so the debug port is free for Hermes.",
    "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
@@ -216,6 +212,11 @@
    "label": "OpenRouter, whole-page reader experiment",
    "usd": 0.082,
    "cap": 0.5
+  },
+  {
+   "label": "OpenRouter, whole-page reader over the library",
+   "usd": 0.247,
+   "cap": 0.6
   }
  ],
  "objective": {
@@ -367,6 +368,12 @@
      "t": "Can a model label every date on a whole page?",
      "r": "As run: precision 0.85, recall 9 of 12 (fails the 0.95 / 0.80 bar). Post-hoc fixes: precision 0.875 (1.00 counting 2 of my own labelling errors it caught), recall 11 of 12. 0 wrong-purpose in 69 accepted. Promising, not proven; needs a larger test.",
      "s": "done"
+    },
+    {
+     "kind": "experiment",
+     "t": "Run the whole-page reader over the offline library (347 usable pages)",
+     "r": "Running 10-01: 162 of 347 read, $0.25 spent, 0 errors. Results are advisory; compared with stored deadlines after it finishes.",
+     "s": "doing"
     }
    ]
   },
