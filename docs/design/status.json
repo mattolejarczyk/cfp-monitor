@@ -1,15 +1,15 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Upstream replied (accepted all 7 leads, retired the India Energy Week duplicate). I verified: their quotes are all on the pages, but the approved files on this machine are UNCHANGED since 09-27, so the Saturday safeguard is still open. Patches are ready in report mode.",
+ "now": "Approved market files patched and verified (Saturday safeguard closed for 3 of 4 fields). One cell still open: the Global Energy Show submit link in the approved file. Reply to upstream drafted.",
  "decisions": [
   {
-   "text": "SATURDAY SAFEGUARD STILL OPEN: the approved files Saturday reads (Markets/Utility_audited.final.csv and Cybersecurity_audited.final.csv) still hold the OLD values for the 4 corrected rows (last changed 09-27). Upstream's 'sync completed' cannot touch files on this machine. Apply the two prepared patches with apply_row_patch.py (auto-backup)? RECOMMEND YES. The Global Energy Show link cannot be patched by that tool (it protects CFP_SUBMISSION_URL).",
-   "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/apply_row_patch.py"
+   "text": "Global Energy Show: the approved file still holds the dead link in CFP_SUBMISSION_URL (the patch tool protects that field). RECOMMEND: I edit that one cell by operator ruling (backup, read-back, logged), as I did in our database, so Saturday's fallback cannot bring the 404 back. Yes?",
+   "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/Utility_audited.final.csv"
   },
   {
-   "text": "Reply to upstream: (1) the Nullcon Goa 2027 ID they gave, 2027-nullcon-goa-goa, matches no existing row (ours: 2026-nullcon-goa-bambolim); a mismatched key would create a duplicate; (2) the files on our machine are unchanged; (3) we will verify their re-research delivery when it arrives. I can draft it.",
-   "file": ""
+   "text": "SEND the round-4 note to upstream: their Nullcon Goa key 2027-nullcon-goa-goa matches no existing row; the files on our machine were unchanged (we patched them tonight); the Global Energy Show link still needs to come from their delivery.",
+   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-4.md"
   },
   {
    "text": "Retry Hermes benchmark stage 2 (5 events)? Needs the debug Chrome restarted first.",
@@ -403,7 +403,7 @@
     {
      "kind": "fix",
      "t": "Correct 4 rows",
-     "r": "All 4 applied to our database 10-01. Upstream replied: duplicate retired, IS_PROJECTED emitted, 7 leads accepted as new rows. Approved files on this machine still old: patches ready, awaiting your go.",
+     "r": "Done 10-01: applied to our database AND to the approved market files Saturday reads (patched, backed up, read back). Open: Global Energy Show link cell in the approved file; upstream's re-research delivery (new rows) not yet received.",
      "s": "done"
     },
     {
