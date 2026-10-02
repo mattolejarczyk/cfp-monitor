@@ -4,12 +4,8 @@
   "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built. Late 10-02: date-reader fix applied (suite 1,327 green), sponsorship option A built and wired, upstream QA canary ready.",
   "decisions": [
     {
-      "text": "Send NOTE-TO-UPSTREAM-14 (canary scored: honest, reads search results, cannot open arbitrary URLs; three rules; asks which tool reads pages). Then NOTE-13 is the re-send request for the seven events (or combine them).",
-      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-14.md"
-    },
-    {
-      "text": "Send NOTE-TO-UPSTREAM-13: the seven in-scope events were rejected by the gate (format again, 3 dead cited pages, 3 non-verbatim quotes, 1 deadline not on its page, CODASPY venue wrong). Re-send the fixes as a sparse patch.",
-      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-13.md"
+      "text": "Send NOTE-TO-UPSTREAM-15 (it replaces 13 and 14 for the seven events): their sparse patch checked against live pages (3 good, CODASPY wrong page, Fuel Ethanol wrongly changed from the correct 2027-02-12), plus OUR page reads for them to apply literally. Triangle closes tonight, WSED 10-09.",
+      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-15.md"
     },
     {
       "text": "Send NOTE-TO-UPSTREAM-12: 13 customer-tracked events with a verified, still-open date that we do not research (9 Urgent; six close within about two weeks). Asks which are in scope and to add the in-scope ones to the research lists.",

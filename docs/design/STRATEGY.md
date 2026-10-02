@@ -48,3 +48,16 @@ Write every task as a brief (`docs/agents/README.md`: ten parts, success test fi
 3. After the benchmark and census: build a platform parser, widen the whole-page model reader, or both; whether Firecrawl is worth a fetch-layer test. The page library (`scripts/page_library.py`, 360 pages) and the refresh policy (`docs/design/page-refresh-policy.md`) are done / designed.
 4. Climate Change `(26)` date check in `verify.find_date`: extend after Monday 10-05 (decided).
 5. I diff the four corrected rows after Saturday's load and report before Monday 07:00.
+
+## Working with upstream: standing principles (operator, 2026-10-02: "keep this top of mind")
+
+Upstream is a chat session whose only web access is a Google search index (confirmed by upstream 2026-10-02; the first canary run, `docs/qa/UPSTREAM-QA-PROTOCOL.md`). It cannot open an arbitrary URL and its code environment has no network. Every shortcut it takes, intentional or not, comes from that gap plus requests that were not specific enough about WHAT and HOW. So:
+
+1. **Question the mechanism, not just the answer.** Every request states WHAT is wanted, HOW it should be found (a page it opened or a search result that names the event), and what to say when it cannot (a plain "could not open", not "404").
+2. **Ask for proof with every fact**: the exact URL, a verbatim sentence, the page title, and one line on how it was obtained (snippet, opened page, or our table). Then verify it ourselves: the gate for the mechanics, a real read for anything that matters.
+3. **We read, they format.** Anything that needs a specific page read is read on our side (our reader and the page library, Hermes, or the built-in browser) and handed over as URL plus verbatim sentence for them to apply literally. This is what produced the 22-of-22 delivery; the unaided ones failed.
+4. **Sparse patches only**, never regenerated rows; and compare the patch field by field with what we asked for. A difference we did not request is a finding.
+5. **Watch for wrong-event attribution.** A search snippet can belong to a different event (the Fuel Ethanol Workshop deadline was replaced by another conference's date on 2026-10-02, turning a correct row wrong). Check the event name in the cited page before accepting a date.
+6. **Log what each exchange taught us** (gap, cause, fix) in the worklog, so the requests get sharper each round.
+
+Known gaps so far (2026-10-02): composed URL paths; "404" reported without observing it; full-row regeneration filling fields with filler; deadlines copied from the customer's sheet; snippet attributed to the wrong event; CSV commas left unquoted three times; GATED_STATUS filled twice; location facts wrong (CODASPY, Apres-Cyber).
