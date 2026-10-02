@@ -1,18 +1,22 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Pinned for today. Round-3 note to upstream is drafted (7 new leads plus the open items). Page library and whole-page reader are done. Hermes benchmark stage 2 waits on your go; the debug Chrome has closed again.",
+ "now": "Upstream replied (accepted all 7 leads, retired the India Energy Week duplicate). I verified: their quotes are all on the pages, but the approved files on this machine are UNCHANGED since 09-27, so the Saturday safeguard is still open. Patches are ready in report mode.",
  "decisions": [
   {
-   "text": "SEND the round-3 note to upstream. It carries 7 new leads (4 close within 19 days: Climate Emerging Scholar 6 Oct, Black Hat Asia summits 12 Oct, SANS summits 19 Oct, Black Hat Asia briefings 20 Oct; Nullcon Goa 30 Oct) and repeats the open round-2 items. The Saturday 02:00 item is time-critical. It replaces the separate round-2 note.",
-   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-3.md"
+   "text": "SATURDAY SAFEGUARD STILL OPEN: the approved files Saturday reads (Markets/Utility_audited.final.csv and Cybersecurity_audited.final.csv) still hold the OLD values for the 4 corrected rows (last changed 09-27). Upstream's 'sync completed' cannot touch files on this machine. Apply the two prepared patches with apply_row_patch.py (auto-backup)? RECOMMEND YES. The Global Energy Show link cannot be patched by that tool (it protects CFP_SUBMISSION_URL).",
+   "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/apply_row_patch.py"
   },
   {
-   "text": "Retry Hermes benchmark stage 2 (5 events)? Its page reading needs a debug Chrome on port 9222. That Chrome closed again on its own; restart it with scripts\\launch_chrome_cdp.bat, or tell me to.",
+   "text": "Reply to upstream: (1) the Nullcon Goa 2027 ID they gave, 2027-nullcon-goa-goa, matches no existing row (ours: 2026-nullcon-goa-bambolim); a mismatched key would create a duplicate; (2) the files on our machine are unchanged; (3) we will verify their re-research delivery when it arrives. I can draft it.",
+   "file": ""
+  },
+  {
+   "text": "Retry Hermes benchmark stage 2 (5 events)? Needs the debug Chrome restarted first.",
    "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
   },
   {
-   "text": "No action: after Saturday's load I diff the corrected rows (India Energy Week, Climate Change, SecureWorld, Global Energy Show) against today's backups and report before Monday 07:00.",
+   "text": "No action: after Saturday's load I diff the corrected rows against today's backups and report before Monday 07:00.",
    "file": ""
   }
  ],
@@ -399,7 +403,7 @@
     {
      "kind": "fix",
      "t": "Correct 4 rows",
-     "r": "All 4 applied 10-01 with backups; re-audit confirms Climate Change and Global Energy Show; round-3 note carries the open items (IS_PROJECTED, duplicate row, Saturday safeguard)",
+     "r": "All 4 applied to our database 10-01. Upstream replied: duplicate retired, IS_PROJECTED emitted, 7 leads accepted as new rows. Approved files on this machine still old: patches ready, awaiting your go.",
      "s": "done"
     },
     {
