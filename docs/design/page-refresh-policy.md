@@ -1,4 +1,4 @@
-# Page refresh policy by event lifecycle (operator's idea, refined by the operator 2026-10-01; DESIGN ONLY, not built)
+# Page refresh policy by event lifecycle (operator's idea, refined by the operator 2026-10-01; SHADOW PLANNER BUILT 2026-10-02, scheduler not built)
 
 **Principle.** Fetch a page when a change on it would matter, not on a clock. The first full fetch of the page library is a one-time snapshot of all 364 planned pages. After that, each page refreshes according to its event's lifecycle category. The library already stores a timestamp and a sha256 per page and keeps older versions, so the policy needs only two added columns (`category`, `next_refresh_at`) and a scheduler.
 
@@ -28,3 +28,7 @@ These counts come from stored start dates and deadlines. 11 rows read "Needs Ver
 1. Add `category`, `next_refresh_at` and an `exception` flag (for E) to `page_library.db`; map each planned page to its event's category (host to conference keys through the inventory).
 2. `--refresh-due` mode in `scripts/page_library.py`, with a test.
 3. One shadow week: log what it would have fetched, compare with the weekend research list, then schedule it.
+
+
+## Status 2026-10-02
+`scripts/refresh_planner.py` implements the categories and overlays above as a report-only shadow planner (tests in `tests/test_refresh_planner.py`). It fetches nothing and adds no columns to `page_library.db`. On live data: 95 conferences in the two markets (as designed); categories A 4, B 25, C1 12, C2 22, D 6, E 1, F 3, SKIP (every customer done) 22. The shadow-week comparison (plan vs what the weekend research actually looked at) is the next step; build order items 1 and 2 (columns in the library, `--refresh-due` in `page_library.py`) wait for it. Open: whether a row every customer has finished (SKIP, 22 today) should still be watched for the NEXT edition, as the policy text says it is skipped only while every customer is done.

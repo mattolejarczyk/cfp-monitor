@@ -1,8 +1,20 @@
 {
   "as_of": "2026-10-02",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open.",
+  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built.",
   "decisions": [
+    {
+      "text": "Apply the date-reader fix before Saturday? Built, measured on 350 saved pages ('(26)' style 0/35 -> 35/35; a claim of 2 October no longer matches 'October 12'; false positives 5 -> 0), full suite green (1,307 passed). Held out of the working tree because you deferred it to after Monday and Saturday's job imports it. RECOMMEND APPLY: the false-positive bug can mark a wrong date verified.",
+      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/proposed_find_date/README.md"
+    },
+    {
+      "text": "Send NOTE-TO-UPSTREAM-12: 13 customer-tracked events with a verified, still-open date that we do not research (9 Urgent; six close within about two weeks). Asks which are in scope and to add the in-scope ones to the research lists.",
+      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-12.md"
+    },
+    {
+      "text": "Sponsorship carry-forward: choose A now and B after a shadow week (recommended), A only, or leave as is; set the TTL (suggest 90 days). Measured: the fact is stable (1 change in 76 rows) but wording and URL churn weekly and a known cost came back blank 4 times.",
+      "file": "C:/Users/matts/cfp-monitor/docs/design/sponsorship-carry-forward.md"
+    },
     {
       "text": "Tell upstream (courtesy): the new Utility awards file (Awards_20261002_out.csv) still carries 6 passed-deadline rows marked Open and one dead Clinton Global Initiative link, so it is not gate-accepted; ask them to re-emit those rows' status. The two new award rows are fine.",
       "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/Awards_20261002_out.csv"
@@ -61,29 +73,35 @@
     "customer": {
       "label": "Agreement with customer-verified dates",
       "definition": "Rows where the customer's team marked the date Verified and has a date: does ours match? Rough first reading, not cleaned for editions or passed rows.",
-      "rows": 40,
+      "rows": 34,
       "levels": [
         {
           "key": "agree",
           "label": "Same date",
-          "n": 20,
+          "n": 17,
           "tone": "good"
         },
         {
           "key": "blank",
           "label": "Our deadline blank",
-          "n": 12,
+          "n": 9,
           "tone": "warn"
         },
         {
           "key": "differ",
           "label": "Different date",
-          "n": 8,
+          "n": 7,
           "tone": "bad"
+        },
+        {
+          "key": "unreadable",
+          "label": "Customer date unreadable",
+          "n": 1,
+          "tone": "none"
         }
       ],
       "note": "Source is the weekly customer-sheet snapshot already in the database. This is the number the customer would feel.",
-      "source": "client_conferences joined to grounding_facts, 2026-10-01"
+      "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-02; customer-withdrawn rows excluded"
     }
   },
   "methods": [
@@ -198,6 +216,22 @@
       "verdict": "good",
       "date": "10-02",
       "note": "Free model matches the key on 6/10, DeepSeek flash 5/10. B38 and B13 relabelled under the rule; key re-locked."
+    },
+    {
+      "step": "Date reader (find_date)",
+      "metric": "Date styles matched on 350 saved pages; false positives",
+      "result": "'(26)' style 0/35 -> 35/35; false positives 5 -> 0 of 322 (fix held, not live)",
+      "verdict": "good",
+      "date": "10-02",
+      "note": "Black Hat Asia 'unconfirmed' was HTTP 403, not the date reader."
+    },
+    {
+      "step": "Whole-page reader scored against the benchmark key",
+      "metric": "Dated events: key date found; no-deadline events: no date accepted ahead",
+      "result": "7 of 11 hit (2 'wrong' are shared-host artefacts); 22 of 23 clean; 6 events not in the library",
+      "verdict": "warn",
+      "date": "10-02",
+      "note": "Offline, no model calls; host-level matching; the one 'check' is the awards-ceremony date. experiments/whole_page_reader/SCORE-VS-KEY.md"
     }
   ],
   "agents": [
@@ -385,7 +419,13 @@
         {
           "kind": "decision",
           "t": "Refresh pages by event lifecycle (idea from the operator)",
-          "r": "Designed and settled 10-01: A weekly, B every 2 weeks, C1 none for 45 days, C2 monthly, D monthly (unknown dates: 45 days then every 2 weeks), E weekly exception batch, F quarterly then stop after 2 years; multi-customer rule. Not built.",
+          "r": "Designed and settled 10-01: A weekly, B every 2 weeks, C1 none for 45 days, C2 monthly, D monthly (unknown dates: 45 days then every 2 weeks), E weekly exception batch, F quarterly then stop after 2 years; multi-customer rule. Not built. Shadow planner built 10-02 (scripts/refresh_planner.py, report only, 12 tests): 98 of 360 pages due a week after the full fetch; scheduler not built.",
+          "s": "todo"
+        },
+        {
+          "kind": "fix",
+          "t": "Verifier cannot read pages that answer HTTP 403 (blackhat.com): Black Hat Asia rows read unconfirmed",
+          "r": "Cause found 10-02 (earlier note blamed the date reader: wrong). Idea: let the verifier fall back to the page library for walled pages. Not built.",
           "s": "todo"
         }
       ]
@@ -410,7 +450,7 @@
         {
           "kind": "build",
           "t": "Benchmark: the answer key every method is scored on",
-          "r": "Locked 10-02: 40 events; 16 high + 15 medium model rows, 9 hand labels; edition rule 7a in brief 01. Checksum beside the file.",
+          "r": "Locked 10-02: 40 events; 16 high + 15 medium model rows, 9 hand labels; edition rule 7a in brief 01. Checksum beside the file. First use: whole-page reader scored against it offline (7/11 dated hits, 22/23 clean).",
           "s": "done"
         },
         {
@@ -430,6 +470,12 @@
           "t": "Does the edition rule fix the model disagreements?",
           "r": "Yes for the live-form and stale-edition cases (B26, B27, B28 now agree). Done 10-02.",
           "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Date reader: whole-date matching and the two-digit-year style (find_date)",
+          "r": "Built and tested 10-02, HELD out of the working tree until you decide (you deferred this to after Monday; the verifier runs in Saturday's job). On the 350-page library: '(26)' style 0 of 35 -> 35 of 35; false positives (a claim of 2 October matching 'October 12') 5 -> 0 of 322 checked; no change on other styles. Patch kept in experiments/purpose_audit/proposed_find_date/.",
+          "s": "doing"
         }
       ]
     },
@@ -473,6 +519,12 @@
           "t": "Gate reports a walled page instead of failing the quote check (Global Energy Show, Incapsula)",
           "r": "Done 10-02: shared helper in verify.py; 3 new tests; Global Energy Show is now a visible NOTE, not a failure. Full suite running.",
           "s": "done"
+        },
+        {
+          "kind": "decision",
+          "t": "Coverage gap: the customer tracks 41 verified, dated events we have no matching event for",
+          "r": "Found by scripts/board_metrics.py 10-02: 29 Arnica, 12 Utility Global. Mostly older or out-of-scope events; needs a look at which are live.",
+          "s": "todo"
         }
       ]
     },
@@ -490,7 +542,7 @@
         {
           "kind": "build",
           "t": "Sponsorship carry-forward",
-          "r": "Agreed in principle; no design yet",
+          "r": "Design written 10-02 with measurements and a recommendation (A now, B after a shadow week); waiting on your three decisions. docs/design/sponsorship-carry-forward.md",
           "s": "todo"
         },
         {
@@ -510,6 +562,18 @@
           "kind": "build",
           "t": "Status board, strategy file, agent briefs",
           "r": "Done 10-01",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "scripts/watchlist_check.py: named-row expectations and deadline-movement diff after a load",
+          "r": "Done 10-02 (docs/operations/watchlist.json, 8 tests). First run: 16 of 20 hold; the 4 CHANGED are the known gap until Saturday's load.",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "scripts/board_metrics.py: customer agreement computed from the database, definition written down",
+          "r": "Done 10-02 (7 tests). 17 of 33 readable rows agree (52%); 9 of ours blank, 7 differ; the 10-01 figure of 40 rows counted customer-withdrawn rows.",
           "s": "done"
         }
       ]

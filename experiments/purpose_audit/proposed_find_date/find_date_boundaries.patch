@@ -1,0 +1,51 @@
+diff --git a/src/cfp_monitor/verify.py b/src/cfp_monitor/verify.py
+index 16d3daf..f19bed3 100644
+--- a/src/cfp_monitor/verify.py
++++ b/src/cfp_monitor/verify.py
+@@ -25,6 +25,7 @@ import urllib.error
+ import urllib.request
+ from dataclasses import dataclass
+ from datetime import date
++from functools import lru_cache
+ from typing import Optional
+ 
+ # The dateutil-backed parser reads month-name formats ("June 1, 2027") as well as numeric
+@@ -69,6 +70,14 @@ def date_variants(d: date) -> list[str]:
+             f"{d.month}/{day}/{str(d.year)[2:]}",
+         }
+     out |= {f"{d.year}-{d.month:02d}-{d.day:02d}", f"{d.month:02d}/{d.day:02d}/{d.year}"}
++    # TWO-DIGIT YEAR in month-name styles: "19 October (26)", "12 October 26". on-climate.com writes its proposal
++    # periods this way (35 of 35 occurrences on the saved library were missed, 2026-10-02). normalize_text turns the
++    # brackets into spaces, so the variant is the plain "19 october 26". The right-hand digit boundary in find_date
++    # keeps it from firing on "19 october 2026" or "19 october 260".
++    yy = f"{d.year % 100:02d}"
++    for day in {str(d.day), f"{d.day:02d}"}:
++        out |= {f"{mon} {day} {yy}", f"{day} {mon} {yy}",
++                *[f"{a} {day} {yy}" for a in abbrs], *[f"{day} {a} {yy}" for a in abbrs]}
+     return [normalize_text(v) for v in out]
+ 
+ 
+@@ -81,10 +90,20 @@ def normalize_text(text: str) -> str:
+     return re.sub(r"\s+", " ", t).strip()
+ 
+ 
++@lru_cache(maxsize=2048)
++def _variant_pattern(target: date) -> "re.Pattern[str]":
++    """One compiled alternation of every rendering of `target`, each bounded so a LONGER number cannot satisfy a
++    shorter one. Found 2026-10-02: the old bare substring test accepted "2 october 2026" inside "12 october 2026", so a
++    claim of 2026-10-02 was "found" on a page that only says 12 October (5 of 5 sampled real pages, e.g. Black Hat's
++    call page). A date is not that date if a digit is glued to either side. Digits only, not letters: an ISO timestamp
++    (2026-10-12T23:59:00Z) legitimately has a letter after the day."""
++    alts = sorted({re.escape(v) for v in date_variants(target)}, key=len, reverse=True)
++    return re.compile(r"(?<![0-9])(?:" + "|".join(alts) + r")(?![0-9])")
++
++
+ def find_date(haystack: str, target: date) -> bool:
+-    """True if `target` appears in the text in any common rendering."""
+-    hay = normalize_text(haystack)
+-    return any(v in hay for v in date_variants(target))
++    """True if `target` appears in the text in any common rendering, as a whole date (not inside a longer number)."""
++    return bool(_variant_pattern(target).search(normalize_text(haystack)))
+ 
+ 
+ def other_deadline_dates(haystack: str, exclude: Optional[date] = None,
