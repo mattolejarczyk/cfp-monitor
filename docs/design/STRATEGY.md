@@ -42,8 +42,9 @@ Show both dates when a call has rounds. The DEADLINE is the first round that has
 ## Agents (Hermes free capacity, Codex subscriptions)
 Write every task as a brief (`docs/agents/README.md`: ten parts, success test fixed in advance). One question per brief. The agent proposes, we verify. Results are advisory files, never database writes. Briefs ready: 01 benchmark, 02 platform census, 03 whole-page reader (starts only after 01 passes its spot-check).
 
-## Open decisions (keep this list to what is genuinely open)
-0. UPSTREAM ACCEPTED the four-row package (10-01). Send `C:/Users/matts/cfp-monitor/experiments/purpose_audit/REPLY-TO-UPSTREAM.md` (their India Energy Week correction cites a page without the quote), then verify and import their re-emit. Climate Change needs a date-check decision ('19 October (26)' is not read by `verify.find_date`).
-1. (done) Send the four-row correction package upstream (`C:/Users/matts/cfp-monitor/experiments/purpose_audit/CORRECTION-PACKAGE.md`).
-2. India Energy Week: the customer learns of the 15 Oct date through Monday 10-05's customer page (the Monday send). Display gating shows a passed deadline as Closed, so the corrected date must reach our database before the 07:00 run, or the page will say Closed.
-3. After benchmark and census results: build a platform parser, a whole-page model reader, or both; and whether Firecrawl is worth a fetch-layer test.
+## Open decisions (revised 2026-10-01 evening)
+1. Send `C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-3.md` (new leads + still-open round-2 items; the Saturday 02:00 safeguard is time-critical).
+2. Hermes benchmark stage 2 (5 new events): needs a debug Chrome on port 9222 (restart with `scripts/launch_chrome_cdp.bat`), then your go. Rollout ladder in `docs/agents/README.md`.
+3. After the benchmark and census: build a platform parser, widen the whole-page model reader, or both; whether Firecrawl is worth a fetch-layer test. The page library (`scripts/page_library.py`, 360 pages) and the refresh policy (`docs/design/page-refresh-policy.md`) are done / designed.
+4. Climate Change `(26)` date check in `verify.find_date`: extend after Monday 10-05 (decided).
+5. I diff the four corrected rows after Saturday's load and report before Monday 07:00.

@@ -1,22 +1,18 @@
 {
  "as_of": "2026-10-01",
  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Whole-page reader finished over the whole library (347 pages, $0.45): 18 submission deadlines still ahead on 9 sites; 5 time-sensitive findings to review. Hermes benchmark stage 2 waits on your go.",
+ "now": "Pinned for today. Round-3 note to upstream is drafted (7 new leads plus the open items). Page library and whole-page reader are done. Hermes benchmark stage 2 waits on your go; the debug Chrome has closed again.",
  "decisions": [
   {
-   "text": "TIME-SENSITIVE leads from the library: Climate Change Emerging Scholar Awards final deadline 6 Oct; Black Hat Asia 2027 summit sessions 12 Oct; SANS CTI/OSINT summits 19 Oct; Nullcon Goa 2027 call closes 30 Oct (our row is blank). Draft a findings note to upstream (they own research and the prospect-market discovery is switched off)?",
-   "file": "C:/Users/matts/cfp-monitor/experiments/whole_page_reader/LIBRARY-RUN-RESULT.md"
+   "text": "SEND the round-3 note to upstream. It carries 7 new leads (4 close within 19 days: Climate Emerging Scholar 6 Oct, Black Hat Asia summits 12 Oct, SANS summits 19 Oct, Black Hat Asia briefings 20 Oct; Nullcon Goa 30 Oct) and repeats the open round-2 items. The Saturday 02:00 item is time-critical. It replaces the separate round-2 note.",
+   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-3.md"
   },
   {
-   "text": "Retry Hermes benchmark stage 2 (5 events)? The library fetch no longer needs Chrome, so the debug port is free for Hermes.",
+   "text": "Retry Hermes benchmark stage 2 (5 events)? Its page reading needs a debug Chrome on port 9222. That Chrome closed again on its own; restart it with scripts\\launch_chrome_cdp.bat, or tell me to.",
    "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
   },
   {
-   "text": "RECOMMEND SEND: the round-2 note to upstream (five follow-ups; the Saturday one matters most: apply the 4 corrections to their approved files before Saturday 02:00).",
-   "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-2.md"
-  },
-  {
-   "text": "RECOMMEND: after Saturday's load I diff the 5 affected rows against today's backups and tell you what changed, before Monday 07:00. No action needed from you now.",
+   "text": "No action: after Saturday's load I diff the corrected rows (India Energy Week, Climate Change, SecureWorld, Global Energy Show) against today's backups and report before Monday 07:00.",
    "file": ""
   }
  ],
@@ -29,7 +25,7 @@
     {
      "key": "confirmed",
      "label": "Date on cited page, purpose = submission",
-     "n": 9,
+     "n": 11,
      "tone": "good"
     },
     {
@@ -41,13 +37,13 @@
     {
      "key": "mismatch",
      "label": "Date on page, wrong purpose",
-     "n": 1,
+     "n": 0,
      "tone": "bad"
     },
     {
      "key": "absent",
      "label": "Date not on the cited page",
-     "n": 16,
+     "n": 15,
      "tone": "bad"
     },
     {
@@ -58,8 +54,8 @@
     }
    ],
    "open_rows": 3,
-   "open_confirmed": 0,
-   "note": "Of the 3 rows whose deadline had not passed: India Energy Week and Global Energy Show are verified on their cited pages (applied 10-01); Climate Change is applied but its '(26)' date format is not yet readable by our date check; SecureWorld is withdrawn to projected.",
+   "open_confirmed": 2,
+   "note": "Re-audited 10-01 after the corrections: Climate Change (was a registration-date mismatch) and Global Energy Show (was unreadable) are now confirmed; SecureWorld has no citation after its withdrawal. India Energy Week is verified separately (the audit counts one row per conference and picks its stale 2026 duplicate).",
    "source": "experiments/purpose_audit/RESULT.md"
   },
   "customer": {
@@ -190,7 +186,7 @@
   {
    "name": "Benchmark stage 2: 5 new events",
    "who": "Hermes",
-   "status": "paused: awaiting your go to retry stage 2",
+   "status": "paused: needs debug Chrome restarted, then your go",
    "budget": "free"
   },
   {
@@ -237,7 +233,7 @@
   "good": [
    {
     "label": "Provable submission dates",
-    "now": "0 of 3 open rows (9 of 39 overall)",
+    "now": "2 of 3 open rows, plus India Energy Week verified separately (11 of 39 overall, up from 9)",
     "target": "90% of open-call rows; the rest honestly blank, never guessed"
    },
    {
@@ -403,7 +399,7 @@
     {
      "kind": "fix",
      "t": "Correct 4 rows",
-     "r": "All 4 applied 10-01 with backups; IS_PROJECTED and duplicate-row items open",
+     "r": "All 4 applied 10-01 with backups; re-audit confirms Climate Change and Global Energy Show; round-3 note carries the open items (IS_PROJECTED, duplicate row, Saturday safeguard)",
      "s": "done"
     },
     {
