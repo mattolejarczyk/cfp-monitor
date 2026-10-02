@@ -58,3 +58,7 @@ experiments/purpose_audit/sandbox_20261002/
 experiments/purpose_audit/upstream_new_rows_*.csv
 experiments/purpose_audit/gate_*_2026*.json
 experiments/purpose_audit/readback_awards.py
+experiments/purpose_audit/upstream_status_fixes*.csv
+experiments/purpose_audit/upstream_sparse_patch_*.csv
+experiments/purpose_audit/sparse_*.csv
+experiments/purpose_audit/readback_*.py
