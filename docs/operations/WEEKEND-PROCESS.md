@@ -139,7 +139,8 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    deadline is unconfirmed and still in the future - in practice almost all in the six monthly
    markets (Saturday keeps Arnica's and Utility Global's rows confirmed). A finding is applied
    ONLY when the re-read page carries the whole quote with the deadline written inside it, word
-   for word. Never applied: a quote that mentions an extension, a date without a year, or an
+   for word. If the quick read of a page returns only an anti-bot wall, the real browser reads it
+   instead (added 2026-10-01, after a correct quote was rejected against a wall). Never applied: a quote that mentions an extension, a date without a year, or an
    ambiguous date like 12/4/2026. Rows on a customer's approved page are left for Saturday. The
    database is backed up first and restored automatically if the health check then fails.
    About 10-20 AI requests (hard cap 25 rows). *(weekly_discovery.py, apply_resolutions.py)*
