@@ -4,8 +4,8 @@
   "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built. Late 10-02: date-reader fix applied (suite 1,327 green), sponsorship option A built and wired, upstream QA canary ready.",
   "decisions": [
     {
-      "text": "Send the three-question QA canary to upstream (positive page, a page that does not exist, a real third-party sentence) and note how long they take. It tells us whether their chat replies come from reading pages or from memory. Text in docs/qa/UPSTREAM-QA-PROTOCOL.md.",
-      "file": "C:/Users/matts/cfp-monitor/docs/qa/UPSTREAM-QA-PROTOCOL.md"
+      "text": "Send NOTE-TO-UPSTREAM-14 (canary scored: honest, reads search results, cannot open arbitrary URLs; three rules; asks which tool reads pages). Then NOTE-13 is the re-send request for the seven events (or combine them).",
+      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-14.md"
     },
     {
       "text": "Send NOTE-TO-UPSTREAM-13: the seven in-scope events were rejected by the gate (format again, 3 dead cited pages, 3 non-verbatim quotes, 1 deadline not on its page, CODASPY venue wrong). Re-send the fixes as a sparse patch.",
@@ -394,8 +394,8 @@
         {
           "kind": "experiment",
           "t": "Do upstream's chat replies read pages or answer from memory? (canary test)",
-          "r": "Test and scoring written (docs/qa/UPSTREAM-QA-PROTOCOL.md); waiting for you to send it to upstream.",
-          "s": "todo"
+          "r": "First canary run 10-02: it reads pages found through search (Sessionize call page: real, verbatim) but cannot open an arbitrary URL; honest when it cannot fetch, but reported '404' without having observed it; composed URL paths explain the dead links. So: we read, upstream formats. docs/qa/UPSTREAM-QA-PROTOCOL.md",
+          "s": "done"
         }
       ]
     },

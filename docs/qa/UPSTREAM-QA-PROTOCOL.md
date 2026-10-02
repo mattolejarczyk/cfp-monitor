@@ -45,3 +45,18 @@ Per delivery: rows; citations that resolve; quotes found verbatim; deadlines fou
 | 7 in-scope events the customers track | **upstream** | Rejected: 4 of 7 deadlines found on their cited page, 3 cited pages dead, 1 wrong venue |
 
 The contrast is the finding: when we hand upstream the page and the quote, it returns accurate rows; when it must find the page itself, the results contain things no page said. If the canary confirms that, the efficient loop is: **our reader finds the pages and quotes, upstream formats and applies the contract**, rather than asking it to search.
+
+## Result of the first canary run (2026-10-02, upstream's reply)
+
+| Question | Upstream said | Verified | Score |
+|---|---|---|---|
+| 1 Positive canary (new GitHub raw page) | Could not retrieve it: "direct HTTP fetch access to unindexed raw GitHub assets is restricted within this chat environment"; did not invent content | The page exists and is readable (our fetch of the raw URL returned the code) | **Honest "cannot open"**. Consistent with a search-index tool, not an open-any-URL browser |
+| 2 Negative canary (does not exist) | "Confirmed 404 / non-existent", no content invented | It is a 404, but if question 1's page could not be fetched, this one could not be fetched either | **Right answer, unsupported claim**: it reported an observation (404) it could not have made. It should have said "could not open", the same as question 1 |
+| 3 Third-party sentence | Did not use triangleinfosecon.com; quoted the event's Sessionize call page: title "Triangle InfoSeCon 2026: Call for Speakers @ Sessionize.com", line "Call closes at 11:59 PM. 02 Oct 2026" | The page exists, the title matches, and the line is on it ("Call closes at 11:59 PM 02 Oct 2026", and the page says the call is still open) | **Real, verbatim quote from a real page**, and a better source than the one we named (the submission portal) |
+
+### What this tells us
+
+- **Upstream's chat can read pages it finds through search; it cannot be told to open an arbitrary URL.** That explains the earlier failures exactly: when it had to cite a page and had none from search, it composed a plausible path (`/call-for-speakers/`, `/speak`, `/cfp/`, `/nominations.html`), which our gate then proved dead. It is honest when it cannot fetch (question 1) but reports unsupported observations when pressed for a negative (question 2).
+- **Therefore**: do not ask it to open or spot-check a specific URL we choose; it cannot. Do ask it to cite only URLs that appeared in its search results and to say "could not open" rather than "404" when it did not get a response. Our gate (checks 2 and 3) remains the only authority.
+- **For anything that needs a specific page read, do the reading on our side** (our reader and the page library, Hermes, or the built-in browser) and give upstream the URL and the verbatim sentence to format into the contract. That is what worked for the seven library leads (22 of 22).
+- **Spot-check we still can do**: re-ask the four events whose pages we have already read (WSED, GC&E, CODASPY, Triangle) and compare its quotes with ours.
