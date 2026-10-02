@@ -26,6 +26,8 @@ what it means for the next run.
 (`CFP Weekly Awards Research`, its first run was due 2026-10-02) and the monthly job (`CFP Monthly
 Re-Research (prospect markets)`; those six markets are speculative and have no customer) are
 **Disabled** in Windows Task Scheduler. Nothing else changed: Saturday, Sunday and Monday still run.
+
+*2026-10-01:* the approved files that Saturday's load falls back to for rows that fail the approval check (`Markets/Utility_audited.final.csv`, `Markets/Cybersecurity_audited.final.csv`) were patched by hand so four corrected rows (India Energy Week 2027, Climate Change, SecureWorld, Global Energy Show) keep their corrected values; upstream acknowledged these local copies as the master for Saturday. Until upstream's re-research delivery is imported, a fallback to these files is safe for those rows. An operator edit to either file is logged in `experiments/purpose_audit/OPERATOR-EDITS-LOG.md`.
 The sections below describe what each job does WHEN it is enabled. To turn one back on, run
 `Enable-ScheduledTask -TaskName '<name>'` in an elevated (Administrator) PowerShell window.
 

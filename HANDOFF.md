@@ -4,6 +4,14 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **2026-10-01 END OF DAY - current state, open, next.** STATE: all four known-wrong customer-market rows are corrected in our database AND in the approved files Saturday 02:00 reads
+> (`Markets/Utility_audited.final.csv`, `Cybersecurity_audited.final.csv`; backups beside them); upstream acknowledged our local copies as master. Offline page library built (`scripts/page_library.py`, 360 pages);
+> whole-page DeepSeek reader run over it (347 pages, 0.45 USD): promising, not proven. Refresh policy designed, not built. Status board: `scripts/status_dashboard.py`. Nothing runs in the background.
+> OPEN: (1) apply upstream's Nullcon Goa 2027 payload to the approved Cybersecurity file (report mode clean; operator approval pending); (2) upstream's re-research delivery (7 new rows, IS_PROJECTED flags,
+> India Energy Week 2026 duplicate retirement) is NOT received: verify it on arrival, our DB still holds both IEW rows; (3) Hermes benchmark stage 2 needs the debug Chrome (`scripts/launch_chrome_cdp.bat`) restarted and the operator's go;
+> (4) Climate `(26)` date check after Monday; sponsorship carry-forward; platform census. NEXT ACTION: after Saturday 02:00's load, diff the four corrected rows (India Energy Week, Climate Change, SecureWorld, Global Energy Show)
+> against today's backups in `%LOCALAPPDATA%/CFP-Monitor` and report BEFORE Monday 07:00 (India Energy Week must read open on the customer page). Operator edits are logged in `experiments/purpose_audit/OPERATOR-EDITS-LOG.md`.
+>
 > **READ FIRST: `docs/design/STRATEGY.md` (standing brief and the 5-line session opener), `docs/design/PROGRESS-CHECKLIST.md`, and the status board (`scripts/status_dashboard.py`, data in `docs/design/status.json`). Agent briefs: `docs/agents/`.**
 >
 > **2026-10-01 (later) - purpose audit + heading reader Phase 1 (experiments only; nothing changed).** `experiments/purpose_audit/` (RESULT.md, LIVE-ROWS-REVIEW.md): of 39 stored

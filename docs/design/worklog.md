@@ -5,6 +5,15 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-01 (later) - corrections applied, page library, whole-page reader, upstream loop (experiments and data corrections; nothing wired)
+
+- Corrections: upstream accepted the 4-row package; applied to our DB with scripts/apply_resolutions.py (report mode on a copy, backups, second-process read-back): India Energy Week 2027 -> 2026-10-15, Climate Change -> 2026-10-19, SecureWorld citation withdrawn, Global Energy Show -> 2026-12-04. Merge guard now escalates to the browser on anti-bot block pages (tests added). Re-audit: 11 of 39 confirmed (was 9).
+- Found upstream's "master files synced" had not touched the approved files on this machine (unchanged since 09-27): patched both with Markets/apply_row_patch.py (backups kept), then fixed the Global Energy Show CFP_SUBMISSION_URL cell by operator ruling (the tool protects that field). Upstream acknowledged our local copies as master. All operator edits logged in experiments/purpose_audit/OPERATOR-EDITS-LOG.md.
+- Whole-page model reader (experiments/whole_page_reader): as run precision 0.85 / recall 9 of 12 on 27 fresh pages, 0 wrong-purpose; post-hoc 0.875 / 11 of 12. Offline page library (scripts/page_library.py, TOOLING.md): 360 pages, 350 usable. Reader over the library: 347 pages, 0.45 USD, 18 deadlines ahead on 9 sites.
+- Leads to upstream (notes 3 and 4): 7 calls accepted as new rows (delivery pending); Nullcon key corrected to the existing row; WHEC quote corrected.
+- Project control: status board (scripts/status_dashboard.py), STRATEGY.md, PROGRESS-CHECKLIST.md, agent briefs and rollout ladder (docs/agents), page refresh policy design.
+- Gotchas: background jobs started from the tool shell die when the turn ends (use Win32_Process.Create); backslash-b in patch strings becomes a backspace and backslash-U in Windows paths breaks Python (use the Edit tool or forward slashes); check_invariants needs --db with the LOCALAPPDATA path.
+
 ## 2026-10-01 - purpose audit and heading reader Phase 1 (experiments only; nothing wired)
 
 - Purpose audit (`experiments/purpose_audit/`): 39 stored deadlines in the two customer markets; 9 CONFIRMED, 1 MISMATCH (Climate Change), 16 ABSENT, 12 NO_PAGE, 1 UNCLEAR. Reproduced the known registration-date error independently. Three live rows written up for review in `LIVE-ROWS-REVIEW.md` (no data changed).
