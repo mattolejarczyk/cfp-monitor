@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.cfp_monitor.verify import fetch_text, is_block_page, link_status      # noqa: E402
+from src.cfp_monitor.verify import fetch_text, is_block_page, is_script_shell, link_status      # noqa: E402
 
 # 36 since the v1.2 amendment added FORMAT as the last column (2026-08-05).
 # Deliveries still emitting 35 columns predate the amendment and fail check 1,
@@ -371,6 +371,13 @@ class Gate:
                 continue                       # v1.4: expected decay, not a defect
 
             quote = self.g(r, "DEADLINE_QUOTE")
+            if quote and is_script_shell(text) and norm(quote) not in norm(text):
+                # A script-built page: a plain fetch saw almost no text (basconf.org: 52 characters), so the quote test has
+                # nothing to test. Same trust as a 403 or a wall, and REPORTED the same way (operator, 2026-10-02): a person or
+                # a browser read must confirm. A page that DOES carry the quote still passes, and a normal-sized page that
+                # lacks it still fails.
+                walled.append(f"{name}: {url} (script-built page: only {len(text.strip())} characters read)")
+                continue
             if quote and text and norm(quote) not in norm(text):
                 # Distinguish a PARAPHRASE from an unsupported claim. If the deadline itself
                 # is on the page, the substance was read correctly and only the wording was
@@ -414,7 +421,7 @@ class Gate:
             self.note("2s", "dead submission link(s) on rows whose deadline has passed - "
                             "expected decay under v2.2", sub_decayed)
         if walled:
-            self.note("3", "cited page(s) returned an anti-bot notice instead of the page - quote NOT "
+            self.note("3", "cited page(s) returned an anti-bot notice or almost no text (a script-built page) instead of the page - quote NOT "
                            "checked (exempt like a 403; a person or a browser read must confirm)", walled)
         self.add("3", "Cited page contains its quote verbatim (403 exempt)", missing_quote)
 

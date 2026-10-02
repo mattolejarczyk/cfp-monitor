@@ -32,7 +32,18 @@ headlines are reported for LIVE rows (the date a customer would act on is still 
                    unreadable the verifier could not read the cited page (HTTP 403, script-built page): unproven, a browser read would settle it
                    notfound   the page was read and the date is not on it
                    contradicted  the page was read and states a different date
---update-status rewrites `headline.customer` and `headline.provable` in docs/design/status.json (levels, row counts, notes) and nothing else.
+OVERALL QUALITY INDEX (2026-10-02, operator asked for one data-based percentage covering the end-to-end process). Five measured components,
+each 0 to 100, combined with stated weights (a judgment, shown on the board with a low/high range):
+  proof      25  live deadlines proven on their cited page (provable_live)
+  no_error   10  live deadlines whose own cited page shows a DIFFERENT date: 100 minus that share
+  alignment  15  live customer-verified dates that match ours (customer_agreement, live)
+  freshness  15  rows genuinely researched in the last Saturday run (stub rows, where every search attempt failed, are not)
+  coverage   15  live, customer-tracked, verified-dated events that exist in our database (matched by event or by site)
+  other      20  non-deadline facts (city, venue, event dates, names) free of known errors, from the recorded spot-checks in
+                 docs/design/field_spotchecks.json. Weak evidence (7 rows so far): it is the only measure of the ~24 other fields
+Not scored, shown as drivers: the share of Saturday's individual calls that grounded (cost and reliability, not customer quality: retries rescue most rows).
+Range: low = unproven pages count as unknown (as scored); high = pages a plain fetch cannot read count half; a flat equal-weight mean is also shown.
+--update-status rewrites `headline.customer`, `headline.provable` and `quality` in docs/design/status.json (levels, row counts, notes) and nothing else.
 Read-only otherwise. The 2026-10-01 figure (40 rows) also counted rows the customer had withdrawn; excluding them gives the
 34 this script reports for the same database.
 """
@@ -48,8 +59,10 @@ from datetime import date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))                      # `src.cfp_monitor` imports when run as a script
 LIVE_DB = Path(os.environ.get("LOCALAPPDATA", "")) / "CFP-Monitor" / "cfp_monitor.db"
 STATUS_JSON = ROOT / "docs" / "design" / "status.json"
+MARKETS_DIR = Path("C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets")
 CLASSES = ("agree", "blank", "differ", "unreadable")
 
 
@@ -64,9 +77,13 @@ def parse_their_date(s: str) -> str | None:
     return None
 
 
-def _our_deadlines(con: sqlite3.Connection) -> dict[str, str]:
+TABLE_OF = {"conference": "grounding_facts", "award": "award_grounding_facts"}
+
+
+def _our_deadlines(con: sqlite3.Connection, kind: str = "conference") -> dict[str, str]:
+    """Our stored deadline per canonical event_id, from the table for `kind` only (conference and award rows never mix)."""
     ours: dict[str, str] = {}
-    for table in ("grounding_facts", "award_grounding_facts"):
+    for table in (TABLE_OF[kind],):
         try:
             for eid, dl in con.execute(f"select event_id, deadline from {table}"):
                 ours[eid] = (dl or "").strip()
@@ -75,10 +92,10 @@ def _our_deadlines(con: sqlite3.Connection) -> dict[str, str]:
     return ours
 
 
-def customer_agreement(db: str, today: str = "") -> dict:
+def customer_agreement(db: str, today: str = "", kind: str = "conference") -> dict:
     con = sqlite3.connect(db)
     try:
-        ours = _our_deadlines(con)
+        ours = _our_deadlines(con, kind)
         rows = con.execute(
             "select client_key, their_name, event_id, their_deadline from client_conferences "
             "where lower(trim(submission_date_verified)) = 'verified' and trim(their_deadline) != '' "
@@ -109,22 +126,26 @@ def customer_agreement(db: str, today: str = "") -> dict:
             "live_counts": live_counts, "live_rows": sum(live_counts.values())}
 
 
-def provable_live(db: str, today: str) -> dict:
-    """How many LIVE stored deadlines (on or after `today`) are proven on their cited page. See the module docstring."""
-    ids: set[str] = set()
-    seed_dir = Path(db).parent / "market_sheets"
-    for name in ("cyber_seed.csv", "utility_seed.csv"):
-        p = seed_dir / name
-        if p.exists():
-            with open(p, encoding="utf-8-sig", newline="") as fh:
-                ids |= {(r.get("EVENT_ID_CANON") or "").strip() for r in csv.DictReader(fh)} - {""}
+def provable_live(db: str, today: str, kind: str = "conference") -> dict:
+    """How many LIVE stored deadlines (on or after `today`) are proven on their cited page. See the module docstring.
+    kind "conference": events on the Cybersecurity/Utility seed sheets (grounding_facts).
+    kind "award": award_grounding_facts rows on an award list of those markets (award_markets)."""
     con = sqlite3.connect(db)
     try:
-        rows = con.execute("select event_id, name, deadline, verify_state, coalesce(verify_detail,''), coalesce(deadline_evidence_url,'') "
-                           "from grounding_facts where trim(deadline) != '' and deadline >= ?", (today,)).fetchall()
+        if kind == "award":
+            rows = con.execute(
+                "select a.event_id, a.name, a.deadline, a.verify_state, coalesce(a.verify_detail,''), coalesce(a.deadline_evidence_url,'') "
+                "from award_grounding_facts a where trim(a.deadline) != '' and a.deadline >= ? "
+                "and a.event_id in (select award_key from award_markets where market in ('Cybersecurity','Utility'))", (today,)).fetchall()
+            ids = {r[0] for r in rows}
+        else:
+            from src.cfp_monitor.identity import market_canonical_ids      # the one owner of seed-file reading
+            ids = market_canonical_ids(db)
+            rows = con.execute("select event_id, name, deadline, verify_state, coalesce(verify_detail,''), coalesce(deadline_evidence_url,'') "
+                               "from grounding_facts where trim(deadline) != '' and deadline >= ?", (today,)).fetchall()
     finally:
         con.close()
-    counts = {k: 0 for k in ("verified", "withdrawn", "unreadable", "notfound", "contradicted")}
+    counts = {k: 0 for k in ("verified", "withdrawn", "unreadable", "notfound", "contradicted", "unchecked")}
     detail = []
     for eid, name, dl, state, why, ev in rows:
         if eid not in ids:
@@ -135,13 +156,157 @@ def provable_live(db: str, today: str) -> dict:
             cls = "verified"
         elif state == "contradicted":
             cls = "contradicted"
-        elif "could not be read" in why:
+        elif "could not be read" in why or why.startswith("unreadable"):
             cls = "unreadable"
+        elif state in ("unverified", "", None):
+            cls = "unchecked"
         else:
             cls = "notfound"
         counts[cls] += 1
         detail.append({"event_id": eid, "name": name, "deadline": dl, "class": cls})
     return {"rows": sum(counts.values()), "counts": counts, "detail": sorted(detail, key=lambda d: d["deadline"])}
+
+
+def _host(u: str) -> str:
+    s = (u or "").lower().strip().split("://", 1)[-1].split("/", 1)[0]
+    return s[4:] if s.startswith("www.") else s
+
+
+def coverage_live(db: str, today: str, kind: str = "conference") -> dict:
+    """Of the customers' live (their date ahead), verified, dated, not-withdrawn rows: how many have an event in our database?
+    Covered = their event_id is ours, or their site is a site we research (host of any grounding_facts url or conference key)."""
+    con = sqlite3.connect(db)
+    try:
+        table = TABLE_OF[kind]
+        ours = {r[0] for r in con.execute(f"select event_id from {table}")}
+        hosts = set()
+        for u, k in con.execute(f"select coalesce(url,''), coalesce(conference_key,'') from {table}"):
+            hosts |= {_host(u), _host(k)}
+        hosts.discard("")
+        rows = con.execute("select client_key, their_name, event_id, their_deadline, coalesce(their_url,'') from client_conferences "
+                           "where lower(trim(submission_date_verified))='verified' and trim(their_deadline)!='' "
+                           "and coalesce(withdrawn_by_customer,0)=0").fetchall()
+    finally:
+        con.close()
+    covered, missing = 0, []
+    for client, name, eid, theirs, url in rows:
+        d = parse_their_date(theirs)
+        if d is None or d < today:
+            continue
+        if kind == "award" and eid not in ours:
+            continue                                   # a customer line is an AWARD only if it links to an award row
+        if eid in ours or (kind == "conference" and url and _host(url) in hosts):
+            covered += 1
+        else:
+            missing.append({"client": client, "name": name, "theirs": theirs.strip()})
+    return {"rows": covered + len(missing), "covered": covered, "missing": missing}
+
+
+def freshness_last_run(markets_dir: str, today: str = "", kind: str = "conference") -> dict:
+    """Rows genuinely researched recently: not a stub ('Audit Exception' in STATUS DETAILS: every search attempt failed) and, when `today`
+    is given, with a SOURCE_AS_OF stamp within 14 days. Same definition for both kinds.
+    conference: the last Saturday research output of each market. award: the awards file the customer page reads (the promoted
+    Awards_audited.final.csv if there is one, else the newest dated Awards_*_out.csv)."""
+    from datetime import timedelta
+    cutoff = (date.fromisoformat(today) - timedelta(days=14)).isoformat() if today else ""
+    if kind == "award":
+        d = Path(markets_dir)
+        final = d / "Awards_audited.final.csv"
+        files = [final] if final.exists() else sorted(d.glob("Awards_2*_out.csv"), key=lambda p: p.stat().st_mtime)[-1:]
+    else:
+        files = [Path(markets_dir) / f"{m}_audited.csv" for m in ("Cybersecurity", "Utility")]
+    total = fresh = stubs = 0
+    for p in files:
+        if not p.exists():
+            continue
+        with open(p, encoding="utf-8-sig", newline="") as fh:
+            for r in csv.DictReader(fh):
+                total += 1
+                stub = "Audit Exception" in (r.get("STATUS DETAILS") or "")
+                stubs += stub
+                if not stub and (not cutoff or (r.get("SOURCE_AS_OF") or "").strip() >= cutoff):
+                    fresh += 1
+    return {"rows": total, "researched": fresh, "stubs": stubs}
+
+
+def call_health(markets_dir: str) -> dict:
+    ok = tot = 0
+    for m in ("Cybersecurity", "Utility"):
+        p = Path(markets_dir) / f"{m}_audited.health.json"
+        if p.exists():
+            c = json.loads(p.read_text(encoding="utf-8"))["call_health"]["counts"]["gemini_call"]
+            ok += c.get("ok", 0)
+            tot += sum(c.values())
+    return {"calls": tot, "grounded": ok}
+
+
+WEIGHTS = {"proof": 25, "no_error": 10, "alignment": 15, "freshness": 15, "coverage": 15, "other": 20}
+SPOTCHECKS = ROOT / "docs" / "design" / "field_spotchecks.json"
+
+
+def spotcheck_summary(path: Path = SPOTCHECKS, kind: str = "conference") -> dict:
+    """Rows read against their own pages, and how many carried a wrong non-deadline fact."""
+    checks = json.loads(path.read_text(encoding="utf-8"))["checks"] if path.exists() else []
+    checks = [c for c in checks if c.get("kind", "conference") == kind]
+    return {"rows": sum(c["rows"] for c in checks), "bad": sum(c["rows_with_error"] for c in checks), "checks": len(checks)}
+
+
+def quality_index(cur: dict, prov: dict, cov: dict, fresh: dict, calls: dict | None, spot: dict | None = None, kind: str = "conference") -> dict:
+    """Combine the measured components for ONE kind (conference or award). Pure: every input is a result computed above.
+    A component with no data is EXCLUDED (the remaining weights are renormalised) and listed under `excluded` with its reason; it is
+    never scored as zero, which would punish a part we cannot measure as if we had measured it and found it bad."""
+    lc = cur.get("live_counts") or {"agree": 0, "blank": 0, "differ": 0}
+    readable = lc["agree"] + lc["blank"] + lc["differ"]
+    pc = prov["counts"]
+    n = prov["rows"]
+    spot = spot or {"rows": 0, "bad": 0}
+    what = "Saturday run" if kind == "conference" else "awards file the page reads (stamped within 14 days, not a stub)"
+    comp: dict[str, tuple[float | None, str]] = {
+        "proof": (100 * pc["verified"] / n if n else None, f"{pc['verified']} of {n} live deadlines proven on their cited page"
+                  if n else "no live deadlines to score"),
+        "no_error": (100 * (n - pc["contradicted"]) / n if n else None, f"{pc['contradicted']} of {n} live deadlines contradicted by their own page"
+                     if n else "no live deadlines to score"),
+        "alignment": (100 * lc["agree"] / readable if readable else None,
+                      f"{lc['agree']} of {readable} live customer-verified dates match ours" if readable else
+                      "no customer-verified, dated rows link to this kind: nothing to compare"),
+        "freshness": (100 * fresh["researched"] / fresh["rows"] if fresh["rows"] else None,
+                      f"{fresh['researched']} of {fresh['rows']} rows genuinely researched in the {what} ({fresh['stubs']} stubs)"
+                      if fresh["rows"] else "no research file found"),
+        "coverage": (100 * cov["covered"] / cov["rows"] if cov["rows"] else None,
+                     f"{cov['covered']} of {cov['rows']} live customer-tracked events exist in our database" if cov["rows"] else
+                     "no customer-tracked rows of this kind: coverage cannot be measured"),
+        "other": (100 * (spot["rows"] - spot["bad"]) / spot["rows"] if spot["rows"] else None,
+                  f"{spot['rows'] - spot['bad']} of {spot['rows']} sampled rows free of known wrong city, venue, dates or name (weak evidence: small sample)"
+                  if spot["rows"] else "no non-deadline fact has been read against its page for this kind"),
+    }
+    live = {k: v[0] for k, v in comp.items() if v[0] is not None}
+    wsum = sum(WEIGHTS[k] for k in live)
+    score = sum(WEIGHTS[k] * live[k] for k in live) / wsum if wsum else 0.0
+    equal = sum(live.values()) / len(live) if live else 0.0
+    half = dict(live)
+    if "proof" in half:
+        half["proof"] = 100 * (pc["verified"] + 0.5 * pc["unreadable"]) / n
+    high = sum(WEIGHTS[k] * half[k] for k in half) / wsum if wsum else 0.0
+    drivers = []
+    if calls and calls.get("calls"):
+        drivers.append(f"{calls['grounded']} of {calls['calls']} Saturday research calls returned a grounded answer "
+                       f"({round(100 * calls['grounded'] / calls['calls'])}%): retries and last week's approved rows cover most of the gap")
+    if kind == "award":
+        drivers.append("The Friday awards research job is disabled (since 2026-09-30), so awards freshness is low by construction until it runs again")
+    return {"kind": kind, "measured_weight": wsum, "overall": round(score), "low": round(min(score, equal)), "high": round(max(high, equal)), "equal_weight": round(equal),
+            "components": [{"key": k, "value": round(comp[k][0]), "weight": WEIGHTS[k], "detail": comp[k][1]} for k in WEIGHTS if comp[k][0] is not None],
+            "excluded": [{"key": k, "weight": WEIGHTS[k], "reason": comp[k][1]} for k in WEIGHTS if comp[k][0] is None],
+            "drivers": drivers}
+
+
+def quality_for(db: str, markets_dir: str, today: str, kind: str) -> dict:
+    """Measure and combine one kind. Conference and award rows are never mixed: every input is read for `kind` only."""
+    cur = customer_agreement(db, today, kind)
+    prov = provable_live(db, today, kind)
+    cov = coverage_live(db, today, kind)
+    fresh = freshness_last_run(markets_dir, today, kind)
+    calls = call_health(markets_dir) if kind == "conference" else None
+    return quality_index(cur, prov, cov, fresh, calls, spotcheck_summary(kind=kind), kind)
 
 
 def render(cur: dict, prev: dict | None, examples: int) -> str:
@@ -169,7 +334,7 @@ def render(cur: dict, prev: dict | None, examples: int) -> str:
     return "\n".join(lines)
 
 
-def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | None = None) -> None:
+def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | None = None, quality: dict | None = None) -> None:
     """Rewrite headline.customer (and headline.provable when `prov` is given). LIVE figures lead; the all-rows figure stays in the note."""
     data = json.loads(path.read_text(encoding="utf-8"))
     c = cur["counts"]
@@ -216,6 +381,19 @@ def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | 
             if g["label"].startswith("Agreement with customer-verified dates") and lc is not None:
                 lr = lc["agree"] + lc["blank"] + lc["differ"]
                 g["now"] = f"{lc['agree']} of {lr} live rows today ({100 * lc['agree'] // lr if lr else 0}%); {c['agree']} of {c['agree'] + c['blank'] + c['differ']} counting past dates and old editions"
+    if quality is not None:
+        method = ("Components, each 0 to 100, combined with the weights shown (a judgment). A component with no data is excluded and the weights "
+                  "renormalised, never scored as zero. Range: the lower of the weighted and equal-weight figure up to the higher of the equal-weight "
+                  "figure and the figure if pages our plain reader cannot open count half. Deadlines are scored on LIVE rows only (a passed "
+                  "deadline's page moves on to the next edition).")
+        data["quality"] = {
+            "as_of": today, "method": method,
+            "conference": {**quality["conference"], "label": "Conferences: overall data quality"},
+            "awards": {**quality["awards"], "label": "Awards: overall data quality"},
+            "not_measured": ("Sponsorship, organizer, overview and categories have no measure at all for conferences, and nothing beyond the deadline is measured "
+                             "for awards. The conference 'other facts' component rests on one 7-row read: 3 of the 7 events upstream delivered on 2026-10-02 carried "
+                             "a wrong city, venue or date that only a read of the page caught. Conferences and awards are deliberately not blended into one number."),
+            "source": "scripts/board_metrics.py quality_for; docs/design/field_spotchecks.json"}
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -237,8 +415,18 @@ def main(argv: list[str] | None = None) -> int:
     for d in prov["detail"]:
         if d["class"] != "verified":
             print(f"    {d['class']:12} {d['deadline']}  {d['name'][:56]}")
+    qc = quality_for(a.db, str(MARKETS_DIR), a.today, "conference")
+    qa = quality_for(a.db, str(MARKETS_DIR), a.today, "award")
+    for label, q in (("CONFERENCES", qc), ("AWARDS", qa)):
+        print(f"OVERALL DATA QUALITY, {label}: {q['overall']}% (range {q['low']} to {q['high']}; equal-weight {q['equal_weight']}%)")
+        for c in q["components"]:
+            print(f"    {c['key']:10} {c['value']:3}%  weight {c['weight']:2}  {c['detail']}")
+        for e in q["excluded"]:
+            print(f"    {e['key']:10} n/a   weight {e['weight']:2}  EXCLUDED: {e['reason']}")
+        for dr in q["drivers"]:
+            print(f"    driver: {dr}")
     if a.update_status:
-        update_status(cur, a.today, prov=prov)
+        update_status(cur, a.today, prov=prov, quality={"conference": qc, "awards": qa})
         print(f"updated headline.customer in {STATUS_JSON}")
     return 0
 

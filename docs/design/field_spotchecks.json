@@ -1,0 +1,18 @@
+{
+  "_about": "Recorded hand or browser reads of non-deadline facts (city, venue, event dates, names) against the event's own page. Each entry: how many rows were read and how many had at least one wrong non-deadline fact BEFORE our correction. This is the only measure we have of the ~24 fields other than the deadline, so it is small and labelled as weak evidence on the board. Add an entry whenever a delivery is read against its pages.",
+  "checks": [
+    {
+      "date": "2026-10-02",
+      "what": "Seven events delivered by upstream (the customer-tracked in-scope set), city, venue, dates and names read against each event's own page",
+      "rows": 7,
+      "rows_with_error": 3,
+      "errors": [
+        "ACS GC&E: city Reston VA (page: Minneapolis MN), '29th Annual' (page: 31st), dates June 7-9 (page: June 7-10)",
+        "ACM CODASPY: city Alexandria VA and June 14-16 (page: Fort Collins CO, June 14-17)",
+        "Apres-Cyber Slopes Summit: venue Steamboat Springs CO (page: Park City UT, Blair Education Center)"
+      ],
+      "caught_by": "a read of the cited pages by us (browser and plain fetch); no check in the pipeline would have caught them",
+      "source": "experiments/purpose_audit/NOTE-TO-UPSTREAM-13.md, -15.md, -16.md"
+    }
+  ]
+}

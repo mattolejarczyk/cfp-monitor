@@ -79,6 +79,24 @@ def seed_map(db_path: str) -> tuple[dict[str, str], list[Path]]:
 SEED_FILES = {"Cybersecurity": "cyber_seed.csv", "Utility": "utility_seed.csv"}
 
 
+def market_canonical_ids(db_path: str, markets: tuple[str, ...] = ("Cybersecurity", "Utility")) -> set[str]:
+    """The canonical ids on the seed sheets of the given customer markets (the market lists the pipeline actually uses).
+
+    Added 2026-10-02 for scripts/board_metrics.py: `conference_markets` misses an event added since the last crawl, so a
+    metric scoped by it silently leaves new events out, and a script that read the seed files itself would be the second copy of
+    the reader this module exists to prevent (tests/test_identity_join.py). Only the markets named in SEED_FILES have a seed sheet."""
+    ids: set[str] = set()
+    for root in seed_roots(db_path):
+        for market in markets:
+            seed = root / SEED_FILES[market]
+            if not seed.exists():
+                continue
+            with open(seed, encoding="utf-8-sig", newline="") as fh:
+                ids |= {(r.get("EVENT_ID_CANON") or "").strip() for r in csv.DictReader(fh)}
+    ids.discard("")
+    return ids
+
+
 def seed_names(db_path: str) -> dict[str, set[str]]:
     """Every CONFERENCE name the seed files have held -> the canonical ids it was stored under.
 

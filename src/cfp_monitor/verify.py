@@ -382,6 +382,19 @@ def is_block_page(text: str) -> bool:
     return bool(t) and len(t) < 600 and any(m in t for m in BLOCK_MARKERS)
 
 
+SHELL_CHARS = 200
+
+
+def is_script_shell(text: str) -> bool:
+    """True when a plain fetch returned almost no text: a page that builds its content with script (basconf.org read as 52
+    characters: 'BASC 2027 - Boston Application Security Conference'). The text exists in a real browser; a plain fetch cannot
+    see it, so a quote test against it proves nothing either way. Operator approved reporting these as 'not checked'
+    2026-10-02 (the same trust given to a 403 or an anti-bot wall). Short but non-empty only: an EMPTY fetch is a different
+    failure and keeps its own handling."""
+    t = (text or "").strip()
+    return 0 < len(t) < SHELL_CHARS
+
+
 def fetch_text(url: str, timeout: int = 20, max_bytes: int = 900_000) -> tuple[str, str]:
     """Plain HTTP GET reduced to visible text. Returns (text, note).
 

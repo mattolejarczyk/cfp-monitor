@@ -5,7 +5,8 @@ import csv, os, shutil, sqlite3, sys
 from datetime import datetime
 
 P = "C:/Users/matts/cfp-monitor/experiments/purpose_audit/load6/"
-MK = {"cyber": ("Cybersecurity", "Cybersecurity_input.csv", "cyber_seed.csv"), "util": ("Utility", "Utility_input.csv", "utility_seed.csv")}
+MK = {"cyber": ("Cybersecurity", "Cybersecurity_input.csv", "cyber_seed.csv"), "util": ("Utility", "Utility_input.csv", "utility_seed.csv"),
+      "basc": ("Cybersecurity", "Cybersecurity_input.csv", "cyber_seed.csv")}
 MARKETS = "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/"
 LIVE = "C:/Users/matts/AppData/Local/CFP-Monitor/"
 name = sys.argv[1]

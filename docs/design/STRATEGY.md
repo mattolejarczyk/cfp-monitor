@@ -61,3 +61,11 @@ Upstream is a chat session whose only web access is a Google search index (confi
 6. **Log what each exchange taught us** (gap, cause, fix) in the worklog, so the requests get sharper each round.
 
 Known gaps so far (2026-10-02): composed URL paths; "404" reported without observing it; full-row regeneration filling fields with filler; deadlines copied from the customer's sheet; snippet attributed to the wrong event; CSV commas left unquoted three times; GATED_STATUS filled twice; location facts wrong (CODASPY, Apres-Cyber).
+
+## Board update checklist (operator, 2026-10-02: the "Working on" and "Waiting on you" sections were stale)
+
+Every time the CFP Status Board is updated, in the same commit as the work, ALL of these, not just the numbers:
+1. `python scripts/board_metrics.py --update-status` (headline numbers and both quality indexes).
+2. Rewrite `working_on` in `docs/design/status.json` (3 to 5 short items, each with a state: In progress, Waiting on upstream, Queued) and set `now_updated` to today's `as_of`. Never append to `now`; it is one sentence.
+3. Prune `decisions` to what is genuinely open and waiting on the operator. Each has an `added` date; anything done is deleted, not left. The board shows each item's age and flags anything older than 2 days.
+4. `python scripts/status_dashboard.py` prints a WARNING for any stale item; fix it before publishing. Then republish.

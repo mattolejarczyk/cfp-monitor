@@ -71,3 +71,31 @@ def test_a_real_page_with_the_quote_passes_with_no_note():
     g = _gate("Intro text. " + QUOTE + ". More text. " * 30)
     num, name, ok, failures = _check3(g)
     assert ok and not [n for n in g.notes if n[0] == "3"]
+
+
+# ---- script-built pages (a plain fetch sees almost no text), operator-approved 2026-10-02 --------------------------------
+SHELL = "BASC 2027 · Boston Application Security Conference"
+
+
+def test_a_script_built_page_is_not_a_failed_quote_and_is_reported():
+    g = _gate(SHELL)
+    num, name, ok, failures = _check3(g)
+    assert ok, f"script-built page rejected the row: {failures}"
+    notes = [n for n in g.notes if n[0] == "3"]
+    assert notes and "script-built page" in " ".join(notes[0][2])
+    assert any(URL in " ".join(n[2]) for n in notes), "script-built page passed silently"
+
+
+def test_a_short_page_that_carries_the_quote_still_passes_with_no_note():
+    g = _gate(QUOTE)                                   # short, but the quote is on it
+    assert _check3(g)[2] and not [n for n in g.notes if n[0] == "3"]
+
+
+def test_an_empty_fetch_is_not_treated_as_a_script_shell():
+    from src.cfp_monitor.verify import is_script_shell
+    assert not is_script_shell("") and not is_script_shell(None) and is_script_shell("x" * 199) and not is_script_shell("x" * 200)
+
+
+def test_a_normal_sized_page_without_the_quote_still_fails_after_the_change():
+    g = _gate("Call for submissions. " + "The programme committee meets in spring. " * 40)
+    assert not _check3(g)[2]

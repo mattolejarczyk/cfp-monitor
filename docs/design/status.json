@@ -1,39 +1,39 @@
 {
   "as_of": "2026-10-02",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. The two award rows are in the awards input list and the awards file the page reads; the preview shows both Open. Late 10-02: date-reader fix built and measured but held; watch-list and board-metrics scripts added; customer agreement recomputed (17 of 33, 52%). Refresh planner (shadow) built. Late 10-02: date-reader fix applied (suite 1,327 green), sponsorship option A built and wired, upstream QA canary ready. Late 10-02: headline numbers re-based on LIVE deadlines (provable 6 of 10; customer agreement 4 of 9, 44%, with the cause named); upstream's final sparse patch gated: only quote wording left. Six more events loaded (Triangle, WSED, GC&E, CODASPY, Apres-Cyber, Fuel Ethanol); BASC waits on the gate decision.",
+  "now": "End of day 2026-10-02: all of today's upstream deliveries are loaded, the data-quality indexes are measured (conferences and awards separately), and the next scheduled event is Saturday 02:00's research load.",
   "decisions": [
     {
-      "text": "Extend the acceptance gate so a script-built page (a plain fetch sees almost no text, e.g. basconf.org 52 characters) is reported as 'quote not checked' instead of failing check 3, as already done for anti-bot walls? RECOMMEND YES: BASC's quote is verbatim in a real browser and the gate currently rejects a correct row. Small change with tests.",
-      "file": "C:/Users/matts/cfp-monitor/scripts/accept_delivery.py"
-    },
-    {
-      "text": "Send NOTE-TO-UPSTREAM-12: 13 customer-tracked events with a verified, still-open date that we do not research (9 Urgent; six close within about two weeks). Asks which are in scope and to add the in-scope ones to the research lists.",
-      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-12.md"
-    },
-    {
-      "text": "Tell upstream (courtesy): the new Utility awards file (Awards_20261002_out.csv) still carries 6 passed-deadline rows marked Open and one dead Clinton Global Initiative link, so it is not gate-accepted; ask them to re-emit those rows' status. The two new award rows are fine.",
-      "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/Awards_20261002_out.csv"
-    },
-    {
-      "text": "H2 MEET 2026 (Utility approved file): deadline 2026-09-30 passed but STATUS still says Open, so the approved Utility file fails gate check 6. STATUS is customer-owned; decide who corrects it before Saturday's fallback (RECOMMEND: ask upstream to re-emit the row's status through their normal path).",
-      "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/Utility_audited.final.csv"
-    },
-    {
-      "text": "No action: after Saturday's load I diff the four corrected rows and the six new rows against today's backups and report before Monday 07:00 (India Energy Week must read open).",
+      "added": "2026-10-02",
+      "text": "Tell the customer which events we do not cover: AAIML, ICRAI and RAAI (Urgent for Arnica, close 10-10), AI Con USA (10-18), AppWorld and ODSC. Upstream ruled all six out of scope; the customer otherwise assumes they are tracked.",
       "file": ""
+    },
+    {
+      "added": "2026-10-02",
+      "text": "Send upstream the closing note: the correction to note 7 (Black Hat Asia reads unconfirmed because blackhat.com refuses a plain fetch, not because of the date reader), and a reminder that the eight STATUS values come in their normal delivery. Text is ready.",
+      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-17.md"
+    },
+    {
+      "added": "2026-10-02",
+      "text": "Awards are not being researched: the Friday awards job has been disabled since 09-30, so awards freshness is 2% (2 of 129 rows stamped within 14 days) and drags the awards index to 58%. Re-enable it (needs an elevated PowerShell) or accept stale awards? RECOMMEND re-enable once the narrow prompt is in, so the first run is not wasted on timeouts.",
+      "file": ""
+    },
+    {
+      "added": "2026-10-02",
+      "text": "Wire the narrow research prompt into Saturday's job? It grounded 24 of 24 calls against 9 of 24 for the full prompt in the 09-30 test; today only about a third of Saturday's calls return a grounded answer. It is upstream's script (run_market_audit.py), so it needs their agreement.",
+      "file": "C:/Users/matts/cfp-monitor/experiments/grounding_reliability/"
     }
   ],
   "headline": {
     "provable": {
       "label": "Provable submission date (live deadlines)",
       "definition": "Deadlines still ahead for events on the Cybersecurity and Utility market lists. Proven = our verifier found the stored date on the cited page and a citation exists. A deadline that has already passed is not scored: its page moves on to the next edition.",
-      "rows": 10,
+      "rows": 17,
       "levels": [
         {
           "key": "confirmed",
           "label": "Date on the cited page",
-          "n": 6,
+          "n": 12,
           "tone": "good"
         },
         {
@@ -51,7 +51,7 @@
         {
           "key": "absent",
           "label": "Page read, date not on it",
-          "n": 0,
+          "n": 1,
           "tone": "bad"
         },
         {
@@ -61,8 +61,8 @@
           "tone": "bad"
         }
       ],
-      "open_rows": 10,
-      "open_confirmed": 6,
+      "open_rows": 17,
+      "open_confirmed": 12,
       "note": "The earlier 28% (11 of 39) counted every stored deadline, including 44 of 48 that had already passed; the purpose audit itself said 15 of 16 'absent' and 11 of 12 'unreadable' rows were already-passed deadlines, 'not errors'. On live deadlines the unproven ones are a deliberate citation withdrawal and pages that refuse a plain fetch, not wrong dates.",
       "source": "scripts/board_metrics.py provable_live, 2026-10-02; experiments/purpose_audit/RESULT.md for the all-rows audit"
     },
@@ -299,7 +299,7 @@
     "good": [
       {
         "label": "Provable submission dates",
-        "now": "6 of 10 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
+        "now": "12 of 17 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
         "target": "90% of open-call rows; the rest honestly blank, never guessed"
       },
       {
@@ -599,6 +599,131 @@
       "how": "CLI agent command (openclaw agent -m)",
       "state": "untested",
       "note": "Installed (2026.8.2). Gateway status unknown; not messaged yet."
+    }
+  ],
+  "quality": {
+    "as_of": "2026-10-02",
+    "method": "Components, each 0 to 100, combined with the weights shown (a judgment). A component with no data is excluded and the weights renormalised, never scored as zero. Range: the lower of the weighted and equal-weight figure up to the higher of the equal-weight figure and the figure if pages our plain reader cannot open count half. Deadlines are scored on LIVE rows only (a passed deadline's page moves on to the next edition).",
+    "conference": {
+      "kind": "conference",
+      "measured_weight": 100,
+      "overall": 69,
+      "low": 69,
+      "high": 71,
+      "equal_weight": 71,
+      "components": [
+        {
+          "key": "proof",
+          "value": 71,
+          "weight": 25,
+          "detail": "12 of 17 live deadlines proven on their cited page"
+        },
+        {
+          "key": "no_error",
+          "value": 100,
+          "weight": 10,
+          "detail": "0 of 17 live deadlines contradicted by their own page"
+        },
+        {
+          "key": "alignment",
+          "value": 44,
+          "weight": 15,
+          "detail": "4 of 9 live customer-verified dates match ours"
+        },
+        {
+          "key": "freshness",
+          "value": 79,
+          "weight": 15,
+          "detail": "89 of 113 rows genuinely researched in the Saturday run (24 stubs)"
+        },
+        {
+          "key": "coverage",
+          "value": 76,
+          "weight": 15,
+          "detail": "16 of 21 live customer-tracked events exist in our database"
+        },
+        {
+          "key": "other",
+          "value": 57,
+          "weight": 20,
+          "detail": "4 of 7 sampled rows free of known wrong city, venue, dates or name (weak evidence: small sample)"
+        }
+      ],
+      "excluded": [],
+      "drivers": [
+        "89 of 280 Saturday research calls returned a grounded answer (32%): retries and last week's approved rows cover most of the gap"
+      ],
+      "label": "Conferences: overall data quality"
+    },
+    "awards": {
+      "kind": "award",
+      "measured_weight": 50,
+      "overall": 58,
+      "low": 58,
+      "high": 60,
+      "equal_weight": 59,
+      "components": [
+        {
+          "key": "proof",
+          "value": 75,
+          "weight": 25,
+          "detail": "12 of 16 live deadlines proven on their cited page"
+        },
+        {
+          "key": "no_error",
+          "value": 100,
+          "weight": 10,
+          "detail": "0 of 16 live deadlines contradicted by their own page"
+        },
+        {
+          "key": "freshness",
+          "value": 2,
+          "weight": 15,
+          "detail": "2 of 129 rows genuinely researched in the awards file the page reads (stamped within 14 days, not a stub) (10 stubs)"
+        }
+      ],
+      "excluded": [
+        {
+          "key": "alignment",
+          "weight": 15,
+          "reason": "no customer-verified, dated rows link to this kind: nothing to compare"
+        },
+        {
+          "key": "coverage",
+          "weight": 15,
+          "reason": "no customer-tracked rows of this kind: coverage cannot be measured"
+        },
+        {
+          "key": "other",
+          "weight": 20,
+          "reason": "no non-deadline fact has been read against its page for this kind"
+        }
+      ],
+      "drivers": [
+        "The Friday awards research job is disabled (since 2026-09-30), so awards freshness is low by construction until it runs again"
+      ],
+      "label": "Awards: overall data quality"
+    },
+    "not_measured": "Sponsorship, organizer, overview and categories have no measure at all for conferences, and nothing beyond the deadline is measured for awards. The conference 'other facts' component rests on one 7-row read: 3 of the 7 events upstream delivered on 2026-10-02 carried a wrong city, venue or date that only a read of the page caught. Conferences and awards are deliberately not blended into one number.",
+    "source": "scripts/board_metrics.py quality_for; docs/design/field_spotchecks.json"
+  },
+  "now_updated": "2026-10-02",
+  "working_on": [
+    {
+      "state": "In progress",
+      "text": "Full test suite re-run on the latest shared-code changes (identity helper, gate change, city fix); result at experiments/purpose_audit/sandbox_20261002/suite3_out.txt"
+    },
+    {
+      "state": "Waiting on upstream",
+      "text": "The eight STATUS corrections (H2 MEET and six awards: Closed) in their normal weekly delivery; our patch tool refuses STATUS columns by design. Until then the awards file fails one gate check and the page already shows those deadlines as Closed"
+    },
+    {
+      "state": "Queued, Saturday after 02:00",
+      "text": "Run scripts/watchlist_check.py against the pre-10-01 backup and report the corrected and new rows before Monday 07:00 (India Energy Week must read open); also confirms the sponsorship carry-forward step ran"
+    },
+    {
+      "state": "Queued, not started",
+      "text": "The 'we read, they format' packet tool (reads each cited page with our reader and prints URL, title and verbatim date sentence for upstream), sponsorship option B after a measured shadow week, and the refresh scheduler after the shadow week"
     }
   ]
 }

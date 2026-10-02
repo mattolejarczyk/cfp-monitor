@@ -58,7 +58,8 @@ def test_withdrawn_unverified_and_dateless_rows_are_not_in_the_population(tmp_pa
 
 def test_awards_are_looked_up_in_their_own_table(tmp_path):
     db = _db(tmp_path / "x.db", [("a", "Award", "aw1", "10/06/2026", "Verified", 0)], {}, awards={"aw1": "2026-10-06"})
-    assert bm.customer_agreement(db)["counts"]["agree"] == 1
+    assert bm.customer_agreement(db, kind="award")["counts"]["agree"] == 1          # a customer line linked to an award row is read against the award table
+    assert bm.customer_agreement(db)["counts"]["agree"] == 0                         # and never against the conference table
 
 
 def test_a_row_not_in_our_database_is_reported_not_counted(tmp_path):
@@ -115,7 +116,7 @@ def _live_db(tmp_path):
 def test_provable_live_classes_and_scope(tmp_path):
     r = bm.provable_live(_live_db(tmp_path), "2026-10-02")
     assert r["rows"] == 5                                              # past and off-list rows are not scored
-    assert r["counts"] == {"verified": 1, "withdrawn": 1, "unreadable": 1, "notfound": 1, "contradicted": 1}
+    assert r["counts"] == {"verified": 1, "withdrawn": 1, "unreadable": 1, "notfound": 1, "contradicted": 1, "unchecked": 0}
 
 
 def test_a_deadline_equal_to_today_is_live(tmp_path):
@@ -145,3 +146,98 @@ def test_update_status_writes_both_headlines_live_first(tmp_path):
     assert d["headline"]["provable"]["rows"] == 10 and d["headline"]["provable"]["levels"][0]["n"] == 6
     assert "17 of 33" in d["headline"]["customer"]["note"]
     assert d["objective"]["good"][0]["now"].startswith("6 of 10") and d["objective"]["good"][1]["now"].startswith("4 of 9")
+
+
+# ---- conference and award indexes are separate (2026-10-02) ---------------------------------------------------
+def _split_db(tmp_path):
+    db = tmp_path / "split.db"
+    con = sqlite3.connect(db)
+    con.execute("create table grounding_facts (event_id text, conference_key text, name text, deadline text, verify_state text, verify_detail text, "
+                "deadline_evidence_url text, url text)")
+    con.execute("create table award_grounding_facts (event_id text, conference_key text, name text, deadline text, verify_state text, verify_detail text, "
+                "deadline_evidence_url text, url text)")
+    con.execute("create table award_markets (award_key text, market text, source_list text, first_seen text)")
+    con.execute("create table client_conferences (client_key text, their_name text, event_id text, their_deadline text, submission_date_verified text, "
+                "withdrawn_by_customer integer, their_url text)")
+    con.executemany("insert into grounding_facts values (?,?,?,?,?,?,?,?)", [("c1", "c.org", "Conf", "2026-12-01", "verified", "", "http://c", "http://c.org")])
+    con.executemany("insert into award_grounding_facts values (?,?,?,?,?,?,?,?)", [
+        ("a1", "a.org", "Award ok", "2026-12-02", "verified", "verified 2026-09-28 x", "http://a", "http://a.org"),
+        ("a2", "b.org", "Award unchecked", "2026-12-03", "unverified", None, "http://b", "http://b.org"),
+        ("a3", "c.org", "Award unreadable", "2026-12-04", "unverified", "unreadable 2026-09-28 http://u", "http://u", "http://c.org"),
+        ("a4", "d.org", "Award off list", "2026-12-05", "verified", "", "http://d", "http://d.org")])
+    con.executemany("insert into award_markets values (?,?,?,?)", [("a1", "Utility", "", ""), ("a2", "Cybersecurity", "", ""), ("a3", "Utility", "", "")])
+    con.executemany("insert into client_conferences values (?,?,?,?,?,?,?)", [("x", "Conf", "c1", "12/01/2026", "Verified", 0, "http://c.org")])
+    con.commit()
+    con.close()
+    sd = tmp_path / "market_sheets"
+    sd.mkdir()
+    with open(sd / "cyber_seed.csv", "w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["EVENT_ID", "EVENT_ID_CANON"])
+        w.writerow(["u-c1", "c1"])
+    return str(db)
+
+
+def test_award_proof_uses_the_award_table_and_the_award_market_list(tmp_path):
+    db = _split_db(tmp_path)
+    r = bm.provable_live(db, "2026-10-02", "award")
+    assert r["rows"] == 3                                              # a4 is on no award list
+    assert r["counts"]["verified"] == 1 and r["counts"]["unchecked"] == 1 and r["counts"]["unreadable"] == 1
+    assert bm.provable_live(db, "2026-10-02", "conference")["rows"] == 1   # never mixes
+
+
+def test_customer_agreement_and_coverage_never_cross_kinds(tmp_path):
+    db = _split_db(tmp_path)
+    assert bm.customer_agreement(db, "2026-10-02", "conference")["live_rows"] == 1
+    assert bm.customer_agreement(db, "2026-10-02", "award")["live_rows"] == 0
+    assert bm.coverage_live(db, "2026-10-02", "conference")["rows"] == 1 and bm.coverage_live(db, "2026-10-02", "award")["rows"] == 0
+
+
+def test_a_component_with_no_data_is_excluded_not_scored_as_zero():
+    cur = {"live_counts": {"agree": 0, "blank": 0, "differ": 0}}
+    prov = {"rows": 4, "counts": {"verified": 3, "withdrawn": 0, "unreadable": 0, "notfound": 1, "contradicted": 0, "unchecked": 0}}
+    q = bm.quality_index(cur, prov, {"rows": 0, "covered": 0}, {"rows": 10, "researched": 10, "stubs": 0}, None, None, "award")
+    assert {e["key"] for e in q["excluded"]} == {"alignment", "coverage", "other"}
+    assert q["measured_weight"] == 25 + 10 + 15                        # proof + no_error + freshness
+    assert q["overall"] == round((25 * 75 + 10 * 100 + 15 * 100) / 50) # renormalised, zeros not injected
+
+
+def test_award_index_names_the_disabled_job(tmp_path):
+    q = bm.quality_index({"live_counts": {"agree": 0, "blank": 0, "differ": 0}}, {"rows": 0, "counts": {k: 0 for k in
+                         ("verified", "withdrawn", "unreadable", "notfound", "contradicted", "unchecked")}},
+                         {"rows": 0, "covered": 0}, {"rows": 1, "researched": 0, "stubs": 0}, None, None, "award")
+    assert any("disabled" in d for d in q["drivers"])
+
+
+def test_award_freshness_reads_the_awards_file_and_ignores_stale_and_stub_rows(tmp_path):
+    md = tmp_path / "Markets"
+    md.mkdir()
+    with open(md / "Awards_20261002_out.csv", "w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=["EVENT_ID", "SOURCE_AS_OF", "STATUS DETAILS"])
+        w.writeheader()
+        w.writerows([{"EVENT_ID": "a", "SOURCE_AS_OF": "2026-10-01", "STATUS DETAILS": ""},
+                     {"EVENT_ID": "b", "SOURCE_AS_OF": "2026-09-05", "STATUS DETAILS": ""},
+                     {"EVENT_ID": "c", "SOURCE_AS_OF": "2026-10-01", "STATUS DETAILS": "Audit Exception: failed"}])
+    assert bm.freshness_last_run(str(md), "2026-10-02", "award") == {"rows": 3, "researched": 1, "stubs": 1}
+
+
+def test_spotchecks_are_filtered_by_kind(tmp_path):
+    sp = tmp_path / "s.json"
+    sp.write_text(json.dumps({"checks": [{"rows": 7, "rows_with_error": 3}, {"kind": "award", "rows": 4, "rows_with_error": 0}]}), encoding="utf-8")
+    assert bm.spotcheck_summary(sp, "conference") == {"rows": 7, "bad": 3, "checks": 1}
+    assert bm.spotcheck_summary(sp, "award") == {"rows": 4, "bad": 0, "checks": 1}
+
+
+def test_market_canonical_ids_reads_only_the_customer_market_seed_sheets(tmp_path):
+    from src.cfp_monitor.identity import market_canonical_ids
+    (tmp_path / "x.db").write_bytes(b"")
+    sd = tmp_path / "market_sheets"
+    sd.mkdir()
+    for name, ids in (("cyber_seed.csv", ["c1", "c2"]), ("utility_seed.csv", ["u1"]), ("robotics_seed.csv", ["r1"])):
+        with open(sd / name, "w", encoding="utf-8", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["EVENT_ID", "EVENT_ID_CANON"])
+            for i in ids:
+                w.writerow(["up-" + i, i])
+    ids = market_canonical_ids(str(tmp_path / "x.db"))     # seed_roots also searches the working directory second, by design
+    assert {"c1", "c2", "u1"} <= ids and "r1" not in ids   # a prospect market's seed sheet is not a customer market
