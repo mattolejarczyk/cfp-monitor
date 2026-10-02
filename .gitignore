@@ -52,3 +52,9 @@ menu_followups*.csv
 dashboard/
 docs/agents/results/
 page_library/
+
+# 2026-10-02: sandbox copies of the live database and upstream's raw delivery rows stay local (public repo)
+experiments/purpose_audit/sandbox_20261002/
+experiments/purpose_audit/upstream_new_rows_*.csv
+experiments/purpose_audit/gate_*_2026*.json
+experiments/purpose_audit/readback_awards.py

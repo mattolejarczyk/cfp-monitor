@@ -111,7 +111,9 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 3. **[Safety check]** **Runs the approval check with the row-by-row rule.** Rows that pass use this week's research.
    Rows that fail, were not researched, or cannot be matched to an event with certainty keep last
    week's approved version. Events not covered this week carry over, so nothing disappears from
-   the page. *(accept_delivery.py - the one approval check)*
+   the page. A cited page that an anti-bot wall will not let a plain read open (it answers with a
+   short notice instead of the page) is not counted as a missing quote; it is listed in the
+   approval report as "not checked" so that a person can confirm it. *(accept_delivery.py - the one approval check)*
 4. **[Load]** **Backs up the database** before touching it.
 5. **[Load]** **Loads each row onto its permanent ID**, so a renamed event updates its name instead of
    becoming a duplicate. *(import_grounding.py --ids)*

@@ -1,466 +1,536 @@
 {
- "as_of": "2026-10-01",
- "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
- "now": "Saturday safeguard closed: approved files and our database hold the corrected values, including the Global Energy Show link. Upstream acknowledged our files as master. Nullcon Goa patch is ready for your go.",
- "decisions": [
-  {
-   "text": "Apply upstream's Nullcon Goa 2027 payload to the approved Cybersecurity file (deadline 2026-10-30, evidence, quote, IS_PROJECTED false)? Report mode is clean (4 fields, one row, key matches the existing row). RECOMMEND YES; their STATUS value is refused by the tool by design.",
-   "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/apply_row_patch.py"
-  },
-  {
-   "text": "Retry Hermes benchmark stage 2 (5 events)? Needs the debug Chrome restarted first.",
-   "file": "C:/Users/matts/cfp-monitor/docs/agents/README.md"
-  },
-  {
-   "text": "No action: upstream's re-research delivery (7 new rows, IS_PROJECTED flags, IEW retirement) is expected; I verify it when it arrives. After Saturday's load I diff the corrected rows against today's backups before Monday 07:00.",
-   "file": ""
-  }
- ],
- "headline": {
-  "provable": {
-   "label": "Provable submission date",
-   "definition": "Stored deadline is on the cited page AND code labels that date a submission date. A correct answer is enough; a word-for-word quote is not required.",
-   "rows": 39,
-   "levels": [
+  "as_of": "2026-10-02",
+  "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
+  "now": "Benchmark closed and locked (40 events, 9 hand labels, edition rule in the brief). Four new speaking rows and two award rows are in our database on upstream's permanent IDs; Saturday's load rehearsed clean with the four rows in the input list. Our own R11 patch defect found and fixed in both approved files. Gate now reports walled pages instead of failing them. Waiting on you: send two notes to upstream (about the Utility awards file).",
+  "decisions": [
     {
-     "key": "confirmed",
-     "label": "Date on cited page, purpose = submission",
-     "n": 11,
-     "tone": "good"
+      "text": "Send NOTE-TO-UPSTREAM-8: 'Utility_Awards_master.csv' is not on this machine; asks where it lives and how to add the two award rows. Until a Utility awards file is approved, the two award rows (Climate Change closes 10-06, ACT Expo) are in the database but may not appear on any page.",
+      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-8.md"
     },
     {
-     "key": "unclear",
-     "label": "Date on page, purpose undecided",
-     "n": 1,
-     "tone": "warn"
+      "text": "Send NOTE-TO-UPSTREAM-7 (FYI: seven rows accepted, what we loaded, the R11 fix on our side). Upstream already confirmed all seven IDs permanent; this note is courtesy and can be skipped if you prefer.",
+      "file": "C:/Users/matts/cfp-monitor/experiments/purpose_audit/NOTE-TO-UPSTREAM-7.md"
     },
     {
-     "key": "mismatch",
-     "label": "Date on page, wrong purpose",
-     "n": 0,
-     "tone": "bad"
+      "text": "H2 MEET 2026 (Utility approved file): deadline 2026-09-30 passed but STATUS still says Open, so the approved Utility file fails gate check 6. STATUS is customer-owned; decide who corrects it before Saturday's fallback (RECOMMEND: ask upstream to re-emit the row's status through their normal path).",
+      "file": "C:/Users/matts/Desktop/Nicolia-PR-Prime/Markets/Utility_audited.final.csv"
     },
     {
-     "key": "absent",
-     "label": "Date not on the cited page",
-     "n": 15,
-     "tone": "bad"
-    },
-    {
-     "key": "nopage",
-     "label": "No readable page",
-     "n": 12,
-     "tone": "mute"
+      "text": "No action: after Saturday's load I diff the four corrected rows and the six new rows against today's backups and report before Monday 07:00 (India Energy Week must read open).",
+      "file": ""
     }
-   ],
-   "open_rows": 3,
-   "open_confirmed": 2,
-   "note": "Re-audited 10-01 after the corrections: Climate Change (was a registration-date mismatch) and Global Energy Show (was unreadable) are now confirmed; SecureWorld has no citation after its withdrawal. India Energy Week is verified separately (the audit counts one row per conference and picks its stale 2026 duplicate).",
-   "source": "experiments/purpose_audit/RESULT.md"
-  },
-  "customer": {
-   "label": "Agreement with customer-verified dates",
-   "definition": "Rows where the customer's team marked the date Verified and has a date: does ours match? Rough first reading, not cleaned for editions or passed rows.",
-   "rows": 40,
-   "levels": [
-    {
-     "key": "agree",
-     "label": "Same date",
-     "n": 20,
-     "tone": "good"
+  ],
+  "headline": {
+    "provable": {
+      "label": "Provable submission date",
+      "definition": "Stored deadline is on the cited page AND code labels that date a submission date. A correct answer is enough; a word-for-word quote is not required.",
+      "rows": 39,
+      "levels": [
+        {
+          "key": "confirmed",
+          "label": "Date on cited page, purpose = submission",
+          "n": 11,
+          "tone": "good"
+        },
+        {
+          "key": "unclear",
+          "label": "Date on page, purpose undecided",
+          "n": 1,
+          "tone": "warn"
+        },
+        {
+          "key": "mismatch",
+          "label": "Date on page, wrong purpose",
+          "n": 0,
+          "tone": "bad"
+        },
+        {
+          "key": "absent",
+          "label": "Date not on the cited page",
+          "n": 15,
+          "tone": "bad"
+        },
+        {
+          "key": "nopage",
+          "label": "No readable page",
+          "n": 12,
+          "tone": "mute"
+        }
+      ],
+      "open_rows": 3,
+      "open_confirmed": 2,
+      "note": "Re-audited 10-01 after the corrections: Climate Change (was a registration-date mismatch) and Global Energy Show (was unreadable) are now confirmed; SecureWorld has no citation after its withdrawal. India Energy Week is verified separately (the audit counts one row per conference and picks its stale 2026 duplicate).",
+      "source": "experiments/purpose_audit/RESULT.md"
     },
-    {
-     "key": "blank",
-     "label": "Our deadline blank",
-     "n": 12,
-     "tone": "warn"
-    },
-    {
-     "key": "differ",
-     "label": "Different date",
-     "n": 8,
-     "tone": "bad"
+    "customer": {
+      "label": "Agreement with customer-verified dates",
+      "definition": "Rows where the customer's team marked the date Verified and has a date: does ours match? Rough first reading, not cleaned for editions or passed rows.",
+      "rows": 40,
+      "levels": [
+        {
+          "key": "agree",
+          "label": "Same date",
+          "n": 20,
+          "tone": "good"
+        },
+        {
+          "key": "blank",
+          "label": "Our deadline blank",
+          "n": 12,
+          "tone": "warn"
+        },
+        {
+          "key": "differ",
+          "label": "Different date",
+          "n": 8,
+          "tone": "bad"
+        }
+      ],
+      "note": "Source is the weekly customer-sheet snapshot already in the database. This is the number the customer would feel.",
+      "source": "client_conferences joined to grounding_facts, 2026-10-01"
     }
-   ],
-   "note": "Source is the weekly customer-sheet snapshot already in the database. This is the number the customer would feel.",
-   "source": "client_conferences joined to grounding_facts, 2026-10-01"
-  }
- },
- "methods": [
-  {
-   "step": "Narrow grounded prompt",
-   "metric": "Calls that grounded",
-   "result": "24/24 (full prompt 9/24)",
-   "verdict": "good",
-   "date": "09-30",
-   "note": "Median 16 s vs 28 s. Truth was our own stored value, so weak on purpose."
   },
-  {
-   "step": "Narrow grounded prompt",
-   "metric": "Quote word for word on page",
-   "result": "8/24 (our own quotes: 4/12)",
-   "verdict": "warn",
-   "date": "09-30",
-   "note": "Checker was weak. Unresolved."
-  },
-  {
-   "step": "Page discovery",
-   "metric": "Sites with a call page found",
-   "result": "31 of 84 sites, 364 pages",
-   "verdict": "good",
-   "date": "09-30",
-   "note": "Median 4 pages per site. Most others have no open call."
-  },
-  {
-   "step": "Offline page library",
-   "metric": "Planned pages stored and usable",
-   "result": "350 of 360 usable (97%)",
-   "verdict": "good",
-   "date": "10-01",
-   "note": "0 blocked, 0 errors. 10 thin or soft-404 pages (e.g. Climate Week NYC, CrowdStrike). Later steps read saved text, not the browser."
-  },
-  {
-   "step": "Sentence picking (cheap model)",
-   "metric": "Precision / recall",
-   "result": "1.00 / 12 of 24",
-   "verdict": "good",
-   "date": "10-01",
-   "note": "About 5 cents per run. Misses tables."
-  },
-  {
-   "step": "Heading reader (rules)",
-   "metric": "Fresh holdout precision",
-   "result": "0.33 (2 of 2 recalled)",
-   "verdict": "bad",
-   "date": "10-01",
-   "note": "Fitted 24/24 on labelled pages. Only 2 labels in holdout. Advisory only."
-  },
-  {
-   "step": "Whole-page reader over the full library",
-   "metric": "Accepted deadlines still ahead, hand-checked",
-   "result": "16 of 18 look right; 2 false positives",
-   "verdict": "warn",
-   "date": "10-01",
-   "note": "Rough, not a score. False positives: an awards-ceremony date and a post-acceptance full-paper date. Needs the benchmark."
-  },
-  {
-   "step": "Whole-page model reader (DeepSeek)",
-   "metric": "Holdout + fresh, as run",
-   "result": "precision 0.85, recall 9/12",
-   "verdict": "warn",
-   "date": "10-01",
-   "note": "0 wrong-purpose. Post-hoc fixes: 0.875 / 11 of 12. Only 12 labels; needs the benchmark."
-  },
-  {
-   "step": "Purpose audit",
-   "metric": "Stored deadlines confirmed",
-   "result": "9 of 39",
-   "verdict": "warn",
-   "date": "10-01",
-   "note": "Reproduced the known Climate Change error independently."
-  },
-  {
-   "step": "Platform census",
-   "metric": "Not run",
-   "result": "no data yet",
-   "verdict": "none",
-   "date": "",
-   "note": "Count Sessionize, Pretalx, PaperCall, OpenConf sites."
-  },
-  {
-   "step": "Firecrawl fetch layer",
-   "metric": "Not run",
-   "result": "no data yet",
-   "verdict": "none",
-   "date": "",
-   "note": "Fetching only; same extractor."
-  }
- ],
- "agents": [
-  {
-   "name": "Benchmark stage 1: 3 events with known answers",
-   "who": "Hermes",
-   "status": "passed 10-01 (3 of 3)",
-   "budget": "free"
-  },
-  {
-   "name": "Benchmark stage 2: 5 new events",
-   "who": "Hermes",
-   "status": "paused: needs debug Chrome restarted, then your go",
-   "budget": "free"
-  },
-  {
-   "name": "Benchmark stages 3-4: 10, then the remaining ~22",
-   "who": "Hermes",
-   "status": "after stage 2",
-   "budget": "free"
-  },
-  {
-   "name": "Platform census",
-   "who": "Hermes",
-   "status": "brief ready",
-   "budget": "free"
-  }
- ],
- "spend": [
-  {
-   "label": "Gemini, August",
-   "usd": 72.79
-  },
-  {
-   "label": "Gemini, September",
-   "usd": 134.06
-  },
-  {
-   "label": "OpenRouter test budget used",
-   "usd": 0.045,
-   "cap": 1.0
-  },
-  {
-   "label": "OpenRouter, whole-page reader experiment",
-   "usd": 0.082,
-   "cap": 0.5
-  },
-  {
-   "label": "OpenRouter, whole-page reader over the library",
-   "usd": 0.453,
-   "cap": 0.6
-  }
- ],
- "objective": {
-  "what": "Give each customer one trustworthy date per conference - the date they can submit by - with the page that proves it.",
-  "why": "Customers act on these dates and fields. Today we cannot tell which of them to trust.",
-  "good": [
-   {
-    "label": "Provable submission dates",
-    "now": "2 of 3 open rows, plus India Energy Week verified separately (11 of 39 overall, up from 9)",
-    "target": "90% of open-call rows; the rest honestly blank, never guessed"
-   },
-   {
-    "label": "Agreement with customer-verified dates",
-    "now": "50% (20 of 40)",
-    "target": "90%"
-   },
-   {
-    "label": "Weekend research that completes",
-    "now": "about 27% of calls grounded (September run)",
-    "target": "95% of calls"
-   },
-   {
-    "label": "Gemini cost per month",
-    "now": "$134 in September",
-    "target": "under $50"
-   }
+  "methods": [
+    {
+      "step": "Narrow grounded prompt",
+      "metric": "Calls that grounded",
+      "result": "24/24 (full prompt 9/24)",
+      "verdict": "good",
+      "date": "09-30",
+      "note": "Median 16 s vs 28 s. Truth was our own stored value, so weak on purpose."
+    },
+    {
+      "step": "Narrow grounded prompt",
+      "metric": "Quote word for word on page",
+      "result": "8/24 (our own quotes: 4/12)",
+      "verdict": "warn",
+      "date": "09-30",
+      "note": "Checker was weak. Unresolved."
+    },
+    {
+      "step": "Page discovery",
+      "metric": "Sites with a call page found",
+      "result": "31 of 84 sites, 364 pages",
+      "verdict": "good",
+      "date": "09-30",
+      "note": "Median 4 pages per site. Most others have no open call."
+    },
+    {
+      "step": "Offline page library",
+      "metric": "Planned pages stored and usable",
+      "result": "350 of 360 usable (97%)",
+      "verdict": "good",
+      "date": "10-01",
+      "note": "0 blocked, 0 errors. 10 thin or soft-404 pages (e.g. Climate Week NYC, CrowdStrike). Later steps read saved text, not the browser."
+    },
+    {
+      "step": "Sentence picking (cheap model)",
+      "metric": "Precision / recall",
+      "result": "1.00 / 12 of 24",
+      "verdict": "good",
+      "date": "10-01",
+      "note": "About 5 cents per run. Misses tables."
+    },
+    {
+      "step": "Heading reader (rules)",
+      "metric": "Fresh holdout precision",
+      "result": "0.33 (2 of 2 recalled)",
+      "verdict": "bad",
+      "date": "10-01",
+      "note": "Fitted 24/24 on labelled pages. Only 2 labels in holdout. Advisory only."
+    },
+    {
+      "step": "Whole-page reader over the full library",
+      "metric": "Accepted deadlines still ahead, hand-checked",
+      "result": "16 of 18 look right; 2 false positives",
+      "verdict": "warn",
+      "date": "10-01",
+      "note": "Rough, not a score. False positives: an awards-ceremony date and a post-acceptance full-paper date. Needs the benchmark."
+    },
+    {
+      "step": "Whole-page model reader (DeepSeek)",
+      "metric": "Holdout + fresh, as run",
+      "result": "precision 0.85, recall 9/12",
+      "verdict": "warn",
+      "date": "10-01",
+      "note": "0 wrong-purpose. Post-hoc fixes: 0.875 / 11 of 12. Only 12 labels; needs the benchmark."
+    },
+    {
+      "step": "Purpose audit",
+      "metric": "Stored deadlines confirmed",
+      "result": "9 of 39",
+      "verdict": "warn",
+      "date": "10-01",
+      "note": "Reproduced the known Climate Change error independently."
+    },
+    {
+      "step": "Platform census",
+      "metric": "Not run",
+      "result": "no data yet",
+      "verdict": "none",
+      "date": "",
+      "note": "Count Sessionize, Pretalx, PaperCall, OpenConf sites."
+    },
+    {
+      "step": "Firecrawl fetch layer",
+      "metric": "Not run",
+      "result": "no data yet",
+      "verdict": "none",
+      "date": "",
+      "note": "Fetching only; same extractor."
+    },
+    {
+      "step": "Benchmark (Hermes, free model)",
+      "metric": "Formal 10-row spot-check; wider checks",
+      "result": "8 of 10 (misses: B28, B37, both low confidence); 9 of 9 on the other checks",
+      "verdict": "warn",
+      "date": "10-02",
+      "note": "Brief asks 9 of 10. Both misses were pages with mixed signals. Key built with 8 hand labels."
+    },
+    {
+      "step": "Model comparison, 10 hard rows",
+      "metric": "Exact status match to the key",
+      "result": "gpt medium 6/10, free 4/10, gpt xhigh 4/9, DeepSeek flash 3/10",
+      "verdict": "warn",
+      "date": "10-02",
+      "note": "Mostly one cause: the brief did not say which edition. Key was partly built from these runs, so the score is rough. xhigh was more cautious, not more correct."
+    },
+    {
+      "step": "Edition rule in the brief (rule 7a)",
+      "metric": "Models agree on the 10 hard rows",
+      "result": "B26, B27, B28 agree across both rerun models; remaining differences were labels written before the rule",
+      "verdict": "good",
+      "date": "10-02",
+      "note": "Free model matches the key on 6/10, DeepSeek flash 5/10. B38 and B13 relabelled under the rule; key re-locked."
+    }
   ],
-  "note": "Targets are proposed, not agreed. Edit them in docs/design/status.json.",
-  "why_points": [
-   "The date can be wrong while labelled verified: one stored deadline was a registration date, and 12 of 39 stored deadlines read 'verified' on call status alone, not on the date.",
-   "Everything else we collect (organiser, sponsorship, categories, overview, about 24 fields) arrives at varying quality, from different sources, and none of it has been measured.",
-   "There is no method yet that proves a field's quality, so improvements are judged by feel and we correct after the customer complains.",
-   "The weekend research fails about 73% of its Gemini calls, September cost $134, and weeks of building still need manual rescue."
+  "agents": [
+    {
+      "name": "Benchmark, all 40 events (free model space-bunny-alpha)",
+      "who": "Hermes",
+      "status": "done 10-02: 5 of 5, then 10, then 25; 9 of 9 first spot-checks right; 8 of 10 on the formal sample (2 low-confidence misses)",
+      "budget": "free"
+    },
+    {
+      "name": "Same 10 hard rows on gpt-6.1-sol (medium and xhigh)",
+      "who": "Hermes",
+      "status": "done 10-02: medium 6 of 10, xhigh 4 of 9 against the key; more careful, not more accurate",
+      "budget": "Codex subscription"
+    },
+    {
+      "name": "Same 10 hard rows on DeepSeek v4.1 flash (medium)",
+      "who": "Hermes",
+      "status": "done 10-02: 3 of 10; 5.5 minutes, about $0.016",
+      "budget": "OpenRouter"
+    },
+    {
+      "name": "Edition-rule rerun: free model and DeepSeek flash, same 10 hard rows",
+      "who": "Hermes",
+      "status": "done 10-02: edition rule fixed the disagreements (B26, B27 now open for both models); 6 and 5 of 10 match the key; DeepSeek about $0.024",
+      "budget": "free + about $0.024"
+    },
+    {
+      "name": "Platform census",
+      "who": "Hermes",
+      "status": "brief ready, not started",
+      "budget": "free"
+    }
   ],
-  "why_close": "So the project is as much a way to prove quality, field by field and step by step, as it is a way to collect data.",
-  "ladder": [
-   "Stated: a model or page says so",
-   "Supported: it appears on the cited page",
-   "Proven: page and purpose checked by code",
-   "Customer-confirmed: their team agrees"
+  "spend": [
+    {
+      "label": "Gemini, August",
+      "usd": 72.79
+    },
+    {
+      "label": "Gemini, September",
+      "usd": 134.06
+    },
+    {
+      "label": "OpenRouter test budget used",
+      "usd": 0.045,
+      "cap": 1.0
+    },
+    {
+      "label": "OpenRouter, whole-page reader experiment",
+      "usd": 0.082,
+      "cap": 0.5
+    },
+    {
+      "label": "OpenRouter, whole-page reader over the library",
+      "usd": 0.453,
+      "cap": 0.6
+    },
+    {
+      "label": "OpenRouter, DeepSeek v4.1 flash on 10 rows (Hermes log estimate)",
+      "usd": 0.016
+    },
+    {
+      "label": "Hermes free model and gpt-6.1-sol runs",
+      "usd": 0.0
+    },
+    {
+      "label": "OpenRouter, DeepSeek flash edition-rule rerun",
+      "usd": 0.024
+    }
+  ],
+  "objective": {
+    "what": "Give each customer one trustworthy date per conference - the date they can submit by - with the page that proves it.",
+    "why": "Customers act on these dates and fields. Today we cannot tell which of them to trust.",
+    "good": [
+      {
+        "label": "Provable submission dates",
+        "now": "2 of 3 open rows, plus India Energy Week verified separately (11 of 39 overall, up from 9)",
+        "target": "90% of open-call rows; the rest honestly blank, never guessed"
+      },
+      {
+        "label": "Agreement with customer-verified dates",
+        "now": "50% (20 of 40)",
+        "target": "90%"
+      },
+      {
+        "label": "Weekend research that completes",
+        "now": "about 27% of calls grounded (September run)",
+        "target": "95% of calls"
+      },
+      {
+        "label": "Gemini cost per month",
+        "now": "$134 in September",
+        "target": "under $50"
+      }
+    ],
+    "note": "Targets are proposed, not agreed. Edit them in docs/design/status.json.",
+    "why_points": [
+      "The date can be wrong while labelled verified: one stored deadline was a registration date, and 12 of 39 stored deadlines read 'verified' on call status alone, not on the date.",
+      "Everything else we collect (organiser, sponsorship, categories, overview, about 24 fields) arrives at varying quality, from different sources, and none of it has been measured.",
+      "There is no method yet that proves a field's quality, so improvements are judged by feel and we correct after the customer complains.",
+      "The weekend research fails about 73% of its Gemini calls, September cost $134, and weeks of building still need manual rescue."
+    ],
+    "why_close": "So the project is as much a way to prove quality, field by field and step by step, as it is a way to collect data.",
+    "ladder": [
+      "Stated: a model or page says so",
+      "Supported: it appears on the cited page",
+      "Proven: page and purpose checked by code",
+      "Customer-confirmed: their team agrees"
+    ]
+  },
+  "pipeline": [
+    {
+      "id": "A",
+      "name": "Ask Gemini",
+      "job": "Find each conference's date and the page it came from.",
+      "items": [
+        {
+          "kind": "experiment",
+          "t": "Why did research fail?",
+          "r": "Prompt size and our own 120 s timeout, not quota",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Does a short prompt make grounding reliable?",
+          "r": "24 of 24 calls vs 9 of 24",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Do its dates match what we hold?",
+          "r": "33 of 33 (weak: our own values were the key)",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Are its quotes really on the page?",
+          "r": "Not measured properly yet",
+          "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "Does it cope with closed, renamed, successor events?",
+          "r": "Not tested",
+          "s": "todo"
+        },
+        {
+          "kind": "decision",
+          "t": "How do the other ~24 fields get filled?",
+          "r": "Open: keep, carry forward, or a second call",
+          "s": "todo"
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "name": "Find the right pages",
+      "job": "On each of 84 sites, get to the page that states the call.",
+      "items": [
+        {
+          "kind": "experiment",
+          "t": "Can sitemap plus menu find the call page?",
+          "r": "31 of 84 sites; 364 pages in total",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Offline page library: fetch the 364 planned pages once, keep text with timestamps and versions",
+          "r": "Done 10-01: 364 planned pages = 360 distinct URLs, all stored; 350 usable (97%), 10 thin or soft-404, 0 blocked, 0 errors; 69 of 69 sites have a usable page. 2.6 MB of text. Fetched once through real Chrome.",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Do many sites use a standard platform we can read directly?",
+          "r": "Census not run (brief 02)",
+          "s": "todo"
+        },
+        {
+          "kind": "fix",
+          "t": "Six sites return no usable links",
+          "r": "4 alias sites, 2 script-built menus",
+          "s": "todo"
+        },
+        {
+          "kind": "decision",
+          "t": "Refresh pages by event lifecycle (idea from the operator)",
+          "r": "Designed and settled 10-01: A weekly, B every 2 weeks, C1 none for 45 days, C2 monthly, D monthly (unknown dates: 45 days then every 2 weeks), E weekly exception batch, F quarterly then stop after 2 years; multi-customer rule. Not built.",
+          "s": "todo"
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "name": "Read and label the date",
+      "job": "From the page text, pick the submission deadline and reject registration, event and notification dates.",
+      "items": [
+        {
+          "kind": "experiment",
+          "t": "Can a cheap model pick the deadline sentence?",
+          "r": "Precision 1.00; recall 12 of 24 (tables missed)",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Can fixed rules read tables and schedules?",
+          "r": "No: fitted 24/24, fresh test 0.33",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Benchmark: the answer key every method is scored on",
+          "r": "Locked 10-02: 40 events; 16 high + 15 medium model rows, 9 hand labels; edition rule 7a in brief 01. Checksum beside the file.",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Can a model label every date on a whole page?",
+          "r": "As run: precision 0.85, recall 9 of 12 (fails the 0.95 / 0.80 bar). Post-hoc fixes: precision 0.875 (1.00 counting 2 of my own labelling errors it caught), recall 11 of 12. 0 wrong-purpose in 69 accepted. Promising, not proven; needs a larger test.",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Run the whole-page reader over the offline library (347 usable pages)",
+          "r": "Done 10-01: 347 pages read, 0 errors, $0.453. 40 pages state a submission deadline (123 accepted dates, 18 sites). 18 still ahead on 9 sites; hand-checked 6: 5 real, 1 false positive (ceremony date). Found an open Nullcon Goa 2027 call that our row lacks. No answer key, so not an accuracy score.",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Does the edition rule fix the model disagreements?",
+          "r": "Yes for the live-form and stale-edition cases (B26, B27, B28 now agree). Done 10-02.",
+          "s": "done"
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "name": "Check and clean stored data",
+      "job": "Make what is already in the sheet right, and show it as unconfirmed when we cannot prove it.",
+      "items": [
+        {
+          "kind": "experiment",
+          "t": "How many stored deadlines are provable today?",
+          "r": "9 of 39; reproduced the known Climate Change error",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Correct 4 rows",
+          "r": "Done 10-01: applied to our database and to the approved files (incl. the Global Energy Show link cell, by your ruling). Upstream acknowledged our files as master. Their re-research delivery (new rows) is pending.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Review the 16 absent and 12 unreadable rows",
+          "r": "Mostly passed deadlines",
+          "s": "todo"
+        },
+        {
+          "kind": "fix",
+          "t": "Load upstream's new rows (4 speaking + 2 awards) on permanent IDs",
+          "r": "Done 10-02: gate accepted 22/22; 4 speaking rows in grounding_facts (409 -> 413), input list and seed updated, Saturday rehearsal ships all four; 2 award rows in the awards tables (119 -> 121). Invariants hold. Utility awards file question open.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Fix our own patch defect: GROUNDING_CONFIDENCE out of step with IS_PROJECTED on 5 approved-file rows (rule R11)",
+          "r": "Done 10-02: one word corrected on 5 rows with backups; Cybersecurity approved file now passes the full gate.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Gate reports a walled page instead of failing the quote check (Global Energy Show, Incapsula)",
+          "r": "Done 10-02: shared helper in verify.py; 3 new tests; Global Energy Show is now a visible NOTE, not a failure. Full suite running.",
+          "s": "done"
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "name": "Spend less and run weekly",
+      "job": "Cut cost and wire the proven steps into the weekend job.",
+      "items": [
+        {
+          "kind": "experiment",
+          "t": "What drives the cost?",
+          "r": "Searches 73%; sponsorship passes about 70% of a weekend",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Sponsorship carry-forward",
+          "r": "Agreed in principle; no design yet",
+          "s": "todo"
+        },
+        {
+          "kind": "build",
+          "t": "Wire in: plan, tests, budget, shadow run, switch",
+          "r": "Not started",
+          "s": "todo"
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "name": "Project control",
+      "job": "So the work stays visible and agents can help.",
+      "items": [
+        {
+          "kind": "build",
+          "t": "Status board, strategy file, agent briefs",
+          "r": "Done 10-01",
+          "s": "done"
+        }
+      ]
+    }
+  ],
+  "channels": [
+    {
+      "name": "Hermes",
+      "how": "CLI one-shot (hermes -z)",
+      "state": "works",
+      "note": "CLI one-shot works with Chrome on 9222. Model is set per run: the command line reads config.yaml (space-bunny-alpha via OpenRouter); your open Hermes window is separate. Pin the model with -m, --provider and --reasoning, then confirm in %LOCALAPPDATA%/hermes/state.db (sessions.model, model_config). AgentOS is not used for these runs."
+    },
+    {
+      "name": "OpenClaw",
+      "how": "CLI agent command (openclaw agent -m)",
+      "state": "untested",
+      "note": "Installed (2026.8.2). Gateway status unknown; not messaged yet."
+    }
   ]
- },
- "pipeline": [
-  {
-   "id": "A",
-   "name": "Ask Gemini",
-   "job": "Find each conference's date and the page it came from.",
-   "items": [
-    {
-     "kind": "experiment",
-     "t": "Why did research fail?",
-     "r": "Prompt size and our own 120 s timeout, not quota",
-     "s": "done"
-    },
-    {
-     "kind": "experiment",
-     "t": "Does a short prompt make grounding reliable?",
-     "r": "24 of 24 calls vs 9 of 24",
-     "s": "done"
-    },
-    {
-     "kind": "experiment",
-     "t": "Do its dates match what we hold?",
-     "r": "33 of 33 (weak: our own values were the key)",
-     "s": "done"
-    },
-    {
-     "kind": "experiment",
-     "t": "Are its quotes really on the page?",
-     "r": "Not measured properly yet",
-     "s": "todo"
-    },
-    {
-     "kind": "experiment",
-     "t": "Does it cope with closed, renamed, successor events?",
-     "r": "Not tested",
-     "s": "todo"
-    },
-    {
-     "kind": "decision",
-     "t": "How do the other ~24 fields get filled?",
-     "r": "Open: keep, carry forward, or a second call",
-     "s": "todo"
-    }
-   ]
-  },
-  {
-   "id": "B",
-   "name": "Find the right pages",
-   "job": "On each of 84 sites, get to the page that states the call.",
-   "items": [
-    {
-     "kind": "experiment",
-     "t": "Can sitemap plus menu find the call page?",
-     "r": "31 of 84 sites; 364 pages in total",
-     "s": "done"
-    },
-    {
-     "kind": "build",
-     "t": "Offline page library: fetch the 364 planned pages once, keep text with timestamps and versions",
-     "r": "Done 10-01: 364 planned pages = 360 distinct URLs, all stored; 350 usable (97%), 10 thin or soft-404, 0 blocked, 0 errors; 69 of 69 sites have a usable page. 2.6 MB of text. Fetched once through real Chrome.",
-     "s": "done"
-    },
-    {
-     "kind": "experiment",
-     "t": "Do many sites use a standard platform we can read directly?",
-     "r": "Census not run (brief 02)",
-     "s": "todo"
-    },
-    {
-     "kind": "fix",
-     "t": "Six sites return no usable links",
-     "r": "4 alias sites, 2 script-built menus",
-     "s": "todo"
-    },
-    {
-     "kind": "decision",
-     "t": "Refresh pages by event lifecycle (idea from the operator)",
-     "r": "Designed and settled 10-01: A weekly, B every 2 weeks, C1 none for 45 days, C2 monthly, D monthly (unknown dates: 45 days then every 2 weeks), E weekly exception batch, F quarterly then stop after 2 years; multi-customer rule. Not built.",
-     "s": "todo"
-    }
-   ]
-  },
-  {
-   "id": "C",
-   "name": "Read and label the date",
-   "job": "From the page text, pick the submission deadline and reject registration, event and notification dates.",
-   "items": [
-    {
-     "kind": "experiment",
-     "t": "Can a cheap model pick the deadline sentence?",
-     "r": "Precision 1.00; recall 12 of 24 (tables missed)",
-     "s": "done"
-    },
-    {
-     "kind": "experiment",
-     "t": "Can fixed rules read tables and schedules?",
-     "r": "No: fitted 24/24, fresh test 0.33",
-     "s": "done"
-    },
-    {
-     "kind": "build",
-     "t": "Benchmark: the answer key every method is scored on",
-     "r": "40 events, brief 01, not run",
-     "s": "todo"
-    },
-    {
-     "kind": "experiment",
-     "t": "Can a model label every date on a whole page?",
-     "r": "As run: precision 0.85, recall 9 of 12 (fails the 0.95 / 0.80 bar). Post-hoc fixes: precision 0.875 (1.00 counting 2 of my own labelling errors it caught), recall 11 of 12. 0 wrong-purpose in 69 accepted. Promising, not proven; needs a larger test.",
-     "s": "done"
-    },
-    {
-     "kind": "experiment",
-     "t": "Run the whole-page reader over the offline library (347 usable pages)",
-     "r": "Done 10-01: 347 pages read, 0 errors, $0.453. 40 pages state a submission deadline (123 accepted dates, 18 sites). 18 still ahead on 9 sites; hand-checked 6: 5 real, 1 false positive (ceremony date). Found an open Nullcon Goa 2027 call that our row lacks. No answer key, so not an accuracy score.",
-     "s": "done"
-    }
-   ]
-  },
-  {
-   "id": "D",
-   "name": "Check and clean stored data",
-   "job": "Make what is already in the sheet right, and show it as unconfirmed when we cannot prove it.",
-   "items": [
-    {
-     "kind": "experiment",
-     "t": "How many stored deadlines are provable today?",
-     "r": "9 of 39; reproduced the known Climate Change error",
-     "s": "done"
-    },
-    {
-     "kind": "fix",
-     "t": "Correct 4 rows",
-     "r": "Done 10-01: applied to our database and to the approved files (incl. the Global Energy Show link cell, by your ruling). Upstream acknowledged our files as master. Their re-research delivery (new rows) is pending.",
-     "s": "done"
-    },
-    {
-     "kind": "fix",
-     "t": "Review the 16 absent and 12 unreadable rows",
-     "r": "Mostly passed deadlines",
-     "s": "todo"
-    }
-   ]
-  },
-  {
-   "id": "E",
-   "name": "Spend less and run weekly",
-   "job": "Cut cost and wire the proven steps into the weekend job.",
-   "items": [
-    {
-     "kind": "experiment",
-     "t": "What drives the cost?",
-     "r": "Searches 73%; sponsorship passes about 70% of a weekend",
-     "s": "done"
-    },
-    {
-     "kind": "build",
-     "t": "Sponsorship carry-forward",
-     "r": "Agreed in principle; no design yet",
-     "s": "todo"
-    },
-    {
-     "kind": "build",
-     "t": "Wire in: plan, tests, budget, shadow run, switch",
-     "r": "Not started",
-     "s": "todo"
-    }
-   ]
-  },
-  {
-   "id": "F",
-   "name": "Project control",
-   "job": "So the work stays visible and agents can help.",
-   "items": [
-    {
-     "kind": "build",
-     "t": "Status board, strategy file, agent briefs",
-     "r": "Done 10-01",
-     "s": "done"
-    }
-   ]
-  }
- ],
- "channels": [
-  {
-   "name": "Hermes",
-   "how": "CLI one-shot (hermes -z)",
-   "state": "works",
-   "note": "Stage 1 (3 events) passed; stage 2 failed twice because its browser had no Chrome on 9222 and its page reader is search-only. The dedicated Chrome is now up. AgentOS is running but very slow (vitals 97 s, Hermes goals timed out at 80 s); not used yet."
-  },
-  {
-   "name": "OpenClaw",
-   "how": "CLI agent command (openclaw agent -m)",
-   "state": "untested",
-   "note": "Installed (2026.8.2). Gateway status unknown; not messaged yet."
-  }
- ]
 }

@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.cfp_monitor.verify import fetch_text, link_status      # noqa: E402
+from src.cfp_monitor.verify import fetch_text, is_block_page, link_status      # noqa: E402
 
 # 36 since the v1.2 amendment added FORMAT as the last column (2026-08-05).
 # Deliveries still emitting 35 columns predate the amendment and fail check 1,
@@ -272,7 +272,7 @@ class Gate:
             self.add("3", "Cited page contains its quote", ["SKIPPED - --no-network"])
             return
         cache: dict[str, tuple] = {}
-        dead, decayed, missing_quote = [], [], []
+        dead, decayed, missing_quote, walled = [], [], [], []
         from src.cfp_monitor import rules                               # noqa: PLC0415
         today = getattr(self, "today", date.today())
 
@@ -339,6 +339,13 @@ class Gate:
                 continue
             if code == 403:
                 continue                       # blocked-but-trusted; exempt from the quote test
+            if is_block_page(text):
+                # An anti-bot wall answered 200 with a short notice instead of the page (Global
+                # Energy Show, Incapsula, 2026-10-01/02). Same trust as a 403: the page cannot be
+                # read by a plain fetch, so the quote test has nothing to test. REPORTED, never
+                # silent - an unread page must not look like a checked one.
+                walled.append(f"{name}: {url}")
+                continue
             # ---- AMENDMENT v1.4: check 3 evaluates ACTIVE deadline claims only ----
             # Measured 2026-08-29 across all 314 cited rows. Of 186 failures, only 28 were live
             # calls; the criterion was mostly reporting two things that are not defects:
@@ -406,6 +413,9 @@ class Gate:
         if sub_decayed:
             self.note("2s", "dead submission link(s) on rows whose deadline has passed - "
                             "expected decay under v2.2", sub_decayed)
+        if walled:
+            self.note("3", "cited page(s) returned an anti-bot notice instead of the page - quote NOT "
+                           "checked (exempt like a 403; a person or a browser read must confirm)", walled)
         self.add("3", "Cited page contains its quote verbatim (403 exempt)", missing_quote)
 
     # ---- 4. prose vs projection -------------------------------------------

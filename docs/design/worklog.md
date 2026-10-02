@@ -5,6 +5,15 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-02 - benchmark locked, models compared, upstream's new rows loaded, R11 defect fixed, gate walled-page fix
+
+- Benchmark: Hermes ran all 40 events (free model space-bunny-alpha, $0): 9 of 9 first spot-checks right, 8 of 10 on the formal sample (misses B28, B37, both self-flagged low confidence). Comparison on the 10 hard rows: gpt-6.1-sol medium 6/10, free 4/10, gpt xhigh 4/9, DeepSeek v4.1 flash 3/10 ($0.016); cause was mostly the brief not naming the edition. Rule 7a added; reruns on free and DeepSeek flash agree on B26/B27/B28. Key locked with 9 hand labels (B38 -> open, B13 -> not_yet_announced under the rule; B37 stays unknown).
+- Hermes model confusion resolved: the CLI one-shot reads config.yaml; an open Hermes window has its own session model. Hermes logs every session's model and reasoning effort in state.db; pin with -m/--provider/--reasoning and check there.
+- Upstream's 7 new rows: first paste was malformed (missing field + unquoted commas + 'TBD' placeholders) -> NOTE-6; clean re-emit gate ACCEPTED 22/22. Four speaking rows loaded live on upstream's IDs via the discovery import with --ids (default import would have merged the two Black Hat Asia calls), verified, fix_edition, held_rows, input list + seed updated, weekend_import --sandbox rehearsals x2 (second ships all four). Two award rows loaded via import_awards --ids. Health check clean each time; second-process read-backs.
+- Own defect: 10-01 patches left GROUNDING_CONFIDENCE inconsistent with IS_PROJECTED (R11) on Nullcon, SecureWorld Gov & CI, Climate Change, IEW, GES; fixed with apply_row_patch (backups). Cybersecurity approved file passes the full gate; Utility still fails check 6 (H2 MEET past deadline, STATUS Open).
+- Gate: check 3 treats an anti-bot notice (200, short) like a 403 and reports it; one shared helper in verify.py; 3 tests.
+- Gotchas: stamp_input_ids.py never mints ids for new events (exact-name matches to last week's page only); the default import_grounding derives its own key and would merge distinct calls; relative paths break weekend_import --sandbox (use absolute); Utility_Awards_master.csv named by upstream does not exist here.
+
 ## 2026-10-01 (later) - corrections applied, page library, whole-page reader, upstream loop (experiments and data corrections; nothing wired)
 
 - Corrections: upstream accepted the 4-row package; applied to our DB with scripts/apply_resolutions.py (report mode on a copy, backups, second-process read-back): India Energy Week 2027 -> 2026-10-15, Climate Change -> 2026-10-19, SecureWorld citation withdrawn, Global Energy Show -> 2026-12-04. Merge guard now escalates to the browser on anti-bot block pages (tests added). Re-audit: 11 of 39 confirmed (was 9).

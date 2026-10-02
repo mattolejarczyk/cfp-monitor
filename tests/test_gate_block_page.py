@@ -1,0 +1,73 @@
+"""Check 3 must not read an anti-bot notice as "the quote is not on the page" (Global Energy Show, 2026-10-01/02).
+
+Incapsula answers 200 with an 84-character notice. The gate's check 3 treated it as the page and reported
+"quote and date both absent", so a correct approved row was REJECTED every week. A walled page is now exempt like
+a 403 - and REPORTED, so an unread page never looks like a checked one. A live call with a real page that lacks
+its quote must still fail.
+"""
+from __future__ import annotations
+
+import csv
+import importlib.util
+import sys
+import tempfile
+from datetime import date
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+_spec = importlib.util.spec_from_file_location("ad", ROOT / "scripts" / "accept_delivery.py")
+ad = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(ad)
+
+INCAPSULA = "Request unsuccessful. Incapsula incident ID: 260000060773792091-441289197983367596"
+URL = "https://example.org/call"
+QUOTE = "all submissions must be completed through the online submission form by the December 4, 2026 deadline"
+
+
+def _gate(page_text: str):
+    cols = ["EVENT_ID", "CONFERENCE", "SUBMISSION DEADLINE", "DEADLINE_EVIDENCE_URL", "DEADLINE_QUOTE",
+            "IS_PROJECTED", "STATUS", "SUBMISSION URL", "CFP_SUBMISSION_URL"]
+    row = {c: "" for c in cols}
+    row.update({"EVENT_ID": "x-2027-speaking", "CONFERENCE": "Test Energy Show 2027", "SUBMISSION DEADLINE": "2026-12-04",
+                "DEADLINE_EVIDENCE_URL": URL, "DEADLINE_QUOTE": QUOTE, "IS_PROJECTED": "false"})
+    with tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False, encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=cols)
+        w.writeheader()
+        w.writerow(row)
+    g = ad.Gate(fh.name, network=True)
+    g.today = date(2026, 10, 2)
+    with open(fh.name, encoding="utf-8-sig", newline="") as f:
+        g.rows = list(csv.DictReader(f))
+    real_ft, real_ls = ad.fetch_text, ad.link_status
+    ad.fetch_text = lambda url, *a, **k: (page_text, "")
+    ad.link_status = lambda url, *a, **k: (200, "ok")
+    try:
+        g.check_citations()
+    finally:
+        ad.fetch_text, ad.link_status = real_ft, real_ls
+    return g
+
+
+def _check3(g):
+    return next(r for r in g.results if r[0] == "3")
+
+
+def test_a_walled_page_is_not_a_failed_quote_and_is_reported():
+    g = _gate(INCAPSULA)
+    num, name, ok, failures = _check3(g)
+    assert ok, f"walled page rejected the row: {failures}"
+    assert any(n[0] == "3" and URL in " ".join(n[2]) for n in g.notes), "walled page passed silently"
+
+
+def test_a_real_page_without_the_quote_still_fails():
+    g = _gate("Call for submissions. " + "The programme committee meets in spring. " * 40)
+    num, name, ok, failures = _check3(g)
+    assert not ok and "quote and date both absent" in failures[0]
+
+
+def test_a_real_page_with_the_quote_passes_with_no_note():
+    g = _gate("Intro text. " + QUOTE + ". More text. " * 30)
+    num, name, ok, failures = _check3(g)
+    assert ok and not [n for n in g.notes if n[0] == "3"]

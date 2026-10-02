@@ -12,7 +12,7 @@
     "scripts/run_weekly.bat": "e34d53e10c3282e23d78d56cb9314dceff5e15db411d35e644f0a33c4d3d49de",
     "scripts/weekly_verify.py": "7f6b260f6ab1c574dee2c67df517f0fee07d6d3d0fab8871bbc3f4abb2ffdd68",
     "scripts/weekly_discovery.py": "28e7247f63c4b85782117dfd1f3f154989b32853ed2cce7cc5014a7724c3d811",
-    "scripts/apply_resolutions.py": "5559151730ce2348fc56ca693a10a35647d80e98a6afa0c91cf54b7576bf004f",
+    "scripts/apply_resolutions.py": "8eaf056e98153a4c743e3d86794196629ba18158a543649dac4f673f77f98370",
     "scripts/weekly_deliverable.py": "d9ab1d3de8e1471b6d720f4c9ae9815dfd1e1d6466fa84f96cd37cfe2080a2af",
     "scripts/qa_build.py": "d2298ebb54a8aed9fb63c5dad657ecf3cc3dc55e2875fd25736a4f64c01817e4",
     "scripts/import_awards.py": "78bfee46a469805826b0b928cb9b147ab9ba6012c7369c37c48901a60a742774",

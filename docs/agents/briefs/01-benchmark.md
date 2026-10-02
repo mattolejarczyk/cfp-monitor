@@ -13,7 +13,7 @@
 **6. Output.** `docs/agents/results/01-benchmark.csv`, exactly 40 rows, one per input id, columns:
 `id, call_status, submission_deadline, deadline_kind, evidence_url, evidence_text, other_dates_seen, confidence, notes`
 - `call_status`: `open` | `closed` | `not_yet_announced` | `no_call_exists` | `unknown`
-- `submission_deadline`: ISO date `YYYY-MM-DD` of the date by which a speaker, author or nominee must SUBMIT. If there are several rounds, the next one still ahead of today; blank if none.
+- `submission_deadline`: ISO date `YYYY-MM-DD` of the date by which a speaker, author or nominee must SUBMIT. If there are several rounds, the next one still ahead of today; blank if none. For a call that is already closed, put the last known closing date and set `call_status` to `closed` (this is a change from v1, decided 2026-10-02: the key records the last known date so a scorer can see what the page said).
 - `deadline_kind`: `speaking` | `papers` | `awards` | `workshop` | `poster` | `other`
 - `evidence_url`: the page where you read it. Final URL, not a short link.
 - `evidence_text`: the text from the page that states it, copied as written (a table row plus its heading is fine). Blank if none.
@@ -21,6 +21,8 @@
 - `confidence`: `high` (page states it plainly) | `medium` | `low`.
 
 **7. Honest blanks.** If no submission deadline is published, write `closed`, `not_yet_announced` or `no_call_exists` with a blank date. If you cannot tell, write `unknown`. A registration, early-bird, event or notification date is NOT a submission deadline; never put one in `submission_deadline`. A guess is a defect and scores worse than `unknown`.
+
+**7a. Which edition (added 2026-10-02).** The input year can be stale: the site may already have moved to the next edition. Answer for the NEXT call still ahead of today, whichever edition that is, and name the edition in `notes` (for example `edition: 2027`). If the edition in the input has closed and the next edition has no published call, write `not_yet_announced`, not `closed`. If the next edition has a live call form with no published cutoff, write `open` with a blank date and say so in `notes`. Never silently answer about a different edition than the one you name. Three models disagreed on exactly these rows in the 2026-10-02 comparison (B26, B27, B28).
 
 **8. Budget and stop rule.** Free model; no paid tools. Maximum 6 minutes per event. Stop after 40 rows or 3 hours, whichever comes first, and write what you have, marking unreached rows `unknown` with note `not reached`.
 

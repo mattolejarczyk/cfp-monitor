@@ -345,6 +345,24 @@ def _pdf_text(raw: bytes, max_pages: int = 12) -> tuple[str, str]:
     return text, ("pdf" if text else "pdf (no extractable text)")
 
 
+BLOCK_MARKERS = ("incapsula", "request unsuccessful", "access denied", "just a moment", "attention required",
+                 "pardon our interruption", "enable javascript and cookies", "verify you are human")
+
+
+def is_block_page(text: str) -> bool:
+    """True when a plain fetch got an anti-bot wall instead of the page.
+
+    Found 2026-10-01: Global Energy Show's quote is on its live page, but a plain fetch returns an
+    84-character Incapsula notice. That is non-empty, so `if not text` never escalated to the browser
+    and the correct quote was rejected as "not on the proposed page". Found again 2026-10-02: the
+    acceptance gate's check 3 read the same notice as "quote and date both absent" and rejected the
+    approved Utility file. A block page is short; a real page that merely mentions one of these phrases
+    is long, so the length cap keeps this from firing on real content. One definition, used by
+    scripts/apply_resolutions.py and scripts/accept_delivery.py."""
+    t = (text or "").strip().lower()
+    return bool(t) and len(t) < 600 and any(m in t for m in BLOCK_MARKERS)
+
+
 def fetch_text(url: str, timeout: int = 20, max_bytes: int = 900_000) -> tuple[str, str]:
     """Plain HTTP GET reduced to visible text. Returns (text, note).
 
