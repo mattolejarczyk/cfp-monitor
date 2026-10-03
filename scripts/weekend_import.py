@@ -296,6 +296,16 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     if ov.get("evidence_carried"):
         log.append(f"[{market}] narrow overlay: {len(ov['evidence_carried'])} row(s) kept last week's verified deadline evidence "
                    f"(this week's research returned no quote): " + "; ".join(e["conference"][:30] for e in ov["evidence_carried"][:6]))
+    # PINNED ROWS (2026-10-03, scripts/pinned_rows.py, docs/operations/pinned_rows.json): a person's ruling on a row holds over this week's research until the
+    # call closes or the pin is removed. Applied after the carry rules and BEFORE the year checks and the gate, so a pinned value is checked like any other
+    # (the gate still reads the pinned quote on its page). Every pin that changed something is in the report with what the research said.
+    if market != AWARDS:
+        from scripts.pinned_rows import apply_pins, load_pins
+        rows, pr = apply_pins(rows, lookup, to_canonical, load_pins())
+        res["pins"] = pr
+        if pr["applied"]:
+            log.append(f"[{market}] pinned rows: {len(pr['applied'])} ruling(s) held over this week's research: "
+                       + "; ".join(a["conference"][:34] for a in pr["applied"]))
     # YEAR CHECKS (2026-10-03, scripts/start_date_arbiter.py year_checks): a row whose start date is not in its edition, whose
     # conference-dates year differs from its start date, whose past start is still Open/Upcoming, or whose deadline is after the
     # start (or 18 months before it) mixes editions. It fails here, so the row rule gives it last week's version or holds it back.

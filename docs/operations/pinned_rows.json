@@ -1,0 +1,36 @@
+{
+  "note": "A person's ruling on a row holds over the research until `until` (the day after the pinned deadline) or until the pin is deleted. See scripts/pinned_rows.py. Only these cells may be pinned: SUBMISSION DEADLINE, DEADLINE_EVIDENCE_URL, DEADLINE_QUOTE, IS_PROJECTED, CFP_SUBMISSION_URL, STATUS DETAILS. Identity (event id, name, edition) and customer-owned columns never.",
+  "pins": [
+    {
+      "canonical": "2027-acm-codaspy-alexandria-speaking",
+      "event": "ACM CODASPY 2027",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "The page https://www.codaspy.org/2027/cfp.html lists two tracks: abstract deadline Nov 16 2026 and research paper deadline Nov 23 2026. The operator ruled: the earliest (abstract) is the default deadline, and both dates go in the details. Submissions are made at https://codaspy27.hotcrp.com/ (operator verified).",
+      "until": "2026-11-17",
+      "set": {
+        "SUBMISSION DEADLINE": "2026-11-16",
+        "DEADLINE_EVIDENCE_URL": "https://www.codaspy.org/2027/cfp.html",
+        "DEADLINE_QUOTE": "Abstract submission deadline: November 16, 2026",
+        "IS_PROJECTED": "false",
+        "CFP_SUBMISSION_URL": "https://codaspy27.hotcrp.com/",
+        "STATUS DETAILS": "Two tracks: abstract submission deadline November 16, 2026 (the date shown, and the earliest); research paper submission deadline November 23, 2026. Submit at https://codaspy27.hotcrp.com/. Conference June 14-17, 2027, Fort Collins, Colorado."
+      }
+    },
+    {
+      "canonical": "2027-apres-cyber-slopes-summit-steamboat-springs-speaking",
+      "event": "Apres-Cyber Slopes Summit 2027",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "The organizer's own Sessionize page says the call closes 11:59 PM 20 Nov 2026. The aggregator the research cited (cfptime.org, deadline Nov 21) does not list the event at all (operator checked): it is bad data and is not accepted as evidence.",
+      "until": "2026-11-21",
+      "set": {
+        "SUBMISSION DEADLINE": "2026-11-20",
+        "DEADLINE_EVIDENCE_URL": "https://sessionize.com/apres-cyber-slopes-summit-2027",
+        "DEADLINE_QUOTE": "Call closes at 11:59 PM 20 Nov 2026",
+        "IS_PROJECTED": "false",
+        "STATUS DETAILS": "The call for papers is open on the organizer's Sessionize page and closes 11:59 PM on 20 November 2026."
+      }
+    }
+  ]
+}

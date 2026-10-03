@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-03",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "2026-10-03: Saturday's research ran on the narrow prompt (130 of 130 rows grounded) and is loaded. The scheduled load step had a bug (fixed), the first live load blanked some verified evidence (restored), and three safeguards now run in every load: last week's unasked fields carried, verified evidence kept, year checks. Load QA, the QA register and the runbook procedures are in. Next: choose the experiments that close the remaining quality gaps.",
+  "now": "2026-10-03: your rulings on CODASPY and Apres-Cyber are applied and pinned, Saturday's task limit is 5 hours, and the quality-loop experiments are underway: the trap cases are done and the answer-key draft is running. The draft has already found one wrong shipped start date (CarbonZero), waiting for your confirmation.",
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "RUN THIS (approved): set Saturday's task time limit to 5 hours. In PowerShell (run as administrator if it says access denied): $n='CFP Weekly Re-Research (live markets)'; $t=Get-ScheduledTask -TaskName $n; $t.Settings.ExecutionTimeLimit='PT5H'; Set-ScheduledTask -TaskName $n -Settings $t.Settings; (Get-ScheduledTask -TaskName $n).Settings.ExecutionTimeLimit   (should print PT5H). Saturday 10-03 ran 2 hours on the narrow prompt; the longest runs on record (about 6.5 hours) were full-prompt runs started by hand."
+      "text": "CONFIRM: CarbonZero Global Conference & Exhibition 2026. We ship a start date of 2026-11-12; the page states 27-29 October 2026 (Brussels). Please open the event's own page and tell me which is right; I will correct it as an operator ruling and pin it."
     },
     {
       "added": "2026-10-03",
-      "text": "VERIFY BY HAND, then tell me which date wins. CODASPY: open https://www.codaspy.org/2027/cfp.html and find the abstract deadline (we hold 2026-11-16) and the research-paper deadline (research returned 2026-11-23). Apres-Cyber Slopes Summit: open https://sessionize.com/apres-cyber-slopes-summit-2027 (we hold 2026-11-20: 'Call closes at 11:59 PM 20 Nov 2026'); research instead cited the aggregator https://cfptime.org/ for 2026-11-21 (6:59 AM PST on the 21st, which is 11:59 PM on the 20th in the US Mountain zone, so it may be the same moment)."
+      "text": "ANSWER KEY, confirm or correct these reads (docs/qa/answer-key-reads-20261003.md): page states our value: SecTor (Oct 6-8 2026 Toronto), CERAWeek 2027 (Mar 8-12 Houston), SecureWorld Gov & CI (Dec 9 2026 virtual). Please check on the event's own page: CES 2027 (we ship Jan 6 2027), Nullcon Goa 2027 (we ship no start date), Global Energy Show Canada 2027 (we ship Jun 8 2027; the page would not read for me). Also decide: the key should score start dates for upcoming events only, since past 2026 editions now show 2027 on their pages."
     },
     {
       "added": "2026-10-03",
-      "text": "PICK THE QUALITY-LOOP EXPERIMENTS (nothing runs until you do; all in shadow, nothing reaches a customer). Cost basis: one narrow grounded call costs about 6 cents (measured 09-30: 6.1 cents narrow, 7.7 cents full; estimate until the Google bill confirms); reading one web page with a cheap model costs about 0.13 cents (measured: 347 pages for 45 cents). 1 Answer key (about 40 events, every field checked on the live page, pre-filled by me for you to confirm): no cash, about 1 to 2 hours of your review. 2 Trap cases (the ten known tricky events): no cost. 3 Narrowness test (ask 10 fields vs 4 fields vs deadline only, same 40 events): 3 x 40 = 120 calls = about 7 dollars (2 variants about 5 dollars; with a repeat of each about 15 dollars; I would repeat only if results are close). 4 Read-the-page pass (cheap model reads each verified page and must quote what it reports): 40 events x 3 pages = 120 pages = about 16 cents; about 50 cents with three tries. 5 Two-model agreement: about 20 to 50 cents (or free on the Hermes model). Recommended path 1 + 2 + 4 + 3 = about 8 dollars in total, about one Saturday's research. Weekly running cost for context: about 131 calls x 6 cents = about 8 dollars per Saturday, about the same for Friday awards (September's whole Gemini bill was 134 dollars on the full prompt)."
+      "text": "AFTER THE ANSWER KEY EXISTS, pick the next experiments: 3 narrowness test (about 7 dollars), 4 read-the-page pass (about 16 cents), 5 two-model agreement (20 to 50 cents). Experiments 1 and 2 are approved and underway. Cost basis: one narrow grounded call is about 6 cents (estimate until Google's bill confirms), one page read about 0.13 cents."
     }
   ],
   "headline": {
@@ -600,9 +600,9 @@
         },
         {
           "kind": "fix",
-          "t": "A hand correction can be overridden by a fresh, evidenced answer (CODASPY abstract 11-16 vs paper 11-23; Apres-Cyber 11-20 vs 11-21)",
-          "r": "KNOWN GAP. The evidence-carry rule only protects against blanks. Needs a per-row 'pinned' list the load honours, so a person's ruling survives until a person changes it. Not built.",
-          "s": "todo"
+          "t": "Pinned rows: a person's ruling holds over the research (CODASPY, Apres-Cyber)",
+          "r": "Done 10-03: docs/operations/pinned_rows.json + scripts/pinned_rows.py, applied in every load before the gate, listed in the load report. A pin lapses the day after the pinned deadline or when you delete it. 5 tests.",
+          "s": "done"
         },
         {
           "kind": "experiment",
@@ -624,14 +624,26 @@
         },
         {
           "kind": "experiment",
-          "t": "PROPOSED (experiment 1): Answer key: about 40 events with every field checked on the live page",
-          "r": "Not approved. No cash; about 1 to 2 hours of your review (I pre-fill from page reads, you confirm). Everything else is scored against it.",
-          "s": "todo"
+          "t": "Experiment 1, ANSWER KEY (approved 10-03): the 40 benchmark events with every field checked on the live page",
+          "r": "Draft built (scripts/answer_key_prefill.py) and the upcoming events read in the browser (docs/qa/answer-key-reads-20261003.md). Of the 40 events: city 29 named on the page, organizer 25, edition 23, start date 14 (26 are mostly 2026 editions already held whose pages now show 2027). Found: CarbonZero's shipped start date is wrong; ESF MENA 2026 has no start date though the page states 14-17 Sep 2026; CES, Nullcon and Global Energy Show Canada cannot be proven by a text read. Waiting for your confirmations; docs/qa/answer-key.csv will be the confirmed file.",
+          "s": "doing"
         },
         {
           "kind": "experiment",
-          "t": "PROPOSED (experiment 2): Trap cases: the ten events that have fooled us (wrong-year page, next-edition page, dead domain, blocked site, two names for one event, two deadlines on one page)",
-          "r": "Not approved. No cost. Every method must pass them before it is trusted.",
+          "t": "Experiment 2, TRAP CASES (approved 10-03): the 12 events and pages that have already fooled us, as data",
+          "r": "Done: docs/qa/trap-cases.json + scripts/trap_cases.py + tests. Our current code passes 7 of 12 offline; 2 are real GAPS (picking the earliest of two deadlines; flagging an aggregator that does not list the event); 3 need a person or a model to judge. Every future method is scored on them first.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "CODASPY and Apres-Cyber rulings (operator, 10-03)",
+          "r": "Done: CODASPY ships the abstract deadline 2026-11-16 as the default (earliest), both tracks and the hotcrp link in the details; Apres-Cyber keeps 2026-11-20 from the organizer's Sessionize page and the aggregator cfptime.org (which does not list the event) is rejected. Approved file re-gated (23 of 23) and re-signed.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Shipped start date is wrong for CarbonZero Global Conference & Exhibition 2026",
+          "r": "FOUND by the answer-key draft 10-03: we ship 2026-11-12; the page states 27-29 October 2026 (Brussels). Waiting for your confirmation; then an operator ruling and a pin.",
           "s": "todo"
         }
       ]
@@ -668,7 +680,7 @@
         {
           "kind": "fix",
           "t": "Weekend load step never ran on 10-03 (script bug) and a stray prompt could hang the job for hours",
-          "r": "Fixed 10-03: steps built whole and added to a list, empty input to Python, missing-script guard, a test that guards the script's shape. Task time limits (6 to 16 h) are still loose: Saturday's could be about 5 h.",
+          "r": "Fixed 10-03: steps built whole and added to a list, empty input to Python, missing-script guard, a test that guards the script's shape. Saturday's task time limit set to 5 hours (operator, 10-03; was 10).",
           "s": "done"
         },
         {
@@ -694,6 +706,12 @@
           "t": "PROPOSED (experiment 5): Two-model agreement: two cheap models must agree before a fact is accepted",
           "r": "Not approved. About 20 to 50 cents. Measures whether disagreements catch most of the errors, so a person only looks at those.",
           "s": "todo"
+        },
+        {
+          "kind": "build",
+          "t": "Saturday task time limit set to 5 hours",
+          "r": "Done 10-03 by you (confirmed PT5H, trigger intact, next run Sat 10-10 02:00). A hang like 10-03's now ends by 07:00 instead of noon.",
+          "s": "done"
         }
       ]
     },
@@ -865,19 +883,19 @@
   "working_on": [
     {
       "state": "In progress",
-      "text": "Full test suite running after today's changes (about 1,400 tests), then commit and push. Also the quality-loop experiments below are being designed with you: nothing runs until you pick."
+      "text": "Experiment 1, the answer key: draft done and the upcoming events read; waiting on your confirmations (see Waiting on you). Experiment 2 (trap cases) is done."
     },
     {
       "state": "Waiting on upstream",
-      "text": "Proper R16 evidence (a page and a verbatim sentence) for the SAF Europe / Sustainable Fuels duplicate and for Future Fuels MENA; evidence that ODSC East 2027 and AppWorld's partner track have a 2027 call; the eight STATUS corrections (H2 MEET, six awards, CGI). Their last replies used ids we do not hold and gave no evidence."
+      "text": "Proper R16 evidence (a page and a verbatim sentence) for the SAF Europe / Sustainable Fuels duplicate and for Future Fuels MENA; evidence that ODSC East 2027 and AppWorld's partner track have a 2027 call; the eight STATUS corrections (H2 MEET, six awards, CGI)."
     },
     {
       "state": "Queued, Friday 10-09 and Saturday 10-10",
-      "text": "Check the first awards run (10-09) and the next Saturday: the load QA report (runs_out/qa), the watch-list, and that the six awards and CGI read Closed or corrected. First run of the fixed load step and of the evidence-carry rule on real research."
+      "text": "Check the first awards run (10-09) and the next Saturday: the load QA report, the watch-list, the pinned rows (CODASPY, Apres-Cyber) holding, and that the six awards and CGI read Closed or corrected."
     },
     {
-      "state": "Queued, not started",
-      "text": "The 'we read, they format' packet tool; sponsorship option B after a measured shadow week; the refresh scheduler after its shadow week; the per-row pinned list; the labelled set for non-deadline facts."
+      "state": "Queued, after the answer key",
+      "text": "Experiments 3 (narrowness), 4 (read-the-page pass) and 5 (two-model agreement); the 'we read, they format' packet tool; sponsorship option B; the refresh scheduler; closing the two trap-case gaps."
     }
   ]
 }
