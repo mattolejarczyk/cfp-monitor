@@ -522,6 +522,7 @@ def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | 
         h["levels"].append({"key": "edition", "label": "Customer row is another edition or round (not scored)", "n": ls["edition"], "tone": "mute"})
     if ls.get("excused"):
         h["levels"].append({"key": "excused", "label": "Our date blank, event more than 90 days off (not scored)", "n": ls["excused"], "tone": "mute"})
+    h["rows"] += sum(ls.values()) if lc is not None else 0          # the not-scored rows are shown, so they are part of the row count
     if use["unreadable"]:
         h["levels"].append({"key": "unreadable", "label": "Customer date unreadable", "n": use["unreadable"], "tone": "none"})
     if lc is not None:

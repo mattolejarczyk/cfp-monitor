@@ -61,7 +61,7 @@
     "customer": {
       "label": "Agreement with customer-verified dates (live rows)",
       "definition": "Rows where the customer's team marked the date Verified and has a date, the customer has not withdrawn the row, and the customer's date or ours is still ahead: does ours match? Rows whose dates have both passed are not scored here.",
-      "rows": 15,
+      "rows": 19,
       "levels": [
         {
           "key": "agree",
