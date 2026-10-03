@@ -5,13 +5,7 @@
   "decisions": [
     {
       "added": "2026-10-02",
-      "text": "Re-enable the Friday awards research job (approved in principle 10-02, after the narrow prompt is proven): needs an elevated PowerShell. Next Friday 02:00 (10-09) would be its first run. I will give you the exact command once the test result is in.",
-      "file": ""
-    },
-    {
-      "added": "2026-10-02",
-      "text": "Tell the customer which events we do not cover: AAIML, ICRAI and RAAI (Urgent for Arnica, close 10-10), AI Con USA (10-18), AppWorld and ODSC. Upstream ruled all six out of scope; the customer otherwise assumes they are tracked.",
-      "file": ""
+      "text": "Send upstream NOTE-TO-UPSTREAM-20.md (copy/paste): six Arnica events are loaded (AAIML, ICRAI, RAAI verified, deadline 10-10; AI Con USA, AppWorld, ODSC East projected, blank deadlines). It corrects upstream's claim that the input list was stamped (it was not; we added the rows), flags two ids with wrong city slugs, and asks for evidence on the three blanks."
     }
   ],
   "headline": {
@@ -515,7 +509,7 @@
         {
           "kind": "decision",
           "t": "Coverage gap: the customer tracks 41 verified, dated events we have no matching event for",
-          "r": "Found by scripts/board_metrics.py 10-02: 29 Arnica, 12 Utility Global. Mostly older or out-of-scope events; needs a look at which are live. Upstream answered 10-02: 7 in scope (delivery being finished, see note 16), 6 out of scope (AAIML, ICRAI, RAAI, AI Con USA, AppWorld, ODSC); three of the out-of-scope were Urgent for Arnica and close 10-10 to 10-18: the customer should be told we do not cover them.",
+          "r": "Found by scripts/board_metrics.py 10-02: 29 Arnica, 12 Utility Global. Mostly older or out-of-scope events; needs a look at which are live. Upstream first ruled six out of scope (AAIML, ICRAI, RAAI, AI Con USA, AppWorld, ODSC); reversed 10-02 because they are on the customer's own sheet (three Urgent, closing 10-10 to 10-18). Upstream agreed to take them (note 18); their first delivery was rejected (note 19, no research, two wrong cities). The other seven were loaded.",
           "s": "todo"
         },
         {
@@ -700,6 +694,14 @@
   "now_updated": "2026-10-02",
   "working_on": [
     {
+      "state": "Done",
+      "text": "Friday awards job re-enabled by you 10-02 (State Ready); first run Friday 10-09 02:00 on the narrow prompt."
+    },
+    {
+      "state": "Waiting on upstream",
+      "text": "AI Con USA, AppWorld and ODSC East deadline evidence, and a 2027-edition confirmation for ODSC (note 20); the three 10-10 rows (AAIML, ICRAI, RAAI) are loaded and gate-accepted."
+    },
+    {
       "state": "Done, live Saturday",
       "text": "Narrow research prompt wired into Saturday's job (10-02): real test grounded 7 of 7 rows (4 conference, 3 award), no fallback to the full prompt, one 504 retried fine; CFP_PROMPT_MODE defaults to narrow-first in Markets/run_monthly.ps1 (backups: run_monthly.pre-narrow-20261002.ps1, run_market_audit.pre-narrow-20261002.py). First real run is Saturday 02:00; roll back by setting CFP_PROMPT_MODE=full."
     },
@@ -714,10 +716,6 @@
     {
       "state": "Queued, not started",
       "text": "The 'we read, they format' packet tool (reads each cited page with our reader and prints URL, title and verbatim date sentence for upstream), sponsorship option B after a measured shadow week, and the refresh scheduler after the shadow week"
-    },
-    {
-      "state": "Waiting on you",
-      "text": "Re-enable 'CFP Weekly Awards Research' in an elevated PowerShell (Enable-ScheduledTask -TaskName 'CFP Weekly Awards Research'); first run Friday 10-09 02:00. Suggested after Saturday's load looks healthy."
     }
   ]
 }

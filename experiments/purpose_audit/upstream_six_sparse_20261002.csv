@@ -1,0 +1,7 @@
+EVENT_ID,CITY,COUNTRY,LOCATION,SUBMISSION DEADLINE,DEADLINE_EVIDENCE_URL,DEADLINE_QUOTE,IS_PROJECTED,GROUNDING_CONFIDENCE
+2027-aaiml-conference-london-speaking,Tokyo,Japan,"Tokyo, Japan",2026-10-10,https://aaiml.net/,"Submission Deadline October 10, 2026",false,Verified (2027)
+2026-icrai-international-conference-robotics-ai-guangzhou-speaking,Incheon,South Korea,"Songdo, Incheon, South Korea",2026-10-10,https://www.icrai.org/,"Submission Deadline: October 10, 2026",false,Verified (2026)
+2026-raai-international-conference-robotics-automation-ai-singapore-speaking,Singapore,Singapore,Singapore,2026-10-10,https://raai.net/,"Submission Deadline: October 10th, 2026",false,Verified (2026)
+2027-ai-con-usa-las-vegas-speaking,Las Vegas,USA,"Las Vegas, NV, USA",,,,true,Projected (2027)
+2027-mwc-barcelona-appworld-barcelona-speaking,Barcelona,Spain,"Barcelona, Spain",,,,true,Projected (2027)
+2027-odsc-east-boston-speaking,Boston,USA,"Boston, MA, USA",,,,true,Projected (2027)
