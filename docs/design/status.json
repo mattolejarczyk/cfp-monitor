@@ -706,8 +706,8 @@
       "text": "Narrow research prompt wired into Saturday's job (10-02): real test grounded 7 of 7 rows (4 conference, 3 award), no fallback to the full prompt, one 504 retried fine; CFP_PROMPT_MODE defaults to narrow-first in Markets/run_monthly.ps1 (backups: run_monthly.pre-narrow-20261002.ps1, run_market_audit.pre-narrow-20261002.py). First real run is Saturday 02:00; roll back by setting CFP_PROMPT_MODE=full."
     },
     {
-      "state": "Waiting on upstream",
-      "text": "The eight STATUS corrections (H2 MEET and six awards: Closed, and CGI) in upstream's next regular delivery (acknowledged 10-02 in reply to note 17); our patch tool refuses STATUS columns by design. Until then the awards file fails one gate check and the page already shows those deadlines as Closed"
+      "state": "Checking, not waiting",
+      "text": "Eight STATUS corrections (H2 MEET, six awards, CGI): upstream was only asked for them 'in the next regular delivery' with no date. The research jobs here should fix them: H2 MEET in Saturday's run, the six awards in Friday 10-09's run. I will check after each and ask upstream with a date only if still Open."
     },
     {
       "state": "Queued, Saturday after 02:00",

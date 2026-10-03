@@ -5,6 +5,14 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-02 (night) - six Arnica events, awards job enabled, board fixes
+
+- Scope reversal: the six events upstream ruled out (AAIML, ICRAI, RAAI, AI Con USA, AppWorld, ODSC East) are on the customer's sheet, so in scope. Notes 18-21. Delivery 1 rejected (empty of research; AAIML Tokyo not London, ICRAI Incheon not Guangzhou; rows not in the input list as claimed). Sparse patch 1 gate ACCEPTED 23/23 (quotes verbatim on aaiml.net, icrai.org, raai.net); sparse patch 2 needed the R11 word on AppWorld/ODSC ('Projected (2027)'), then ACCEPTED. AI Con USA read in a real browser: Seattle, 2026-10-18.
+- Loads: backups pre-arnica6 and pre-arnica6b; import_grounding --ids; fix_edition; held_rows; input list 73, seed 72 (add_inputs_and_seeds.py arnica; refresh_arnica6_inputs.py). Invariants hold; watchlist check shows only known items.
+- Slips: unrestricted verify_grounding --apply (13 rows' verify_state/detail changed; use --market Cybersecurity with --seed-csv); import keeps old start_date when blank (ODSC fixed by one UPDATE).
+- Board: Agent tasks card rewritten (name + pill, wrapped result text), pill nowrap fixed, stale 'out of scope' card corrected. Awards job enabled by operator.
+- Open: STATUS corrections owed (no date given upstream); check H2 MEET after Saturday, six awards after Fri 10-09.
+
 ## 2026-10-02 (evening) - narrow research prompt tested and wired for Saturday
 
 - Patched Markets/run_market_audit.py (backup run_market_audit.pre-narrow-20261002.py; patch script experiments/purpose_audit/patch_narrow_prompt.py): CFP_PROMPT_MODE=narrow-first, 3,092-char prompt (awards 3,819) vs 11,885 (12,662); default stays full. Why: Saturday 09-27 grounded ~a third of calls; 09-30 experiment grounded 24 of 24 narrow.
