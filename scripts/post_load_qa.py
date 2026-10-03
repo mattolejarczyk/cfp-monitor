@@ -34,7 +34,7 @@ from src.cfp_monitor import qa_report                                     # noqa
 
 LIVE = Path(r"C:\Users\matts\AppData\Local\CFP-Monitor")
 MARKETS = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
-VENUE_WORDS = ("hilton", "marriott", "ahoy", "excel", "sands", "convention", "centre", "center", "hotel", "resort", "pullman",
+VENUE_WORDS = ("hyatt", "sheraton", "westin", "hilton", "marriott", "ahoy", "excel", "sands", "convention", "centre", "center", "hotel", "resort", "pullman",
                "intercontinental", "ifema", "arena", "stadium", "expo", "hall")
 UNASKED = ("organizer", "overview", "categories", "coordinator_email")
 COLS = ("event_id", "name", "deadline", "is_projected", "deadline_evidence_url", "deadline_quote", "submission_url", "status",

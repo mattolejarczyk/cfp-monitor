@@ -55,8 +55,9 @@
       "expect": {
         "deadline": "2026-12-04",
         "is_projected": "false",
-        "submission_url": "https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login"
-      }
+        "submission_url": "https://www.globalenergyshow.com/conferences/2027-call-for-submissions/"
+      },
+      "note": " Updated 2026-10-03: the operator copied the call link from the page (https://www.globalenergyshow.com/conferences/2027-call-for-submissions/); the dmg submitter portal (verified 10-01) is where its SUBMIT button leads."
     },
     {
       "label": "Nullcon Goa 2027 holds the call-for-papers deadline (db)",
@@ -146,8 +147,9 @@
       "expect": {
         "SUBMISSION DEADLINE": "2026-12-04",
         "IS_PROJECTED": "false",
-        "CFP_SUBMISSION_URL": "https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login"
-      }
+        "CFP_SUBMISSION_URL": "https://www.globalenergyshow.com/conferences/2027-call-for-submissions/"
+      },
+      "note": " Updated 2026-10-03: the operator copied the call link from the page (https://www.globalenergyshow.com/conferences/2027-call-for-submissions/); the dmg submitter portal (verified 10-01) is where its SUBMIT button leads."
     },
     {
       "label": "Approved Cybersecurity file: Nullcon corrected",

@@ -135,16 +135,92 @@
     {
       "canonical": "2027-global-energy-show-canada-calgary",
       "event": "Global Energy Show Canada 2027",
-      "ruled_on": "2026-10-01",
+      "ruled_on": "2026-10-03",
       "by": "operator",
-      "why": "Operator confirmed on the live page: the 'SUBMIT AN ABSTRACT' button after the deadline sentence links to the dmg events submitter page (the old /speak/abstract-submission/ link is a 404).",
-      "until": "2026-12-05",
+      "why": "Copied by the operator from the event's own pages: 'June 8-10, 2027 | BMO Centre, Calgary, Canada'; 'Call for Abstracts is now open. Submit your abstract by December 4, 2026'; the call link is https://www.globalenergyshow.com/conferences/2027-call-for-submissions/. (Earlier, 10-01, the operator confirmed the SUBMIT button on the call page leads to the dmg events submitter portal.) Also: a Global Energy Show Canada AWARDS programme exists at https://www.globalenergyshow.com/awards/global-energy-show-canada-awards/ (same dates and venue), recorded as a lead for the awards research, not mixed in here.",
+      "until": "2027-06-11",
       "links": [
-        "https://www.globalenergyshow.com/",
-        "https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login"
+        "https://www.globalenergyshow.com/conferences/2027-call-for-submissions/",
+        "https://www.globalenergyshow.com/awards/global-energy-show-canada-awards/"
       ],
       "set": {
-        "CFP_SUBMISSION_URL": "https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login"
+        "START DATE": "2027-06-08",
+        "CONFERENCE DATES": "June 8 - June 10, 2027",
+        "LOCATION": "BMO Centre, Calgary, Canada",
+        "SUBMISSION DEADLINE": "2026-12-04",
+        "CFP_SUBMISSION_URL": "https://www.globalenergyshow.com/conferences/2027-call-for-submissions/"
+      }
+    },
+    {
+      "canonical": "2026-carbonzero-global-conference-exhibition-brussels",
+      "event": "CarbonZero Global Conference & Exhibition 2026",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "Copied by the operator from the event's own page: 'Event Dates: October 27 - 29, 2026 - Brussels, Belgium', with a countdown timer to the event. Our start date 2026-11-12 was wrong.",
+      "until": "2026-10-30",
+      "links": [
+        "https://industrylink.eu/event/carbonzero-global-conference-exhibition-2026/"
+      ],
+      "set": {
+        "START DATE": "2026-10-27",
+        "CONFERENCE DATES": "October 27 - October 29, 2026",
+        "CITY": "Brussels",
+        "COUNTRY": "Belgium"
+      }
+    },
+    {
+      "canonical": "2027-ces-las-vegas",
+      "event": "CES 2027",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "Copied by the operator from the event's own page: 'January 6-9, Las Vegas, NV'.",
+      "until": "2027-01-10",
+      "links": [
+        "https://www.ces.tech/"
+      ],
+      "set": {
+        "START DATE": "2027-01-06",
+        "CONFERENCE DATES": "January 6 - January 9, 2027",
+        "CITY": "Las Vegas",
+        "STATE_PROVINCE": "Nevada",
+        "COUNTRY": "USA"
+      }
+    },
+    {
+      "canonical": "2026-nullcon-goa-bambolim",
+      "event": "Nullcon Goa 2027",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "Copied by the operator from the event's own page (a timeline on the right, each date with its own countdown): 'Conference: 27th - 28th February 2027'; 'Call for Papers Opens 11th September 2026'; 'Call for Papers Closes 30th October 2026'. Our database held start 2027-03-06 (wrong).",
+      "until": "2027-03-01",
+      "links": [
+        "https://nullcon.net/event/nullcon-goa-2027/"
+      ],
+      "set": {
+        "START DATE": "2027-02-27",
+        "CONFERENCE DATES": "February 27 - February 28, 2027",
+        "SUBMISSION_OPENS": "2026-09-11",
+        "SUBMISSION DEADLINE": "2026-10-30",
+        "DEADLINE_EVIDENCE_URL": "https://nullcon.net/event/nullcon-goa-2027/call-for-papers/",
+        "DEADLINE_QUOTE": "CALL FOR PAPERS CLOSES ON 30th October 2026",
+        "IS_PROJECTED": "false",
+        "MAIN_INFO_URL": "https://nullcon.net/event/nullcon-goa-2027/"
+      }
+    },
+    {
+      "canonical": "2026-german-owasp-day-karlsruhe",
+      "event": "German OWASP Day 2026",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "Operator verified: September 23-24, 2026, and the event has already taken place. (The input list's other variant, 'OWASP German Chapter Conference (AppSec Karlsruhe 2026)', says 9/22/2026: wrong, and probably a duplicate for upstream to rule on.)",
+      "until": "2026-12-31",
+      "links": [
+        "https://god.owasp.de/2026/",
+        "https://owasp.org/www-chapter-germany/"
+      ],
+      "set": {
+        "START DATE": "2026-09-23",
+        "CONFERENCE DATES": "September 23 - September 24, 2026"
       }
     }
   ]

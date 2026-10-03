@@ -1,15 +1,15 @@
 {
   "as_of": "2026-10-03",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "2026-10-03: your rulings on CODASPY and Apres-Cyber are applied and pinned, Saturday's task limit is 5 hours, and the quality-loop experiments are underway: the trap cases are done and the answer-key draft is running. The draft has already found one wrong shipped start date (CarbonZero), waiting for your confirmation.",
+  "now": "2026-10-03: everything you verified is stored once and enforced: 13 events pinned (shown under 'Verified by you'), applied to the files and database today, generated into the confirmed answer key, and protected from the weekly research. Experiments 1 (answer key) and 2 (trap cases) are underway; the next experiments wait for the key.",
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "CHECK THESE PAGES, then tell me 'all as stated' or the corrections; I pin every one you verify (shown under 'Verified by you', never asked again, never overridden). 1 CarbonZero 2026 (we ship start 2026-11-12; the page says 27-29 October 2026, Brussels): https://industrylink.eu/event/carbonzero-global-conference-exhibition-2026/  2 CES 2027 (we ship 2027-01-06): https://www.ces.tech/about-ces/dates-and-hours/  and  https://www.ces.tech/  3 Nullcon Goa 2027 (we ship no start date): https://nullcon.net/  and  https://nullcon.net/cfp/  4 Global Energy Show Canada 2027 (we ship 2027-06-08): https://www.globalenergyshow.com/  and  https://www.globalenergyshow.com/about/about-exhibition/  5 German OWASP Day 2026 (we ship 2026-09-23 Karlsruhe; the input list has a second variant at 9/22/2026, probably a duplicate): https://god.owasp.de/2026/  and  https://owasp.org/www-chapter-germany/  6 Decarbonization Congress 2026 (input list 11/23/2026 Berlin, held back for no permanent id): https://decarboncongress.com/"
+      "text": "AFTER THE ANSWER KEY EXISTS, pick the next experiments: 3 narrowness test (about 7 dollars), 4 read-the-page pass (about 16 cents), 5 two-model agreement (20 to 50 cents). Experiments 1 and 2 are approved and underway. Cost basis: one narrow grounded call is about 6 cents (estimate until Google's bill confirms), one page read about 0.13 cents."
     },
     {
       "added": "2026-10-03",
-      "text": "AFTER THE ANSWER KEY EXISTS, pick the next experiments: 3 narrowness test (about 7 dollars), 4 read-the-page pass (about 16 cents), 5 two-model agreement (20 to 50 cents). Experiments 1 and 2 are approved and underway. Cost basis: one narrow grounded call is about 6 cents (estimate until Google's bill confirms), one page read about 0.13 cents."
+      "text": "SEND upstream NOTE-TO-UPSTREAM-23.md (copy/paste): a new row for Decarbonization Congress 2027, a ruling on the German OWASP Day duplicate, the Global Energy Show Canada awards lead, the verified facts with where upstream's wrong values came from, and Nullcon's city."
     }
   ],
   "headline": {
@@ -459,6 +459,12 @@
           "t": "Verifier cannot read pages that answer HTTP 403 (blackhat.com): Black Hat Asia rows read unconfirmed",
           "r": "Cause found 10-02 (earlier note blamed the date reader: wrong). Idea: let the verifier fall back to the page library for walled pages. Not built.",
           "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "Countdown timers on event pages signal the upcoming edition (operator idea, seen on CarbonZero, Nullcon, Carbon Capture Expo MENA)",
+          "r": "Not built. A page that shows a countdown to the event is showing the NEXT edition's dates in a structured way; Nullcon's pages also carry a timeline (call opens, call closes, event) each with its own timer. Idea: use the presence of a countdown and the timeline block as evidence for the page reader and the refresh scheduler. First step: count how many saved pages have one.",
+          "s": "todo"
         }
       ]
     },
@@ -621,7 +627,7 @@
         {
           "kind": "experiment",
           "t": "Experiment 1, ANSWER KEY (approved 10-03): the 40 benchmark events with every field checked on the live page",
-          "r": "Draft built (scripts/answer_key_prefill.py) and the upcoming events read in the browser (docs/qa/answer-key-reads-20261003.md). Of the 40 events: city 29 named on the page, organizer 25, edition 23, start date 14 (26 are mostly 2026 editions already held whose pages now show 2027). Found: CarbonZero's shipped start date is wrong; ESF MENA 2026 has no start date though the page states 14-17 Sep 2026; CES, Nullcon and Global Energy Show Canada cannot be proven by a text read. Waiting for your confirmations; docs/qa/answer-key.csv will be the confirmed file.",
+          "r": "Draft for all 40 benchmark events (answer-key-DRAFT.csv) plus the CONFIRMED key generated from your verifications (docs/qa/answer-key.csv: 39 facts for 13 events, each with who, when and the pages). You verify once; it is pinned, shown on the board, and becomes a test every method is scored on. Remaining for the key: the benchmark events not yet verified; for past 2026 editions the pages now show 2027, so the key scores forward-looking events.",
           "s": "doing"
         },
         {
@@ -638,8 +644,26 @@
         },
         {
           "kind": "fix",
-          "t": "Shipped start date is wrong for CarbonZero Global Conference & Exhibition 2026",
-          "r": "FOUND by the answer-key draft 10-03: we ship 2026-11-12; the page states 27-29 October 2026 (Brussels). Waiting for your confirmation; then an operator ruling and a pin.",
+          "t": "CarbonZero start date corrected and pinned",
+          "r": "Done 10-03: you copied it from the page: October 27-29, 2026, Brussels, Belgium. We shipped 2026-11-12. Fixed in the approved Utility file and the database; pinned.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Six events you verified from their own pages (CarbonZero, CES 2027, Nullcon Goa 2027, Global Energy Show Canada 2027, German OWASP Day, Decarbonization Congress)",
+          "r": "Done 10-03: all facts pinned (13 events in total on the 'Verified by you' panel) and applied to the approved files and the database today. Corrections found on the way: Nullcon's dates text said March 4-6 (page: Feb 27-28, 2027) and its database start date was 2027-03-06; CarbonZero had no country; Nullcon's city is stored as 'Grand Hyatt Goa' (a venue).",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Nullcon Goa 2027: CITY holds a venue ('Grand Hyatt Goa'), not the city",
+          "r": "OPEN: not one of the facts you verified (city was not in your copy), so not pinned. Asked upstream (note 23). The gate's venue rule did not flag it; the load QA venue-word list now includes hotel names.",
+          "s": "todo"
+        },
+        {
+          "kind": "fix",
+          "t": "Events to add or rule on (from your checks): Decarbonization Congress 2027 (new row, 15-16 Feb 2027, Berlin); German OWASP Day duplicate; Global Energy Show Canada AWARDS lead",
+          "r": "Sent to upstream as note 23 (copy/paste). The new row needs upstream's permanent id (we never mint ids); the awards programme is not on the Utility awards list. Waiting.",
           "s": "todo"
         }
       ]
@@ -763,6 +787,12 @@
           "t": "The learning loop: every manual verification becomes a pin, an answer-key line and, when it exposes a failure, a trap case and a rule (QA-REGISTER section F)",
           "r": "Standing process, agreed 10-03. Measure it: the share of events that needed a manual verification each month should fall. A pin holds one edition; next year's edition is a new row, so the rules (steps 3-5) are what make manual checks rarer.",
           "s": "doing"
+        },
+        {
+          "kind": "build",
+          "t": "scripts/apply_pins_live.py and scripts/answer_key_from_pins.py",
+          "r": "Done 10-03: a fact you verify takes effect the same day in both approved files and the database (backups, proof that only pinned cells changed), and the confirmed answer key is generated from the same ledger. After it, the approved file is re-gated and re-promoted.",
+          "s": "done"
         }
       ]
     }
@@ -891,7 +921,7 @@
   "working_on": [
     {
       "state": "In progress",
-      "text": "Experiment 1, the answer key: draft done and the upcoming events read; waiting on your page checks (see Waiting on you). Each fact you verify is pinned, listed under 'Verified by you' and entered in the key. Experiment 2 (trap cases) is done."
+      "text": "Applying everything you verified: 13 events pinned, applied to the approved files and database; the two approved files are being re-gated with the network and re-signed so Monday's pages publish. Then the benchmark events you have not yet verified feed the answer key."
     },
     {
       "state": "Waiting on upstream",
