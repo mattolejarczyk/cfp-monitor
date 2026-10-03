@@ -107,7 +107,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 
 ## Saturday, right after research - Automatic load into the database
 
-*Same scheduled task; `run_monthly.ps1` calls `weekend_import.py` then `weekend_recap.py`*
+*Same scheduled task; `run_monthly.ps1` calls `weekend_import.py`, then `post_load_qa.py` (conference markets), then `weekend_recap.py`. Each step is skipped with a logged line if its script is missing, and runs with empty input, so a stray interactive prompt exits instead of waiting for a person (the 2026-10-03 hang).*
 
 1. **[Safety check]** **Stops if research failed.** Nothing is loaded and the database stays exactly as it was.
 2. **[Update]** **Fixes wording-only problems** - for example a quote copied slightly wrong from the cited
@@ -138,9 +138,14 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 6. **[Load]** **Re-verifies the new rows** against their cited pages. *(verify_grounding.py, fix_edition.py)*
 7. **[Safety check]** **Runs the database health check.** If anything is wrong, **everything is undone from the
    backup** and nothing is approved. *(check_invariants.py)*
-8. **[Publish]** **Approves the files for Monday** and records the approval. *(promote_delivery.py)*
-9. **[Report]** **Emails the Saturday recap** - worked or failed, the results table, and what it means for
-   Sunday and Monday. Sent on failure too. *(weekend_recap.py saturday)*
+8. **[Safety check]** **Checks what the load changed and whether it lost anything we had proven.** For every event whose deadline is still ahead it
+   flags evidence, quote, deadline or submission link lost, and verified turned projected; it counts blanks in the fields the short research question does
+   not ask and venue words in CITY; it checks the shipped files' dates and years again; it lists any start date the load set on a projected row with no
+   evidence page; it confirms the approved files are signed and fresh so Monday's pages will publish; and it runs the named-row watch-list. It reports and never
+   blocks: a flag is for a person. The result is filed as `runs_out\qa\<Monday>\load.md`. *(post_load_qa.py)*
+9. **[Publish]** **Approves the files for Monday** and records the approval. *(promote_delivery.py)*
+10. **[Report]** **Emails the Saturday recap** - worked or failed, the results table, "Did the load lose anything?" with every flag, and what it means for
+   Sunday and Monday. Sent on failure too; the subject reads "WORKED - n to check" when there are flags. *(weekend_recap.py saturday)*
 
 ## Sunday 1:00 AM - Weekly link and deadline check (all markets)
 

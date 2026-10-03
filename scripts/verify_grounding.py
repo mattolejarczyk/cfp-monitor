@@ -45,7 +45,15 @@ def main() -> int:
     ap.add_argument("--layers", default="01", help="which layers to run, e.g. 0, 01, 012")
     ap.add_argument("--limit", type=int)
     ap.add_argument("--apply", action="store_true", help="write results back to the DB")
+    ap.add_argument("--all-markets", action="store_true", help="allow --apply without --market: re-verifies EVERY row in the database")
     a = ap.parse_args()
+    # 2026-10-03: --apply without --market verified and rewrote the state of all 426 rows (13 changed) when I meant to check six new ones. Both
+    # scheduled callers pass --market. A whole-database write now has to be asked for by name.
+    if a.apply and not a.market and not a.all_markets:
+        print("REFUSED: --apply without --market would re-verify and rewrite EVERY row in the database.\n"
+              "  To check only some rows give --market <Market> and --seed-csv <a seed holding just those rows>.\n"
+              "  If you really mean the whole database, add --all-markets.", file=sys.stderr)
+        return 2
 
     today = date.today()
     store = Store(a.db)

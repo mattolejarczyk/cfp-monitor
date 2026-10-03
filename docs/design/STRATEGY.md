@@ -33,6 +33,15 @@ Stage 0 diagnose (done) - 1 narrow Gemini prompt (grounding proven, quality and 
 - Public repo: no customer data, credentials or private paths. A patch or heredoc that contains a backslash-b turns into a backspace character on this machine: use the Edit tool.
 - Before any new script: check `docs/operations/TOOLING.md` and say `USING EXISTING:` or `NEW CODE: searched ... found nothing`.
 
+## Quality rules added 2026-10-03 (each is enforced by a check in `docs/operations/QA-REGISTER.md`)
+
+- **A blank answer never replaces a verified one.** The short research question returns blanks for what it cannot find; the load now keeps last week's verified evidence, and the load QA flags any loss.
+- **A year is part of an identity.** No carry, match or comparison crosses editions; a 2027 date inside a 2026 edition fails the row (Y1-Y4).
+- **Accepted means the claims checked out, not that research happened.** Read the gate's notes.
+- **Claims about our own files are checked on our own files** (`check_delivery_ids.py`).
+- **A hand edit is re-signed and logged.** Edit the research output AND the input list, then promote again.
+- **Rehearse on a copy with the production checks, and replay a past situation against a new rule, before anything touches the live database.**
+
 ## The wisdom pattern (added 2026-10-01, operator's principle)
 When a code solution grows complex or keeps failing, **try a cheap or free model first** (DeepSeek, Hermes free capacity), with code verifying its output and an answer key scoring it, before spending more weeks on rules. Evidence so far: a rules reader took days and failed a fresh test (0.33); one DeepSeek call read the same table correctly for $0.0009. Result so far (10-01): promising, not proven. As run precision 0.85 / recall 9 of 12 on 27 fresh pages; 0 wrong-purpose in 69 accepted dates; post-hoc 0.875 / 11 of 12. Needs a larger fresh test before wiring: `experiments/whole_page_reader/RESULT.md`.
 

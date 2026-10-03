@@ -1,15 +1,19 @@
 {
   "as_of": "2026-10-03",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "End of day 2026-10-02: all of today's upstream deliveries are loaded and acknowledged, the split data-quality indexes are on the board, and the narrow research prompt is being wired into Saturday's job (test in progress).",
+  "now": "2026-10-03: Saturday's research ran on the narrow prompt (130 of 130 rows grounded) and is loaded. The scheduled load step had a bug (fixed), the first live load blanked some verified evidence (restored), and three safeguards now run in every load: last week's unasked fields carried, verified evidence kept, year checks. Load QA, the QA register and the runbook procedures are in. Next: choose the experiments that close the remaining quality gaps.",
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "CODASPY (11-16 abstract vs 11-23 paper) and Apres-Cyber (11-20 vs 11-21) came back from research with different, evidenced deadlines. I restored your earlier 11-16 and 11-20 for now; tell me if the paper date or the 21st should win and I will stop restoring them."
+      "text": "Pick the quality-loop experiments to run first (my recommendation: pass-1 narrowness and a page-anchored cheap second pass, both in SHADOW so nothing reaches a customer). Costs are about 5 dollars for the first and under 1 dollar for the second on the 40-event key; the labelled set of about 40 rows is the real work. See the proposed items in stages A and E."
     },
     {
-      "added": "2026-10-02",
-      "text": "Optional: send upstream NOTE-TO-UPSTREAM-21.md (acknowledges their second sparse patch, which we checked on the real pages and loaded; asks for plain-sentence STATUS DETAILS and 'Projected (YYYY)'). Nothing on the board is blocked on it."
+      "added": "2026-10-03",
+      "text": "CODASPY (abstract 11-16 vs paper 11-23) and Apres-Cyber (11-20 vs 11-21) came back from research with different, evidenced deadlines. I restored your earlier 11-16 and 11-20 for now. Tell me which should win, and I will pin it (the pinned list is not built yet)."
+    },
+    {
+      "added": "2026-10-03",
+      "text": "Tighten Saturday's scheduled-task time limit from 10 hours to about 5, so a hang like 10-03's cannot hold the job until noon. Needs an elevated PowerShell; I will give you the exact command."
     }
   ],
   "headline": {
@@ -210,6 +214,30 @@
       "verdict": "warn",
       "date": "10-02",
       "note": "Offline, no model calls; host-level matching; the one 'check' is the awards-ceremony date. experiments/whole_page_reader/SCORE-VS-KEY.md"
+    },
+    {
+      "step": "Narrow prompt, live Saturday 10-03",
+      "metric": "Rows with a real Google search behind the answer",
+      "result": "130 of 130 (was about a third on 09-27)",
+      "verdict": "good",
+      "date": "10-03",
+      "note": "Reliability of the call, not accuracy of every field: the fields it does not ask need their own measure."
+    },
+    {
+      "step": "Start-date arbiter",
+      "metric": "Which of two start dates a page proves",
+      "result": "Research date 5 of 5; the input list's text 0",
+      "verdict": "warn",
+      "date": "10-03",
+      "note": "Most conflicts (about 60 of 66) were unprovable on a plain fetch; pages that are walled or script-built need a browser read."
+    },
+    {
+      "step": "Load QA against the live post-load snapshot",
+      "metric": "Regressions it flags that were found by hand",
+      "result": "RSA, Black Hat Asia, ODSC all flagged",
+      "verdict": "good",
+      "date": "10-03",
+      "note": "Nullcon's lost deadline and the Global Energy Show link are caught by the named-row watch-list, not by this report."
     }
   ],
   "agents": [
@@ -297,7 +325,7 @@
       },
       {
         "label": "Weekend research that completes",
-        "now": "about 27% of calls grounded (September run)",
+        "now": "130 of 130 rows grounded on Saturday 10-03 (narrow prompt); about 27% of calls on 09-27 (full prompt). One run so far.",
         "target": "95% of calls"
       },
       {
@@ -360,20 +388,38 @@
         {
           "kind": "decision",
           "t": "How do the other ~24 fields get filled?",
-          "r": "Open: keep, carry forward, or a second call",
-          "s": "todo"
+          "r": "Partly decided 10-03: carry last week's same-edition values (narrow_overlay.py, live). Open: a second, cheap pass for what the short question never asks (see the experiments proposed below).",
+          "s": "doing"
         },
         {
           "kind": "experiment",
           "t": "Is the research really searching? Saturday logs: only about 35% of calls were genuine grounded searches",
-          "r": "Measured 10-02 from the grounding logs: Cybersecurity 49 of 141 grounded, 52 timed out, 36 answered with no search; Utility 40 of 139. Discarded answers leave rows on last week's data. Narrow prompt grounded 24 of 24 (09-30 test) but is not wired in.",
-          "s": "todo"
+          "r": "Saturday 10-03 on the narrow prompt: 130 of 130 rows grounded (73 + 57), 0 stubs, about 131 calls (was about a third grounded and 24 stubs on 09-27). Grounding logs and health.json each run.",
+          "s": "done"
         },
         {
           "kind": "experiment",
           "t": "Do upstream's chat replies read pages or answer from memory? (canary test)",
           "r": "First canary run 10-02: it reads pages found through search (Sessionize call page: real, verbatim) but cannot open an arbitrary URL; honest when it cannot fetch, but reported '404' without having observed it; composed URL paths explain the dead links. So: we read, upstream formats. docs/qa/UPSTREAM-QA-PROTOCOL.md",
           "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Narrow research prompt wired into Saturday's job (CFP_PROMPT_MODE=narrow-first, full prompt as fallback)",
+          "r": "Done 10-02/03: real test 7 of 7 grounded; first live Saturday 130 of 130. Default set in run_monthly.ps1 (rollback: CFP_PROMPT_MODE=full).",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "The narrow prompt can guess a start date for an unconfirmed edition (ODSC East 2027: 2027-05-10 with no page)",
+          "r": "KNOWN GAP. The load QA flags it afterwards (post_load_qa) and the year checks cannot catch it (the year is consistent). Real fix: a prompt rule 'empty unless the page states this edition', then measure.",
+          "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "PROPOSED: how narrow is best? Ultra-narrow first pass (deadline + quote + page only) against today's 10 fields",
+          "r": "Not approved. Score on the locked key plus the operator-verified rows: grounded rate, deadline right, quote on the page, cost, seconds.",
+          "s": "todo"
         }
       ]
     },
@@ -466,6 +512,18 @@
           "t": "Date reader: whole-date matching and the two-digit-year style (find_date)",
           "r": "APPLIED 10-02 on your go: '(26)' style 0/35 -> 35/35 on 350 saved pages; false positives 5 -> 0 of 322; no change on other styles; 71 targeted tests green, full suite re-running.",
           "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Start-date arbiter and year checks (scripts/start_date_arbiter.py)",
+          "r": "Done 10-03: reads the event's own pages, year-specific, spells out ranges. Where a page proved anything it proved the research start date (5 of 5, 0 for the input list's text). Year checks Y1-Y4 now run on every row of every Saturday load.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Narrow overlay: last week's same-edition values for the fields the short question does not ask (scripts/narrow_overlay.py)",
+          "r": "Done 10-03, live in weekend_import: organizer blank on 130 rows -> 14 and 2; venue in CITY 28 -> 1 and 0; conference-dates text restored when it names the same full date as the start date. 11 tests.",
+          "s": "done"
         }
       ]
     },
@@ -521,6 +579,48 @@
           "t": "Our city cleaning read 'Park City' as a venue and stored 'UT'",
           "r": "Fixed 10-02 (src/cfp_monitor/grounding.py, narrow 'park' exception, tests); the live row re-imported; golden-master derivation unchanged.",
           "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Operator rulings on five Utility rows (start date vs conference dates), verified on the live pages",
+          "r": "Done 10-03: applied to the research output and the input list, logged in OPERATOR-EDITS-LOG.md; start dates and dates text now agree on 49 Utility rows and 63 Cybersecurity rows, 0 year failures.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "Six Arnica events (AAIML, ICRAI, RAAI, AI Con USA, AppWorld, ODSC East) and the 2027 expo row loaded",
+          "r": "Done 10-02/03 after upstream's out-of-scope ruling was reversed (they are on the customer's own sheet). Database 427 rows. AppWorld and ODSC East stay projected with blank deadlines.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "First live Saturday load: regressions found and restored",
+          "r": "Done 10-03: the load blanked verified evidence on RSA 2027, Black Hat Asia call for summits and Nullcon, reverted the Global Energy Show link and re-set ODSC's start date. Restored from backups (16 database cells, 19 file cells), gate and watch-list clean (26 of 26), approved files re-signed for Monday.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "A hand correction can be overridden by a fresh, evidenced answer (CODASPY abstract 11-16 vs paper 11-23; Apres-Cyber 11-20 vs 11-21)",
+          "r": "KNOWN GAP. The evidence-carry rule only protects against blanks. Needs a per-row 'pinned' list the load honours, so a person's ruling survives until a person changes it. Not built.",
+          "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "Non-deadline facts (city, venue, format, organizer, categories) are only spot-checked",
+          "r": "KNOWN GAP. The one read so far: 3 of 7 upstream events carried a wrong city, venue or date. Needs a labelled set (about 40 rows) and a page-based measure per field.",
+          "s": "todo"
+        },
+        {
+          "kind": "fix",
+          "t": "Rows loaded by hand into the database but absent from the approved file get no carry-forward the first Saturday",
+          "r": "KNOWN GAP. Is how RSA / Black Hat Asia lost evidence. Closed for today's rows (they are in the file now); the load should add hand-loaded rows to the approved file by itself.",
+          "s": "todo"
+        },
+        {
+          "kind": "decision",
+          "t": "Upstream: SAF Europe / Sustainable Fuels duplicate and Future Fuels MENA",
+          "r": "Their rulings (merge, discontinued) carry no R16 evidence and use ids we do not hold. Both rows keep blank dates; the SAF pair has the same URL and date (probably one event under two names). Waiting for proper evidence.",
+          "s": "todo"
         }
       ]
     },
@@ -538,13 +638,49 @@
         {
           "kind": "build",
           "t": "Sponsorship carry-forward",
-          "r": "Option A BUILT and wired into the weekend import 10-02 (scripts/sponsor_carry.py, 14 tests; rehearsal clean): never lose a known answer. Rescues 4 Cybersecurity + 1 Utility rows on last week's real data. Option B (stop re-asking while fresh) not built, after a measured shadow week.",
-          "s": "doing"
+          "r": "Option A built and live in the weekend import (10-02). Option B (stop re-asking while fresh) waits for a measured shadow week.",
+          "s": "done"
         },
         {
           "kind": "build",
           "t": "Wire in: plan, tests, budget, shadow run, switch",
           "r": "Not started",
+          "s": "todo"
+        },
+        {
+          "kind": "fix",
+          "t": "Sponsorship 'Yes' has a link but never a quote (about 90% Yes on both markets, 0 quotes)",
+          "r": "KNOWN GAP, not new. Contract R18b asks for evidence; the gate accepts a link. Needs a quote requirement (a contract question for upstream) and a sponsorship read from the page.",
+          "s": "todo"
+        },
+        {
+          "kind": "fix",
+          "t": "Weekend load step never ran on 10-03 (script bug) and a stray prompt could hang the job for hours",
+          "r": "Fixed 10-03: steps built whole and added to a list, empty input to Python, missing-script guard, a test that guards the script's shape. Task time limits (6 to 16 h) are still loose: Saturday's could be about 5 h.",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Load QA runs after every Saturday load (scripts/post_load_qa.py) and in the recap",
+          "r": "Done 10-03. Flags evidence / deadline / link lost on future deadlines, verified turned projected, blank-rate rise, venue in CITY, date and year problems, guessed start dates, unsigned approved files, watch-list. Run against the first rehearsal and the live post-load snapshot it found everything I had found by hand. 6 tests.",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Friday awards research job re-enabled",
+          "r": "Done 10-03 (operator): State Ready, first run Fri 10-09 02:00 on the narrow prompt. It is the first awards run on the fixed load step.",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "PROPOSED: a second, cheap pass that reads the verified page for the fields the short question never asks (DeepSeek v4.1 flash, about 0.1 cent per page)",
+          "r": "Not approved. The first pass finds the right page; later passes read it. Score against the labelled set; compare with a second grounded call on cost and accuracy.",
+          "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "PROPOSED: two cheap models must agree before a fact is accepted; disagreements go to a person or one grounded call",
+          "r": "Not approved. Measures how much a second opinion buys per cent spent.",
           "s": "todo"
         }
       ]
@@ -570,6 +706,24 @@
           "kind": "build",
           "t": "scripts/board_metrics.py: customer agreement computed from the database, definition written down",
           "r": "Done 10-02 (7 tests). 17 of 33 readable rows agree (52%); 9 of ours blank, 7 differ; the 10-01 figure of 40 rows counted customer-withdrawn rows.",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "QA register, runbook section 7, upstream-claims rule and process-doc guard",
+          "r": "Done 10-03: docs/operations/QA-REGISTER.md lists every check (automatic or manual, where it reports, which incident made it, known gaps); market-runbook section 7 holds the procedures done by hand (delivery ids, rehearsal and replay, re-signing an edited file, operator rulings, a hung job); the process-doc guard now tracks the three new scripts; the global CLAUDE.md points to the register.",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "scripts/check_delivery_ids.py and gate note S",
+          "r": "Done 10-03: do upstream's ids exist here, and is the event on the input list; and a warning when a delivery's rows claim nothing (ACCEPTED 22 of 22 with no research). 3 tests.",
+          "s": "done"
+        },
+        {
+          "kind": "fix",
+          "t": "verify_grounding --apply without --market is refused",
+          "r": "Done 10-03 after an unintended whole-database re-verify (13 rows' verification state changed, no deadlines). 1 test.",
           "s": "done"
         }
       ]
@@ -698,36 +852,20 @@
   "now_updated": "2026-10-03",
   "working_on": [
     {
-      "state": "Done 10-03",
-      "text": "Saturday's research (130 of 130 grounded) is LOADED: Cybersecurity 70 rows, Utility 55, plus the new 2027 expo row (DB 427). The scheduled load had a script bug (fixed) so it was run by hand. The load blanked verified evidence on six future-deadline rows; all restored and gate-checked. Three safeguards now run inside the import (carry last week's unasked fields, keep verified evidence, year checks). Next real test: Saturday 10-10 and the Friday 10-09 awards run."
-    },
-    {
-      "state": "Done",
-      "text": "Friday awards job re-enabled by you 10-02 (State Ready); first run Friday 10-09 02:00 on the narrow prompt."
+      "state": "In progress",
+      "text": "Full test suite running after today's changes (about 1,400 tests), then commit and push. Also the quality-loop experiments below are being designed with you: nothing runs until you pick."
     },
     {
       "state": "Waiting on upstream",
-      "text": "A page announcing ODSC East 2027 or AppWorld's partner-track call (URL plus verbatim sentence). The other four of the six Arnica events are loaded and verified or checked: AAIML, ICRAI, RAAI (10-10) and AI Con USA (10-18, Seattle; page is walled to our plain fetch, read by us in a browser)."
+      "text": "Proper R16 evidence (a page and a verbatim sentence) for the SAF Europe / Sustainable Fuels duplicate and for Future Fuels MENA; evidence that ODSC East 2027 and AppWorld's partner track have a 2027 call; the eight STATUS corrections (H2 MEET, six awards, CGI). Their last replies used ids we do not hold and gave no evidence."
     },
     {
-      "state": "Done, live Saturday",
-      "text": "Narrow research prompt wired into Saturday's job (10-02): real test grounded 7 of 7 rows (4 conference, 3 award), no fallback to the full prompt, one 504 retried fine; CFP_PROMPT_MODE defaults to narrow-first in Markets/run_monthly.ps1 (backups: run_monthly.pre-narrow-20261002.ps1, run_market_audit.pre-narrow-20261002.py). First real run is Saturday 02:00; roll back by setting CFP_PROMPT_MODE=full."
-    },
-    {
-      "state": "Checking, not waiting",
-      "text": "Eight STATUS corrections (H2 MEET, six awards, CGI): upstream was only asked for them 'in the next regular delivery' with no date. The research jobs here should fix them: H2 MEET in Saturday's run, the six awards in Friday 10-09's run. I will check after each and ask upstream with a date only if still Open."
-    },
-    {
-      "state": "Queued, Saturday after 02:00",
-      "text": "Run scripts/watchlist_check.py against the pre-10-01 backup and report the corrected and new rows before Monday 07:00 (India Energy Week must read open); also confirms the sponsorship carry-forward step ran"
+      "state": "Queued, Friday 10-09 and Saturday 10-10",
+      "text": "Check the first awards run (10-09) and the next Saturday: the load QA report (runs_out/qa), the watch-list, and that the six awards and CGI read Closed or corrected. First run of the fixed load step and of the evidence-carry rule on real research."
     },
     {
       "state": "Queued, not started",
-      "text": "The 'we read, they format' packet tool (reads each cited page with our reader and prints URL, title and verbatim date sentence for upstream), sponsorship option B after a measured shadow week, and the refresh scheduler after the shadow week"
-    },
-    {
-      "state": "Waiting on upstream",
-      "text": "Proper R16 evidence for the SAF Europe / Sustainable Fuels duplicate and for Future Fuels MENA (their rulings had none; our dates for both stay blank); the eight STATUS corrections; evidence for ODSC East 2027 and AppWorld. Their replies' ids differ from ours, so patches cannot apply as sent."
+      "text": "The 'we read, they format' packet tool; sponsorship option B after a measured shadow week; the refresh scheduler after its shadow week; the per-row pinned list; the labelled set for non-deadline facts."
     }
   ]
 }

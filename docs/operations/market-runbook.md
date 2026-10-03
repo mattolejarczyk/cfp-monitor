@@ -33,6 +33,8 @@ the week you are; this runbook is the detail underneath its steps 3 and 4.
 
 ## The map, before the commands
 
+> **Every quality check, what it catches and where it runs: [`QA-REGISTER.md`](QA-REGISTER.md).** Section 7 of this runbook has the procedures that were done by hand on 2026-10-02/03 (delivery ids, rehearsal and replay, re-signing an edited approved file, operator rulings, a hung weekend job).
+
 Two principles govern every method choice below. **Cheapest first, escalate only on failure.**
 And **only positive evidence disproves** - silence, a timeout or a block is never a "no".
 
@@ -485,6 +487,14 @@ contained at least one problem introduced by a fix.
 | Import reports unmapped market labels | upstream used a new spelling | map in `markets.ALIASES` — never auto-register |
 | Everything verifies | almost certainly a bug | check the guards in `verify.py` |
 | Many rows verify against a *different* edition | claim matching regressed | `tests/test_claim_match.py` |
+| Saturday's load did not run; the log ends with `=== C ===` and Python at a prompt | a step list flattened into one array (`@(a)+$x+@(b), @(c)`: the comma binds tighter than `+`), fixed 2026-10-03 | `Get-ScheduledTaskInfo` shows 267009 (still running): stop it, then run the import by hand (section 7.7); `tests/test_run_monthly_steps.py` guards the script's shape |
+| A live load lost evidence on a future deadline (RSA, Black Hat Asia, Nullcon) | the narrow research returned no quote and the blank replaced a verified answer | `post_load_qa.py` flags it; restore the cells from the pre-load backup (section 7.6); the evidence-carry rule (`narrow_overlay.py`) prevents it |
+| Start date and conference-dates text disagree on dozens of rows | the input list's `CONFERENCE DATES` was wrong; the research start date was right wherever a page could prove it | `start_date_arbiter.py`; the overlay restores last week's text when it agrees with the start date; year checks run in the import |
+| Monday's page "will NOT publish - hash mismatch" | an approved file was hand-edited after promotion | re-gate with the network and `promote_delivery.py` (section 7.5) |
+| A whole-database re-verify you did not intend | `verify_grounding.py --apply` without `--market` | now refused; give `--market` and a one-row-set `--seed-csv` |
+| A cleared start date comes back | the importer keeps an old `start_date` when the new one is blank, and the narrow research can guess one | one guarded UPDATE plus a log entry; `post_load_qa.py` flags a start date the load introduced on a projected row with no evidence |
+| Upstream says a row, script or file is "added" and it is not here | their working tree is not ours | `check_delivery_ids.py` before anything else (section 7.1) |
+| A delivery is ACCEPTED but has no deadlines or quotes | an empty claim passes every check | gate note S; ask what research stands behind the rows |
 
 ---
 
@@ -794,3 +804,80 @@ cd /c/Users/matts/cfp-monitor && uv run --with pypdf --with pytest python -m pyt
 `tests/run_all.py` delegates to pytest. It used to run each file as a script, which silently
 skipped the 9 files without a `__main__` block — 112 tests reported as passing without ever
 executing. Do not reintroduce that pattern.
+
+---
+
+## 7. Procedures from the 2026-10-02/03 work (each has a check in `QA-REGISTER.md`)
+
+These are the things that were done by hand in a hurry, found real defects, and are now written down so that nobody has to rediscover them.
+
+### 7.1 A delivery arrives from upstream: ids first, then the gate
+
+1. `python scripts/check_delivery_ids.py <delivery.csv> --market Utility`. It says, per id, whether we hold it in the database, this week's research, the approved
+   file and the input list. An id we do not hold is **unknown**: a sparse patch cannot apply on it (contract 5.4, their id space is not ours to extend silently).
+   Tell upstream which ids we hold; do not rewrite theirs. If they say "added to `<Market>_input.csv`", the answer is in the last column.
+2. `python scripts/accept_delivery.py <delivery.csv>` with the network. Read any `[NOTE]` lines, above all **note S**: rows with no deadline and no quote pass every
+   check because they claim nothing. ACCEPTED then means "nothing to check".
+3. Read every cited page the gate could not (walled, script-built) in the built-in browser and write down the verbatim sentence. A person's read is the proof.
+4. Load only with upstream's own ids (`import_grounding.py --ids`), then `verify_grounding.py --market <M> --seed-csv <seed of just those rows> --apply`.
+
+### 7.2 Two dates disagree for one event
+
+`python scripts/start_date_arbiter.py <csv>` reads the event's own pages (conference URL, main info, venue and deadline evidence), year-specific (a 2026 date never proves
+2027), and says which of the two is stated in an event context. Rows it cannot prove are for a person. Never choose by guess; write the person's finding in
+`OPERATOR-EDITS-LOG.md`. The year checks Y1-Y4 already run in every Saturday load.
+
+### 7.3 Rehearse before touching the live database
+
+```
+python scripts/weekend_import.py --markets Cybersecurity Utility --research-exit 0 --sandbox C:/abs/path/sandbox --report C:/abs/path/rehearsal.json
+python scripts/post_load_qa.py --db C:/abs/path/sandbox/cfp_monitor.db --previous-db <live backup or live db> --markets-dir C:/abs/path/sandbox --out <scratch>
+```
+
+Absolute paths only (relative ones break the sandbox). The sandbox holds a full copy: database, approved files, manifests. The second command is the same check production
+runs after a load, so a flag in the rehearsal is a flag you would have shipped.
+
+### 7.4 Replay a past situation against a new rule
+
+Copy the research files (`<Market>_audited.csv`, `.identity.csv`, `.progress.txt`, `.health.json`, `.grounding.jsonl`, `<Market>_input.csv`) and the OLD approved file
+(`.final.csv`) into a scratch directory and run the sandbox with `--markets-dir <scratch>`. This is how the evidence-carry rule was proved against Saturday's real research.
+Remember the prior must contain the row: rows loaded by hand into the database but never added to the approved file have nothing to carry.
+
+### 7.5 You hand-edited an approved file: re-sign it
+
+Monday's page refuses to publish a file whose bytes changed after promotion. Stage the edited file, gate it with the network and promote it:
+
+```
+copy Markets\<Market>_audited.final.csv Markets\weekend\<date>-repromote\<Market>_audited.csv
+python scripts/accept_delivery.py <staged csv> --json <staged>_accept.json
+python scripts/promote_delivery.py --delivery <staged csv> --accept-json <staged>_accept.json --market <Market>
+```
+
+Check `weekend_recap.py saturday --log <log> --import-json <json> --dry-run`: it must say "will publish".
+
+### 7.6 An operator ruling, and restoring rows from a backup
+
+A value you verified on the live page overrides the research. Edit BOTH the research output (`<Market>_audited.csv`) and the input list (`<Market>_input.csv`):
+the wrong value usually came from the input list and would return next Saturday. Back both up, change only the cells you mean (prove it), and log it in
+`experiments/purpose_audit/OPERATOR-EDITS-LOG.md`. Templates: `operator_rulings_20261003.py` (cells in the two files) and `restore_rows_20261003.py` (copy named cells from the
+pre-load database and the pre-promotion approved file back into the live database and the approved file). Then 7.5, then `check_invariants.py` and `watchlist_check.py`.
+
+### 7.7 The weekend job looks hung, or the load did not run
+
+`Get-ScheduledTaskInfo -TaskName "CFP Weekly Re-Research (live markets)"` returning 267009 is "still running". Read the tail of
+`Markets\logs\run_monthly_<stamp>.log`. If the research finished and the load did not start, stop the task and run it by hand (nothing else may be running):
+
+```
+copy %LOCALAPPDATA%\CFP-Monitor\cfp_monitor.db %LOCALAPPDATA%\CFP-Monitor\cfp_monitor.pre-<name>.db
+python scripts/weekend_import.py --markets Cybersecurity Utility --research-exit 0 --report <path>.import.json
+python scripts/post_load_qa.py --import-json <path>.import.json
+python scripts/check_invariants.py --db %LOCALAPPDATA%\CFP-Monitor\cfp_monitor.db
+```
+
+Then read the report before relying on the load, and use 7.6 for anything it flagged. The recap says "loaded automatically" whatever happened: when you ran it by hand, say so
+(the dry run, 7.5, shows what it will send).
+
+### 7.8 Running the tests
+
+`uv run --with pypdf --with pytest python -m pytest tests/ -q`. Plain `python -m pytest` fails here (no pytest in the venv). Many of the pure-function tests also run with a
+ten-line loop that calls each zero-argument `test_*` function; use that only for a quick check, never as the suite.

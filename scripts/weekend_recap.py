@@ -165,8 +165,18 @@ def monthly_recap(log: str) -> tuple[str, str, str]:
     return subject, text, html_
 
 
+def load_qa_lines(qa: dict | None) -> tuple[str, list[str]]:
+    """(headline, flags) from scripts/post_load_qa.py's report, for the email. None = it did not run (said so, never silently)."""
+    if not qa:
+        return "The load check (what the load changed, anything lost) did not run or left no report.", []
+    flags = list(qa.get("flags") or [])
+    if not flags:
+        return f"Load check: nothing we had proven was lost. {qa.get('summary', '')}".strip(), []
+    return f"Load check: {len(flags)} thing(s) a person should look at (full report: runs_out/qa/{qa.get('cycle', '')}/load.md).", flags[:8]
+
+
 def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
-                   kind: str = "saturday") -> tuple[str, str, str]:
+                   kind: str = "saturday", qa: dict | None = None) -> tuple[str, str, str]:
     """`kind='friday'` is the awards run (2026-09-28): same research, load and table, but the
     next steps are Monday's AWARDS page - Sunday's check covers conferences only."""
     s = parse_saturday(log)
@@ -224,8 +234,11 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
             monday.append(f"Monday 7 AM page ({who}): " + (
                 f"will publish - {why}" if ok else f"will NOT publish - {why}"))
 
+    qa_head, qa_flags = load_qa_lines(qa) if imp else ("", [])
     good = research_ok and imp and imp.get("status") == "DONE"
     status = ("WORKED" if good else "PARTLY WORKED" if research_ok else "FAILED")
+    if good and qa_flags:
+        status = "WORKED - " + str(len(qa_flags)) + " to check"
     label = "Friday awards research" if kind == "friday" else "Saturday research"
     subject = f"CFP {label} {status} - {datetime.now():%a %b %d}"
 
@@ -239,6 +252,9 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
                                  "Held back", "Ready for Monday"], imp_rows))
     html_parts.append("<ul>" + "".join(f"<li>{H.escape(x)}</li>" for x in imp_lines + [db_line])
                       + "</ul>")
+    if qa_head:
+        html_parts += ["<h3 style='margin:14px 0 4px'>Did the load lose anything?</h3>",
+                       "<ul>" + "".join(f"<li>{H.escape(x)}</li>" for x in [qa_head] + qa_flags) + "</ul>"]
     html_parts += ["<h3 style='margin:14px 0 4px'>What this means next</h3>",
                    "<ul>" + "".join(f"<li>{H.escape(x)}</li>" for x in [sunday] + monday) + "</ul>",
                    "</div>"]
@@ -331,7 +347,15 @@ def main() -> int:
             imp = None
             if a.import_json and Path(a.import_json).exists():
                 imp = json.loads(Path(a.import_json).read_text(encoding="utf-8"))
-            subject, text, html_ = saturday_recap(log, imp, md, a.kind)
+            qa = None
+            try:
+                from src.cfp_monitor import qa_report
+                qp = qa_report.QA_ROOT / qa_report.cycle_of(datetime.now().date()).isoformat() / "load.json"
+                if qp.exists() and (datetime.now().timestamp() - qp.stat().st_mtime) < 86400:
+                    qa = json.loads(qp.read_text(encoding="utf-8"))
+            except Exception:                                                  # noqa: BLE001
+                qa = None
+            subject, text, html_ = saturday_recap(log, imp, md, a.kind, qa)
         elif a.kind == "monthly":
             subject, text, html_ = monthly_recap(log)
         else:

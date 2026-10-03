@@ -47,6 +47,9 @@ DESCRIBED = {
     "scripts/qa_build.py": ROOT / "scripts" / "qa_build.py",
     "scripts/import_awards.py": ROOT / "scripts" / "import_awards.py",
     "scripts/export_checks.py": ROOT / "scripts" / "export_checks.py",
+    "scripts/post_load_qa.py": ROOT / "scripts" / "post_load_qa.py",
+    "scripts/narrow_overlay.py": ROOT / "scripts" / "narrow_overlay.py",
+    "scripts/start_date_arbiter.py": ROOT / "scripts" / "start_date_arbiter.py",
 }
 
 

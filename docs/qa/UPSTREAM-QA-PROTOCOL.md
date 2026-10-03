@@ -60,3 +60,22 @@ The contrast is the finding: when we hand upstream the page and the quote, it re
 - **Therefore**: do not ask it to open or spot-check a specific URL we choose; it cannot. Do ask it to cite only URLs that appeared in its search results and to say "could not open" rather than "404" when it did not get a response. Our gate (checks 2 and 3) remains the only authority.
 - **For anything that needs a specific page read, do the reading on our side** (our reader and the page library, Hermes, or the built-in browser) and give upstream the URL and the verbatim sentence to format into the contract. That is what worked for the seven library leads (22 of 22).
 - **Spot-check we still can do**: re-ask the four events whose pages we have already read (WSED, GC&E, CODASPY, Triangle) and compare its quotes with ours.
+
+## Checking what upstream says is on OUR machine (added 2026-10-03)
+
+Upstream's working tree is not ours, and in two days three statements about our files were wrong: rows "added to `Cybersecurity_input.csv`" that were not there (twice: the six Arnica events, then the 2027 expo row), a script `stamp_input_list.py` that does not exist here, and a sparse patch built on ids we do not hold (`2026-carbon-capture-usa-houston-speaking`; ours is `2026-carbon-capture-usa-houston`). None of it was malicious; each was found by hand, late.
+
+**Standing rule: any claim about a file, script or id on this machine is checked on this machine before it is relied on.**
+
+1. `python scripts/check_delivery_ids.py <their csv> --market <Market>` on every delivery (QA-REGISTER.md C1). Reply with what we found, not what they said.
+2. A claimed edit to the input list: the last column of that report, or open `Markets\<Market>_input.csv`.
+3. A claimed script: `Test-Path` it, and look in `docs/operations/TOOLING.md`.
+4. When ids differ, tell upstream which ids we hold. Never rewrite theirs to match (contract 5.4) and never mint ours for a new event.
+
+## A passing gate is not proof of research (added 2026-10-03)
+
+The first six-event Arnica delivery had no deadline, no quote and no evidence on any row and was ACCEPTED 22 of 22: a row that claims nothing cannot fail a check about its claims. The gate now prints note **S** when every row of a small file (or half of a large one) carries neither a deadline nor a quote. Read the notes, not only the verdict. What distinguishes a delivery with research in it: rows whose deadline AND quote are present and found on the cited page (check 3), counted per delivery in the fidelity scorecard above.
+
+## Answers that admit inference (added 2026-10-03)
+
+Asked where five wrong dates came from, upstream answered "a secondary index snippet", "a residual pre-rebrand schedule" and "inferred dates from prior-year events without edition year boundary filtering". The last is the year mix-up in plain words. Treat an answer that says "inferred" as a defect report on the source, not as an explanation that closes the question: the value stays out until a page states it.

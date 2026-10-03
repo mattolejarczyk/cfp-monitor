@@ -1,0 +1,230 @@
+"""Step QA report for the Saturday LOAD: what did the load change in the database, and did it lose anything we had proven?
+
+    python scripts/post_load_qa.py --previous-db <backup taken before the load> [--import-json <weekend_import report>]
+
+WHY (2026-10-03). The first live load of the narrow-prompt research dropped verified evidence on three events whose deadlines were
+still ahead (RSA Conference 2027, Black Hat Asia's call for summits, Nullcon), reverted a hand-corrected submission link, and wrote
+a guessed start date back onto ODSC East after we had cleared it. Every one of those was found by hand AFTER the load. This report
+runs the same comparisons automatically, right after the load and before anyone relies on it, and files them in the weekly QA folder
+(runs_out/qa/<cycle Monday>/load.md and .json, the shape in src/cfp_monitor/qa_report.py). It reads; it never changes pipeline data.
+
+WHAT IT CHECKS (a FLAG is a thing for a person to look at, never a failure of the run)
+  1 Future-deadline rows. For every event whose deadline was ahead of today before OR after the load: REGRESSION flags for evidence page or
+    quote lost, deadline lost, verified -> projected, submission link lost. Moves and evidence swaps are listed without a flag.
+  2 Blank rates of the fields the short research question does not ask (organizer, overview, categories, coordinator email) and a venue
+    word in CITY, against the pre-load database: a rise of 15 points or more is flagged.
+  3 Dates on the shipped approved files: start date against the conference-dates text, and the four year checks (start_date_arbiter).
+  4 Guessed start dates: a start date the load introduced or changed on a projected row that has no evidence page.
+  5 The approved files are signed and fresh, so Monday's pages will publish (publish_guard).
+  6 The watch-list of named rows (watchlist_check.py), as one line.
+Pure functions below take plain dicts so the same rules are tested without a database."""
+from __future__ import annotations
+
+import argparse
+import json
+import sqlite3
+import subprocess
+import sys
+from datetime import date, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from src.cfp_monitor import qa_report                                     # noqa: E402
+
+LIVE = Path(r"C:\Users\matts\AppData\Local\CFP-Monitor")
+MARKETS = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
+VENUE_WORDS = ("hilton", "marriott", "ahoy", "excel", "sands", "convention", "centre", "center", "hotel", "resort", "pullman",
+               "intercontinental", "ifema", "arena", "stadium", "expo", "hall")
+UNASKED = ("organizer", "overview", "categories", "coordinator_email")
+COLS = ("event_id", "name", "deadline", "is_projected", "deadline_evidence_url", "deadline_quote", "submission_url", "status",
+        "start_date", "city", "organizer", "overview", "categories", "coordinator_email")
+
+
+def _b(v) -> str:
+    return (str(v) if v is not None else "").strip()
+
+
+def _d(v) -> date | None:
+    try:
+        return date.fromisoformat(_b(v))
+    except ValueError:
+        return None
+
+
+def deadline_changes(old: dict, new: dict, today: date) -> tuple[list[list], list[str], list[str]]:
+    """(rows, flags, past) for rows whose deadline was ahead before or after the load."""
+    rows, flags, past = [], [], []
+    for k, n in new.items():
+        o = old.get(k)
+        if o is None:
+            continue
+        od, nd = _d(o.get("deadline")), _d(n.get("deadline"))
+        if not ((od and od >= today) or (nd and nd >= today)):
+            if _b(o.get("deadline")) != _b(n.get("deadline")):
+                past.append(f"{n['name'][:50]}: deadline {o.get('deadline') or '-'} -> {n.get('deadline') or '-'} (already passed)")
+            continue
+        name = n.get("name", k)[:50]
+        reg, chg = [], []
+        if _b(o.get("deadline")) and not _b(n.get("deadline")):
+            reg.append("deadline LOST")
+        elif _b(o.get("deadline")) != _b(n.get("deadline")):
+            chg.append(f"deadline {o.get('deadline') or '-'} -> {n.get('deadline') or '-'}")
+        if _b(o.get("deadline_evidence_url")) and not _b(n.get("deadline_evidence_url")):
+            reg.append("evidence page LOST")
+        elif _b(o.get("deadline_evidence_url")) != _b(n.get("deadline_evidence_url")):
+            chg.append("evidence page changed")
+        if _b(o.get("deadline_quote")) and not _b(n.get("deadline_quote")):
+            reg.append("quote LOST")
+        if _b(o.get("is_projected")).lower() == "false" and _b(n.get("is_projected")).lower() == "true":
+            reg.append("verified -> projected")
+        if _b(o.get("submission_url")) and not _b(n.get("submission_url")):
+            reg.append("submission link LOST")
+        elif _b(o.get("submission_url")) != _b(n.get("submission_url")):
+            chg.append("submission link changed")
+        if reg or chg:
+            rows.append([name, o.get("deadline") or "-", n.get("deadline") or "-", "REGRESSION: " + "; ".join(reg) if reg else "changed", "; ".join(chg)])
+        if reg:
+            flags.append(f"{name} (deadline {n.get('deadline') or o.get('deadline')}): " + "; ".join(reg))
+    return rows, flags, past
+
+
+def blank_rates(old: dict, new: dict, threshold: float = 0.15) -> tuple[list[list], list[str]]:
+    rows, flags = [], []
+    n_old, n_new = max(len(old), 1), max(len(new), 1)
+    for c in UNASKED:
+        bo = sum(1 for r in old.values() if not _b(r.get(c)))
+        bn = sum(1 for r in new.values() if not _b(r.get(c)))
+        rows.append([c, f"{bo} of {len(old)}", f"{bn} of {len(new)}"])
+        if bn / n_new - bo / n_old >= threshold:
+            flags.append(f"{c} is blank on {bn} of {len(new)} rows after the load (was {bo} of {len(old)}): the research left a field out and nothing carried it")
+    vo = sum(1 for r in old.values() if any(w in _b(r.get("city")).lower() for w in VENUE_WORDS))
+    vn = sum(1 for r in new.values() if any(w in _b(r.get("city")).lower() for w in VENUE_WORDS))
+    rows.append(["CITY holds a venue word", f"{vo}", f"{vn}"])
+    if vn - vo >= max(3, int(0.05 * n_new)):
+        flags.append(f"CITY holds a venue word on {vn} rows after the load (was {vo})")
+    return rows, flags
+
+
+def date_checks(market: str, rows: list[dict], today: date) -> tuple[list, list[str]]:
+    from scripts.start_date_arbiter import first_date, year_checks
+    agree = dis = blank = 0
+    flags, bad = [], []
+    for r in rows:
+        a, b = _b(r.get("START DATE")), first_date(r.get("CONFERENCE DATES", ""))
+        if not a or not b:
+            blank += 1
+        elif a == b.isoformat():
+            agree += 1
+        else:
+            dis += 1
+            bad.append(r.get("CONFERENCE", "")[:40])
+        yf = year_checks(r, today)
+        if yf:
+            flags.append(f"{market}: {r.get('CONFERENCE', '')[:44]}: " + "; ".join(yf))
+    if dis:
+        flags.append(f"{market}: start date and conference-dates text disagree on {dis} shipped row(s): " + ", ".join(bad[:6]))
+    return [market, len(rows), agree, dis, blank], flags
+
+
+def guessed_dates(old: dict, new: dict) -> list[str]:
+    """A start date INTRODUCED OR CHANGED by this load on a projected row with no evidence page (the ODSC East case: the load set 2027-05-10 and
+    'Upcoming' from a model guess, after we had cleared both). Existing start dates on such rows
+    are normal (they come from the event's own site) and are not flagged."""
+    out = []
+    for k, r in new.items():
+        if _b((old.get(k) or {}).get("start_date")) == _b(r.get("start_date")):
+            continue
+        if _b(r.get("start_date")) and _b(r.get("is_projected")).lower() == "true" and not _b(r.get("deadline_evidence_url")):
+            out.append(f"{_b(r.get('name'))[:50]}: the load set start date {r.get('start_date')} (was {_b((old.get(k) or {}).get('start_date')) or 'blank'}) on a projected row with no evidence page: confirm a page states this edition")
+    return out
+
+
+def read_db(path: Path) -> dict:
+    con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    con.row_factory = sqlite3.Row
+    have = {r[1] for r in con.execute("pragma table_info(grounding_facts)")}
+    cols = [c for c in COLS if c in have]
+    out = {r["event_id"]: dict(r) for r in con.execute(f"select {','.join(cols)} from grounding_facts")}
+    con.close()
+    return out
+
+
+def read_csv_rows(path: Path) -> list[dict]:
+    import csv
+    with open(path, encoding="utf-8-sig", newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
+def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str, tuple[bool, str]], watch: str, today: date) -> dict:
+    rep = qa_report.new_report("load", today)
+    rows, flags, past = deadline_changes(old, new, today)
+    rep["sections"].append({"title": "Rows with a deadline still ahead: what the load changed",
+                            "note": "REGRESSION = something we had proven was lost. A move or an evidence swap is listed without a flag.",
+                            "columns": ["Event", "Deadline before", "Deadline now", "Result", "Other changes"], "rows": rows, "flags": flags})
+    rep["flags"] += flags
+    rep["past"] = past
+    brows, bflags = blank_rates(old, new)
+    rep["sections"].append({"title": "Fields the short research question does not ask", "columns": ["Field", "Blank before", "Blank after"], "rows": brows, "flags": bflags})
+    rep["flags"] += bflags
+    drows, dflags = [], []
+    for m, rs in finals.items():
+        r, f = date_checks(m, rs, today)
+        drows.append(r)
+        dflags += f
+    rep["sections"].append({"title": "Dates on the shipped approved files", "columns": ["Market", "Rows", "Start agrees with dates text", "Disagrees", "One side blank"],
+                            "rows": drows, "flags": dflags})
+    rep["flags"] += dflags
+    g = guessed_dates(old, new)
+    rep["sections"].append({"title": "Start dates with no page behind the edition", "columns": ["Row"], "rows": [[x] for x in g], "flags": g})
+    rep["flags"] += g
+    srows = [[m, "yes" if ok else "NO", why] for m, (ok, why) in signed.items()]
+    sflags = [f"{m}: Monday's page will NOT publish - {why}" for m, (ok, why) in signed.items() if not ok]
+    rep["sections"].append({"title": "Approved files signed and fresh (Monday's pages publish)", "columns": ["Market", "Will publish", "Reason"], "rows": srows, "flags": sflags})
+    rep["flags"] += sflags
+    rep["sections"].append({"title": "Watch-list of named rows", "note": watch or "not run", "columns": [], "rows": [], "flags": []})
+    if watch and "ALL OK" not in watch:
+        rep["flags"].append("watch-list: " + watch)
+    return qa_report.finish(rep, "the load lost nothing we had proven; every shipped date and year is consistent")
+
+
+def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--previous-db", help="the backup taken before the load (default: the backup named in --import-json)")
+    ap.add_argument("--import-json")
+    ap.add_argument("--db", default=str(LIVE / "cfp_monitor.db"))
+    ap.add_argument("--markets-dir", default=str(MARKETS))
+    ap.add_argument("--markets", nargs="+", default=["Cybersecurity", "Utility"])
+    ap.add_argument("--today", default=date.today().isoformat())
+    ap.add_argument("--out", default=str(qa_report.QA_ROOT))
+    ap.add_argument("--strict", action="store_true", help="exit 1 when anything is flagged")
+    a = ap.parse_args()
+    today = datetime.strptime(a.today, "%Y-%m-%d").date()
+    prev = a.previous_db
+    if not prev and a.import_json and Path(a.import_json).exists():
+        prev = json.loads(Path(a.import_json).read_text(encoding="utf-8")).get("backup")
+    if not prev or not Path(prev).exists():
+        print("post_load_qa: no pre-load backup to compare with (give --previous-db)", file=sys.stderr)
+        return 2
+    old, new = read_db(Path(prev)), read_db(Path(a.db))
+    mdir = Path(a.markets_dir)
+    finals = {m: read_csv_rows(mdir / f"{m}_audited.final.csv") for m in a.markets if (mdir / f"{m}_audited.final.csv").exists()}
+    from src.cfp_monitor.publish_guard import check_publish_fresh
+    signed = {m: check_publish_fresh(mdir / f"{m}_audited.final.csv", today) for m in a.markets}
+    try:
+        w = subprocess.run([sys.executable, str(ROOT / "scripts" / "watchlist_check.py"), "--previous-db", str(prev)], capture_output=True, text=True,
+                           encoding="utf-8", timeout=300).stdout
+        watch = next((ln.strip("* ").strip() for ln in w.splitlines() if "ALL OK" in ln or "need a look" in ln), "")
+    except Exception as e:                                                  # noqa: BLE001
+        watch = f"watch-list did not run: {e}"
+    rep = build(old, new, finals, signed, watch, today)
+    d = qa_report.write(rep, qa_report.to_markdown(rep, "Saturday load - what changed and what was lost"), Path(a.out))
+    print(f"{rep['status']}: {rep['summary']}  ->  {d / 'load.md'}")
+    for f in rep["flags"]:
+        print("  FLAG:", f)
+    return 1 if (a.strict and rep["flags"]) else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

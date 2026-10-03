@@ -470,6 +470,20 @@ class Gate:
                                f'{self.g(r, "STATUS")}')
         self.add("6", f"No past deadline presented as open (as of {today}; rolling forms exempt)", bad)
 
+    # ---- S. substance (advisory) --------------------------------------------
+    def check_substance(self):
+        """ADVISORY, never a failure (2026-10-03). Every check above tests what a row CLAIMS, so a row that claims nothing passes all of them:
+        upstream's first six-event delivery had no deadline, no quote and no evidence on any row and was ACCEPTED 22 of 22. A person
+        reading 'ACCEPTED' must not mistake 'nothing to check' for 'checked'. Noted when the rows with neither a deadline nor a quote are
+        every row of a small file or half of a large one (an ordinary weekly file has about a third, closed events whose page no longer
+        states one)."""
+        empty = [self.g(r, "CONFERENCE")[:40] for r in self.rows
+                 if not self.g(r, "SUBMISSION DEADLINE") and not self.g(r, "DEADLINE_QUOTE")]
+        n = len(self.rows)
+        if empty and (len(empty) == n or (n >= 10 and len(empty) * 2 >= n)):
+            self.note("S", f"{len(empty)} of {n} row(s) carry NO deadline and NO quote - a pass here means 'nothing to check', not 'checked'. "
+                           f"Ask what research stands behind them before relying on them.", empty[:8])
+
     # ---- R8 / R11 schema rules --------------------------------------------
     def check_schema_rules(self):
         derived = [self.g(r, "CONFERENCE")[:40] for r in self.rows
@@ -886,6 +900,7 @@ class Gate:
         self.check_opportunity()
         self.check_past(today)
         self.check_schema_rules()
+        self.check_substance()
         if db and market:
             self.check_loaded(db, market)
 

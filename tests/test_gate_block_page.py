@@ -99,3 +99,25 @@ def test_an_empty_fetch_is_not_treated_as_a_script_shell():
 def test_a_normal_sized_page_without_the_quote_still_fails_after_the_change():
     g = _gate("Call for submissions. " + "The programme committee meets in spring. " * 40)
     assert not _check3(g)[2]
+
+
+def test_substance_note_when_rows_claim_nothing():
+    """An empty claim passes every check; the gate must say so (advisory, never a failure)."""
+    cols = ["EVENT_ID", "CONFERENCE", "SUBMISSION DEADLINE", "DEADLINE_QUOTE"]
+    g = ad.Gate.__new__(ad.Gate)
+    g.notes, g.results = [], []
+    g.rows = [{"EVENT_ID": f"e{i}", "CONFERENCE": f"Conf {i}", "SUBMISSION DEADLINE": "", "DEADLINE_QUOTE": ""} for i in range(6)]
+    ad.Gate.check_substance(g)
+    assert g.notes and g.notes[0][0] == "S" and g.results == []                # a note, not a result: it cannot fail the gate
+    g.notes = []
+    g.rows[0].update({"SUBMISSION DEADLINE": "2026-12-04", "DEADLINE_QUOTE": "q"})
+    ad.Gate.check_substance(g)
+    assert not g.notes, "a small file notes only when EVERY row is empty (one researched row means research happened)"
+    g.notes = []
+    g.rows = [{"EVENT_ID": f"e{i}", "CONFERENCE": f"Conf {i}", "SUBMISSION DEADLINE": "" if i < 6 else "2026-12-04", "DEADLINE_QUOTE": "" if i < 6 else "q"} for i in range(10)]
+    ad.Gate.check_substance(g)
+    assert g.notes, "a file of 10 or more notes when half the rows are empty"
+    g.notes = []
+    g.rows = [{"EVENT_ID": f"e{i}", "CONFERENCE": f"Conf {i}", "SUBMISSION DEADLINE": "2026-12-04", "DEADLINE_QUOTE": "q"} for i in range(6)]
+    ad.Gate.check_substance(g)
+    assert not g.notes

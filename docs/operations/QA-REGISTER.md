@@ -1,0 +1,74 @@
+# QA register: every check, what it catches, when it runs, and where its result goes
+
+**Why this file exists (2026-10-03).** Over two days a large share of the quality work was done by hand and in throwaway scripts: reading pages in a
+browser, comparing a candidate file with last week's by column, counting blanks, tracing upstream's ids to our files. Each of those found a real
+defect, and each lived only in a chat. This register lists every check that matters, says which are **automatic** (they run in the weekend job and report
+without anyone remembering) and which are **manual procedures** (you run them, here is the exact command), and records the incident that created each one.
+If you do a quality check by hand and it is not listed here, add it: that is how the gap closes.
+
+How to read the columns: **Auto** = runs inside a scheduled job and its result is in the recap or a QA report. **Manual** = a named command at a named
+moment (runbook section in brackets). **Report** = where the result lands.
+
+## A. Saturday research and load (automatic)
+
+| # | Check | What it catches | Mode | Report | Born from |
+|---|---|---|---|---|---|
+| A1 | 5-row canary before the run | a broken key, quota or prompt, before 130 calls are spent | Auto | recap line "5-row test" | 2026-09-26 stopped run |
+| A2 | Grounding trail: share of calls with a real Google search, 504 count, retries | research that answered from memory; the share fell to about a third on 2026-09-27 | Auto | recap table "Researched with real Google searches"; `<Market>_audited.health.json` | 2026-09-30 reliability experiment |
+| A3 | Mechanical repairs (contract v2.4) | a quote copied slightly wrong | Auto | `<Market>_audited.repairs.md` | 2026-09-12 |
+| A4 | Narrow overlay: last week's value for fields the short question does not ask, same edition only | organizer blank on 130 rows, a venue in CITY on 28, input-list dates on 66 | Auto | the import report `narrow_overlay` | 2026-10-03 rehearsal |
+| A5 | Evidence carry: a blank quote never replaces verified evidence (same deadline, or a future deadline) | RSA Conference 2027, Black Hat Asia's call for summits and Nullcon lost their evidence in the first live load | Auto | import report `evidence_carried` | 2026-10-03 live load |
+| A6 | Sponsorship carry-forward | a known Yes/No replaced by Unknown | Auto | import report `sponsor_carried` | 2026-10-02 |
+| A7 | Year checks Y1-Y4 on every row | a 2027 start date inside a 2026 edition; conference-dates year differing from start year; a past start still Open; a deadline after the start or 18 months before it | Auto | a failing row keeps last week's version (decision list in the import report) | 2026-10-03 (Hydrogen Technology Expo MENA) |
+| A8 | The acceptance gate, 23 checks, with the row-by-row rule | wrong format, dead or invented pages, quotes not on the page, past deadlines marked open, placeholders | Auto | `<Market>_audited.candidate.gate.json` | contract |
+| A9 | Gate note **S** (substance): rows with no deadline and no quote | a file that is ACCEPTED only because it claims nothing | Auto (advisory) | the gate output | 2026-10-03: six-event delivery passed 22 of 22 with no research |
+| A10 | Database health check (invariants) with automatic rollback | missing rows, duplicate ids, keys that moved | Auto | recap | 2026-08-08 |
+| A11 | **Load QA** (`scripts/post_load_qa.py`): what the load changed and what it lost | evidence, deadline or link lost on a future deadline; verified turned projected; blank-rate rise; venue words in CITY; start date vs dates text; year checks on shipped files; a start date the load introduced on a projected row with no evidence; approved files signed and fresh; the named-row watch-list | Auto | `runs_out/qa/<Monday>/load.md` and the recap section "Did the load lose anything?" | 2026-10-03 (all found by hand after the load) |
+| A12 | Publish guard: approved file signed, accepted, unchanged, fresh | Monday's page built from a hand-edited or stale file | Auto (Monday) | recap "will publish / will NOT publish" | 2026-09 |
+
+## B. Sunday, Monday and the board (automatic)
+
+| # | Check | Mode | Report |
+|---|---|---|---|
+| B1 | Weekly verify: every cited page re-read, dead links confirmed in a real browser | Auto Sunday | Sunday recap and digest |
+| B2 | Build QA: what the customer pages show against last week's | Auto Monday | `runs_out/qa/<Monday>/build.md`; "INTERNAL - Build QA" next to the pages |
+| B3 | Board metrics: live-deadline proof, customer agreement, coverage, freshness; per-kind quality index | Manual: `python scripts/board_metrics.py --examples 0 --update-status` | the status board |
+
+## C. When something arrives or you change something (manual procedures: runbook section 7)
+
+| # | Moment | Command | What it answers | Born from |
+|---|---|---|---|---|
+| C1 | A delivery arrives from upstream | `python scripts/check_delivery_ids.py <csv> --market <Market>` | do their ids exist HERE, and is each event on the input list? A sparse patch cannot apply on an unknown id (5.4) | three false "it is in the file" claims, 2026-10-02/03 |
+| C2 | Same | `python scripts/accept_delivery.py <csv>` (network) and read note S | ACCEPTED is not the same as researched | 2026-10-03 |
+| C3 | A cited page is walled or script-built | read it in the built-in browser (or the page library) and record the verbatim sentence | the plain fetch cannot see it | Black Hat Asia, OWASP BASC, AI Con USA |
+| C4 | Two dates disagree for one event | `python scripts/start_date_arbiter.py <csv>` (reads the event's own pages, year-specific), then a person reads the unproven ones | which is right; never a guess | 66 start-date conflicts, 2026-10-03 |
+| C5 | Before loading a changed process or file | rehearse: `weekend_import.py --markets ... --sandbox <ABSOLUTE dir>`, then `post_load_qa.py --db <sandbox>\cfp_monitor.db --markets-dir <sandbox> --previous-db <live backup>` | what the load would change and lose, with the same checks as production, and nothing live touched | 2026-10-03 rehearsals |
+| C6 | Replaying a past situation against a new rule | copy the research files and the OLD approved file into a scratch markets dir, run the sandbox with `--markets-dir` | does the rule fix the case it was written for | evidence-carry replay |
+| C7 | Any hand edit of `Markets\*_audited.final.csv` | re-gate with the network, then `promote_delivery.py` (re-signs it) | otherwise Monday's page refuses to publish | 2026-10-03 recap dry run |
+| C8 | An operator ruling (you verified a page by hand) | edit BOTH `Utility_audited.csv`/`Cybersecurity_audited.csv` and the `*_input.csv` row, backups first, log it in `OPERATOR-EDITS-LOG.md` (template: `experiments/purpose_audit/operator_rulings_20261003.py`) | otherwise next Saturday copies the wrong value back from the input list | 5 Utility rows |
+| C9 | Re-verifying only some rows | `verify_grounding.py --market <M> --seed-csv <seed of just those rows> --apply`; `--apply` alone is now refused | a whole-database rewrite by accident | 2026-10-03 |
+| C10 | The importer will not blank a start date | clear it by one guarded UPDATE and log it | ODSC East came back with a guessed date | 2026-10-03 |
+| C11 | After ANY load, by hand or scheduled | `check_invariants.py`, `watchlist_check.py --previous-db <backup>`, a second-process read-back | corrections still hold | 2026-10-01 |
+| C12 | Before sending a recap by hand | `weekend_recap.py ... --dry-run` and read it | wording that does not match what happened | 2026-10-03 ("loaded automatically" after a by-hand load) |
+| C13 | The weekend job looks hung or did not load | `Get-ScheduledTaskInfo`; read `Markets\logs\run_monthly_<stamp>.log`; run the import by hand (runbook section 7) | the 2026-10-03 load step that never ran | 2026-10-03 |
+
+## D. Standing principles the checks enforce
+
+1. A blank answer never replaces a verified one (A4, A5, A6, A11).
+2. A year is part of an identity: no check, carry or match crosses editions (A4, A7, C4).
+3. "Accepted" means the claims checked out, not that research happened (A9, C2).
+4. A claim about our own files is checked on disk (C1).
+5. A hand edit is re-signed and logged, never left as a silent difference (C7, C8).
+6. A change is rehearsed on a copy with the production checks before it touches the live database (C5, C6).
+7. We read, they format (UPSTREAM-QA-PROTOCOL.md).
+
+## E. Known gaps (measured or suspected, not yet closed)
+
+| Gap | Evidence | Next step |
+|---|---|---|
+| Non-deadline facts (city, venue, format, organizer) are only spot-checked | 3 of 7 upstream events carried a wrong city, venue or date (`docs/design/field_spotchecks.json`) | extend the arbiter's page-proof to venue and format |
+| Sponsorship "Yes" has a link but never a quote | about 90% Yes, 0 quotes, in both weekly files | sponsorship option B and a quote requirement (contract question for upstream) |
+| The narrow prompt can guess a start date for an unconfirmed edition | ODSC East 2027 | A11 flags it after the load; a prompt rule is the real fix |
+| Research can return a different, evidenced deadline for a row we corrected by hand (CODASPY abstract vs paper, Apres-Cyber) | 2026-10-03 | a per-row "operator-pinned" list the carry rule honours |
+| Rows loaded by hand into the database but missing from the approved file get no carry the first Saturday | RSA/Black Hat Asia on 2026-10-03 | add hand-loaded rows to the approved file at load time |
+| `run_monthly.ps1` has only static tests | the flattened-array bug | a PowerShell dry-run mode that exercises the post-research steps |
