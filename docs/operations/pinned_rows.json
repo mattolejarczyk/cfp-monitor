@@ -118,21 +118,6 @@
       }
     },
     {
-      "canonical": "2027-odsc-east-boston-speaking",
-      "event": "ODSC East 2027",
-      "ruled_on": "2026-10-02",
-      "by": "operator",
-      "why": "Operator verified: the page shows the 2026 edition (Boston, April 28-30, 2026) and no 2027 dates; the research's guess 2027-05-10 is not accepted. Remove this pin when a page announces the 2027 edition.",
-      "until": "2027-12-31",
-      "links": [
-        "https://odsc.ai/east/"
-      ],
-      "set": {
-        "START DATE": "",
-        "CONFERENCE DATES": ""
-      }
-    },
-    {
       "canonical": "2027-global-energy-show-canada-calgary",
       "event": "Global Energy Show Canada 2027",
       "ruled_on": "2026-10-03",

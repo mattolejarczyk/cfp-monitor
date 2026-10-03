@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-03 (late) - experiment 4, 13 pinned events, and the ODSC correction
+
+- Verified-by-you ledger: pins extended to any fact (start date, dates text, location, city, country, links, deadline); scripts/apply_pins_live.py; scripts/answer_key_from_pins.py; board panel; 12 events pinned. Applied to both approved files and the database; re-gated and re-promoted twice.
+- Experiment 4 (read-the-page pass): see experiments/read_the_page_pass/RESULT.md. Runner fix: HTTP 429 is a failed call, not a blank.
+- CORRECTION: ODSC East 2027 was a correct date (page header: May 10-12th, 2027). My 10-03 'fix' cleared it and my pin called it operator-verified; undone and documented. Trap T02 rewritten; QA register, board, post_load_qa comments corrected; upstream told (note 24 item 5).
+- Upstream's reply to note 23: new rows again unquoted commas (47 fields), 'added to the input list' false for the fourth time, sparse patch on ids we do not hold with 'Discontinued' and no R16 evidence: note 24.
+
 ## 2026-10-03 - Saturday research healthy, load broken and fixed, narrow-prompt gaps closed, live load and restore
 
 - Research 130/130 grounded (73 + 57), 0 stubs. Scheduled load never ran (flattened-array bug in run_monthly.ps1; fixed). Rehearsals (sandbox_20261003*) found the narrow prompt's gaps: ORGANIZER blank 130/130, CITY a venue on 28, input-list CONFERENCE DATES wrong on 66 rows (research START DATE right on every page-provable row, 5 of 5; last week's approved dates agreed with it on 16 of 17).

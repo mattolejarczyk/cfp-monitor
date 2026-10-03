@@ -12,6 +12,7 @@ def test_no_trap_case_fails_in_the_code_we_run():
 def test_the_two_known_gaps_are_recorded_not_hidden():
     res = {r["id"]: r["result"] for r in run_all(load_cases())}
     assert res["T04"] == "GAP" and res["T05"] == "GAP"      # earliest-of-two-deadlines; aggregator that does not list the event
+    assert res["T02"] == "GAP"                              # the date prover needs an event word beside the date; a header prints it bare
 
 
 def test_every_case_has_a_fixture_a_wrong_and_a_right_answer_and_checks():

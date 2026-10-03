@@ -83,10 +83,21 @@ def run_check(case: dict, chk: dict) -> tuple[str, str]:
 ORDER = {"PASS": 0, "HUMAN": 1, "GAP": 2, "FAIL": 3}
 
 
+def run_check_flagged(case: dict, chk: dict) -> tuple[str, str]:
+    """A check marked "gap": true records something our code does NOT do yet: a failing assertion is reported as GAP; if it starts to pass, the flag must be removed."""
+    v, detail = run_check(case, chk)
+    if chk.get("gap") and chk["type"] not in ("earliest_deadline", "aggregator_citation_flag"):
+        if v == "PASS":
+            return "FAIL", "gap closed: this now passes; remove the gap flag. " + detail
+        if v == "FAIL":
+            return "GAP", (chk.get("note") or "known gap") + " [" + detail + "]"
+    return v, detail
+
+
 def run_all(cases: list[dict]) -> list[dict]:
     out = []
     for c in cases:
-        res = [run_check(c, k) for k in c["checks"]]
+        res = [run_check_flagged(c, k) for k in c["checks"]]
         worst = max((v for v, _ in res), key=ORDER.get)
         out.append({"id": c["id"], "name": c["name"], "result": worst, "details": res})
     return out

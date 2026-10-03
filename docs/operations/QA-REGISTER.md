@@ -47,7 +47,7 @@ moment (runbook section in brackets). **Report** = where the result lands.
 | C7 | Any hand edit of `Markets\*_audited.final.csv` | re-gate with the network, then `promote_delivery.py` (re-signs it) | otherwise Monday's page refuses to publish | 2026-10-03 recap dry run |
 | C8 | An operator ruling (you verified a page by hand) | edit BOTH `Utility_audited.csv`/`Cybersecurity_audited.csv` and the `*_input.csv` row, backups first, log it in `OPERATOR-EDITS-LOG.md` (template: `experiments/purpose_audit/operator_rulings_20261003.py`) | otherwise next Saturday copies the wrong value back from the input list | 5 Utility rows |
 | C9 | Re-verifying only some rows | `verify_grounding.py --market <M> --seed-csv <seed of just those rows> --apply`; `--apply` alone is now refused | a whole-database rewrite by accident | 2026-10-03 |
-| C10 | The importer will not blank a start date | clear it by one guarded UPDATE and log it | ODSC East came back with a guessed date | 2026-10-03 |
+| C10 | The importer will not blank a start date | clear it by one guarded UPDATE and log it (or pin the blank: C14) | Future Fuels MENA kept a stale date; a page that states nothing must be able to clear one | 2026-10-03 |
 | C11 | After ANY load, by hand or scheduled | `check_invariants.py`, `watchlist_check.py --previous-db <backup>`, a second-process read-back | corrections still hold | 2026-10-01 |
 | C12 | Before sending a recap by hand | `weekend_recap.py ... --dry-run` and read it | wording that does not match what happened | 2026-10-03 ("loaded automatically" after a by-hand load) |
 | C13 | The weekend job looks hung or did not load | `Get-ScheduledTaskInfo`; read `Markets\logs\run_monthly_<stamp>.log`; run the import by hand (runbook section 7) | the 2026-10-03 load step that never ran | 2026-10-03 |
@@ -70,7 +70,7 @@ moment (runbook section in brackets). **Report** = where the result lands.
 |---|---|---|
 | Non-deadline facts (city, venue, format, organizer) are only spot-checked | 3 of 7 upstream events carried a wrong city, venue or date (`docs/design/field_spotchecks.json`) | extend the arbiter's page-proof to venue and format |
 | Sponsorship "Yes" has a link but never a quote | about 90% Yes, 0 quotes, in both weekly files | sponsorship option B and a quote requirement (contract question for upstream) |
-| The narrow prompt can guess a start date for an unconfirmed edition | ODSC East 2027 | A11 flags it after the load; a prompt rule is the real fix |
+| The narrow prompt may state a start date for an edition no page states | no confirmed case yet (ODSC East 2027 looked like one and was NOT: its page header states May 10-12th, 2027) | A11 lists any start date the load introduces on a projected row with no evidence page, for a person to confirm; a prompt rule is the real fix if a real case appears |
 | Research can return a different, evidenced deadline for a row we corrected by hand (CODASPY abstract vs paper, Apres-Cyber) | 2026-10-03 | a per-row "operator-pinned" list the carry rule honours |
 | Rows loaded by hand into the database but missing from the approved file get no carry the first Saturday | RSA/Black Hat Asia on 2026-10-03 | add hand-loaded rows to the approved file at load time |
 | `run_monthly.ps1` has only static tests | the flattened-array bug | a PowerShell dry-run mode that exercises the post-research steps |
@@ -83,7 +83,7 @@ Every manual verification is a one-time cost and also a lesson. The loop, in ord
 2. **Put it in the answer key** (`docs/qa/answer-key.csv`, with who confirmed it and when). It becomes a test every future method is scored on.
 3. **Ask what went wrong** and name the failure mode in one line: a wrong-edition page, a venue read as a city, an aggregator that does not list the event, two deadlines on one page, an input list that is stale.
 4. **Make it a trap case** (`docs/qa/trap-cases.json`) with the page text we saw, the wrong answer and the right one.
-5. **Turn it into a rule or a check** where the failure can be detected by code: a year check, a carry rule, a gate note, a load-QA flag, a prompt rule. Today's examples: the wrong-year start date became checks Y1-Y4; the guessed ODSC date became a load-QA flag; the empty delivery became gate note S; the stale dates text became an overlay rule.
+5. **Turn it into a rule or a check** where the failure can be detected by code: a year check, a carry rule, a gate note, a load-QA flag, a prompt rule. Today's examples: the wrong-year start date became checks Y1-Y4; an introduced start date with no evidence page became a load-QA flag (a flag is for a person to confirm, not proof the date is wrong: ODSC's was right); the empty delivery became gate note S; the stale dates text became an overlay rule.
 6. **Record what is still a gap** (section E) until a rule closes it, and measure whether the rule worked on the next run.
 
 What a pin cannot do: it holds one edition. When next year's edition appears it is a NEW row with no pin, and the research must get it right or a person verifies once more. The point of steps 3-5 is that the

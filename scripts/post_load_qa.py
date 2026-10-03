@@ -4,7 +4,7 @@
 
 WHY (2026-10-03). The first live load of the narrow-prompt research dropped verified evidence on three events whose deadlines were
 still ahead (RSA Conference 2027, Black Hat Asia's call for summits, Nullcon), reverted a hand-corrected submission link, and wrote
-a guessed start date back onto ODSC East after we had cleared it. Every one of those was found by hand AFTER the load. This report
+and listed a start date it had introduced on ODSC East that we then wrongly cleared (the page states it; a flag asks a person to confirm, it does not prove a date wrong). Every one of those was found by hand AFTER the load. This report
 runs the same comparisons automatically, right after the load and before anyone relies on it, and files them in the weekly QA folder
 (runs_out/qa/<cycle Monday>/load.md and .json, the shape in src/cfp_monitor/qa_report.py). It reads; it never changes pipeline data.
 
@@ -129,7 +129,7 @@ def date_checks(market: str, rows: list[dict], today: date) -> tuple[list, list[
 
 def guessed_dates(old: dict, new: dict) -> list[str]:
     """A start date INTRODUCED OR CHANGED by this load on a projected row with no evidence page (the ODSC East case: the load set 2027-05-10 and
-    'Upcoming' from a model guess, after we had cleared both). Existing start dates on such rows
+    'Upcoming'; the date was in fact right, which is why this is a list for a person to confirm). Existing start dates on such rows
     are normal (they come from the event's own site) and are not flagged."""
     out = []
     for k, r in new.items():

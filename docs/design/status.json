@@ -1,11 +1,15 @@
 {
   "as_of": "2026-10-03",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "2026-10-03: everything you verified is stored once and enforced: 13 events pinned (shown under 'Verified by you'), applied to the files and database today, generated into the confirmed answer key, and protected from the weekly research. Experiments 1 (answer key) and 2 (trap cases) are underway; the next experiments wait for the key.",
+  "now": "2026-10-03: the read-the-page experiment is done (safe and cheap; recall limited by the pages and date formats), and a mistake of mine on ODSC East was caught by it and corrected everywhere. 12 operator-verified events remain pinned; Monday's pages publish.",
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "AFTER THE ANSWER KEY EXISTS, pick the next experiments: 3 narrowness test (about 7 dollars), 4 read-the-page pass (about 16 cents), 5 two-model agreement (20 to 50 cents). Experiments 1 and 2 are approved and underway. Cost basis: one narrow grounded call is about 6 cents (estimate until Google's bill confirms), one page read about 0.13 cents."
+      "text": "NEXT: experiment 4 is done (read-the-page pass: safe, cheap, recall limited by pages and date formats). Recommended next, in order: (a) close the three recall limiters (browser rendering, date formats, year from the heading), then re-run it three times per model; (b) experiment 3, the narrowness test (about 7 dollars); (c) experiment 5, two-model agreement (about 20 to 50 cents). Tell me to proceed with (a), or pick another."
+    },
+    {
+      "added": "2026-10-03",
+      "text": "OPTIONAL: ODSC East 2027. I wrongly cleared its start date earlier and have restored it. The page header (read in a real browser) states 'May 10-12th, 2027'. It is not pinned because you did not verify it; verify once at https://odsc.ai/east/ and say 'as stated' if you want it pinned, or leave it and the research value stands."
     },
     {
       "added": "2026-10-03",
@@ -230,7 +234,7 @@
     {
       "step": "Load QA against the live post-load snapshot",
       "metric": "Regressions it flags that were found by hand",
-      "result": "RSA, Black Hat Asia, ODSC all flagged",
+      "result": "RSA and Black Hat Asia flagged; ODSC listed for confirmation (its date was right)",
       "verdict": "good",
       "date": "10-03",
       "note": "Nullcon's lost deadline and the Global Energy Show link are caught by the named-row watch-list, not by this report."
@@ -407,8 +411,8 @@
         },
         {
           "kind": "fix",
-          "t": "The narrow prompt can guess a start date for an unconfirmed edition (ODSC East 2027: 2027-05-10 with no page)",
-          "r": "KNOWN GAP. The load QA flags it afterwards (post_load_qa) and the year checks cannot catch it (the year is consistent). Real fix: a prompt rule 'empty unless the page states this edition', then measure.",
+          "t": "The narrow prompt may state a start date for an edition no page states",
+          "r": "KNOWN RISK, no confirmed case: ODSC East 2027 looked like one and was not (its page header states May 10-12th, 2027; my first read missed it and I wrongly cleared the date, corrected 10-03). The load QA lists introduced start dates for a person to confirm. Real fix if a case appears: a prompt rule, then measure.",
           "s": "todo"
         },
         {
@@ -717,9 +721,9 @@
         },
         {
           "kind": "experiment",
-          "t": "PROPOSED (experiment 4): Read-the-page pass: a cheap model reads each verified page and must quote every fact it reports",
-          "r": "Not approved. 40 events x 3 pages = 120 pages, about 16 cents (about 0.13 cents a page measured). Our code checks each quote is on the page; anything not quoted stays blank.",
-          "s": "todo"
+          "t": "Experiment 4, READ-THE-PAGE PASS (run 10-03): a cheap model reads the page and must quote every fact",
+          "r": "Result (experiments/read_the_page_pass/RESULT.md): 0 wrong answers accepted in about 70 scored answers, every blank-expected case (wrong-edition page, dead page) kept blank; found 7 to 10 of 16 verified facts for under 1 cent a pass. Misses are about the PAGE (script-built pages the plain fetch cannot render, German date formats, a year that sits in the heading) not the model. Small sample: direction, not a rate.",
+          "s": "done"
         },
         {
           "kind": "experiment",
@@ -732,6 +736,12 @@
           "t": "Saturday task time limit set to 5 hours",
           "r": "Done 10-03 by you (confirmed PT5H, trigger intact, next run Sat 10-10 02:00). A hang like 10-03's now ends by 07:00 instead of noon.",
           "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Close the three recall limiters found by experiment 4: render script-built pages in the browser; read dd.mm.yyyy / German / ordinal dates; take the year from the nearest heading (checked in code)",
+          "r": "Not started. Each is a code change with trap cases; then re-run experiment 4 three times per model.",
+          "s": "todo"
         }
       ]
     },
@@ -779,7 +789,7 @@
         {
           "kind": "build",
           "t": "'Verified by you' ledger: pinned rows extended to any fact you verify, with the pages, and a panel on this board",
-          "r": "Done 10-03: nine events pinned so far (CODASPY, Apres-Cyber, European CCUS, Carbon Capture USA, Sustainable Fuels, Carbon Capture Expo MENA 2026, Future Fuels MENA, ODSC East, Global Energy Show link). A blank pin ('the page states nothing') clears the database too. The panel is generated from the same file the weekly load enforces. 12 tests.",
+          "r": "Done 10-03: nine events pinned so far (CODASPY, Apres-Cyber, European CCUS, Carbon Capture USA, Sustainable Fuels, Carbon Capture Expo MENA 2026, Future Fuels MENA, Global Energy Show link). A blank pin ('the page states nothing') clears the database too. The panel is generated from the same file the weekly load enforces. 12 tests.",
           "s": "done"
         },
         {
@@ -921,11 +931,11 @@
   "working_on": [
     {
       "state": "In progress",
-      "text": "Applying everything you verified: 13 events pinned, applied to the approved files and database; the two approved files are being re-gated with the network and re-signed so Monday's pages publish. Then the benchmark events you have not yet verified feed the answer key."
+      "text": "Experiment 4 is done and written up; correcting my ODSC mistake everywhere is done. Next: the three recall limiters (see Waiting on you). Everything you verified stays pinned (12 events)."
     },
     {
       "state": "Waiting on upstream",
-      "text": "Proper R16 evidence (a page and a verbatim sentence) for the SAF Europe / Sustainable Fuels duplicate and for Future Fuels MENA; evidence that ODSC East 2027 and AppWorld's partner track have a 2027 call; the eight STATUS corrections (H2 MEET, six awards, CGI)."
+      "text": "Proper R16 evidence (a page and a verbatim sentence) for the SAF Europe / Sustainable Fuels duplicate and for Future Fuels MENA; evidence that AppWorld's partner track has a 2027 call (ODSC East's page does state the 2027 edition: May 10-12th, 2027); the eight STATUS corrections (H2 MEET, six awards, CGI)."
     },
     {
       "state": "Queued, Friday 10-09 and Saturday 10-10",

@@ -1,0 +1,17 @@
+Reply to your answer to note 23: the two new rows are not valid CSV (third time), the ids are not in our input lists (fourth time), and the sparse patch cannot be applied as sent. What we need.
+
+1. The two new rows (Decarbonization Congress 2027, Global Energy Show Canada Awards 2027) parse to 47 fields instead of 45: the OVERVIEW cell contains commas and is not wrapped in double quotes ("...industrial decarbonization, net-zero technologies, and energy transition." and "...excellence, innovation, and leadership..."). Gate check 1 fails. Please re-send both rows with every cell that contains a comma in double quotes. Also: leave ORGANIZER blank unless the page states it ("BGS Group" and "dmg events" are not on any page we read), and OPPORTUNITY_TYPE must be one of the four enum values (it parsed empty because the columns shifted).
+
+2. "Added to Utility_input.csv" / "Awards_input.csv": on this machine neither id is in either file (checked with scripts/check_delivery_ids.py: 2027-decarbonization-congress-berlin-speaking and 2027-global-energy-show-canada-awards-calgary-awards are UNKNOWN here). Please do not tell us a file is stamped unless you name the exact path you edited. We will add both rows to our own copies once the corrected CSV arrives, on your ids.
+
+3. The sparse patch: do not apply, and please do not send patches for facts a person has already pinned. Specific problems:
+   - Global Energy Show Canada: CFP_SUBMISSION_URL is the dmg portal; the operator-verified value is https://www.globalenergyshow.com/conferences/2027-call-for-submissions/ . A pinned value is not overridden by a research or patch value.
+   - CarbonZero: CFP_SUBMISSION_URL is the event page, not a call for speakers page. Leave it blank unless a page shows one. STATUS "Open" on CarbonZero and CES has no evidence behind it.
+   - Nullcon: the event-page deadline evidence and quote are the ones we already hold; nothing to change.
+   - The ids in the patch (for example 2026-carbonzero-global-conference-exhibition-brussels-speaking, 2027-ces-las-vegas-speaking) are not ours; ours are 2026-carbonzero-global-conference-exhibition-brussels and 2027-ces-las-vegas. An id we do not hold cannot take a patch (5.4).
+   - "Discontinued" for the German OWASP duplicate and the stale Decarbonization Congress row: R16.1 requires the page and the verbatim sentence that says so. None is given. The duplicate row also carries a deadline of 2026-07-15, which no page we read states (the page says CfP closed June 21, 2026). Please remove it.
+   Instead: for the OWASP duplicate, send the page URL and sentence that shows the two names are one event, and we will retire the extra row on that evidence.
+
+4. Your origin answers: "inferred from prior 2026 edition timelines" (Nullcon's March dates) is the failure we are trying to remove. A date inferred from another edition must not be written as a date. Please check the YEAR of every date against the edition in the page title.
+
+5. A correction from our side (so you can correct yours): in notes 20, 21 and 23 we said the ODSC East page shows only the 2026 edition and that 2027-05-10 was unconfirmed. That was wrong. The header of https://odsc.ai/east/ reads "Menino Convention and Exhibition Center, Boston, MA | May 10-12th, 2027". Your start date 2027-05-10 was right; your end date (May 10-13 in your first file) is one day too long: the page says 10-12. We have restored our data; no action needed except the end date.

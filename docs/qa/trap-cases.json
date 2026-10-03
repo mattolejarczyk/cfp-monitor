@@ -3,122 +3,284 @@
   "version": 1,
   "cases": [
     {
-      "id": "T01", "name": "The page now shows NEXT year's edition (wrong-year answer)",
-      "event": "Carbon Capture Technology Expo MENA", "read_on": "2026-10-03", "url": "https://www.hydrogenccs-menaexpo.com/",
+      "id": "T01",
+      "name": "The page now shows NEXT year's edition (wrong-year answer)",
+      "event": "Carbon Capture Technology Expo MENA",
+      "read_on": "2026-10-03",
+      "url": "https://www.hydrogenccs-menaexpo.com/",
       "went_wrong": "Research returned a 2026 start date (2026-06-09) for the 2026 edition from a page whose title and dates are the 2027 edition.",
       "fixture": "Hydrogen and Carbon Capture Technology Expo MENA 2027. The conference takes place 8-9 June 2027, ADNEC Centre, Abu Dhabi. Also on this site: 20/21/22 October 2026 and 10/11 February 2027 (other events of the organizer).",
-      "wrong": "2026-06-09", "right": "2027-06-08 for the 2027 edition; the 2026 edition's dates are not on the page, so blank",
+      "wrong": "2026-06-09",
+      "right": "2027-06-08 for the 2027 edition; the 2026 edition's dates are not on the page, so blank",
       "checks": [
-        {"type": "arbiter_proves", "date": "2027-06-08", "expect": true},
-        {"type": "arbiter_proves", "date": "2026-06-09", "expect": false},
-        {"type": "year_check", "row": {"EDITION": "2026", "START DATE": "2027-06-08", "CONFERENCE DATES": "June 8 - June 9, 2026", "STATUS": "Closed", "SUBMISSION DEADLINE": ""}, "expect_fail": "Y1"}
+        {
+          "type": "arbiter_proves",
+          "date": "2027-06-08",
+          "expect": true
+        },
+        {
+          "type": "arbiter_proves",
+          "date": "2026-06-09",
+          "expect": false
+        },
+        {
+          "type": "year_check",
+          "row": {
+            "EDITION": "2026",
+            "START DATE": "2027-06-08",
+            "CONFERENCE DATES": "June 8 - June 9, 2026",
+            "STATUS": "Closed",
+            "SUBMISSION DEADLINE": ""
+          },
+          "expect_fail": "Y1"
+        }
       ]
     },
     {
-      "id": "T02", "name": "Only last year's edition exists: a start date is guessed for the next one",
-      "event": "ODSC East 2027", "read_on": "2026-10-02", "url": "https://odsc.ai/east/",
-      "went_wrong": "Research returned START DATE 2027-05-10 and status Upcoming; the page shows the 2026 edition (Boston, April 28-30, 2026) and a 'Call for speakers' link with no date. The load wrote it back after we had cleared it.",
-      "fixture": "ODSC AI East. April 28-30, 2026. Menino Convention and Exhibition Center, Boston. Call for speakers.",
-      "wrong": "2027-05-10", "right": "blank; STATUS Needs Verification until a page announces a 2027 edition",
+      "id": "T02",
+      "name": "One page shows two editions: pick the one that was asked for",
+      "event": "ODSC East",
+      "read_on": "2026-10-03",
+      "url": "https://odsc.ai/east/",
+      "went_wrong": "A summary of the page reported only the 2026 speaker announcement (April 28-30, 2026) and missed the header, so the 2027 start date (2027-05-10) was wrongly treated as a guess, cleared from our data, and pinned blank. The header of the same page states the 2027 edition. A method that reads only part of a page, or does not know which edition is asked, gets one of the two editions wrong.",
+      "fixture": "Menino Convention and Exhibition Center, Boston, MA | May 10-12th, 2027 REGISTER Your interest for 2027 REGISTER NOW 11 Years of Leadership in AI Training Conference. Featured East Speakers The first wave of transformative speakers for ODSC AI East 2026 is here! Join us April 28-30 in Boston to celebrate our 11th anniversary with AI's pioneers.",
+      "wrong": "a summary that says only 2026 (April 28-30), or 2027-05-10 reported for edition 2026",
+      "right": "asked for 2027: 2027-05-10 (header: May 10-12th, 2027); asked for 2026: 2026-04-28 (speaker block: April 28-30)",
       "checks": [
-        {"type": "arbiter_proves", "date": "2027-05-10", "expect": false},
-        {"type": "guessed_start_flag", "old": {"status": "Needs Verification", "is_projected": "true", "deadline_evidence_url": "", "start_date": ""},
-         "new": {"status": "Upcoming", "is_projected": "true", "deadline_evidence_url": "", "start_date": "2027-05-10"}, "expect_flag": true}
+        {
+          "type": "arbiter_proves",
+          "date": "2027-05-10",
+          "expect": true,
+          "gap": true,
+          "note": "GAP in start_date_arbiter: it needs a 'held' / 'takes place' word beside the date, and a header prints the dates bare ('Boston, MA | May 10-12th, 2027'). The read-the-page pass reads it correctly."
+        },
+        {
+          "type": "year_check",
+          "row": {
+            "EDITION": "2026",
+            "START DATE": "2027-05-10",
+            "CONFERENCE DATES": "May 10 - May 12, 2027",
+            "STATUS": "Closed",
+            "SUBMISSION DEADLINE": ""
+          },
+          "expect_fail": "Y1"
+        },
+        {
+          "type": "human",
+          "note": "Asked for edition 2027 the method must return 2027-05-10; asked for 2026 it must return 2026-04-28 (the year comes from the heading 'ODSC AI East 2026', not from the date itself)."
+        }
       ]
     },
     {
-      "id": "T03", "name": "The site blocks a plain read (anti-bot wall)",
-      "event": "Black Hat Asia", "read_on": "2026-10-02", "url": "https://www.blackhat.com/",
+      "id": "T03",
+      "name": "The site blocks a plain read (anti-bot wall)",
+      "event": "Black Hat Asia",
+      "read_on": "2026-10-02",
+      "url": "https://www.blackhat.com/",
       "went_wrong": "A plain fetch returns HTTP 403 or an 84-character wall notice; early on this was mistaken for 'the quote is not on the page' and for a date-reader fault.",
       "fixture": "Request unsuccessful. Incapsula incident ID: 260000060773792091-441289197983367596",
-      "wrong": "quote not found / page dead", "right": "unreadable by a plain fetch: report 'not checked' and read it in a browser. The browser shows: Close date: 12 October 2026 (23:59 Singapore Time GMT/UTC +8)",
-      "checks": [{"type": "block_page", "expect": true}]
+      "wrong": "quote not found / page dead",
+      "right": "unreadable by a plain fetch: report 'not checked' and read it in a browser. The browser shows: Close date: 12 October 2026 (23:59 Singapore Time GMT/UTC +8)",
+      "checks": [
+        {
+          "type": "block_page",
+          "expect": true
+        }
+      ]
     },
     {
-      "id": "T04", "name": "Two tracks, two deadlines on one page",
-      "event": "ACM CODASPY 2027", "read_on": "2026-10-03", "url": "https://www.codaspy.org/2027/cfp.html",
+      "id": "T04",
+      "name": "Two tracks, two deadlines on one page",
+      "event": "ACM CODASPY 2027",
+      "read_on": "2026-10-03",
+      "url": "https://www.codaspy.org/2027/cfp.html",
       "went_wrong": "Research returned the paper deadline one week and the abstract deadline the next; the customer needs one date.",
       "fixture": "Important Dates. Abstract submission deadline: November 16, 2026. Research paper submission deadline: November 23, 2026. All submissions should be made electronically at https://codaspy27.hotcrp.com/",
-      "wrong": "2026-11-23", "right": "2026-11-16 (operator rule: the earliest is the default; both dates in the details)",
+      "wrong": "2026-11-23",
+      "right": "2026-11-16 (operator rule: the earliest is the default; both dates in the details)",
       "checks": [
-        {"type": "find_date", "date": "2026-11-16", "expect": true},
-        {"type": "find_date", "date": "2026-11-23", "expect": true},
-        {"type": "earliest_deadline", "expect": "2026-11-16", "gap": true}
+        {
+          "type": "find_date",
+          "date": "2026-11-16",
+          "expect": true
+        },
+        {
+          "type": "find_date",
+          "date": "2026-11-23",
+          "expect": true
+        },
+        {
+          "type": "earliest_deadline",
+          "expect": "2026-11-16",
+          "gap": true
+        }
       ]
     },
     {
-      "id": "T05", "name": "An aggregator that does not even list the event is cited as evidence",
-      "event": "Apres-Cyber Slopes Summit 2027", "read_on": "2026-10-03", "url": "https://cfptime.org/",
+      "id": "T05",
+      "name": "An aggregator that does not even list the event is cited as evidence",
+      "event": "Apres-Cyber Slopes Summit 2027",
+      "read_on": "2026-10-03",
+      "url": "https://cfptime.org/",
       "went_wrong": "Research cited cfptime.org ('Nov 21, 2026 at 6:59 AM PST'); the operator found the aggregator does not list the event. Our gate accepted the citation because the page was admissible and the quote was on it.",
       "fixture": "CFP Time. Upcoming calls for papers: BSides Boston 2026, Hackers Next Door 2026, OWASP Global AppSec EU 2027. (The organizer of the event in question is not on this list.)",
-      "wrong": "2026-11-21 from cfptime.org", "right": "2026-11-20 from the organizer's own Sessionize page: Call closes at 11:59 PM 20 Nov 2026",
+      "wrong": "2026-11-21 from cfptime.org",
+      "right": "2026-11-20 from the organizer's own Sessionize page: Call closes at 11:59 PM 20 Nov 2026",
       "checks": [
-        {"type": "event_named_on_page", "event": "Apres-Cyber Slopes Summit", "expect": false},
-        {"type": "aggregator_citation_flag", "url": "https://cfptime.org/", "gap": true}
+        {
+          "type": "event_named_on_page",
+          "event": "Apres-Cyber Slopes Summit",
+          "expect": false
+        },
+        {
+          "type": "aggregator_citation_flag",
+          "url": "https://cfptime.org/",
+          "gap": true
+        }
       ]
     },
     {
-      "id": "T06", "name": "The same event under two names",
-      "event": "SAF Europe Summit 2027 / Sustainable Fuels Global Summit 2027", "read_on": "2026-10-03", "url": "https://www.sustainablefuelsglobal.com/",
+      "id": "T06",
+      "name": "The same event under two names",
+      "event": "SAF Europe Summit 2027 / Sustainable Fuels Global Summit 2027",
+      "read_on": "2026-10-03",
+      "url": "https://www.sustainablefuelsglobal.com/",
       "went_wrong": "Two rows with the same URL, city and start date; the old site now redirects to the new brand. Upstream's 'merge' carried no evidence.",
       "fixture": "SAF Europe Summit 2027 (#SAFEU2027), taking place on 13-14 April 2027 at the Postillion Hotel & Convention Centre WTC Rotterdam.",
-      "wrong": "two rows, or 'Discontinued' on the old name", "right": "one event; the retire/merge claim needs its own evidence page (R16)",
-      "checks": [{"type": "human", "note": "Does the method notice that two rows share URL host, city and start date, and refuse to call either dead?"}]
+      "wrong": "two rows, or 'Discontinued' on the old name",
+      "right": "one event; the retire/merge claim needs its own evidence page (R16)",
+      "checks": [
+        {
+          "type": "human",
+          "note": "Does the method notice that two rows share URL host, city and start date, and refuse to call either dead?"
+        }
+      ]
     },
     {
-      "id": "T07", "name": "A dead domain: nothing to read, so nothing to invent",
-      "event": "Future Fuels MENA Summit 2026", "read_on": "2026-10-03", "url": "https://futurefuelsmena.com/",
+      "id": "T07",
+      "name": "A dead domain: nothing to read, so nothing to invent",
+      "event": "Future Fuels MENA Summit 2026",
+      "read_on": "2026-10-03",
+      "url": "https://futurefuelsmena.com/",
       "went_wrong": "The domain does not work. Research still returned a start date and dates text; upstream then called it 'Discontinued' with no evidence page.",
       "fixture": "(no page)",
-      "wrong": "start 2026-04-01 / dates Nov 24-25, 2026 / Discontinued", "right": "dates blank, status Needs Verification; 'discontinued' only with a page and sentence that says so (R16)",
-      "checks": [{"type": "human", "note": "With no page, does the method return blanks and say so?"}]
+      "wrong": "start 2026-04-01 / dates Nov 24-25, 2026 / Discontinued",
+      "right": "dates blank, status Needs Verification; 'discontinued' only with a page and sentence that says so (R16)",
+      "checks": [
+        {
+          "type": "human",
+          "note": "With no page, does the method return blanks and say so?"
+        }
+      ]
     },
     {
-      "id": "T08", "name": "One brand, two different events",
-      "event": "Wild West Hackin' Fest (Mile High vs Deadwood)", "read_on": "2026-10-03", "url": "https://wildwesthackinfest.com/",
+      "id": "T08",
+      "name": "One brand, two different events",
+      "event": "Wild West Hackin' Fest (Mile High vs Deadwood)",
+      "read_on": "2026-10-03",
+      "url": "https://wildwesthackinfest.com/",
       "went_wrong": "Different editions of one brand in different cities carry different dates; a method that matches by brand mixes them.",
       "fixture": "Wild West Hackin' Fest @ Mile High 2026 (Denver) and Wild West Hackin' Fest Deadwood 2026 (Deadwood, SD) are separate events with their own dates and calls.",
-      "wrong": "one row, or one event's dates on the other", "right": "two events, never merged (5.4)",
-      "checks": [{"type": "human", "note": "Does the method keep the two events apart and give each its own dates?"}]
+      "wrong": "one row, or one event's dates on the other",
+      "right": "two events, never merged (5.4)",
+      "checks": [
+        {
+          "type": "human",
+          "note": "Does the method keep the two events apart and give each its own dates?"
+        }
+      ]
     },
     {
-      "id": "T09", "name": "The input list's dates text is wrong; the page says otherwise",
-      "event": "European Carbon Capture, Utilization & Storage 2027", "read_on": "2026-10-03", "url": "https://ccus-carbon-capture.com/",
+      "id": "T09",
+      "name": "The input list's dates text is wrong; the page says otherwise",
+      "event": "European Carbon Capture, Utilization & Storage 2027",
+      "read_on": "2026-10-03",
+      "url": "https://ccus-carbon-capture.com/",
       "went_wrong": "The list said March 9-10, 2027; no page says that. The event page reads 26 - 27 January 2027 in Amsterdam.",
       "fixture": "6th European Carbon Capture, Utilization & Storage (CCUS) 2027. 26 - 27 January 2027 | Amsterdam. The conference takes place in Amsterdam.",
-      "wrong": "2027-03-09", "right": "2027-01-26",
+      "wrong": "2027-03-09",
+      "right": "2027-01-26",
       "checks": [
-        {"type": "arbiter_proves", "date": "2027-01-26", "expect": true},
-        {"type": "arbiter_proves", "date": "2027-03-09", "expect": false},
-        {"type": "first_date", "text": "January 26 - January 27, 2027", "expect": "2027-01-26"}
+        {
+          "type": "arbiter_proves",
+          "date": "2027-01-26",
+          "expect": true
+        },
+        {
+          "type": "arbiter_proves",
+          "date": "2027-03-09",
+          "expect": false
+        },
+        {
+          "type": "first_date",
+          "text": "January 26 - January 27, 2027",
+          "expect": "2027-01-26"
+        }
       ]
     },
     {
-      "id": "T10", "name": "A two-digit-year date style",
-      "event": "International Conference on Climate Change", "read_on": "2026-10-02", "url": "https://on-climate.com/",
+      "id": "T10",
+      "name": "A two-digit-year date style",
+      "event": "International Conference on Climate Change",
+      "read_on": "2026-10-02",
+      "url": "https://on-climate.com/",
       "went_wrong": "The page writes proposal periods as '19 October (26)'; the date reader matched none of 35 occurrences until the fix.",
       "fixture": "Late, 20 October (26) to 20 December (26)",
-      "wrong": "date not found", "right": "2026-10-20 found",
-      "checks": [{"type": "find_date", "date": "2026-10-20", "expect": true}]
-    },
-    {
-      "id": "T11", "name": "A claim of 2 October must not match 'October 12'",
-      "event": "(date reader)", "read_on": "2026-10-02", "url": "",
-      "went_wrong": "No digit boundary: a claim of 2026-10-02 matched the page text '12 October 2026' in 5 of 5 sampled pages.",
-      "fixture": "Close date: 12 October 2026 (23:59 Singapore Time)",
-      "wrong": "2026-10-02 found", "right": "only 2026-10-12 found",
+      "wrong": "date not found",
+      "right": "2026-10-20 found",
       "checks": [
-        {"type": "find_date", "date": "2026-10-02", "expect": false},
-        {"type": "find_date", "date": "2026-10-12", "expect": true}
+        {
+          "type": "find_date",
+          "date": "2026-10-20",
+          "expect": true
+        }
       ]
     },
     {
-      "id": "T12", "name": "A deadline in another time zone",
-      "event": "Apres-Cyber Slopes Summit 2027", "read_on": "2026-10-03", "url": "https://sessionize.com/apres-cyber-slopes-summit-2027",
+      "id": "T11",
+      "name": "A claim of 2 October must not match 'October 12'",
+      "event": "(date reader)",
+      "read_on": "2026-10-02",
+      "url": "",
+      "went_wrong": "No digit boundary: a claim of 2026-10-02 matched the page text '12 October 2026' in 5 of 5 sampled pages.",
+      "fixture": "Close date: 12 October 2026 (23:59 Singapore Time)",
+      "wrong": "2026-10-02 found",
+      "right": "only 2026-10-12 found",
+      "checks": [
+        {
+          "type": "find_date",
+          "date": "2026-10-02",
+          "expect": false
+        },
+        {
+          "type": "find_date",
+          "date": "2026-10-12",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "T12",
+      "name": "A deadline in another time zone",
+      "event": "Apres-Cyber Slopes Summit 2027",
+      "read_on": "2026-10-03",
+      "url": "https://sessionize.com/apres-cyber-slopes-summit-2027",
       "went_wrong": "'Nov 21, 2026 at 6:59 AM PST' is the same moment as 11:59 PM on 20 November in US Mountain time.",
       "fixture": "Call closes at 11:59 PM 20 Nov 2026",
-      "wrong": "2026-11-21", "right": "2026-11-20 (the organizer's own end-of-day)",
-      "checks": [{"type": "find_date", "date": "2026-11-20", "expect": true}, {"type": "find_date", "date": "2026-11-21", "expect": false}]
+      "wrong": "2026-11-21",
+      "right": "2026-11-20 (the organizer's own end-of-day)",
+      "checks": [
+        {
+          "type": "find_date",
+          "date": "2026-11-20",
+          "expect": true
+        },
+        {
+          "type": "find_date",
+          "date": "2026-11-21",
+          "expect": false
+        }
+      ]
     }
   ]
 }
