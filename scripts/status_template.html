@@ -147,11 +147,14 @@ function splitCard(label, s) {
     <p class="def" style="margin:0 0 6px"><b>Complete ${p(s.complete)}</b> &nbsp; <span class="num">${s.filled} of ${s.expected} expected fields filled (${p(s.fill_pct)}); coverage ${p(s.coverage_pct)}; ${s.excused_fields} call fields on ${s.excused_rows} far-future rows excused</span></p>
     <p class="def" style="margin:0"><b>Accurate ${p(s.accurate)}</b> &nbsp; <span class="num">${s.proven} proven, ${s.contradicted} contradicted; ${s.unproven} unproven (not counted wrong, ${p(s.unproven_share)} of stated facts), ${s.unproven_excused} excused</span></p></section>`;
 }
+function splitStrip(Q) {
+  if (!Q) return '';
+  return `<div class="two">${splitCard('Conferences: complete and accurate', Q.conference.split)}${splitCard('Awards: complete and accurate', Q.awards.split)}</div>
+    <p class="def" style="margin:0 0 14px">${esc(Q.split_method || '')}</p>`;
+}
 function quality(Q) {
   if (!Q) return '';
-  const sp = `<div class="two">${splitCard('Conferences: complete and accurate', Q.conference.split)}${splitCard('Awards: complete and accurate', Q.awards.split)}</div>
-    <p class="def" style="margin:0 0 14px">${esc(Q.split_method || '')}</p>`;
-  return sp + `<div class="two">${qcard(Q.conference)}${qcard(Q.awards)}</div>
+  return `<div class="two">${qcard(Q.conference)}${qcard(Q.awards)}</div>
     <p class="def" style="margin:0 0 14px">${esc(Q.method)} <b>Not measured:</b> ${esc(Q.not_measured)} <span class="num">as of ${esc(Q.as_of)}</span></p>`;
 }
 const ageDays = d => Math.round((Date.parse(D.as_of) - Date.parse(d)) / 86400000);
@@ -175,6 +178,7 @@ function render() {
   document.getElementById('app').innerHTML = `
     <div class="top"><div><h1>CFP Status Board</h1><div class="sub">${esc(D.scope)}</div></div>
       <div class="sub"><span class="num">as of ${esc(D.as_of)}</span> &nbsp; <button class="theme" id="tg" type="button">Theme</button></div></div>
+    ${splitStrip(D.quality)}
     ${objective(D.objective)}
     ${nowBlock()}
     ${quality(D.quality)}
