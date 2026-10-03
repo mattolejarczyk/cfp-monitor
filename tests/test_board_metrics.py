@@ -241,3 +241,59 @@ def test_market_canonical_ids_reads_only_the_customer_market_seed_sheets(tmp_pat
                 w.writerow(["up-" + i, i])
     ids = market_canonical_ids(str(tmp_path / "x.db"))     # seed_roots also searches the working directory second, by design
     assert {"c1", "c2", "u1"} <= ids and "r1" not in ids   # a prospect market's seed sheet is not a customer market
+
+
+# --- Complete % and Accurate % (operator's definitions, 2026-10-03) ---
+from scripts.board_metrics import expected_fields, far_future, split_scores   # noqa: E402
+
+TODAY = "2026-10-03"
+
+
+def _row(**k):
+    base = {"event_id": "e", "name": "E", "edition": "2027", "start_date": "", "city": "X", "country": "Y", "main_info_url": "http://x",
+            "deadline": "", "submission_url": "", "deadline_evidence_url": "", "deadline_quote": "", "status": "", "is_projected": 0, "verify_state": ""}
+    base.update(k)
+    return base
+
+
+def test_far_future_event_without_an_open_call_is_not_penalised_for_missing_call_fields():
+    r = _row(start_date="2027-06-08")                                   # 248 days out, nothing published
+    exp, excused = expected_fields(r, TODAY)
+    assert "deadline" in excused and "deadline" not in exp
+    assert split_scores([r], TODAY, "conference")["complete"] == 100
+
+
+def test_the_90_day_edge_and_an_open_call_lift_the_grace():
+    assert far_future(_row(start_date="2027-01-02"), TODAY) is True      # 91 days
+    assert far_future(_row(start_date="2027-01-01"), TODAY) is False     # 90 days: call fields are expected
+    assert far_future(_row(start_date="2027-06-08", status="Open"), TODAY) is False
+    assert far_future(_row(start_date="2027-06-08", deadline="2026-12-04"), TODAY) is False
+    assert far_future(_row(start_date="2027-06-08", deadline="2026-12-04", is_projected=1), TODAY) is True
+
+
+def test_a_blank_close_to_the_event_is_a_miss_but_a_pinned_honest_blank_is_not():
+    r = _row(start_date="2026-12-01")
+    assert split_scores([r], TODAY, "conference")["complete"] < 100
+    pin = [{"canonical": "e", "set": {"DEADLINE": "", "CFP_SUBMISSION_URL": ""}}]
+    s = split_scores([_row(start_date="2026-12-01", deadline_evidence_url="x", deadline_quote="x")], TODAY, "conference", pin)
+    assert s["missing_by_field"] == {}
+
+
+def test_accuracy_never_counts_unproven_as_wrong_but_a_contradiction_is_not_excused_by_the_grace():
+    far = _row(start_date="2027-06-08", deadline="2027-01-10", is_projected=1)             # far-future, unproven
+    near = _row(event_id="n", edition="2026", start_date="2026-12-01", deadline="2026-11-01", verify_state="contradicted", deadline_evidence_url="u")
+    ok = _row(event_id="o", edition="2026", start_date="2026-12-01", deadline="2026-11-01", verify_state="verified", deadline_evidence_url="u")
+    s = split_scores([far, near, ok], TODAY, "conference")
+    assert (s["proven"], s["contradicted"], s["unproven_excused"], s["unproven"]) == (1, 1, 1, 0) and s["accurate"] == 50
+    far2 = _row(event_id="f", start_date="2027-06-08", deadline="2027-01-10", is_projected=1, verify_state="contradicted")
+    assert split_scores([far2], TODAY, "conference")["contradicted"] == 1
+
+
+def test_year_rule_and_pins_feed_accuracy_and_passed_rows_are_out_of_scope():
+    wrong_year = _row(start_date="2026-06-08", edition="2027")
+    assert split_scores([wrong_year], TODAY, "conference")["rows_scored"] == 0          # passed: not scored
+    r = _row(start_date="2027-06-08", edition="2026")
+    assert split_scores([r], TODAY, "conference")["contradicted"] == 1
+    p = [{"canonical": "e", "set": {"START DATE": "2027-06-08"}}]
+    assert split_scores([_row(start_date="2027-06-08")], TODAY, "conference", p)["proven"] == 1
+    assert split_scores([_row(start_date="2027-06-09")], TODAY, "conference", p)["contradicted"] == 1

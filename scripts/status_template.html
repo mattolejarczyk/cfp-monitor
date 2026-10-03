@@ -140,9 +140,18 @@ function qcard(q) {
     ${ex ? `<ul class="dec">${ex}</ul>` : ''}
     ${q.drivers.map(d => `<p class="def">Driver, not scored: ${esc(d)}</p>`).join('')}</section>`;
 }
+function splitCard(label, s) {
+  if (!s) return '';
+  const p = v => v === null || v === undefined ? 'n/a' : v + '%';
+  return `<section class="band"><h2>${esc(label)}</h2>
+    <p class="def" style="margin:0 0 6px"><b>Complete ${p(s.complete)}</b> &nbsp; <span class="num">${s.filled} of ${s.expected} expected fields filled (${p(s.fill_pct)}); coverage ${p(s.coverage_pct)}; ${s.excused_fields} call fields on ${s.excused_rows} far-future rows excused</span></p>
+    <p class="def" style="margin:0"><b>Accurate ${p(s.accurate)}</b> &nbsp; <span class="num">${s.proven} proven, ${s.contradicted} contradicted; ${s.unproven} unproven (not counted wrong, ${p(s.unproven_share)} of stated facts), ${s.unproven_excused} excused</span></p></section>`;
+}
 function quality(Q) {
   if (!Q) return '';
-  return `<div class="two">${qcard(Q.conference)}${qcard(Q.awards)}</div>
+  const sp = `<div class="two">${splitCard('Conferences: complete and accurate', Q.conference.split)}${splitCard('Awards: complete and accurate', Q.awards.split)}</div>
+    <p class="def" style="margin:0 0 14px">${esc(Q.split_method || '')}</p>`;
+  return sp + `<div class="two">${qcard(Q.conference)}${qcard(Q.awards)}</div>
     <p class="def" style="margin:0 0 14px">${esc(Q.method)} <b>Not measured:</b> ${esc(Q.not_measured)} <span class="num">as of ${esc(Q.as_of)}</span></p>`;
 }
 const ageDays = d => Math.round((Date.parse(D.as_of) - Date.parse(d)) / 86400000);
@@ -168,7 +177,6 @@ function render() {
       <div class="sub"><span class="num">as of ${esc(D.as_of)}</span> &nbsp; <button class="theme" id="tg" type="button">Theme</button></div></div>
     ${objective(D.objective)}
     ${nowBlock()}
-    ${verifiedBand(D.verified)}
     ${quality(D.quality)}
     <div class="two">${headline(D.headline.provable)}${headline(D.headline.customer)}</div>
     <section class="band"><h2>Build progress &nbsp;<span class="num">${done} of ${items.length} items done</span></h2>
@@ -180,7 +188,8 @@ function render() {
     </tbody></table></div></section>
     <div class="two"><section class="band"><h2>Agent tasks</h2>${D.agents.map(a => `<div class="agent"><div class="ahead"><b>${esc(a.name)}</b><span class="pill ${/^done/i.test(a.status) ? 'good' : 'none'}">${/^done/i.test(a.status) ? 'done' : 'not started'}</span></div><div class="astat">${esc(a.status.replace(/^done[ 0-9-]*:?\s*/i, ''))}</div><small>${esc(a.who)} &middot; <span class="num">${esc(a.budget)}</span></small></div>`).join('')}
       <div class="chan"><b>Agent channels</b>${D.channels.map(c => `<div><b>${esc(c.name)}</b> <span class="pill ${c.state === 'works' ? 'good' : 'none'}">${esc(c.state)}</span><div class="sub">${esc(c.how)}. ${esc(c.note)}</div></div>`).join('')}</div></section>
-    <section class="band"><h2>Spend</h2><div class="spend">${D.spend.map(s => `<div class="srow"><span>${esc(s.label)}</span><span class="num">$${s.usd.toFixed(s.usd < 1 ? 3 : 2)}${s.cap ? ' of $' + s.cap.toFixed(2) : ''}</span>${s.cap ? `<div class="meter"><i style="width:${100 * s.usd / s.cap}%"></i></div>` : ''}</div>`).join('')}</div></section></div>`;
+    <section class="band"><h2>Spend</h2><div class="spend">${D.spend.map(s => `<div class="srow"><span>${esc(s.label)}</span><span class="num">$${s.usd.toFixed(s.usd < 1 ? 3 : 2)}${s.cap ? ' of $' + s.cap.toFixed(2) : ''}</span>${s.cap ? `<div class="meter"><i style="width:${100 * s.usd / s.cap}%"></i></div>` : ''}</div>`).join('')}</div></section></div>
+    ${verifiedBand(D.verified)}`;
   document.getElementById('tg').onclick = () => {
     const r = document.documentElement, dark = r.getAttribute('data-theme') === 'dark' || (!r.getAttribute('data-theme') && matchMedia('(prefers-color-scheme:dark)').matches);
     r.setAttribute('data-theme', dark ? 'light' : 'dark');

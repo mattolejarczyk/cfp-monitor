@@ -309,6 +309,141 @@ def quality_for(db: str, markets_dir: str, today: str, kind: str) -> dict:
     return quality_index(cur, prov, cov, fresh, calls, spotcheck_summary(kind=kind), kind)
 
 
+GRACE_DAYS = 90
+FACT_FIELDS = {"conference": ("start_date", "city", "country", "main_info_url"), "award": ("main_info_url",)}
+CALL_FIELDS = ("deadline", "submission_url", "deadline_evidence_url", "deadline_quote")
+PIN_COLUMN = {"START DATE": "start_date", "CITY": "city", "COUNTRY": "country", "MAIN_INFO_URL": "main_info_url", "DEADLINE": "deadline",
+              "CFP_SUBMISSION_URL": "submission_url"}
+
+
+def call_is_open(r: dict, today: str) -> bool:
+    """A call we can see: the row says Open, or it carries a firm (not projected) deadline on or after today. Evidence can then be expected."""
+    return (r.get("status") or "").strip().lower() == "open" or (bool((r.get("deadline") or "").strip()) and (r.get("deadline") or "") >= today
+                                                                 and not r.get("is_projected"))
+
+
+def far_future(r: dict, today: str, kind: str = "conference") -> bool:
+    """Start date more than GRACE_DAYS ahead and no open call: no evidence is expected to exist yet (operator's 90-day rule, 2026-10-03).
+    Awards have no event start, so no grace applies to them."""
+    s = (r.get("start_date") or "").strip()
+    if kind != "conference" or not s or call_is_open(r, today):
+        return False
+    try:
+        return (date.fromisoformat(s) - date.fromisoformat(today)).days > GRACE_DAYS
+    except ValueError:
+        return False
+
+
+def in_scope(r: dict, today: str) -> bool:
+    """Rows a customer could still act on: the event or its deadline is not past (edition year if neither is dated)."""
+    s, d = (r.get("start_date") or "").strip(), (r.get("deadline") or "").strip()
+    if s or d:
+        return max(s, d) >= today
+    return (r.get("edition") or "") >= today[:4]
+
+
+def expected_fields(r: dict, today: str, kind: str = "conference") -> tuple[list[str], list[str]]:
+    """(expected, excused). Edition facts are always expected. Call fields (deadline, link, evidence) are excused while the event is far off
+    and no call is open, and when the start date itself is unknown and no call is open."""
+    exp = list(FACT_FIELDS[kind])
+    excused = []
+    if far_future(r, today, kind) or (kind == "conference" and not (r.get("start_date") or "").strip() and not call_is_open(r, today)):
+        excused = list(CALL_FIELDS)
+    else:
+        exp += list(CALL_FIELDS)
+    return exp, excused
+
+
+def split_scores(rows: list[dict], today: str, kind: str, pins: list[dict] | None = None, cov: dict | None = None,
+                 cur: dict | None = None, spot: dict | None = None) -> dict:
+    """COMPLETE % and ACCURATE % for one kind (operator's definitions, 2026-10-03). Pure over `rows` (dicts of grounding_facts columns).
+    Complete = expected fields that are filled (or are a pinned honest blank) / expected fields; far-future call fields are excused, not missed.
+    Accurate = of the facts we state: proven / (proven + contradicted); unproven is shown beside it, never counted wrong; far-future unproven is excused.
+    A contradiction is never excused by the grace period."""
+    pinned: dict[str, dict] = {}
+    for p in pins or []:
+        pinned[p.get("canonical", "")] = {PIN_COLUMN[k]: v for k, v in (p.get("set") or {}).items() if k in PIN_COLUMN}
+    exp_n = filled = excused_n = excused_rows = 0
+    missing: dict[str, int] = {}
+    proven = contra = unproven = unproven_excused = 0
+    contradicted_names: list[str] = []
+    scored = 0
+    for r in rows:
+        if not in_scope(r, today):
+            continue
+        scored += 1
+        pin = pinned.get(r.get("event_id", ""), {})
+        exp, exc = expected_fields(r, today, kind)
+        excused_n += len(exc)
+        excused_rows += bool(exc)
+        for f in exp:
+            if (r.get(f) or "").strip() or (f in pin and str(pin[f]).strip() == ""):
+                filled += 1
+            else:
+                missing[f] = missing.get(f, 0) + 1
+            exp_n += 1
+        # accuracy of what is stated
+        facts = []
+        dl = (r.get("deadline") or "").strip()
+        if dl and dl >= today:                                          # a passed deadline's page moves on to the next edition: not scored
+            st = r.get("verify_state")
+            facts.append("proven" if st == "verified" and (r.get("deadline_evidence_url") or "").strip() else "contradicted" if st == "contradicted" else "unproven")
+        s = (r.get("start_date") or "").strip()
+        if s and (r.get("edition") or "").isdigit() and s[:4] != r["edition"]:
+            facts.append("contradicted")                                  # year rule: the date is not in the edition it sits on
+        for f, v in pin.items():
+            if str(v).strip() and (r.get(f) or "").strip():
+                facts.append("proven" if str(r.get(f)).strip() == str(v).strip() else "contradicted")
+        for fct in facts:
+            if fct == "proven":
+                proven += 1
+            elif fct == "contradicted":
+                contra += 1
+                contradicted_names.append((r.get("name") or "")[:40])
+            elif far_future(r, today, kind):
+                unproven_excused += 1
+            else:
+                unproven += 1
+    if cur:
+        lc = cur.get("live_counts") or {}
+        proven += lc.get("agree", 0)
+        contra += lc.get("differ", 0)
+    if spot and spot.get("rows"):
+        proven += spot["rows"] - spot["bad"]
+        contra += spot["bad"]
+    fill_pct = 100 * filled / exp_n if exp_n else None
+    cov_pct = 100 * cov["covered"] / cov["rows"] if cov and cov.get("rows") else None
+    parts = [x for x in (fill_pct, cov_pct) if x is not None]
+    complete = sum(parts) / len(parts) if parts else None
+    checked = proven + contra
+    accurate = 100 * proven / checked if checked else None
+    return {"kind": kind, "rows_scored": scored, "grace_days": GRACE_DAYS,
+            "complete": None if complete is None else round(complete), "fill_pct": None if fill_pct is None else round(fill_pct),
+            "coverage_pct": None if cov_pct is None else round(cov_pct), "expected": exp_n, "filled": filled, "missing_by_field": missing,
+            "excused_fields": excused_n, "excused_rows": excused_rows,
+            "accurate": None if accurate is None else round(accurate), "proven": proven, "contradicted": contra,
+            "unproven": unproven, "unproven_excused": unproven_excused,
+            "unproven_share": None if not (checked + unproven) else round(100 * unproven / (checked + unproven)),
+            "contradicted_names": contradicted_names[:10]}
+
+
+def split_for(db: str, markets_dir: str, today: str, kind: str) -> dict:
+    from scripts.pinned_rows import load_pins
+    con = sqlite3.connect(db)
+    con.row_factory = sqlite3.Row
+    try:
+        if kind == "award":
+            ids = {r[0] for r in con.execute("select award_key from award_markets where market in ('Cybersecurity','Utility')")}
+        else:
+            from src.cfp_monitor.identity import market_canonical_ids
+            ids = market_canonical_ids(db)
+        rows = [dict(r) for r in con.execute(f"select * from {TABLE_OF[kind]}") if r["event_id"] in ids]
+    finally:
+        con.close()
+    pins = load_pins() if kind == "conference" else []
+    return split_scores(rows, today, kind, pins, coverage_live(db, today, kind), customer_agreement(db, today, kind), spotcheck_summary(kind=kind))
+
+
 def render(cur: dict, prev: dict | None, examples: int) -> str:
     c = cur["counts"]
     readable = c["agree"] + c["blank"] + c["differ"]
@@ -393,7 +528,12 @@ def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | 
             "not_measured": ("Sponsorship, organizer, overview and categories have no measure at all for conferences, and nothing beyond the deadline is measured "
                              "for awards. The conference 'other facts' component rests on one 7-row read: 3 of the 7 events upstream delivered on 2026-10-02 carried "
                              "a wrong city, venue or date that only a read of the page caught. Conferences and awards are deliberately not blended into one number."),
-            "source": "scripts/board_metrics.py quality_for; docs/design/field_spotchecks.json"}
+            "split_method": (f"COMPLETE % = expected fields that are filled (a pinned honest blank counts as filled) averaged with coverage of customer-tracked events. Edition facts "
+                             f"(start date, city, country, main page) are always expected; the call fields (deadline, link, evidence) are excused while the event starts more than "
+                             f"{GRACE_DAYS} days ahead and no call is open, because nothing is published yet. ACCURATE % = proven / (proven + contradicted) over facts we state "
+                             "(deadline vs its cited page, start year vs edition, pinned facts, customer-verified dates, spot checks); unproven is shown beside it and never counted wrong; "
+                             "a contradiction is never excused by the 90-day rule. Awards have no event start, so no grace applies."),
+            "source": "scripts/board_metrics.py quality_for, split_for; docs/design/field_spotchecks.json"}
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -425,7 +565,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"    {e['key']:10} n/a   weight {e['weight']:2}  EXCLUDED: {e['reason']}")
         for dr in q["drivers"]:
             print(f"    driver: {dr}")
+    sc = split_for(a.db, str(MARKETS_DIR), a.today, "conference")
+    sa = split_for(a.db, str(MARKETS_DIR), a.today, "award")
+    for label, s in (("CONFERENCES", sc), ("AWARDS", sa)):
+        print(f"COMPLETE {s['complete']}% (fields filled {s['filled']} of {s['expected']} expected = {s['fill_pct']}%, coverage {s['coverage_pct'] if s['coverage_pct'] is not None else 'n/a'}%; "
+              f"{s['excused_fields']} call fields on {s['excused_rows']} far-future rows excused) | ACCURATE {s['accurate']}% "
+              f"({s['proven']} proven, {s['contradicted']} contradicted; unproven {s['unproven']} not counted wrong, {s['unproven_excused']} excused) - {label}")
     if a.update_status:
+        qc["split"], qa["split"] = sc, sa
         update_status(cur, a.today, prov=prov, quality={"conference": qc, "awards": qa})
         print(f"updated headline.customer in {STATUS_JSON}")
     return 0
