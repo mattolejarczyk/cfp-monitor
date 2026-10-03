@@ -1,8 +1,12 @@
 {
-  "as_of": "2026-10-02",
+  "as_of": "2026-10-03",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
   "now": "End of day 2026-10-02: all of today's upstream deliveries are loaded and acknowledged, the split data-quality indexes are on the board, and the narrow research prompt is being wired into Saturday's job (test in progress).",
   "decisions": [
+    {
+      "added": "2026-10-03",
+      "text": "CODASPY (11-16 abstract vs 11-23 paper) and Apres-Cyber (11-20 vs 11-21) came back from research with different, evidenced deadlines. I restored your earlier 11-16 and 11-20 for now; tell me if the paper date or the 21st should win and I will stop restoring them."
+    },
     {
       "added": "2026-10-02",
       "text": "Optional: send upstream NOTE-TO-UPSTREAM-21.md (acknowledges their second sparse patch, which we checked on the real pages and loaded; asks for plain-sentence STATUS DETAILS and 'Projected (YYYY)'). Nothing on the board is blocked on it."
@@ -12,12 +16,12 @@
     "provable": {
       "label": "Provable submission date (live deadlines)",
       "definition": "Deadlines still ahead for events on the Cybersecurity and Utility market lists. Proven = our verifier found the stored date on the cited page and a citation exists. A deadline that has already passed is not scored: its page moves on to the next edition.",
-      "rows": 17,
+      "rows": 18,
       "levels": [
         {
           "key": "confirmed",
           "label": "Date on the cited page",
-          "n": 12,
+          "n": 11,
           "tone": "good"
         },
         {
@@ -29,13 +33,13 @@
         {
           "key": "nopage",
           "label": "Cited page blocks our plain reader (a browser read would settle it)",
-          "n": 3,
+          "n": 0,
           "tone": "mute"
         },
         {
           "key": "absent",
           "label": "Page read, date not on it",
-          "n": 1,
+          "n": 6,
           "tone": "bad"
         },
         {
@@ -45,37 +49,37 @@
           "tone": "bad"
         }
       ],
-      "open_rows": 17,
-      "open_confirmed": 12,
+      "open_rows": 18,
+      "open_confirmed": 11,
       "note": "The earlier 28% (11 of 39) counted every stored deadline, including 44 of 48 that had already passed; the purpose audit itself said 15 of 16 'absent' and 11 of 12 'unreadable' rows were already-passed deadlines, 'not errors'. On live deadlines the unproven ones are a deliberate citation withdrawal and pages that refuse a plain fetch, not wrong dates.",
-      "source": "scripts/board_metrics.py provable_live, 2026-10-02; experiments/purpose_audit/RESULT.md for the all-rows audit"
+      "source": "scripts/board_metrics.py provable_live, 2026-10-03; experiments/purpose_audit/RESULT.md for the all-rows audit"
     },
     "customer": {
       "label": "Agreement with customer-verified dates (live rows)",
       "definition": "Rows where the customer's team marked the date Verified and has a date, the customer has not withdrawn the row, and the customer's date or ours is still ahead: does ours match? Rows whose dates have both passed are not scored here.",
-      "rows": 9,
+      "rows": 19,
       "levels": [
         {
           "key": "agree",
           "label": "Same date",
-          "n": 4,
+          "n": 14,
           "tone": "good"
         },
         {
           "key": "blank",
           "label": "Our deadline blank",
-          "n": 3,
+          "n": 2,
           "tone": "warn"
         },
         {
           "key": "differ",
           "label": "Different date",
-          "n": 2,
+          "n": 3,
           "tone": "bad"
         }
       ],
-      "note": "All rows, rough (includes past dates and old editions): 17 of 33 agree. Of the live rows that do not agree today, most are fixed by loads already done (Nullcon, Troopers 2027, Black Hat Asia) but the customer's row still points at the previous edition's event; Climate Change is the customer holding the earlier round's date.",
-      "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-02; customer-withdrawn rows excluded"
+      "note": "All rows, rough (includes past dates and old editions): 32 of 44 agree. Of the live rows that do not agree today, most are fixed by loads already done (Nullcon, Troopers 2027, Black Hat Asia) but the customer's row still points at the previous edition's event; Climate Change is the customer holding the earlier round's date.",
+      "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-03; customer-withdrawn rows excluded"
     }
   },
   "methods": [
@@ -283,12 +287,12 @@
     "good": [
       {
         "label": "Provable submission dates",
-        "now": "12 of 17 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
+        "now": "11 of 18 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
         "target": "90% of open-call rows; the rest honestly blank, never guessed"
       },
       {
         "label": "Agreement with customer-verified dates",
-        "now": "4 of 9 live rows today (44%); 17 of 33 counting past dates and old editions",
+        "now": "14 of 19 live rows today (73%); 32 of 44 counting past dates and old editions",
         "target": "90%"
       },
       {
@@ -586,45 +590,45 @@
     }
   ],
   "quality": {
-    "as_of": "2026-10-02",
+    "as_of": "2026-10-03",
     "method": "Components, each 0 to 100, combined with the weights shown (a judgment). A component with no data is excluded and the weights renormalised, never scored as zero. Range: the lower of the weighted and equal-weight figure up to the higher of the equal-weight figure and the figure if pages our plain reader cannot open count half. Deadlines are scored on LIVE rows only (a passed deadline's page moves on to the next edition).",
     "conference": {
       "kind": "conference",
       "measured_weight": 100,
-      "overall": 69,
-      "low": 69,
-      "high": 71,
-      "equal_weight": 71,
+      "overall": 78,
+      "low": 78,
+      "high": 82,
+      "equal_weight": 82,
       "components": [
         {
           "key": "proof",
-          "value": 71,
+          "value": 61,
           "weight": 25,
-          "detail": "12 of 17 live deadlines proven on their cited page"
+          "detail": "11 of 18 live deadlines proven on their cited page"
         },
         {
           "key": "no_error",
           "value": 100,
           "weight": 10,
-          "detail": "0 of 17 live deadlines contradicted by their own page"
+          "detail": "0 of 18 live deadlines contradicted by their own page"
         },
         {
           "key": "alignment",
-          "value": 44,
+          "value": 74,
           "weight": 15,
-          "detail": "4 of 9 live customer-verified dates match ours"
+          "detail": "14 of 19 live customer-verified dates match ours"
         },
         {
           "key": "freshness",
-          "value": 79,
+          "value": 100,
           "weight": 15,
-          "detail": "89 of 113 rows genuinely researched in the Saturday run (24 stubs)"
+          "detail": "130 of 130 rows genuinely researched in the Saturday run (0 stubs)"
         },
         {
           "key": "coverage",
-          "value": 76,
+          "value": 100,
           "weight": 15,
-          "detail": "16 of 21 live customer-tracked events exist in our database"
+          "detail": "20 of 20 live customer-tracked events exist in our database"
         },
         {
           "key": "other",
@@ -635,29 +639,29 @@
       ],
       "excluded": [],
       "drivers": [
-        "89 of 280 Saturday research calls returned a grounded answer (32%): retries and last week's approved rows cover most of the gap"
+        "130 of 131 Saturday research calls returned a grounded answer (99%): retries and last week's approved rows cover most of the gap"
       ],
       "label": "Conferences: overall data quality"
     },
     "awards": {
       "kind": "award",
       "measured_weight": 50,
-      "overall": 58,
-      "low": 58,
-      "high": 60,
-      "equal_weight": 59,
+      "overall": 60,
+      "low": 60,
+      "high": 61,
+      "equal_weight": 61,
       "components": [
         {
           "key": "proof",
-          "value": 75,
+          "value": 80,
           "weight": 25,
-          "detail": "12 of 16 live deadlines proven on their cited page"
+          "detail": "12 of 15 live deadlines proven on their cited page"
         },
         {
           "key": "no_error",
           "value": 100,
           "weight": 10,
-          "detail": "0 of 16 live deadlines contradicted by their own page"
+          "detail": "0 of 15 live deadlines contradicted by their own page"
         },
         {
           "key": "freshness",
@@ -684,15 +688,19 @@
         }
       ],
       "drivers": [
-        "The Friday awards research job is disabled (since 2026-09-30), so awards freshness is low by construction until it runs again"
+        "The Friday awards research job was disabled from 2026-09-30 and re-enabled on 2026-10-03; awards freshness stays low until its first run (Fri 2026-10-09 02:00)"
       ],
       "label": "Awards: overall data quality"
     },
     "not_measured": "Sponsorship, organizer, overview and categories have no measure at all for conferences, and nothing beyond the deadline is measured for awards. The conference 'other facts' component rests on one 7-row read: 3 of the 7 events upstream delivered on 2026-10-02 carried a wrong city, venue or date that only a read of the page caught. Conferences and awards are deliberately not blended into one number.",
     "source": "scripts/board_metrics.py quality_for; docs/design/field_spotchecks.json"
   },
-  "now_updated": "2026-10-02",
+  "now_updated": "2026-10-03",
   "working_on": [
+    {
+      "state": "Done 10-03",
+      "text": "Saturday's research (130 of 130 grounded) is LOADED: Cybersecurity 70 rows, Utility 55, plus the new 2027 expo row (DB 427). The scheduled load had a script bug (fixed) so it was run by hand. The load blanked verified evidence on six future-deadline rows; all restored and gate-checked. Three safeguards now run inside the import (carry last week's unasked fields, keep verified evidence, year checks). Next real test: Saturday 10-10 and the Friday 10-09 awards run."
+    },
     {
       "state": "Done",
       "text": "Friday awards job re-enabled by you 10-02 (State Ready); first run Friday 10-09 02:00 on the narrow prompt."
@@ -716,6 +724,10 @@
     {
       "state": "Queued, not started",
       "text": "The 'we read, they format' packet tool (reads each cited page with our reader and prints URL, title and verbatim date sentence for upstream), sponsorship option B after a measured shadow week, and the refresh scheduler after the shadow week"
+    },
+    {
+      "state": "Waiting on upstream",
+      "text": "Proper R16 evidence for the SAF Europe / Sustainable Fuels duplicate and for Future Fuels MENA (their rulings had none; our dates for both stay blank); the eight STATUS corrections; evidence for ODSC East 2027 and AppWorld. Their replies' ids differ from ours, so patches cannot apply as sent."
     }
   ]
 }

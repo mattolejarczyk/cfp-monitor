@@ -292,7 +292,7 @@ def quality_index(cur: dict, prov: dict, cov: dict, fresh: dict, calls: dict | N
         drivers.append(f"{calls['grounded']} of {calls['calls']} Saturday research calls returned a grounded answer "
                        f"({round(100 * calls['grounded'] / calls['calls'])}%): retries and last week's approved rows cover most of the gap")
     if kind == "award":
-        drivers.append("The Friday awards research job is disabled (since 2026-09-30), so awards freshness is low by construction until it runs again")
+        drivers.append("The Friday awards research job was disabled from 2026-09-30 and re-enabled on 2026-10-03; awards freshness stays low until its first run (Fri 2026-10-09 02:00)")
     return {"kind": kind, "measured_weight": wsum, "overall": round(score), "low": round(min(score, equal)), "high": round(max(high, equal)), "equal_weight": round(equal),
             "components": [{"key": k, "value": round(comp[k][0]), "weight": WEIGHTS[k], "detail": comp[k][1]} for k in WEIGHTS if comp[k][0] is not None],
             "excluded": [{"key": k, "weight": WEIGHTS[k], "reason": comp[k][1]} for k in WEIGHTS if comp[k][0] is None],

@@ -27,6 +27,8 @@ what it means for the next run.
 Re-Research (prospect markets)`; those six markets are speculative and have no customer) are
 **Disabled** in Windows Task Scheduler. Nothing else changed: Saturday, Sunday and Monday still run.
 
+*2026-10-03:* Saturday's research now asks a short question first (`CFP_PROMPT_MODE=narrow-first`, set in `run_monthly.ps1`): 130 of 130 rows grounded, against about a third before. Because that question does not ask every field, step 2 now also restores last week's value of the fields it leaves out, keeps last week's verified deadline evidence when this week's research returns no quote, and checks every row's years (step 3). The step that starts the load had a script bug that day (the load did not run by itself; fixed in `run_monthly.ps1`).
+
 *2026-10-02:* sponsorship answers are no longer lost to an Unknown or a blank (step 2).
 
 *2026-10-01:* the approved files that Saturday's load falls back to for rows that fail the approval check (`Markets/Utility_audited.final.csv`, `Markets/Cybersecurity_audited.final.csv`) were patched by hand so four corrected rows (India Energy Week 2027, Climate Change, SecureWorld, Global Energy Show) keep their corrected values; upstream acknowledged these local copies as the master for Saturday. Until upstream's re-research delivery is imported, a fallback to these files is safe for those rows. An operator edit to either file is logged in `experiments/purpose_audit/OPERATOR-EDITS-LOG.md`.
@@ -114,7 +116,17 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    answer we already hold for the same year's edition, last week's answer is kept together with its page; blank cells
    are filled, a fresh answer is never replaced, and a Yes-versus-No difference is left for a person. Every value
    kept is listed in the report. *(sponsor_carry.py)*
+   Also, since 2026-10-03, for rows researched with the short question: fields it does not ask (organizer, city, overview,
+   categories, coordinator email, and the like) take last week's accepted value for the SAME edition, never a different
+   year's; last week's conference-dates text is restored only when it names the same full date as this week's start date;
+   and if this week's research returned no quote for a deadline that is unchanged (or blank) while last week's was verified
+   and has not passed, last week's page, quote and verified flag are kept together. A fresh answer is never overridden and
+   the approval check in step 3 still reads the kept quote on its page. Every value kept is listed in the report.
+   *(narrow_overlay.py)*
 3. **[Safety check]** **Runs the approval check with the row-by-row rule.** Rows that pass use this week's research.
+   Each row's years are checked first (start date inside its edition, conference-dates year equals start year, no
+   past start still Open or Upcoming, deadline not after the start or more than 18 months before it); a row that fails
+   is treated like any failing row. *(start_date_arbiter.py year checks)*
    Rows that fail, were not researched, or cannot be matched to an event with certainty keep last
    week's approved version. Events not covered this week carry over, so nothing disappears from
    the page. A cited page that an anti-bot wall will not let a plain read open (it answers with a

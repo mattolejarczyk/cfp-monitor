@@ -5,6 +5,16 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-03 - Saturday research healthy, load broken and fixed, narrow-prompt gaps closed, live load and restore
+
+- Research 130/130 grounded (73 + 57), 0 stubs. Scheduled load never ran (flattened-array bug in run_monthly.ps1; fixed). Rehearsals (sandbox_20261003*) found the narrow prompt's gaps: ORGANIZER blank 130/130, CITY a venue on 28, input-list CONFERENCE DATES wrong on 66 rows (research START DATE right on every page-provable row, 5 of 5; last week's approved dates agreed with it on 16 of 17).
+- Built: scripts/narrow_overlay.py (+6 more tests), scripts/start_date_arbiter.py (year-specific page proof, range expansion, year checks Y1-Y4), wired into weekend_import.py; WEEKEND-PROCESS.md and TOOLING.md updated. 50 related tests pass (no pytest in this environment; plain-function runner).
+- Operator rulings on five Utility rows (live pages): applied to Utility_audited.csv and Utility_input.csv; a Hydrogen Technology Expo MENA 2026 row had a 2027 start inside a 2026 edition (caught by Y1, kept at last week's).
+- Live load 07:49: both markets promoted. Regressions on future-deadline rows (blank quote overwrote verified evidence: RSA, Black Hat Asia call for summits, Nullcon; Global Energy Show link reverted; CODASPY and Apres-Cyber moved) restored by restore_rows_20261003.py; evidence-carry rule added (narrow_overlay.carry_evidence) and replayed against Saturday's research: Nullcon and RSA keep evidence; the replay gate rejected a composed Black Hat URL and kept last week's. Rows hand-loaded into the DB but missing from the approved file get no carry: they are in it now.
+- Upstream notes 21 and 22: their reply ids do not exist here, 'discontinued' and 'merged' claims lack R16 evidence; five of seven ids differ from ours. Third time a claimed input-list edit was not on this machine.
+- Loaded Carbon Capture Technology Expo MENA 2027 (upstream id, page dates, organizer blank). DB 427. Invariants hold; watch-list 25/26 -> 26/26 after updating the Nullcon entry.
+- Slips: first restore design over-reached on Global Energy Show (narrowed to the link); the rehearsal did not check verified evidence dropping, the live load did.
+
 ## 2026-10-02 (night) - six Arnica events, awards job enabled, board fixes
 
 - Scope reversal: the six events upstream ruled out (AAIML, ICRAI, RAAI, AI Con USA, AppWorld, ODSC East) are on the customer's sheet, so in scope. Notes 18-21. Delivery 1 rejected (empty of research; AAIML Tokyo not London, ICRAI Incheon not Guangzhou; rows not in the input list as claimed). Sparse patch 1 gate ACCEPTED 23/23 (quotes verbatim on aaiml.net, icrai.org, raai.net); sparse patch 2 needed the R11 word on AppWorld/ODSC ('Projected (2027)'), then ACCEPTED. AI Con USA read in a real browser: Seattle, 2026-10-18.

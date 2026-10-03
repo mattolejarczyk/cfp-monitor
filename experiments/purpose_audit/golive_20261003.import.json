@@ -1,0 +1,1628 @@
+{
+  "stamp": "20261003-074945",
+  "mode": "live",
+  "markets": [
+    {
+      "market": "Cybersecurity",
+      "status": "PROMOTED",
+      "decisions": [
+        {
+          "conference": "Hack In The Box (HITB Security Conference 2026)",
+          "canonical": "2026-hack-in-the-box-phuket",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "OWASP Global AppSec Europe 2026",
+          "canonical": "2026-owasp-global-appsec-europe-2026-lisbon-speaking",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "OWASP German Chapter Conference (AppSec Karlsruhe 2026)",
+          "canonical": "2026-owasp-german-chapter-conference-appsec-karlsruhe-2026-karlsruhe-institute-of-technology-kit-zkm-speaking",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "Hack In The Box Security Conference 2026",
+          "canonical": "2026-hack-in-the-box-security-conference-phuket",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "German OWASP Day 2026 (AppSec Karlsruhe)",
+          "canonical": "2026-german-owasp-day-karlsruhe",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "Gartner Identity & Access Management Summit 2026",
+          "canonical": "2026-gartner-identity-access-management-summit-las-vegas",
+          "reasons": [
+            "[2] Gartner Identity & Access Management Sum: HTTP 404 https://infosec-conferences.com/cybersecurity-events-usa/"
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "Cloud & Cyber Security Expo London 2027",
+          "canonical": "2027-cloud-cyber-security-expo-london-london",
+          "reasons": [
+            "[2] Cloud & Cyber Security Expo London 2027: HTTP 404 https://www.techshowlondon.co.uk/apply-to-speak"
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "it-sa Expo & Congress 2026",
+          "canonical": "2026-it-sa-expo-congress-nuremberg",
+          "reasons": [
+            "[2] it-sa Expo & Congress 2026: HTTP 404 https://www.itsa365.de/en/it-sa-expo-congress/supporting-programme"
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "SecureWorld East 2026",
+          "canonical": "2026-secureworld-east-virtual",
+          "reasons": [
+            "[2] SecureWorld East 2026: HTTP 404 https://www.secureworld.io/call-for-speakers",
+            "[4] SecureWorld East 2026: The event is confirmed for November 18, 2026, as a virtual conference."
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "SecureWorld Government & Critical Infrastructure 2026",
+          "canonical": "2026-secureworld-government-critical-infrastructure-virtual",
+          "reasons": [
+            "[3] SecureWorld Government & Critical Infras: paraphrase, date IS on page - \"Government & Critical Infrastructure. October 28, 20\""
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "Black Hat Asia 2027 (Call for Briefings)",
+          "canonical": "2027-black-hat-asia-briefings-singapore",
+          "reasons": [
+            "[2] Black Hat Asia 2027 (Call for Briefings): HTTP 404 (plain fetch said 403; a browser says 404) https://www.blackhat.com/asia-27/call-for-briefings.html"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "AppWorld (MWC Mobile World Congress 2027)",
+          "canonical": "2027-mwc-barcelona-appworld-barcelona-speaking",
+          "reasons": [
+            "[3] AppWorld (MWC Mobile World Congress 2027: paraphrase, date IS on page - \"Complete your submission by 5 November 2026 (23:00 C\""
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        }
+      ],
+      "input": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\Cybersecurity_input.csv",
+      "rows": 73,
+      "stubs": 0,
+      "repairs_log": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\weekend\\20261003-074945\\Cybersecurity_audited.repairs.md",
+      "narrow_overlay": {
+        "overlaid": [
+          {
+            "conference": "ShmooCon 2027",
+            "canonical": "2027-shmoocon-washington",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "CyberTech Global Tel Aviv 2027",
+            "canonical": "2027-cybertech-global-tel-aviv-tel-aviv",
+            "fields": [
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Wild West Hackin' Fest @ Mile High 2026",
+            "canonical": "2026-wild-west-hackin-fest-mile-high-denver",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "Gartner Identity & Access Management Summit 2026",
+            "canonical": "2026-gartner-identity-access-management-summit-las-vegas",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Cloud & Cyber Security Expo London 2027",
+            "canonical": "2027-cloud-cyber-security-expo-london-london",
+            "fields": [
+              "CONFERENCE DATES",
+              "CITY",
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Troopers 2026 (Troopers Cybersecurity Conference)",
+            "canonical": "2026-troopers-heidelberg",
+            "fields": [
+              "LOCATION",
+              "STATE_PROVINCE",
+              "CATEGORIES",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "RSA Conference 2027 (RSAC 2027)",
+            "canonical": "2027-rsa-conference-san-francisco",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Security BSides Austin 2026",
+            "canonical": "2026-security-bsides-austin-austin",
+            "fields": [
+              "STATE_PROVINCE",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "CYBERUK 2026",
+            "canonical": "2026-cyberuk-glasgow",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Black Hat Asia 2026",
+            "canonical": "2026-black-hat-asia-singapore",
+            "fields": [
+              "CONFERENCE DATES",
+              "CITY",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Google Cloud Next '26",
+            "canonical": "2026-google-cloud-next-26-las-vegas",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "DEF CON Singapore 2026 (Inaugural Edition)",
+            "canonical": "2026-def-con-singapore-singapore",
+            "fields": [
+              "CONFERENCE DATES",
+              "CITY",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "OffensiveCon Berlin 2026",
+            "canonical": "2026-offensivecon-berlin-berlin",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "AppSec Israel 2026 (OWASP AppSec Israel)",
+            "canonical": "2026-appsec-israel-tel-aviv",
+            "fields": [
+              "CONFERENCE DATES",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Gartner Security & Risk Management Summit EMEA 2026 (London)",
+            "canonical": "2026-gartner-security-risk-management-summit-emea-london",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Gartner Security & Risk Management Summit 2026 (National Harbor / NA)",
+            "canonical": "2026-gartner-security-risk-management-summit-national-harbor",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "IEEE Symposium on Security & Privacy 2026 (47th IEEE S&P / Oakland)",
+            "canonical": "2026-ieee-symposium-on-security-privacy-san-francisco",
+            "fields": [
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "FIRST 38th Annual Conference 2026 (Forum of Incident Response Teams)",
+            "canonical": "2026-first-38th-annual-conference-denver",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "Infosecurity Europe 2026",
+            "canonical": "2026-infosecurity-europe-london",
+            "fields": [
+              "CITY",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "OWASP Italy Day 2026",
+            "canonical": "2026-owasp-italy-day-cagliari",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "Area41 Security Conference 2026",
+            "canonical": "2026-area41-security-conference-d-bendorf",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "OWASP Global AppSec EU 2026 (25th Anniversary)",
+            "canonical": "2026-owasp-global-appsec-eu-vienna",
+            "fields": [
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Gartner Security & Risk Management Summit Japan 2026",
+            "canonical": "2026-gartner-security-risk-management-summit-japan-grand-nikko-tokyo-daiba",
+            "fields": [
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Black Hat USA 2026",
+            "canonical": "2026-black-hat-usa-las-vegas",
+            "fields": [
+              "STATE_PROVINCE",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "BSides Las Vegas 2026 (BSidesLV)",
+            "canonical": "2026-bsides-las-vegas-las-vegas",
+            "fields": [
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "DEF CON 34",
+            "canonical": "2026-def-con-34-las-vegas",
+            "fields": [
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "AppSec Village at DEF CON 34",
+            "canonical": "2026-appsec-village-at-def-con-34-las-vegas",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "USENIX Security Symposium 2026 (35th USENIX Security '26)",
+            "canonical": "2026-usenix-security-symposium-baltimore",
+            "fields": [
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "CrowdStrike Fal.Con 2026",
+            "canonical": "2026-crowdstrike-fal-con-las-vegas",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "DevSecCon 2026 (DevSecCon Global / Virtual)",
+            "canonical": "2026-devseccon-virtual",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "InfoSec World 2026",
+            "canonical": "2026-infosec-world-orlando",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Billington 17th Annual CyberSecurity Summit 2026",
+            "canonical": "2026-billington-17th-annual-cybersecurity-summit-washington",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "LabsCon 2026 (SentinelOne LabsCon)",
+            "canonical": "2026-labscon-scottsdale",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "OWASP AppSec Days France 2026",
+            "canonical": "2026-owasp-appsec-days-france-paris",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "OWASP Global AppSec USA 2026",
+            "canonical": "2026-owasp-global-appsec-usa-san-francisco",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "LASCON 2026 (Lonestar Application Security Conference)",
+            "canonical": "2026-lascon-austin",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "it-sa Expo & Congress 2026",
+            "canonical": "2026-it-sa-expo-congress-nuremberg",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "SecTor 2026 (Black Hat Canada / SecTor)",
+            "canonical": "2026-sector-toronto",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Wild West Hackin' Fest Deadwood 2026",
+            "canonical": "2026-wild-west-hackin-fest-deadwood-deadwood",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "ISC2 Security Congress 2026",
+            "canonical": "2026-isc2-security-congress-aurora",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "CyberDefenseCon 2026 (Cyber Defense Magazine)",
+            "canonical": "2026-cyberdefensecon-orlando",
+            "fields": [
+              "CONFERENCE DATES",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "SANS Cyber Defense Initiative 2026 (CDI 2026)",
+            "canonical": "2026-sans-cyber-defense-initiative-washington",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "fwd:cloudsec North America 2026",
+            "canonical": "2026-fwd-cloudsec-north-america-bellevue",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld Detroit 2026",
+            "canonical": "2026-secureworld-detroit-novi",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld Quantum Cryptography 2026",
+            "canonical": "2026-secureworld-quantum-cryptography-virtual",
+            "fields": [
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld Atlanta 2026",
+            "canonical": "2026-secureworld-atlanta-atlanta",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld Denver 2026",
+            "canonical": "2026-secureworld-denver-denver",
+            "fields": [
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld Dallas 2026",
+            "canonical": "2026-secureworld-dallas-plano",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld Threat Defense 2026",
+            "canonical": "2026-secureworld-threat-defense-virtual",
+            "fields": [
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld New York City 2026",
+            "canonical": "2026-secureworld-new-york-city-new-york",
+            "fields": [
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld Seattle 2026",
+            "canonical": "2026-secureworld-seattle-bellevue",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld East 2026",
+            "canonical": "2026-secureworld-east-virtual",
+            "fields": [
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld Twin Cities 2026",
+            "canonical": "2026-secureworld-twin-cities-bloomington",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "SecureWorld Government & Critical Infrastructure 2026",
+            "canonical": "2026-secureworld-government-critical-infrastructure-virtual",
+            "fields": [
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          }
+        ],
+        "skipped_new_edition": 1,
+        "skipped_full_prompt": 0,
+        "skipped_no_prior": 17,
+        "fields": {
+          "LOCATION": 26,
+          "CITY": 25,
+          "STATE_PROVINCE": 40,
+          "ORGANIZER": 54,
+          "CFP MODEL TYPE": 10,
+          "OVERVIEW": 46,
+          "CATEGORIES": 24,
+          "CONFERENCE DATES": 21,
+          "MAIN_INFO_URL": 18,
+          "COORDINATOR EMAIL": 21,
+          "SUBMISSION URL": 28
+        }
+      },
+      "year_check_failed": 0,
+      "sponsor_carried": {
+        "carried": [
+          {
+            "conference": "Troopers 2026 (Troopers Cybersecurity Conference)",
+            "canonical": "2026-troopers-heidelberg",
+            "fields": [
+              "SPONSOR_REQUIRED"
+            ],
+            "why": "this week's answer was Unknown or blank; kept last week's resolved answer with its page"
+          },
+          {
+            "conference": "DEF CON Singapore 2026 (Inaugural Edition)",
+            "canonical": "2026-def-con-singapore-singapore",
+            "fields": [
+              "SPONSOR_REQUIRED",
+              "SPONSOR_URL",
+              "SPONSOR_COST"
+            ],
+            "why": "this week's answer was Unknown or blank; kept last week's resolved answer with its page"
+          },
+          {
+            "conference": "OWASP AppSec Days France 2026",
+            "canonical": "2026-owasp-appsec-days-france-paris",
+            "fields": [
+              "SPONSOR_COST"
+            ],
+            "why": "same answer as last week but these cells came back blank; filled from last week"
+          }
+        ],
+        "disagreements": [
+          {
+            "conference": "DEF CON 34",
+            "canonical": "2026-def-con-34-las-vegas",
+            "last_week": "no",
+            "this_week": "yes"
+          }
+        ],
+        "skipped_new_edition": 1
+      },
+      "ids_csv": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\weekend\\20261003-074945\\Cybersecurity_ids.csv",
+      "carried_over": 2,
+      "candidate": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\weekend\\20261003-074945\\Cybersecurity_audited.candidate.csv",
+      "accept_json": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\weekend\\20261003-074945\\Cybersecurity_audited.candidate.gate.json",
+      "shipped": 70,
+      "from_this_week": 63,
+      "from_last_week": 7,
+      "rounds": 2,
+      "held_back": 5
+    },
+    {
+      "market": "Utility",
+      "status": "PROMOTED",
+      "decisions": [
+        {
+          "conference": "Decarb Connect Europe 2027",
+          "canonical": "2027-decarb-connect-europe-2027-hamburg-speaking",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "World Hydrogen & Carbon Capture Conference Indonesia (IICCS Forum 2026)",
+          "canonical": "2026-world-hydrogen-carbon-capture-conference-indonesia-iiccs-forum-2026-jakarta-speaking",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "2026 World Conference on Carbon Capture, Utilisation & Storage (CCUS Event 2026)",
+          "canonical": "2026-2026-world-conference-on-carbon-capture-utilisation-storage-ccus-event-2026-houston-speaking",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "Decarb Connect Canada 2026",
+          "canonical": "2026-decarb-connect-canada-toronto",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "India Energy Week 2027 (IEW 2027)",
+          "canonical": "2027-india-energy-week-2027-iew-2027-yashobhoomi-iicc-pragati-maidan-speaking",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "Decarbonization Congress 2026 (Resilient & Net-Zero Industry Congress)",
+          "canonical": "2026-decarbonization-congress-2026-resilient-net-zero-industry-congress-berlin-speaking",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "Innovation Zero 2027 (The UK's Clean Tech Congress)",
+          "canonical": "2027-innovation-zero-2027-the-uks-clean-tech-congress-olympia-london-speaking",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "Hydrogen Technology Expo MENA 2026",
+          "canonical": "2026-hydrogen-technology-expo-mena-abu-dhabi",
+          "reasons": [
+            "year check: Y1 START DATE 2027-06-08 is not in edition 2026; Y2 CONFERENCE DATES year 2026 differs from START DATE year 2027"
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "World Hydrogen Energy Conference 2026 (WHEC 2026 - 24th Edition)",
+          "canonical": "2026-world-hydrogen-energy-conference-2026-whec-2026-24th-edition-marina-bay-sands-speaking",
+          "reasons": [
+            "no permanent id - cannot tell for certain which event this is, so it is not loaded (a rename would otherwise create a duplicate)"
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "Industry Connect Europe 2027",
+          "canonical": "2027-industry-connect-europe-vienna",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "India Energy Week 2027",
+          "canonical": "2027-india-energy-week-kolkata",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "World Hydrogen Energy Conference 2026 (WHEC 2026)",
+          "canonical": "2026-world-hydrogen-energy-conference-singapore",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "The 4th International & Indonesia Carbon Capture and Storage (IICCS) Forum 2026",
+          "canonical": "2026-the-4th-international-indonesia-carbon-capture-jakarta",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "Carbon Capture, Utilization, and Storage (CCUS) 2026",
+          "canonical": "2026-carbon-capture-utilization-and-storage-the-woodlands",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "Industry Connect Canada 2026",
+          "canonical": "2026-industry-connect-canada-toronto",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "Oil & Gas Decarbonisation Congress 2026 (DECARBON 2026)",
+          "canonical": "2026-oil-gas-decarbonisation-congress-v-sendorf",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "Innovation Zero World Congress 2027",
+          "canonical": "2027-innovation-zero-world-congress-london",
+          "reasons": [
+            "not covered by this week's research"
+          ],
+          "action": "carried-over"
+        },
+        {
+          "conference": "CarbonZero Global Conference & Exhibition 2026",
+          "canonical": "2026-carbonzero-global-conference-exhibition-brussels",
+          "reasons": [
+            "[4] CarbonZero Global Conference & Exhibitio: The event is confirmed for October 27-29, 2026, in Brussels, contradic"
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "Industrial Net Zero & Decarbonisation Europe Summit 2026",
+          "canonical": "2026-industrial-net-zero-decarbonisation-europe-amsterdam",
+          "reasons": [
+            "[3] Industrial Net Zero & Decarbonisation Eu: quote and date both absent - \"Sale ends on 16-10-2026.\""
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "World Future Energy Summit 2027 (WFES 2027)",
+          "canonical": "2027-world-future-energy-summit-abu-dhabi",
+          "reasons": [
+            "[2] World Future Energy Summit 2027 (WFES 20: HTTP 404 https://www.s-ge.com/en/event/trade-fair/world-future-energy-summit-adswwfes-2027"
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "International Conference on Climate Change: Impacts and Responses 2027 (19th ICCC)",
+          "canonical": "2026-nineteenth-international-conference-on-climate-johannesburg",
+          "reasons": [
+            "[3] International Conference on Climate Chan: paraphrase, date IS on page - \"Late, 20 October (26) to 20 December (26)\""
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "Decarb Connect North America 2027",
+          "canonical": "2026-decarb-connect-north-america-houston",
+          "reasons": [
+            "[2] Decarb Connect North America 2027: HTTP 404 https://decarbconnectnorthamerica.com/2026-speakers/"
+          ],
+          "action": "kept-last-week"
+        },
+        {
+          "conference": "31st Annual Green Chemistry & Engineering Conference (GC&E)",
+          "canonical": "2027-acs-green-chemistry-engineering-conference-reston-speaking",
+          "reasons": [
+            "[3] 31st Annual Green Chemistry & Engineerin: paraphrase, date IS on page - \"Call for Symposia: Deadline October 13, 2026. Help u\""
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        },
+        {
+          "conference": "Fuel Ethanol Workshop and Expo & Sustainable Fuels Summit",
+          "canonical": "2027-fuel-ethanol-workshop-sustainable-fuels-summit-omaha-speaking",
+          "reasons": [
+            "[3] Fuel Ethanol Workshop and Expo & Sustain: paraphrase, date IS on page - \"Presentation abstracts will be accepted for the 2027\""
+          ],
+          "action": "held-back",
+          "why_no_prior": "no accepted version from last week"
+        }
+      ],
+      "input": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\Utility_input.csv",
+      "rows": 57,
+      "stubs": 0,
+      "repairs_log": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\weekend\\20261003-074945\\Utility_audited.repairs.md",
+      "narrow_overlay": {
+        "overlaid": [
+          {
+            "conference": "Industrial Net Zero Conference 2027",
+            "canonical": "2027-industrial-net-zero-conference-tbd",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "European Carbon Capture, Utilization & Storage Conference 2027",
+            "canonical": "2027-european-carbon-capture-utilization-storage-amsterdam",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "American Hydrogen & CCUS Forum 2026",
+            "canonical": "2026-american-hydrogen-ccus-forum-houston",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Connecting Hydrogen Europe 2026",
+            "canonical": "2026-connecting-hydrogen-europe-madrid",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Reuters Events: Global Energy Forum 2026",
+            "canonical": "2026-reuters-events-global-energy-forum-new-york-city",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Horizons Clean Energy Expansion Asia Conference 2027",
+            "canonical": "2027-horizons-clean-energy-expansion-asia-conference-tokyo",
+            "fields": [
+              "ORGANIZER",
+              "MAIN_INFO_URL"
+            ]
+          },
+          {
+            "conference": "WFCC 2026 (World Fuel Cell Conference)",
+            "canonical": "2026-wfcc-fukuoka",
+            "fields": [
+              "CONFERENCE DATES",
+              "CATEGORIES",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Carbon Capture USA 2026",
+            "canonical": "2026-carbon-capture-usa-houston",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Asia Pacific Hydrogen Summit & Exhibition 2026",
+            "canonical": "2026-asia-pacific-hydrogen-summit-exhibition-adelaide",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Decarb TechInvest 2027",
+            "canonical": "2027-decarb-techinvest-boston",
+            "fields": [
+              "STATE_PROVINCE",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Hydrogen Innovation and Technology Conference 2026 (IChemE Hydrogen 2026)",
+            "canonical": "2026-hydrogen-innovation-and-technology-conference-manchester",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Gastech 2026",
+            "canonical": "2026-gastech-bangkok",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "ESF MENA 2026 (Middle East Energy & Sustainability Forum)",
+            "canonical": "2026-esf-mena-dubai",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Climate Week NYC 2026",
+            "canonical": "2026-climate-week-nyc-new-york-city",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Hydrogen Technology World Expo Europe 2026",
+            "canonical": "2026-hydrogen-technology-world-expo-europe-hamburg",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Hydrogen Americas 2026 Summit & Exhibition",
+            "canonical": "2026-hydrogen-americas-summit-exhibition-houston",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Reuters Events: Energy Transition Europe 2026",
+            "canonical": "2026-reuters-events-energy-transition-europe-amsterdam",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "COUNTRY",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Industrial Decarbonisation Europe 2026 (Reuters Events)",
+            "canonical": "2026-industrial-decarbonisation-europe-amsterdam",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Carbon Capture Technology Expo Europe 2026",
+            "canonical": "2026-carbon-capture-technology-expo-europe-hamburg",
+            "fields": [
+              "CONFERENCE DATES",
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Singapore International Energy Week 2026 (SIEW 2026)",
+            "canonical": "2026-singapore-international-energy-week-singapore",
+            "fields": [
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "All-Energy Australia 2026",
+            "canonical": "2026-all-energy-australia-melbourne",
+            "fields": [
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "ADIPEC 2026 (Abu Dhabi International Petroleum Exhibition & Conference)",
+            "canonical": "2026-adipec-abu-dhabi",
+            "fields": [
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "H2 MEET 2026 (World Hydrogen Expo Korea)",
+            "canonical": "2026-h2-meet-goyang",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Horizons Clean Energy Expansion Week 2026 (HCEE Week 2026)",
+            "canonical": "2026-horizons-clean-energy-expansion-week-copenhagen",
+            "fields": [
+              "CONFERENCE DATES",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Industrial Net Zero & Decarbonisation Europe Summit 2026",
+            "canonical": "2026-industrial-net-zero-decarbonisation-europe-amsterdam",
+            "fields": [
+              "CONFERENCE DATES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Energy Transition North America 2026 (Reuters Events)",
+            "canonical": "2026-energy-transition-north-america-houston",
+            "fields": [
+              "CONFERENCE DATES",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "CES 2027 (Consumer Electronics Show - Smart Energy & Clean Tech)",
+            "canonical": "2027-ces-las-vegas",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "World Future Energy Summit 2027 (WFES 2027)",
+            "canonical": "2027-world-future-energy-summit-abu-dhabi",
+            "fields": [
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Clean Fuels Conference 2027",
+            "canonical": "2027-clean-fuels-conference-phoenix",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "International Conference on Climate Change: Impacts and Responses 2027 (19th ICCC)",
+            "canonical": "2026-nineteenth-international-conference-on-climate-johannesburg",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "Decarb Connect North America 2027",
+            "canonical": "2026-decarb-connect-north-america-houston",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "STATE_PROVINCE",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Carbon Capture Technology Expo North America 2027",
+            "canonical": "2027-carbon-capture-technology-expo-north-america-houston",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Hydrogen Technology Expo North America 2027",
+            "canonical": "2027-hydrogen-technology-expo-north-america-houston",
+            "fields": [
+              "CONFERENCE DATES",
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER"
+            ]
+          },
+          {
+            "conference": "CERAWeek 2027 (by S&P Global)",
+            "canonical": "2027-ceraweek-houston",
+            "fields": [
+              "LOCATION",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Future Fuels MENA Summit 2026",
+            "canonical": "2026-future-fuels-mena-summit-dubai",
+            "fields": [
+              "OVERVIEW",
+              "ORGANIZER",
+              "MAIN_INFO_URL",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Decarb Connect UK 2026",
+            "canonical": "2026-decarb-connect-uk-london",
+            "fields": [
+              "CONFERENCE DATES",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Sustainable Fuels Global Summit 2027",
+            "canonical": "2027-sustainable-fuels-global-summit-rotterdam",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Carbon Capture Europe Summit 2027",
+            "canonical": "2027-carbon-capture-europe-summit-rotterdam",
+            "fields": [
+              "CONFERENCE DATES",
+              "OVERVIEW",
+              "CATEGORIES",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Canadian Hydrogen Convention 2027",
+            "canonical": "2027-canadian-hydrogen-convention-edmonton",
+            "fields": [
+              "LOCATION",
+              "STATE_PROVINCE",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "ACT Expo 2027 (Advanced Clean Transportation Expo)",
+            "canonical": "2026-act-expo-las-vegas",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "World Hydrogen 2027 Summit & Exhibition",
+            "canonical": "2027-world-hydrogen-summit-exhibition-rotterdam",
+            "fields": [
+              "CONFERENCE DATES",
+              "CITY",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Global Energy Show Canada 2027",
+            "canonical": "2027-global-energy-show-canada-calgary",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "SUBMISSION URL"
+            ]
+          },
+          {
+            "conference": "Hydrogen Technology Expo MENA 2026",
+            "canonical": "2026-hydrogen-technology-expo-mena-abu-dhabi",
+            "fields": [
+              "LOCATION",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Carbon Capture Technology Expo MENA 2026",
+            "canonical": "2026-carbon-capture-technology-expo-mena-abu-dhabi",
+            "fields": [
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          },
+          {
+            "conference": "Hydrogen Technology World Expo 2027",
+            "canonical": "2027-hydrogen-technology-world-expo-hamburg",
+            "fields": [
+              "CONFERENCE DATES",
+              "STATE_PROVINCE",
+              "OVERVIEW",
+              "CATEGORIES",
+              "COORDINATOR EMAIL",
+              "ORGANIZER",
+              "CFP MODEL TYPE"
+            ]
+          }
+        ],
+        "skipped_new_edition": 0,
+        "skipped_full_prompt": 0,
+        "skipped_no_prior": 11,
+        "fields": {
+          "LOCATION": 17,
+          "CITY": 11,
+          "STATE_PROVINCE": 33,
+          "OVERVIEW": 39,
+          "ORGANIZER": 45,
+          "CFP MODEL TYPE": 30,
+          "CONFERENCE DATES": 27,
+          "COORDINATOR EMAIL": 20,
+          "SUBMISSION URL": 17,
+          "CATEGORIES": 22,
+          "MAIN_INFO_URL": 3,
+          "COUNTRY": 1
+        }
+      },
+      "year_check_failed": 1,
+      "sponsor_carried": {
+        "carried": [
+          {
+            "conference": "Reuters Events: Energy Transition Europe 2026",
+            "canonical": "2026-reuters-events-energy-transition-europe-amsterdam",
+            "fields": [
+              "SPONSOR_COST"
+            ],
+            "why": "same answer as last week but these cells came back blank; filled from last week"
+          },
+          {
+            "conference": "ACT Expo 2027 (Advanced Clean Transportation Expo)",
+            "canonical": "2026-act-expo-las-vegas",
+            "fields": [
+              "SPONSOR_COST"
+            ],
+            "why": "same answer as last week but these cells came back blank; filled from last week"
+          }
+        ],
+        "disagreements": [],
+        "skipped_new_edition": 0
+      },
+      "ids_csv": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\weekend\\20261003-074945\\Utility_ids.csv",
+      "carried_over": 8,
+      "candidate": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\weekend\\20261003-074945\\Utility_audited.candidate.csv",
+      "accept_json": "C:\\Users\\matts\\Desktop\\Nicolia-PR-Prime\\Markets\\weekend\\20261003-074945\\Utility_audited.candidate.gate.json",
+      "shipped": 55,
+      "from_this_week": 41,
+      "from_last_week": 14,
+      "rounds": 2,
+      "held_back": 10
+    }
+  ],
+  "database": "updated",
+  "status": "DONE",
+  "backup": "C:\\Users\\matts\\AppData\\Local\\CFP-Monitor\\cfp_monitor.db.pre-weekend-20261003-074945",
+  "why": ""
+}

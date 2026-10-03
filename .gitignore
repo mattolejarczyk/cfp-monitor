@@ -68,3 +68,4 @@ experiments/purpose_audit/upstream_seven_merged_*.csv
 experiments/purpose_audit/upstream_sparse_patch2_*.csv
 experiments/purpose_audit/mr7/
 experiments/purpose_audit/narrow_test/
+experiments/purpose_audit/sandbox_2026*/

@@ -284,6 +284,30 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     # the row rule looks prior versions up by canonical id; give it the carried ids
     lookup = {**up_to_canon, **canon_of}
     sources = ["new"] * len(rows)
+    # NARROW-PROMPT OVERLAY (2026-10-03, scripts/narrow_overlay.py): the narrow research question does not ask ORGANIZER, CITY,
+    # OVERVIEW and the like; they came back blank or as the input list's older text (a venue in CITY on 28 rows, ORGANIZER blank on
+    # all 130). Keep last week's accepted value of those fields, same edition only; fresh answers are never touched; reported.
+    from scripts.narrow_overlay import overlay_narrow
+    rows, ov = overlay_narrow(rows, sources, prior_by_canon, lookup, to_canonical)
+    res["narrow_overlay"] = ov
+    if ov["overlaid"]:
+        log.append(f"[{market}] narrow overlay: {len(ov['overlaid'])} row(s) kept last week's unasked fields "
+                   f"({', '.join(f'{k} {v}' for k, v in sorted(ov['fields'].items()))})")
+    if ov.get("evidence_carried"):
+        log.append(f"[{market}] narrow overlay: {len(ov['evidence_carried'])} row(s) kept last week's verified deadline evidence "
+                   f"(this week's research returned no quote): " + "; ".join(e["conference"][:30] for e in ov["evidence_carried"][:6]))
+    # YEAR CHECKS (2026-10-03, scripts/start_date_arbiter.py year_checks): a row whose start date is not in its edition, whose
+    # conference-dates year differs from its start date, whose past start is still Open/Upcoming, or whose deadline is after the
+    # start (or 18 months before it) mixes editions. It fails here, so the row rule gives it last week's version or holds it back.
+    from datetime import date as _date
+    from scripts.start_date_arbiter import year_checks
+    for i, r in enumerate(rows):
+        if market == AWARDS or i in pre_bad:
+            continue
+        yf = year_checks(r, _date.today())
+        if yf:
+            pre_bad[i] = ["year check: " + "; ".join(yf)]
+    res["year_check_failed"] = sum(1 for i in pre_bad if any(x.startswith("year check") for x in pre_bad[i]))
     if pre_bad:
         rows, sources = apply_row_rule(rows, sources, pre_bad, prior_by_canon, lookup,
                                        res["decisions"])

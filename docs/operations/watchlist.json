@@ -152,12 +152,13 @@
     {
       "label": "Approved Cybersecurity file: Nullcon corrected",
       "file": "Cybersecurity_audited.final.csv",
-      "event_id": "2026-nullcon-goa-2027-bambolim-speaking",
+      "event_id": "2027-nullcon-goa-2027-18th-edition-grand-hyatt-goa-speaking",
       "expect": {
         "SUBMISSION DEADLINE": "2026-10-30",
         "IS_PROJECTED": "false",
-        "GROUNDING_CONFIDENCE": "Verified (2026)"
-      }
+        "GROUNDING_CONFIDENCE": "Verified (2027)"
+      },
+      "note": "Row renamed by the 2026-10-03 load ('Nullcon Goa 2027 (18th Edition)', edition 2027); deadline restored by operator ruling after the narrow research returned blank."
     },
     {
       "label": "Approved Cybersecurity file: SecureWorld Gov and CI citation withdrawn",
