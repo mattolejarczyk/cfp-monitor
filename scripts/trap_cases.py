@@ -43,7 +43,8 @@ def run_check(case: dict, chk: dict) -> tuple[str, str]:
         return ("PASS" if got == chk["expect"] else "FAIL"), f"page proves {chk['date']}: {got} (expected {chk['expect']})"
     if t == "find_date":
         from src.cfp_monitor.verify import find_date
-        got = find_date(case["fixture"], _d(chk["date"]))
+        from scripts.start_date_arbiter import expand_ranges            # ranges are spelled out first, as the real reader does
+        got = find_date(expand_ranges(case["fixture"]), _d(chk["date"]))
         return ("PASS" if got == chk["expect"] else "FAIL"), f"find_date {chk['date']}: {got} (expected {chk['expect']})"
     if t == "block_page":
         from src.cfp_monitor.verify import is_block_page
@@ -63,6 +64,14 @@ def run_check(case: dict, chk: dict) -> tuple[str, str]:
         from scripts.post_load_qa import guessed_dates
         got = bool(guessed_dates({"k": {"name": "n", **chk["old"]}}, {"k": {"name": "n", **chk["new"]}}))
         return ("PASS" if got == chk["expect_flag"] else "FAIL"), f"load QA flags the introduced start date: {got} (expected {chk['expect_flag']})"
+    if t == "pass_accepts":
+        from experiments.read_the_page_pass.pass_lib import accept
+        got, why = accept(chk["field"], {"value": chk["value"], "quote": chk["quote"]}, case["fixture"], chk["edition"])
+        return ("PASS" if got == chk["expect"] else "FAIL"), f"read-the-page acceptance: {got!r} ({why}); expected {chk['expect']!r}"
+    if t == "dateless":
+        from experiments.read_the_page_pass.pass_lib import looks_dateless
+        got = looks_dateless(case["fixture"])
+        return ("PASS" if got == chk["expect"] else "FAIL"), f"looks_dateless: {got} (expected {chk['expect']})"
     if t == "event_named_on_page":
         got = chk["event"].lower() in case["fixture"].lower()
         return ("PASS" if got == chk["expect"] else "FAIL"), f"event named on the page: {got} (expected {chk['expect']})"

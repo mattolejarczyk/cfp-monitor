@@ -24,7 +24,7 @@ from experiments.read_the_page_pass import pass_lib as L                      # 
 from scripts.pinned_rows import load_pins                                     # noqa: E402
 from src.cfp_monitor.verify import fetch_text, is_block_page                  # noqa: E402
 
-MAX_REQUESTS, MAX_USD = 60, 0.50
+MAX_REQUESTS, MAX_USD = 150, 0.50          # raised from 60 on 2026-10-03: three repeats per model; the whole experiment still costs cents
 LOG = HERE / "llm_log.jsonl"
 PAGES = HERE / "pages.json"
 sp.MAXTOK[0] = 3000
@@ -41,7 +41,11 @@ def spent():
     return n, usd
 
 
+RENDER = {"on": True}
+
+
 def page_text(url, cache):
+    """Plain fetch first; if the text has no dated sentence at all, render the page in the real Chrome (LIMITER 1: script-built pages). Cached per URL and mode."""
     if url in cache:
         return cache[url]
     try:
@@ -49,6 +53,12 @@ def page_text(url, cache):
     except Exception:                                                        # noqa: BLE001
         t = ""
     t = "" if (t and is_block_page(t)) else (t or "")
+    if RENDER["on"] and L.looks_dateless(t):
+        from src.cfp_monitor.render_text import render_text
+        rt, note = render_text(url)
+        print(f"  render {url[:60]}: plain {len(t)} chars -> {len(rt)} chars ({note})", flush=True)
+        if len(rt) > len(t):
+            t = rt
     cache[url] = t
     return t
 
@@ -91,7 +101,10 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="+", default=["B"])
+    ap.add_argument("--repeats", type=int, default=1, help="run each model this many times: temperature 0 is not deterministic at low reasoning effort")
+    ap.add_argument("--no-render", action="store_true", help="plain fetch only (the 2026-10-03 baseline)")
     a = ap.parse_args()
+    RENDER["on"] = not a.no_render
     cache = json.loads(PAGES.read_text(encoding="utf-8")) if PAGES.exists() else {}
     pins = load_pins()
     gold = L.gold_facts(pins)
@@ -116,6 +129,7 @@ def main():
     PAGES.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
     results = {}
     for mk in a.models:
+      for rep in range(a.repeats):
         items, total = [], 0.0
         for event, edition, text, facts, lens in jobs:
             readable = bool(text.strip())
@@ -132,9 +146,24 @@ def main():
                 else:
                     got, why = L.accept(f["field"], (fields or {}).get(f["field"], {}), text, edition) if readable else ("", "page unreadable")
                 items.append({"event": event, "field": f["field"], "gold": f["gold"], "accepted": got, "why": why, "readable": readable, "call_failed": failed})
-        results[mk] = {"model": sp.MODELS[mk], "score": L.score(items), "cost_usd": round(total, 5), "items": items}
-        s = results[mk]["score"]
-        print(f"\n== {sp.MODELS[mk]}: precision {s['precision']}, recall {s['recall']} ({s['found_of_gold']}), wrong {s['wrong']}, blanks kept blank {s['blank_kept_blank']} of {s['blank_gold']}, false accepts {s['false_accept']}, cost ${total:.4f}")
+        key = f"{mk}#{rep + 1}"
+        results[key] = {"model": sp.MODELS[mk], "score": L.score(items), "cost_usd": round(total, 5), "items": items}
+        s = results[key]["score"]
+        print(f"\n== {sp.MODELS[mk]} run {rep + 1}: precision {s['precision']}, recall {s['recall']} ({s['found_of_gold']}), wrong {s['wrong']}, blanks kept blank {s['blank_kept_blank']} of {s['blank_gold']}, false accepts {s['false_accept']}, calls failed {s['calls_failed']}, cost ${total:.4f}", flush=True)
+    # stability: a fact is STABLE if it is accepted and correct in every run of a model
+    for mk in a.models:
+        runs = [results[f"{mk}#{r + 1}"]["items"] for r in range(a.repeats)]
+        keyed = {}
+        for run in runs:
+            for i in run:
+                if i.get("call_failed"):
+                    continue
+                ok = (i["accepted"] and i["gold"] and L.same(i["field"], i["accepted"], i["gold"])) or (not i["accepted"] and not i["gold"])
+                keyed.setdefault((i["event"], i["field"], i["gold"]), []).append(bool(ok) and bool(i["gold"]))
+        gold_keys = [k for k in keyed if k[2]]
+        always = sum(1 for k in gold_keys if all(keyed[k]))
+        ever = sum(1 for k in gold_keys if any(keyed[k]))
+        print(f"   {sp.MODELS[mk]}: of {len(gold_keys)} verified facts, found in EVERY run {always}, in at least one run {ever}", flush=True)
     (HERE / "results.json").write_text(json.dumps(results, indent=1, ensure_ascii=False), encoding="utf-8")
     n, usd = spent()
     print(f"\ntotal so far: {n} requests, {usd:.4f} USD")

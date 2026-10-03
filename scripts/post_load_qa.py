@@ -127,12 +127,14 @@ def date_checks(market: str, rows: list[dict], today: date) -> tuple[list, list[
     return [market, len(rows), agree, dis, blank], flags
 
 
-def guessed_dates(old: dict, new: dict) -> list[str]:
+def guessed_dates(old: dict, new: dict, pinned: set | None = None) -> list[str]:
     """A start date INTRODUCED OR CHANGED by this load on a projected row with no evidence page (the ODSC East case: the load set 2027-05-10 and
     'Upcoming'; the date was in fact right, which is why this is a list for a person to confirm). Existing start dates on such rows
     are normal (they come from the event's own site) and are not flagged."""
     out = []
     for k, r in new.items():
+        if pinned and k in pinned:
+            continue                                  # a person verified this fact on the event's own page (pinned_rows.json): nothing to confirm
         if _b((old.get(k) or {}).get("start_date")) == _b(r.get("start_date")):
             continue
         if _b(r.get("start_date")) and _b(r.get("is_projected")).lower() == "true" and not _b(r.get("deadline_evidence_url")):
@@ -156,7 +158,7 @@ def read_csv_rows(path: Path) -> list[dict]:
         return list(csv.DictReader(fh))
 
 
-def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str, tuple[bool, str]], watch: str, today: date) -> dict:
+def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str, tuple[bool, str]], watch: str, today: date, steps: dict | None = None, pinned: set | None = None) -> dict:
     rep = qa_report.new_report("load", today)
     rows, flags, past = deadline_changes(old, new, today)
     rep["sections"].append({"title": "Rows with a deadline still ahead: what the load changed",
@@ -175,9 +177,25 @@ def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str,
     rep["sections"].append({"title": "Dates on the shipped approved files", "columns": ["Market", "Rows", "Start agrees with dates text", "Disagrees", "One side blank"],
                             "rows": drows, "flags": dflags})
     rep["flags"] += dflags
-    g = guessed_dates(old, new)
+    g = guessed_dates(old, new, pinned)
     rep["sections"].append({"title": "Start dates with no page behind the edition", "columns": ["Row"], "rows": [[x] for x in g], "flags": g})
     rep["flags"] += g
+    if steps:
+        from scripts.failure_steps import STEPS, line
+        stp_rows = [[m, v["researched"], v["shipped_fresh"], *[v["counts"][s] for s in STEPS]] for m, v in steps.items()]
+        rep["sections"].append({"title": "Why rows did not ship this week's research, by step (FIND / PROVE / READ / IDENTITY)",
+                                "note": "FIND = the cited page is a 404 or the search failed; PROVE = the page exists but the quote is not on it; READ = the claim is wrong or inconsistent (a year check, active-call wording on a projected row); "
+                                        "IDENTITY = no permanent id or a duplicate id (not a tool); FORMAT = file shape; COVERAGE = last week's event not in this week's research (not a failure). A row is counted under the first step that failed it.",
+                                "columns": ["Market", "Rows researched", "Shipped fresh", *STEPS], "rows": stp_rows, "flags": []})
+        hist_rows = []
+        for m, v in steps.items():
+            for h in v["history"]:
+                hist_rows.append([m, h.get("stamp", "")[:8], *[h["counts"].get(s, 0) for s in STEPS]])
+        rep["sections"].append({"title": "The same counts for the last loads (the trend that tells us which step to improve)", "columns": ["Market", "Load", *STEPS], "rows": hist_rows, "flags": []})
+        for m, v in steps.items():
+            for r in v["rises"]:
+                rep["flags"].append(f"{m}: more rows failed a step than last load: {r}")
+        rep["step_summary"] = "; ".join(f"{m}: {line(v['counts'])}" for m, v in steps.items())
     srows = [[m, "yes" if ok else "NO", why] for m, (ok, why) in signed.items()]
     sflags = [f"{m}: Monday's page will NOT publish - {why}" for m, (ok, why) in signed.items() if not ok]
     rep["sections"].append({"title": "Approved files signed and fresh (Monday's pages publish)", "columns": ["Market", "Will publish", "Reason"], "rows": srows, "flags": sflags})
@@ -218,7 +236,23 @@ def main() -> int:
         watch = next((ln.strip("* ").strip() for ln in w.splitlines() if "ALL OK" in ln or "need a look" in ln), "")
     except Exception as e:                                                  # noqa: BLE001
         watch = f"watch-list did not run: {e}"
-    rep = build(old, new, finals, signed, watch, today)
+    steps = None
+    if a.import_json and Path(a.import_json).exists():
+        from scripts import failure_steps as fs
+        imp = json.loads(Path(a.import_json).read_text(encoding="utf-8"))
+        hist_path = Path(a.out) / "step_failures.jsonl"
+        steps = {}
+        for mk in imp.get("markets", []):
+            if mk.get("market") not in a.markets:
+                continue
+            summ = fs.summarize(mk.get("decisions", []))
+            cnt = fs.counts(summ)
+            fs.append_history(hist_path, {"stamp": imp.get("stamp", ""), "market": mk["market"], "counts": cnt, "researched": mk.get("rows"), "shipped_fresh": mk.get("from_this_week")})
+            hist = fs.load_history(hist_path, mk["market"], 5)
+            prior = hist[-2]["counts"] if len(hist) >= 2 else None
+            steps[mk["market"]] = {"counts": cnt, "researched": mk.get("rows"), "shipped_fresh": mk.get("from_this_week"), "history": hist, "rises": fs.rises(cnt, prior)}
+    from scripts.pinned_rows import load_pins
+    rep = build(old, new, finals, signed, watch, today, steps, {p['canonical'] for p in load_pins()})
     d = qa_report.write(rep, qa_report.to_markdown(rep, "Saturday load - what changed and what was lost"), Path(a.out))
     print(f"{rep['status']}: {rep['summary']}  ->  {d / 'load.md'}")
     for f in rep["flags"]:

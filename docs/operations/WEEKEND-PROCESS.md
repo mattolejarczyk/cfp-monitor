@@ -145,7 +145,9 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    flags evidence, quote, deadline or submission link lost, and verified turned projected; it counts blanks in the fields the short research question does
    not ask and venue words in CITY; it checks the shipped files' dates and years again; it lists any start date the load set on a projected row with no
    evidence page; it confirms the approved files are signed and fresh so Monday's pages will publish; and it runs the named-row watch-list. It reports and never
-   blocks: a flag is for a person. The result is filed as `runs_out\qa\<Monday>\load.md`. *(post_load_qa.py)*
+   blocks: a flag is for a person. It also counts, per market, the rows that did not ship this week's research by the step that failed (finding the page, proving the quote, reading the claim,
+   identity), appends the counts to `runs_out\qa\step_failures.jsonl` and shows the last loads side by side, so it is visible over weeks which step to improve; a step that rises by five or
+   more rows since the previous load is flagged. The result is filed as `runs_out\qa\<Monday>\load.md`. *(post_load_qa.py, failure_steps.py)*
 9. **[Publish]** **Approves the files for Monday** and records the approval. *(promote_delivery.py)*
 10. **[Report]** **Emails the Saturday recap** - worked or failed, the results table, "Did the load lose anything?" with every flag, and what it means for
    Sunday and Monday. Sent on failure too; the subject reads "WORKED - n to check" when there are flags. *(weekend_recap.py saturday)*

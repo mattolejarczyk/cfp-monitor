@@ -56,3 +56,10 @@ def test_guessed_start_date_only_when_the_load_introduced_it_on_an_unverified_ro
     assert not guessed_dates({"o": _r()}, {"o": _r(start_date="2027-05-10")})  # verified row: not flagged
     upc = {**unv, "status": "Upcoming"}                                       # the real ODSC load also set the status: still flagged
     assert guessed_dates({"o": _r(**{**upc, "start_date": ""})}, {"o": _r(**upc)})
+
+
+def test_a_pinned_event_is_not_flagged_for_an_introduced_start_date():
+    unv = dict(status="Upcoming", is_projected="true", deadline_evidence_url="", start_date="2027-05-10")
+    old, new = {"o": _r(**{**unv, "start_date": ""})}, {"o": _r(**unv)}
+    assert guessed_dates(old, new)                       # unpinned: listed for a person to confirm
+    assert not guessed_dates(old, new, {"o"})            # pinned (operator verified): nothing to confirm

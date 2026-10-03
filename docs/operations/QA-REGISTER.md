@@ -25,6 +25,7 @@ moment (runbook section in brackets). **Report** = where the result lands.
 | A10 | Database health check (invariants) with automatic rollback | missing rows, duplicate ids, keys that moved | Auto | recap | 2026-08-08 |
 | A11 | **Load QA** (`scripts/post_load_qa.py`): what the load changed and what it lost | evidence, deadline or link lost on a future deadline; verified turned projected; blank-rate rise; venue words in CITY; start date vs dates text; year checks on shipped files; a start date the load introduced on a projected row with no evidence; approved files signed and fresh; the named-row watch-list | Auto | `runs_out/qa/<Monday>/load.md` and the recap section "Did the load lose anything?" | 2026-10-03 (all found by hand after the load) |
 | A12 | Publish guard: approved file signed, accepted, unchanged, fresh | Monday's page built from a hand-edited or stale file | Auto (Monday) | recap "will publish / will NOT publish" | 2026-09 |
+| A13 | **Per-step failure count** (`scripts/failure_steps.py`, shown in the load report and the recap): rows that did not ship this week's research, by the step that failed: FIND (dead or composed page), PROVE (quote not on the page), READ (claim wrong or inconsistent), IDENTITY (no permanent id), FORMAT; history in `runs_out/qa/step_failures.jsonl`; a rise of five or more is flagged | Auto | load report, recap, `step_failures.jsonl` | 2026-10-03 (needed to say where a tool change would pay off: FIND 7, PROVE 6, READ 2, IDENTITY 11 on the first load) |
 
 ## B. Sunday, Monday and the board (automatic)
 
@@ -52,6 +53,7 @@ moment (runbook section in brackets). **Report** = where the result lands.
 | C12 | Before sending a recap by hand | `weekend_recap.py ... --dry-run` and read it | wording that does not match what happened | 2026-10-03 ("loaded automatically" after a by-hand load) |
 | C13 | The weekend job looks hung or did not load | `Get-ScheduledTaskInfo`; read `Markets\logs\run_monthly_<stamp>.log`; run the import by hand (runbook section 7) | the 2026-10-03 load step that never ran | 2026-10-03 |
 | C14 | **You verified a fact on the event's own page** (a date, a city, a link, 'the page states nothing') | Add a pin to `docs/operations/pinned_rows.json` with the pages you checked (`links`), the date and a one-line why; do not edit files by hand. The weekly load applies it before the gate, clears the database for a blank, and the board's "Verified by you" panel lists it. | You are never asked about the same fact twice and the research cannot override it. | 2026-10-03: nine verified events |
+| C15 | A page the plain fetch cannot read (empty text, or text with no dates) | `src/cfp_monitor/render_text.render_text(url)` renders it in the real Chrome; the read-the-page experiment does this automatically when `looks_dateless` | a script-built page printed no dates to the plain reader | 2026-10-03 |
 
 ## D. Standing principles the checks enforce
 

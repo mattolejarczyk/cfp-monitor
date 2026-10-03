@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-03",
   "scope": "Cybersecurity + Utility (customer markets). Prospect-market jobs disabled.",
-  "now": "2026-10-03: the read-the-page experiment is done (safe and cheap; recall limited by the pages and date formats), and a mistake of mine on ODSC East was caught by it and corrected everywhere. 12 operator-verified events remain pinned; Monday's pages publish.",
+  "now": "2026-10-03: the three recall limiters are closed (older model finds 75% to 81% of verified facts on readable pages with 0 wrong answers); the grounding-versus-real-URL evidence is written up; 13 operator-verified events are pinned; Monday's pages publish.",
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "NEXT: experiment 4 is done (read-the-page pass: safe, cheap, recall limited by pages and date formats). Recommended next, in order: (a) close the three recall limiters (browser rendering, date formats, year from the heading), then re-run it three times per model; (b) experiment 3, the narrowness test (about 7 dollars); (c) experiment 5, two-model agreement (about 20 to 50 cents). Tell me to proceed with (a), or pick another."
+      "text": "NEXT (your pick, nothing running): (a) page-finding tests from docs/design/page-finding-options.md, now that the weekly per-step failure count exists to say which step pays off; (b) the next gap from the board: Nullcon-style pages with two date ranges, the country rule, and growing the answer key with the other benchmark events; (c) wait for Saturday 10-10 and read the first trend line. I would do (c) first: it costs nothing."
     },
     {
       "added": "2026-10-03",
-      "text": "OPTIONAL: ODSC East 2027. I wrongly cleared its start date earlier and have restored it. The page header (read in a real browser) states 'May 10-12th, 2027'. It is not pinned because you did not verify it; verify once at https://odsc.ai/east/ and say 'as stated' if you want it pinned, or leave it and the research value stands."
+      "text": "SEND upstream NOTE-TO-UPSTREAM-25.md (copy/paste): the two rows now parse and Decarbonization Congress 2027 is loaded; their OWASP evidence page is a 404; asks where Nullcon's 'provisional' March dates came from and to stop patching pinned facts."
     },
     {
       "added": "2026-10-03",
-      "text": "SEND upstream NOTE-TO-UPSTREAM-23.md (copy/paste): a new row for Decarbonization Congress 2027, a ruling on the German OWASP Day duplicate, the Global Energy Show Canada awards lead, the verified facts with where upstream's wrong values came from, and Nullcon's city."
+      "text": "OPTIONAL: ODSC East 2027. The page header (read in a real browser) states 'May 10-12th, 2027' and upstream now agrees. Verify once at https://odsc.ai/east/ and say 'as stated' if you want it pinned."
     }
   ],
   "headline": {
@@ -669,6 +669,12 @@
           "t": "Events to add or rule on (from your checks): Decarbonization Congress 2027 (new row, 15-16 Feb 2027, Berlin); German OWASP Day duplicate; Global Energy Show Canada AWARDS lead",
           "r": "Sent to upstream as note 23 (copy/paste). The new row needs upstream's permanent id (we never mint ids); the awards programme is not on the Utility awards list. Waiting.",
           "s": "todo"
+        },
+        {
+          "kind": "fix",
+          "t": "Decarbonization Congress 2027 loaded and pinned (upstream re-sent the row as valid CSV)",
+          "r": "Done 10-03: loaded on upstream's id (database 428), stamped into our input list and seed, facts you verified pinned. The Awards row (Global Energy Show Canada Awards 2027) passes the format check and waits for the awards flow. Upstream's OWASP duplicate evidence URL returns 404: rejected (note 25).",
+          "s": "done"
         }
       ]
     },
@@ -722,7 +728,7 @@
         {
           "kind": "experiment",
           "t": "Experiment 4, READ-THE-PAGE PASS (run 10-03): a cheap model reads the page and must quote every fact",
-          "r": "Result (experiments/read_the_page_pass/RESULT.md): 0 wrong answers accepted in about 70 scored answers, every blank-expected case (wrong-edition page, dead page) kept blank; found 7 to 10 of 16 verified facts for under 1 cent a pass. Misses are about the PAGE (script-built pages the plain fetch cannot render, German date formats, a year that sits in the heading) not the model. Small sample: direction, not a rate.",
+          "r": "Result (experiments/read_the_page_pass/RESULT.md): 0 wrong answers accepted in about 70 scored answers, every blank-expected case (wrong-edition page, dead page) kept blank; found 7 to 10 of 16 verified facts for under 1 cent a pass. Misses are about the PAGE (script-built pages the plain fetch cannot render, German date formats, a year that sits in the heading) not the model. Small sample: direction, not a rate. After the limiters (10-03 later): 75% to 81% found with the older model, still 0 wrong.",
           "s": "done"
         },
         {
@@ -739,8 +745,14 @@
         },
         {
           "kind": "build",
-          "t": "Close the three recall limiters found by experiment 4: render script-built pages in the browser; read dd.mm.yyyy / German / ordinal dates; take the year from the nearest heading (checked in code)",
-          "r": "Not started. Each is a code change with trap cases; then re-run experiment 4 three times per model.",
+          "t": "The three recall limiters are closed (browser rendering, other-language date formats, year from the heading)",
+          "r": "Done 10-03, re-run 3 times per model: older model found 12 / 13 / 13 of 16 verified facts (75% to 81%, up from 62%), faster model 7 / 10 / 9; 0 wrong answers in all six runs and every blank-expected case kept blank; 91 requests, 5.6 cents. Left: pages with no year beside the date (CES), two date ranges on one page (Nullcon), and a conservative faster model. A bug of mine in the range expander was caught by the full suite and fixed. See experiments/read_the_page_pass/RESULT.md.",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Page-finding options: alternatives to Google grounding for FINDING the right page (docs/design/page-finding-options.md)",
+          "r": "List and test plan written 10-03 with current prices. Already tested once: Codex through your ChatGPT subscription, with its experimental search flag on, ran a real search and returned exactly Nullcon's verified call-for-papers page (about 12,500 tokens). Can start now with no new keys: OpenRouter ':online' with DeepSeek, Codex batches, successor-URL probing, JSON-LD coverage on the saved pages. Free API keys needed from you for Tavily / Serper / Brave / Exa.",
           "s": "todo"
         }
       ]
@@ -802,6 +814,12 @@
           "kind": "build",
           "t": "scripts/apply_pins_live.py and scripts/answer_key_from_pins.py",
           "r": "Done 10-03: a fact you verify takes effect the same day in both approved files and the database (backups, proof that only pinned cells changed), and the confirmed answer key is generated from the same ledger. After it, the approved file is re-gated and re-promoted.",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Per-step failure count in every Saturday load report (FIND / PROVE / READ / IDENTITY), with history and trend",
+          "r": "Done 10-03 (scripts/failure_steps.py, wired into post_load_qa and the recap; 4 tests). First load: Cybersecurity IDENTITY 3, FIND 5, PROVE 2; Utility IDENTITY 8, FIND 2, PROVE 4, READ 2 (FIND 7, PROVE 6, READ 2, IDENTITY 11 in all, matching the hand count). The trend file builds itself weekly; a rise of 5 or more is flagged.",
           "s": "done"
         }
       ]
@@ -931,7 +949,7 @@
   "working_on": [
     {
       "state": "In progress",
-      "text": "Experiment 4 is done and written up; correcting my ODSC mistake everywhere is done. Next: the three recall limiters (see Waiting on you). Everything you verified stays pinned (12 events)."
+      "text": "The per-step failure count is built and recorded for the 10-03 load. Nothing is running. Next real data point: Saturday 10-10 (and Friday 10-09 awards)."
     },
     {
       "state": "Waiting on upstream",

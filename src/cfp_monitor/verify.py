@@ -20,6 +20,7 @@ own crawl history, so the expensive layer only runs on the genuinely unknown rem
 from __future__ import annotations
 
 import re
+import unicodedata
 import ssl
 import urllib.error
 import urllib.request
@@ -38,6 +39,23 @@ _MONTHS = ["january", "february", "march", "april", "may", "june", "july",
            "august", "september", "october", "november", "december"]
 
 VERIFIED, CONTRADICTED, NOT_FOUND = "verified", "contradicted", "not_found"
+
+# MONTH NAMES IN OTHER LANGUAGES (2026-10-03, ASCII: normalize_text strips accents). The recall limiters measured on the read-the-page experiment: German OWASP Day writes
+# dates the German way and no variant matched. Every variant still carries the YEAR and keeps the digit boundaries, so a date of another year can never match.
+_OTHER_MONTHS = {
+    1: ("januar", "janvier", "enero", "gennaio", "januari", "janeiro"),
+    2: ("februar", "fevrier", "febrero", "febbraio", "februari", "fevereiro"),
+    3: ("marz", "maerz", "mars", "marzo", "maart", "marco"),
+    4: ("avril", "abril", "aprile"),
+    5: ("mai", "mayo", "maggio", "mei", "maio"),
+    6: ("juni", "juin", "junio", "giugno", "junho"),
+    7: ("juli", "juillet", "julio", "luglio", "julho"),
+    8: ("aout", "agosto", "augustus"),
+    9: ("septembre", "septiembre", "setiembre", "settembre", "setembro"),
+    10: ("oktober", "octobre", "octubre", "ottobre", "outubro"),
+    11: ("novembre", "noviembre", "novembro"),
+    12: ("dezember", "decembre", "diciembre", "dicembre", "dezembro"),
+}
 
 
 def date_variants(d: date) -> list[str]:
@@ -74,6 +92,12 @@ def date_variants(d: date) -> list[str]:
     # periods this way (35 of 35 occurrences on the saved library were missed, 2026-10-02). normalize_text turns the
     # brackets into spaces, so the variant is the plain "19 october 26". The right-hand digit boundary in find_date
     # keeps it from firing on "19 october 2026" or "19 october 260".
+    # OTHER LANGUAGES and NUMERIC day-month-year ("23.09.2026" normalises to "23 09 2026"; "10 de mayo de 2027")
+    for day in {str(d.day), f"{d.day:02d}"}:
+        for nm in _OTHER_MONTHS[d.month]:
+            out |= {f"{day} {nm} {d.year}", f"{day} de {nm} de {d.year}"}
+        for mo in {str(d.month), f"{d.month:02d}"}:
+            out |= {f"{day} {mo} {d.year}", f"{day}-{mo}-{d.year}"}
     yy = f"{d.year % 100:02d}"
     for day in {str(d.day), f"{d.day:02d}"}:
         out |= {f"{mon} {day} {yy}", f"{day} {mon} {yy}",
@@ -84,8 +108,10 @@ def date_variants(d: date) -> list[str]:
 def normalize_text(text: str) -> str:
     """Collapse case, whitespace and punctuation noise so date tokens compare reliably."""
     t = (text or "").lower()
+    t = unicodedata.normalize("NFKD", t)                 # accents: marz, fevrier, aout, decembre (2026-10-03: month names of other languages)
+    t = "".join(c for c in t if not unicodedata.combining(c)).replace("ß", "ss")
     t = t.replace("–", "-").replace("—", "-").replace(" ", " ")
-    t = re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", t)      # 15th -> 15
+    t = re.sub(r"(\d)(st|nd|rd|th|er)\b", r"\1", t)   # 15th -> 15, 1er -> 1
     t = re.sub(r"[^a-z0-9/\-: ]+", " ", t)
     return re.sub(r"\s+", " ", t).strip()
 

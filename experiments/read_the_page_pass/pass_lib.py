@@ -36,6 +36,31 @@ def norm(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").replace(" ", " ")).strip().lower()
 
 
+def year_from_heading(page: str, quote: str, window: int = 400) -> str:
+    """The nearest year (2010-2029) written EARLIER on the page than the quote, within `window` characters; '' if none or the quote is not on the page."""
+    p, q = norm(page), norm(quote)
+    i = p.find(q)
+    if i < 0:
+        return ""
+    years = re.findall(r"(?<!\d)(20[12]\d)(?!\d)", p[max(0, i - window): i])
+    return years[-1] if years else ""
+
+
+_MONTH_WORDS = r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|janu|febr|marz|mars|mai|mayo|juni|juli|okto|dezem|janvier|fevrier|avril|juin|juillet|aout|septembre|octobre|novembre|decembre|enero|febrero|marzo|abril|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|gennaio|febbraio|aprile|maggio|giugno|luglio|settembre|ottobre|dicembre)[a-z]*"
+
+
+def looks_dateless(text: str) -> bool:
+    """True if the text has no date with a year in it (no month name or numeric date near a 2010-2029 year). Used to decide a plain fetch is not enough and the page
+    should be rendered in a real browser (script-built pages print their dates after the page loads)."""
+    from src.cfp_monitor.verify import normalize_text
+    low = normalize_text(text)                # punctuation and accents stripped, like the date reader
+    if len(low) < 300:
+        return True
+    if re.search(rf"{_MONTH_WORDS}[ a-z0-9\-]{{0,22}}20[12]\d|20[12]\d[ a-z0-9\-]{{0,22}}{_MONTH_WORDS}", low):
+        return False
+    return not re.search(r"(?<!\d)\d{1,2}[ ./-]\d{1,2}[ ./-]20[12]\d", low)
+
+
 def accept(field: str, item: dict, page: str, edition: str) -> tuple[str, str]:
     """(value or '', why). The model's claim is accepted only if the page itself supports it."""
     value, quote = (item or {}).get("value", ""), (item or {}).get("quote", "")
@@ -51,11 +76,17 @@ def accept(field: str, item: dict, page: str, edition: str) -> tuple[str, str]:
         except ValueError:
             return "", "not an ISO date"
         q = expand_ranges(quote)
+        how = "ok"
         if not find_date(q, d):
-            return "", "the quote does not state that day, month and year"
+            # LIMITER 3 (2026-10-03): a block such as 'ODSC AI East 2026 ... Join us April 28-30' states the year in the heading, not beside the date. The year may be taken from the
+            # nearest EARLIER year on the page (within 400 characters) only when the quote itself states no year, and only if it is the date's year.
+            y = year_from_heading(page, quote)
+            if (not y) or re.search(r"20[12]\d", quote) or str(d.year) != y or not find_date(expand_ranges(f"{quote} {y}"), d):
+                return "", "the quote does not state that day, month and year"
+            how = f"ok (year {y} taken from the nearest earlier year on the page)"
         if edition and str(d.year) != str(edition) and not (field == "end_date" and abs(d.year - int(edition)) <= 1):
             return "", "date is not in the asked edition's year"
-        return value, "ok"
+        return value, how
     if norm(value) not in norm(quote):
         return "", "the value is not in the quote"
     if field == "format" and value not in ("In-Person", "Virtual", "Hybrid"):

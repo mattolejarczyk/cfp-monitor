@@ -170,9 +170,10 @@ def load_qa_lines(qa: dict | None) -> tuple[str, list[str]]:
     if not qa:
         return "The load check (what the load changed, anything lost) did not run or left no report.", []
     flags = list(qa.get("flags") or [])
+    steps = f" Rows that did not ship this week's research, by the step that failed: {qa['step_summary']}." if qa.get("step_summary") else ""
     if not flags:
-        return f"Load check: nothing we had proven was lost. {qa.get('summary', '')}".strip(), []
-    return f"Load check: {len(flags)} thing(s) a person should look at (full report: runs_out/qa/{qa.get('cycle', '')}/load.md).", flags[:8]
+        return f"Load check: nothing we had proven was lost. {qa.get('summary', '')}{steps}".strip(), []
+    return f"Load check: {len(flags)} thing(s) a person should look at (full report: runs_out/qa/{qa.get('cycle', '')}/load.md).{steps}", flags[:8]
 
 
 def saturday_recap(log: str, imp: dict | None, markets_dir: Path,

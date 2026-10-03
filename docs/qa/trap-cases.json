@@ -66,8 +66,28 @@
           "expect_fail": "Y1"
         },
         {
-          "type": "human",
-          "note": "Asked for edition 2027 the method must return 2027-05-10; asked for 2026 it must return 2026-04-28 (the year comes from the heading 'ODSC AI East 2026', not from the date itself)."
+          "type": "pass_accepts",
+          "field": "start_date",
+          "value": "2027-05-10",
+          "quote": "May 10-12th, 2027",
+          "edition": "2027",
+          "expect": "2027-05-10"
+        },
+        {
+          "type": "pass_accepts",
+          "field": "start_date",
+          "value": "2026-04-28",
+          "quote": "April 28-30",
+          "edition": "2026",
+          "expect": "2026-04-28"
+        },
+        {
+          "type": "pass_accepts",
+          "field": "start_date",
+          "value": "2027-04-28",
+          "quote": "April 28-30",
+          "edition": "2027",
+          "expect": ""
         }
       ]
     },
@@ -279,6 +299,54 @@
           "type": "find_date",
           "date": "2026-11-21",
           "expect": false
+        }
+      ]
+    },
+    {
+      "id": "T13",
+      "name": "Dates written the German way",
+      "event": "German OWASP Day 2026",
+      "read_on": "2026-10-03",
+      "url": "https://god.owasp.de/2026/",
+      "went_wrong": "The date reader knew only English forms; a German page ('23.-24. September 2026', '23.09.2026') matched nothing and the quote was rejected.",
+      "fixture": "Die Konferenz findet am 23.–24. September 2026 in Karlsruhe statt. German OWASP Day 2026 / AppSec Karlsruhe. Weitere Informationen folgen. Weitere Informationen folgen. Weitere Informationen folgen. Weitere Informationen folgen. Weitere Informationen folgen. Weitere Informationen folgen. ",
+      "wrong": "date not found",
+      "right": "2026-09-23 found; the same text for another year is not",
+      "checks": [
+        {
+          "type": "find_date",
+          "date": "2026-09-23",
+          "expect": true
+        },
+        {
+          "type": "find_date",
+          "date": "2025-09-23",
+          "expect": false
+        },
+        {
+          "type": "pass_accepts",
+          "field": "start_date",
+          "value": "2026-09-23",
+          "quote": "23.–24. September 2026",
+          "edition": "2026",
+          "expect": "2026-09-23"
+        }
+      ]
+    },
+    {
+      "id": "T14",
+      "name": "A script-built page: the plain read has no dates",
+      "event": "Global Energy Show Canada 2027 / Nullcon Goa 2027",
+      "read_on": "2026-10-03",
+      "url": "https://www.globalenergyshow.com/conferences/2027-call-for-submissions/",
+      "went_wrong": "A plain fetch returned no text (Global Energy Show Canada) or no dates (Nullcon's timeline, built by script). Rendered in a real browser the same pages read 'June 8-10, 2027 | BMO Centre, Calgary, Canada' and 'TRAINING: 24TH - 26TH FEBRUARY 2027 | DAY ZERO: 26TH FEBRUARY 2027'.",
+      "fixture": "<div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading <div id=app></div> loading ",
+      "wrong": "a blank or an unreadable page",
+      "right": "detect that the plain text has no dated sentence and render the page in the browser",
+      "checks": [
+        {
+          "type": "dateless",
+          "expect": true
         }
       ]
     }

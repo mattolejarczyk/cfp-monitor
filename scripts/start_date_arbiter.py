@@ -69,22 +69,41 @@ def first_date(conference_dates: str) -> date | None:
         return None
 
 
+def _strip_accents(s: str) -> str:
+    import unicodedata
+    s = unicodedata.normalize("NFKD", s)
+    return "".join(c for c in s if not unicodedata.combining(c)).replace("\u00df", "ss")
+
+
+def _all_month_names() -> str:
+    from src.cfp_monitor.verify import _OTHER_MONTHS
+    names = sorted({n for v in _OTHER_MONTHS.values() for n in v} | set(_MON), key=len, reverse=True)   # other languages AND English (September is spelled alike)
+    return "|".join(names)
+
+
 def expand_ranges(text: str) -> str:
     """Rewrite year-bearing ranges as explicit start and end dates so a single-date matcher can see the start. Year is never
     invented: a range without its own year is left alone."""
-    t = text
-    sfx = r"(?:st|nd|rd|th)?"
+    t = _strip_accents(text)
+    sfx = r"(?:st|nd|rd|th|er)?"
+    # 23.-24.09.2026 and 23-24.09.2026 (numeric, day first)
+    t = re.sub(r"(?<!\d)(\d{1,2})\.?\s*(?:-|\u2013|\u2014)\s*(\d{1,2})\.(\d{1,2})\.(20\d\d)",
+               lambda m: f"{m.group(1)}.{m.group(3)}.{m.group(4)} - {m.group(2)}.{m.group(3)}.{m.group(4)}", t)
+    # 23.-24. September 2026 / 23 - 24 septembre 2026 / 10-12 de mayo de 2027 (month names of other languages; the output keeps the month's own name, which date_variants knows)
+    fm = _all_month_names()
+    t = re.sub(rf"(?<!\d)(\d{{1,2}}){sfx}\.?\s*(?:-|\u2013|\u2014|bis|au|al)\s*(\d{{1,2}}){sfx}\.?\s+(?:de\s+)?({fm}),?\s+(?:de\s+)?(20\d\d)",
+               lambda m: f"{m.group(1)} {m.group(3)} {m.group(4)} - {m.group(2)} {m.group(3)} {m.group(4)}", t, flags=re.I)
     # October 21-23, 2026  /  October 21 - 23 2026
-    t = re.sub(rf"{_MONRE}\s+(\d{{1,2}}){sfx}{_DASH}(\d{{1,2}}){sfx},?\s+(20\d\d)",
+    t = re.sub(rf"{_MONRE}\s+(?<!\d)(\d{{1,2}}){sfx}{_DASH}(\d{{1,2}}){sfx},?\s+(20\d\d)",
                lambda m: f"{m.group(1)} {m.group(2)}, {m.group(4)} - {m.group(1)} {m.group(3)}, {m.group(4)}", t, flags=re.I)
     # October 21 - November 2, 2026
     t = re.sub(rf"{_MONRE}\s+(\d{{1,2}}){sfx}{_DASH}{_MONRE}\s+(\d{{1,2}}){sfx},?\s+(20\d\d)",
                lambda m: f"{m.group(1)} {m.group(2)}, {m.group(5)} - {m.group(3)} {m.group(4)}, {m.group(5)}", t, flags=re.I)
     # 21-23 October 2026
-    t = re.sub(rf"(\d{{1,2}}){sfx}{_DASH}(\d{{1,2}}){sfx}\s+{_MONRE},?\s+(20\d\d)",
+    t = re.sub(rf"(?<!\d)(\d{{1,2}}){sfx}{_DASH}(\d{{1,2}}){sfx}\s+{_MONRE},?\s+(20\d\d)",
                lambda m: f"{m.group(1)} {m.group(3)} {m.group(4)} - {m.group(2)} {m.group(3)} {m.group(4)}", t, flags=re.I)
     # 21 October - 2 November 2026
-    t = re.sub(rf"(\d{{1,2}}){sfx}\s+{_MONRE}{_DASH}(\d{{1,2}}){sfx}\s+{_MONRE},?\s+(20\d\d)",
+    t = re.sub(rf"(?<!\d)(\d{{1,2}}){sfx}\s+{_MONRE}{_DASH}(\d{{1,2}}){sfx}\s+{_MONRE},?\s+(20\d\d)",
                lambda m: f"{m.group(1)} {m.group(2)} {m.group(5)} - {m.group(3)} {m.group(4)} {m.group(5)}", t, flags=re.I)
     return t
 
