@@ -5,7 +5,7 @@
   "decisions": [
     {
       "added": "2026-10-02",
-      "text": "Send upstream NOTE-TO-UPSTREAM-20.md (copy/paste): six Arnica events are loaded (AAIML, ICRAI, RAAI verified, deadline 10-10; AI Con USA, AppWorld, ODSC East projected, blank deadlines). It corrects upstream's claim that the input list was stamped (it was not; we added the rows), flags two ids with wrong city slugs, and asks for evidence on the three blanks."
+      "text": "Optional: send upstream NOTE-TO-UPSTREAM-21.md (acknowledges their second sparse patch, which we checked on the real pages and loaded; asks for plain-sentence STATUS DETAILS and 'Projected (YYYY)'). Nothing on the board is blocked on it."
     }
   ],
   "headline": {
@@ -699,7 +699,7 @@
     },
     {
       "state": "Waiting on upstream",
-      "text": "AI Con USA, AppWorld and ODSC East deadline evidence, and a 2027-edition confirmation for ODSC (note 20); the three 10-10 rows (AAIML, ICRAI, RAAI) are loaded and gate-accepted."
+      "text": "A page announcing ODSC East 2027 or AppWorld's partner-track call (URL plus verbatim sentence). The other four of the six Arnica events are loaded and verified or checked: AAIML, ICRAI, RAAI (10-10) and AI Con USA (10-18, Seattle; page is walled to our plain fetch, read by us in a browser)."
     },
     {
       "state": "Done, live Saturday",
