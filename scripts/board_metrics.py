@@ -92,6 +92,25 @@ def _our_deadlines(con: sqlite3.Connection, kind: str = "conference") -> dict[st
     return ours
 
 
+def _far(d: str | None, today: str, days: int = 90) -> bool:
+    """`d` is more than `days` after today (the operator's 90-day rule: nothing is expected to be published that far ahead)."""
+    try:
+        return bool(today) and d is not None and (date.fromisoformat(d) - date.fromisoformat(today)).days > days
+    except ValueError:
+        return False
+
+
+def _other_edition(theirs: str, ours: str, today: str) -> bool:
+    """Two different dates that are not a disagreement about one date: more than 180 days apart (another edition: Troopers 2026 vs 2027), or the
+    customer's date has already passed while ours is still ahead (they hold the earlier round: Climate Change). Reported separately, never as 'differ'."""
+    try:
+        if abs((date.fromisoformat(theirs) - date.fromisoformat(ours)).days) > 180:
+            return True
+        return bool(today) and theirs < today <= ours
+    except ValueError:
+        return False
+
+
 def customer_agreement(db: str, today: str = "", kind: str = "conference") -> dict:
     con = sqlite3.connect(db)
     try:
@@ -103,6 +122,7 @@ def customer_agreement(db: str, today: str = "", kind: str = "conference") -> di
     finally:
         con.close()
     counts = {k: 0 for k in CLASSES}
+    side = {"edition": 0, "excused": 0}
     detail = []
     unmatched = 0
     for client, name, eid, theirs in rows:
@@ -113,16 +133,20 @@ def customer_agreement(db: str, today: str = "", kind: str = "conference") -> di
         if t is None:
             cls = "unreadable"
         elif not o:
-            cls = "blank"
+            cls = "excused" if _far(t, today) else "blank"      # 90-day rule: no call is expected to be published yet
         elif t == o:
             cls = "agree"
         else:
-            cls = "differ"
-        counts[cls] += 1
+            cls = "edition" if _other_edition(t, o, today) else "differ"
+        if cls in ("edition", "excused"):                        # reported beside the figure, kept out of it
+            side[cls] += 1
+        else:
+            counts[cls] += 1
         is_live = bool(today) and ((t is not None and t >= today) or (o != "" and o >= today))
         detail.append({"client": client, "name": name, "event_id": eid, "theirs": theirs.strip(), "ours": o, "class": cls, "live": is_live})
     live_counts = {k: sum(1 for d in detail if d["live"] and d["class"] == k) for k in CLASSES}
-    return {"rows": sum(counts.values()), "counts": counts, "unmatched_to_our_db": unmatched, "detail": detail,
+    live_side = {k: sum(1 for d in detail if d["live"] and d["class"] == k) for k in side}
+    return {"rows": sum(counts.values()), "counts": counts, "other_edition": side["edition"], "excused": side["excused"], "live_side": live_side, "unmatched_to_our_db": unmatched, "detail": detail,
             "live_counts": live_counts, "live_rows": sum(live_counts.values())}
 
 
@@ -134,23 +158,35 @@ def provable_live(db: str, today: str, kind: str = "conference") -> dict:
     try:
         if kind == "award":
             rows = con.execute(
-                "select a.event_id, a.name, a.deadline, a.verify_state, coalesce(a.verify_detail,''), coalesce(a.deadline_evidence_url,'') "
+                "select a.event_id, a.name, a.deadline, a.verify_state, coalesce(a.verify_detail,''), coalesce(a.deadline_evidence_url,''), '', '', 0 "
                 "from award_grounding_facts a where trim(a.deadline) != '' and a.deadline >= ? "
                 "and a.event_id in (select award_key from award_markets where market in ('Cybersecurity','Utility'))", (today,)).fetchall()
             ids = {r[0] for r in rows}
         else:
             from src.cfp_monitor.identity import market_canonical_ids      # the one owner of seed-file reading
             ids = market_canonical_ids(db)
-            rows = con.execute("select event_id, name, deadline, verify_state, coalesce(verify_detail,''), coalesce(deadline_evidence_url,'') "
-                               "from grounding_facts where trim(deadline) != '' and deadline >= ?", (today,)).fetchall()
+            have = {r[1] for r in con.execute("pragma table_info(grounding_facts)")}
+            extra = ", ".join(f"coalesce({c},{d})" if c in have else d for c, d in (("start_date", "''"), ("status", "''"), ("is_projected", "0")))
+            rows = con.execute("select event_id, name, deadline, verify_state, coalesce(verify_detail,''), coalesce(deadline_evidence_url,''), "
+                               f"{extra} from grounding_facts where trim(deadline) != '' and deadline >= ?", (today,)).fetchall()
     finally:
         con.close()
     counts = {k: 0 for k in ("verified", "withdrawn", "unreadable", "notfound", "contradicted", "unchecked")}
     detail = []
-    for eid, name, dl, state, why, ev in rows:
+    operator = excused = 0
+    from scripts.pinned_rows import load_pins
+    pinned_deadline = {p["canonical"]: str(p["set"].get("SUBMISSION DEADLINE", "")).strip() for p in load_pins()
+                       if kind == "conference" and p.get("set", {}).get("SUBMISSION DEADLINE") and (not p.get("until") or p["until"] >= today)}
+    for eid, name, dl, state, why, ev, start, status, proj in rows:
         if eid not in ids:
             continue
-        if not ev.strip():
+        if pinned_deadline.get(eid) == dl:
+            cls = "verified"                               # the operator read this date on the event's own page: proven by a person
+            operator += 1
+        elif _far(start, today) and not (status.strip().lower() == "open" or (dl and not proj)) and state != "contradicted":
+            excused += 1                                   # 90-day rule: event far off, no firm call: no evidence is expected yet
+            continue
+        elif not ev.strip():
             cls = "withdrawn"
         elif state == "verified":
             cls = "verified"
@@ -164,7 +200,8 @@ def provable_live(db: str, today: str, kind: str = "conference") -> dict:
             cls = "notfound"
         counts[cls] += 1
         detail.append({"event_id": eid, "name": name, "deadline": dl, "class": cls})
-    return {"rows": sum(counts.values()), "counts": counts, "detail": sorted(detail, key=lambda d: d["deadline"])}
+    return {"rows": sum(counts.values()), "counts": counts, "operator_verified": operator, "excused_far_future": excused,
+            "detail": sorted(detail, key=lambda d: d["deadline"])}
 
 
 def _host(u: str) -> str:
@@ -480,6 +517,11 @@ def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | 
     h["levels"] = [{"key": "agree", "label": "Same date", "n": use["agree"], "tone": "good"},
                    {"key": "blank", "label": "Our deadline blank", "n": use["blank"], "tone": "warn"},
                    {"key": "differ", "label": "Different date", "n": use["differ"], "tone": "bad"}]
+    ls = cur.get("live_side") or {}
+    if ls.get("edition"):
+        h["levels"].append({"key": "edition", "label": "Customer row is another edition or round (not scored)", "n": ls["edition"], "tone": "mute"})
+    if ls.get("excused"):
+        h["levels"].append({"key": "excused", "label": "Our date blank, event more than 90 days off (not scored)", "n": ls["excused"], "tone": "mute"})
     if use["unreadable"]:
         h["levels"].append({"key": "unreadable", "label": "Customer date unreadable", "n": use["unreadable"], "tone": "none"})
     if lc is not None:
@@ -487,9 +529,10 @@ def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | 
         h["label"] = "Agreement with customer-verified dates (live rows)"
         h["definition"] = ("Rows where the customer's team marked the date Verified and has a date, the customer has not withdrawn the row, and the "
                            "customer's date or ours is still ahead: does ours match? Rows whose dates have both passed are not scored here.")
-        h["note"] = (f"All rows, rough (includes past dates and old editions): {c['agree']} of {readable_all} agree. Of the live rows that do not "
-                     "agree today, most are fixed by loads already done (Nullcon, Troopers 2027, Black Hat Asia) but the customer's row still points at "
-                     "the previous edition's event; Climate Change is the customer holding the earlier round's date.")
+        h["note"] = (f"All rows, rough (includes past dates and old editions): {c['agree']} of {readable_all} agree. Scored: the live rows where both sides "
+                     "name the same edition. Not scored, shown beside it: a customer row holding another edition or an earlier round (more than 180 days apart, or "
+                     "their date already passed while ours is ahead: Troopers, CyberDefenseCon, Climate Change), and our blank on an event more than 90 days off, "
+                     "where no call is expected to be published yet. Those are coverage or timing questions, not disagreements about one date.")
     h["source"] = f"scripts/board_metrics.py, client_conferences joined to our deadlines, {today}; customer-withdrawn rows excluded"
     if prov is not None:
         pc = prov["counts"]
@@ -506,6 +549,8 @@ def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | 
             {"key": "nopage", "label": "Cited page blocks our plain reader (a browser read would settle it)", "n": pc["unreadable"], "tone": "mute"},
             {"key": "absent", "label": "Page read, date not on it", "n": pc["notfound"], "tone": "bad"},
             {"key": "mismatch", "label": "Page read, shows a different date", "n": pc["contradicted"], "tone": "bad"}]
+        ph["definition"] += (" Proven also includes dates you verified yourself on the event's own page (pinned: "
+                             f"{prov.get('operator_verified', 0)} today). Events more than 90 days off with no firm call are not counted ({prov.get('excused_far_future', 0)} today): no page is expected to state a date yet.")
         ph["note"] = ("The earlier 28% (11 of 39) counted every stored deadline, including 44 of 48 that had already passed; the purpose audit itself said "
                       "15 of 16 'absent' and 11 of 12 'unreadable' rows were already-passed deadlines, 'not errors'. On live deadlines the unproven ones are "
                       "a deliberate citation withdrawal and pages that refuse a plain fetch, not wrong dates.")
@@ -551,7 +596,7 @@ def main(argv: list[str] | None = None) -> int:
     prov = provable_live(a.db, a.today)
     pc = prov["counts"]
     print(f"Provable submission date, LIVE deadlines ({a.today} or later, on the market lists): {pc['verified']} of {prov['rows']} proven on the cited page"
-          f" | citation withdrawn {pc['withdrawn']} | page unreadable by plain fetch {pc['unreadable']} | date not on page {pc['notfound']} | different date {pc['contradicted']}")
+          f" | of which verified by you {prov.get('operator_verified', 0)} | excused (90 days) {prov.get('excused_far_future', 0)} | citation withdrawn {pc['withdrawn']} | page unreadable by plain fetch {pc['unreadable']} | date not on page {pc['notfound']} | different date {pc['contradicted']}")
     for d in prov["detail"]:
         if d["class"] != "verified":
             print(f"    {d['class']:12} {d['deadline']}  {d['name'][:56]}")

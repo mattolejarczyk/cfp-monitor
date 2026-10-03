@@ -128,8 +128,9 @@ def test_customer_live_split(tmp_path):
             ("a", "Live blank", "e3", "12/02/2026", "Verified", 0), ("a", "Customer old round", "e4", "06/19/2026", "Verified", 0)]
     db = _db(tmp_path / "x.db", rows, {"e1": "2026-02-01", "e2": "2026-12-01", "e3": "", "e4": "2026-10-19"})
     r = bm.customer_agreement(db, "2026-10-02")
-    assert r["live_counts"] == {"agree": 1, "blank": 1, "differ": 1, "unreadable": 0} and r["live_rows"] == 3
-    assert r["counts"]["differ"] == 2                                  # the all-rows view still counts the past one
+    assert r["live_counts"] == {"agree": 1, "blank": 1, "differ": 0, "unreadable": 0} and r["live_rows"] == 2
+    assert r["live_side"]["edition"] == 1                              # the customer's earlier round is reported beside the figure, not as a different date
+    assert r["counts"]["differ"] == 1                                  # the all-rows view still counts the past one
 
 
 def test_update_status_writes_both_headlines_live_first(tmp_path):
@@ -297,3 +298,41 @@ def test_year_rule_and_pins_feed_accuracy_and_passed_rows_are_out_of_scope():
     p = [{"canonical": "e", "set": {"START DATE": "2027-06-08"}}]
     assert split_scores([_row(start_date="2027-06-08")], TODAY, "conference", p)["proven"] == 1
     assert split_scores([_row(start_date="2027-06-09")], TODAY, "conference", p)["contradicted"] == 1
+
+
+# --- the three fixes (2026-10-03): operator pins prove a deadline, 90-day rule in both metrics, other-edition class ---
+def _mini_db(tmp_path, grounding, client):
+    import sqlite3
+    db = str(tmp_path / "m.db")
+    con = sqlite3.connect(db)
+    con.execute("create table grounding_facts (event_id, name, deadline, verify_state, verify_detail, deadline_evidence_url, start_date, status, is_projected)")
+    con.execute("create table client_conferences (client_key, their_name, event_id, their_deadline, submission_date_verified, withdrawn_by_customer, their_url)")
+    con.executemany("insert into grounding_facts values (?,?,?,?,?,?,?,?,?)", grounding)
+    con.executemany("insert into client_conferences values (?,?,?,?,?,?,?)", client)
+    con.commit()
+    con.close()
+    return db
+
+
+def test_customer_agreement_separates_other_edition_and_far_blank_from_a_real_difference(tmp_path):
+    cl = [("c", "Same", "a", "11/01/2026", "Verified", 0, ""), ("c", "Older edition", "b", "03/31/2027", "Verified", 0, ""),
+          ("c", "Earlier round", "d", "06/19/2026", "Verified", 0, ""), ("c", "Real diff", "e", "11/05/2026", "Verified", 0, ""),
+          ("c", "Far blank", "f", "03/01/2027", "Verified", 0, ""), ("c", "Near blank", "g", "10/20/2026", "Verified", 0, "")]
+    g = [("a", "A", "2026-11-01", "", "", "", "", "", 0), ("b", "B", "2026-03-31", "", "", "", "", "", 0), ("d", "D", "2026-10-19", "", "", "", "", "", 0),
+         ("e", "E", "2026-11-09", "", "", "", "", "", 0), ("f", "F", "", "", "", "", "", "", 0), ("g", "G", "", "", "", "", "", "", 0)]
+    r = bm.customer_agreement(_mini_db(tmp_path, g, cl), "2026-10-03")
+    assert r["live_counts"] == {"agree": 1, "blank": 1, "differ": 1, "unreadable": 0}
+    assert r["live_side"] == {"edition": 2, "excused": 1}
+
+
+def test_provable_live_counts_operator_pins_as_proven_and_excuses_far_future_without_a_call(tmp_path, monkeypatch):
+    import scripts.pinned_rows as pr
+    monkeypatch.setattr(pr, "load_pins", lambda *a, **k: [{"canonical": "pin", "until": "2027-12-31", "set": {"SUBMISSION DEADLINE": "2026-12-04"}}])
+    import src.cfp_monitor.identity as idn
+    monkeypatch.setattr(idn, "market_canonical_ids", lambda db: {"pin", "far", "firm", "near"})
+    g = [("pin", "Pinned", "2026-12-04", "not_found", "", "u", "2027-06-01", "Open", 0),         # operator read it: proven
+         ("far", "Far", "2027-01-10", "unverified", "", "", "2027-06-01", "Upcoming", 1),         # far off, projected: excused
+         ("firm", "Firm", "2026-12-10", "not_found", "", "u", "2027-06-01", "Upcoming", 0),       # firm call: still scored
+         ("near", "Near", "2026-11-01", "unverified", "", "", "2026-12-01", "Upcoming", 1)]
+    r = bm.provable_live(_mini_db(tmp_path, g, []), "2026-10-03")
+    assert (r["rows"], r["counts"]["verified"], r["operator_verified"], r["excused_far_future"]) == (3, 1, 1, 1)

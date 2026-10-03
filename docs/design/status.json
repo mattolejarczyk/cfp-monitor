@@ -19,13 +19,13 @@
   "headline": {
     "provable": {
       "label": "Provable submission date (live deadlines)",
-      "definition": "Deadlines still ahead for events on the Cybersecurity and Utility market lists. Proven = our verifier found the stored date on the cited page and a citation exists. A deadline that has already passed is not scored: its page moves on to the next edition.",
-      "rows": 18,
+      "definition": "Deadlines still ahead for events on the Cybersecurity and Utility market lists. Proven = our verifier found the stored date on the cited page and a citation exists. A deadline that has already passed is not scored: its page moves on to the next edition. Proven also includes dates you verified yourself on the event's own page (pinned: 4 today). Events more than 90 days off with no firm call are not counted (1 today): no page is expected to state a date yet.",
+      "rows": 17,
       "levels": [
         {
           "key": "confirmed",
           "label": "Date on the cited page",
-          "n": 11,
+          "n": 14,
           "tone": "good"
         },
         {
@@ -43,7 +43,7 @@
         {
           "key": "absent",
           "label": "Page read, date not on it",
-          "n": 6,
+          "n": 2,
           "tone": "bad"
         },
         {
@@ -53,15 +53,15 @@
           "tone": "bad"
         }
       ],
-      "open_rows": 18,
-      "open_confirmed": 11,
+      "open_rows": 17,
+      "open_confirmed": 14,
       "note": "The earlier 28% (11 of 39) counted every stored deadline, including 44 of 48 that had already passed; the purpose audit itself said 15 of 16 'absent' and 11 of 12 'unreadable' rows were already-passed deadlines, 'not errors'. On live deadlines the unproven ones are a deliberate citation withdrawal and pages that refuse a plain fetch, not wrong dates.",
       "source": "scripts/board_metrics.py provable_live, 2026-10-03; experiments/purpose_audit/RESULT.md for the all-rows audit"
     },
     "customer": {
       "label": "Agreement with customer-verified dates (live rows)",
       "definition": "Rows where the customer's team marked the date Verified and has a date, the customer has not withdrawn the row, and the customer's date or ours is still ahead: does ours match? Rows whose dates have both passed are not scored here.",
-      "rows": 19,
+      "rows": 15,
       "levels": [
         {
           "key": "agree",
@@ -72,17 +72,29 @@
         {
           "key": "blank",
           "label": "Our deadline blank",
-          "n": 2,
+          "n": 1,
           "tone": "warn"
         },
         {
           "key": "differ",
           "label": "Different date",
-          "n": 3,
+          "n": 0,
           "tone": "bad"
+        },
+        {
+          "key": "edition",
+          "label": "Customer row is another edition or round (not scored)",
+          "n": 3,
+          "tone": "mute"
+        },
+        {
+          "key": "excused",
+          "label": "Our date blank, event more than 90 days off (not scored)",
+          "n": 1,
+          "tone": "mute"
         }
       ],
-      "note": "All rows, rough (includes past dates and old editions): 32 of 44 agree. Of the live rows that do not agree today, most are fixed by loads already done (Nullcon, Troopers 2027, Black Hat Asia) but the customer's row still points at the previous edition's event; Climate Change is the customer holding the earlier round's date.",
+      "note": "All rows, rough (includes past dates and old editions): 32 of 39 agree. Scored: the live rows where both sides name the same edition. Not scored, shown beside it: a customer row holding another edition or an earlier round (more than 180 days apart, or their date already passed while ours is ahead: Troopers, CyberDefenseCon, Climate Change), and our blank on an event more than 90 days off, where no call is expected to be published yet. Those are coverage or timing questions, not disagreements about one date.",
       "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-03; customer-withdrawn rows excluded"
     }
   },
@@ -315,12 +327,12 @@
     "good": [
       {
         "label": "Provable submission dates",
-        "now": "11 of 18 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
+        "now": "14 of 17 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
         "target": "90% of open-call rows; the rest honestly blank, never guessed"
       },
       {
         "label": "Agreement with customer-verified dates",
-        "now": "14 of 19 live rows today (73%); 32 of 44 counting past dates and old editions",
+        "now": "14 of 15 live rows today (93%); 32 of 39 counting past dates and old editions",
         "target": "90%"
       },
       {
@@ -845,28 +857,28 @@
     "conference": {
       "kind": "conference",
       "measured_weight": 100,
-      "overall": 78,
-      "low": 78,
-      "high": 82,
-      "equal_weight": 82,
+      "overall": 86,
+      "low": 86,
+      "high": 89,
+      "equal_weight": 89,
       "components": [
         {
           "key": "proof",
-          "value": 61,
+          "value": 82,
           "weight": 25,
-          "detail": "11 of 18 live deadlines proven on their cited page"
+          "detail": "14 of 17 live deadlines proven on their cited page"
         },
         {
           "key": "no_error",
           "value": 100,
           "weight": 10,
-          "detail": "0 of 18 live deadlines contradicted by their own page"
+          "detail": "0 of 17 live deadlines contradicted by their own page"
         },
         {
           "key": "alignment",
-          "value": 74,
+          "value": 93,
           "weight": 15,
-          "detail": "14 of 19 live customer-verified dates match ours"
+          "detail": "14 of 15 live customer-verified dates match ours"
         },
         {
           "key": "freshness",
@@ -911,12 +923,12 @@
         },
         "excused_fields": 108,
         "excused_rows": 27,
-        "accurate": 89,
+        "accurate": 94,
         "proven": 50,
-        "contradicted": 6,
+        "contradicted": 3,
         "unproven": 5,
         "unproven_excused": 2,
-        "unproven_share": 8,
+        "unproven_share": 9,
         "contradicted_names": []
       },
       "label": "Conferences: overall data quality"
