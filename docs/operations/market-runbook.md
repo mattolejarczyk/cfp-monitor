@@ -857,6 +857,8 @@ Check `weekend_recap.py saturday --log <log> --import-json <json> --dry-run`: it
 
 ### 7.6 An operator ruling, and restoring rows from a backup
 
+**First choice: a pin.** Anything you verified on a page (a date, dates text, city, organizer, a link, a deadline, or 'the page states nothing') goes into `docs/operations/pinned_rows.json` with `links`, `ruled_on`, `why` and `until`. The Saturday load applies it before the gate; a blank pin also clears the database; the board lists it under "Verified by you". Add it to the answer key too (QA-REGISTER.md section F). The hand-edit procedure below is only for data that is wrong RIGHT NOW in a file or the database, and a pin should accompany it so the fix survives the next load.
+
 A value you verified on the live page overrides the research. Edit BOTH the research output (`<Market>_audited.csv`) and the input list (`<Market>_input.csv`):
 the wrong value usually came from the input list and would return next Saturday. Back both up, change only the cells you mean (prove it), and log it in
 `experiments/purpose_audit/OPERATOR-EDITS-LOG.md`. Templates: `operator_rulings_20261003.py` (cells in the two files) and `restore_rows_20261003.py` (copy named cells from the

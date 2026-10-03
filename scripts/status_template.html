@@ -153,6 +153,13 @@ function nowBlock() {
   const warn = (D.warnings || []).map(x => `<li style="color:var(--bad)"><b>Board check:</b> ${esc(x)}</li>`).join('');
   return `<div class="now"><b>Working on</b>${esc(D.now)}<ul class="dec">${w}</ul><ul class="dec">${dec}</ul>${warn ? `<ul class="dec">${warn}</ul>` : ''}</div>`;
 }
+function verifiedBand(V) {
+  if (!V || !V.length) return '';
+  const rows = V.map(v => `<tr><td><b>${esc(v.event)}</b></td><td>${esc(v.what)}</td><td>${(v.links || []).map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40))}</a>`).join('<br>')}</td><td class="num">${esc(v.on)}</td><td class="num">${esc(v.until)}</td></tr>`).join('');
+  return `<section class="band"><h2>Verified by you &nbsp;<span class="num">${V.length} events</span></h2>
+    <p class="def" style="margin:0 0 10px">Facts you checked on the event's own page. The weekly runs cannot override them and you are not asked about them again; a pin lapses on its date or when it is deleted. Source: docs/operations/pinned_rows.json.</p>
+    <div class="tbl"><table><thead><tr><th>Event</th><th>What you verified</th><th>Pages</th><th>On</th><th>Holds until</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+}
 function render() {
   const items = D.pipeline.flatMap(s => s.items);
   const done = items.filter(i => i.s === 'done').length;
@@ -161,6 +168,7 @@ function render() {
       <div class="sub"><span class="num">as of ${esc(D.as_of)}</span> &nbsp; <button class="theme" id="tg" type="button">Theme</button></div></div>
     ${objective(D.objective)}
     ${nowBlock()}
+    ${verifiedBand(D.verified)}
     ${quality(D.quality)}
     <div class="two">${headline(D.headline.provable)}${headline(D.headline.customer)}</div>
     <section class="band"><h2>Build progress &nbsp;<span class="num">${done} of ${items.length} items done</span></h2>

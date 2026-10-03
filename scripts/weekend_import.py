@@ -545,6 +545,13 @@ def load_markets(resolved: list[dict], db: Path, data_root: Path, log: list[str]
             return (f"{m}: the gate with the database loaded said {verdict}: "
                     + "; ".join(f"[{c}] {t}" for c, t in fails[:3]))
 
+    # PINNED BLANKS (2026-10-03, scripts/pinned_rows.py): the importer keeps an old start_date when the new one is blank, so a person's ruling that
+    # 'the page states no date' must clear the database explicitly.
+    from scripts.pinned_rows import clear_pinned_blank_starts, load_pins
+    cleared = clear_pinned_blank_starts(db, load_pins())
+    if cleared:
+        log.append(f"pinned blanks: cleared the start date of {len(cleared)} row(s) a person ruled the page does not state: " + "; ".join(cleared))
+
     held = data_root / "market_sheets" / "held_rows.txt"
     in_db = db_ids(db)
     up_to_canon, _ = seed_map(str(db))

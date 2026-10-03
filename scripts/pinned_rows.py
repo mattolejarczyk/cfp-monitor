@@ -17,14 +17,37 @@ from datetime import date
 from pathlib import Path
 
 PINS_FILE = Path(__file__).resolve().parents[1] / "docs" / "operations" / "pinned_rows.json"
-# The cells a ruling may set: the deadline and its evidence, the call link, and the plain-language details. Identity and customer columns are never pinned.
-ALLOWED = ("SUBMISSION DEADLINE", "DEADLINE_EVIDENCE_URL", "DEADLINE_QUOTE", "IS_PROJECTED", "CFP_SUBMISSION_URL", "STATUS DETAILS")
+# The cells a ruling may set: the deadline and its evidence, the call link, the plain-language details, and (since 2026-10-03) the facts a person verifies on the event's
+# own page: start date, dates text, location, city, country, organizer, format, main page. Identity (event id, name, edition) and customer columns are never pinned.
+# A pinned VALUE of "" means 'the page states nothing: leave it blank' (see clear_pinned_blank_starts).
+ALLOWED = ("SUBMISSION DEADLINE", "DEADLINE_EVIDENCE_URL", "DEADLINE_QUOTE", "IS_PROJECTED", "CFP_SUBMISSION_URL", "STATUS DETAILS",
+           "START DATE", "CONFERENCE DATES", "LOCATION", "CITY", "STATE_PROVINCE", "COUNTRY", "ORGANIZER", "FORMAT", "MAIN_INFO_URL")
 
 
 def load_pins(path: Path = PINS_FILE) -> list[dict]:
     if not Path(path).exists():
         return []
     return json.loads(Path(path).read_text(encoding="utf-8")).get("pins", [])
+
+
+def clear_pinned_blank_starts(db_path, pins: list[dict], today: date | None = None) -> list[str]:
+    """The importer keeps an old start_date when the new one is blank (so a research blank never erases a date). A ruling that says 'the page states no date' therefore has to clear
+    the database explicitly. Returns the canonical ids whose start_date was cleared."""
+    import sqlite3
+    today = today or date.today()
+    ids = [p["canonical"] for p in pins if p.get("set", {}).get("START DATE") == "" and not (p.get("until") and date.fromisoformat(p["until"]) < today)]
+    cleared = []
+    if not ids:
+        return cleared
+    con = sqlite3.connect(str(db_path))
+    try:
+        for cid in ids:
+            if con.execute("update grounding_facts set start_date=NULL where event_id=? and start_date is not null", (cid,)).rowcount:
+                cleared.append(cid)
+        con.commit()
+    finally:
+        con.close()
+    return cleared
 
 
 def apply_pins(rows: list[dict], lookup: dict, to_canonical, pins: list[dict], today: date | None = None) -> tuple[list[dict], dict]:

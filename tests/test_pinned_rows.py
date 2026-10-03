@@ -50,4 +50,29 @@ def test_the_real_pin_file_is_valid_and_each_pin_names_why_and_until():
     assert len(pins) >= 2
     for p in pins:
         assert p["canonical"] and p["until"] and p["why"] and p["ruled_on"] and set(p["set"]) <= set(ALLOWED)
-        assert p["set"].get("DEADLINE_EVIDENCE_URL", "").startswith("https://")
+        if "DEADLINE_EVIDENCE_URL" in p["set"]:
+            assert p["set"]["DEADLINE_EVIDENCE_URL"].startswith("https://")
+
+
+def test_blank_start_pins_clear_the_database_and_ordinary_pins_do_not(tmp_path):
+    """The importer keeps an old start_date when the new one is blank; 'the page states no date' must clear it explicitly."""
+    import sqlite3
+    from scripts.pinned_rows import clear_pinned_blank_starts
+    db = tmp_path / "t.db"
+    con = sqlite3.connect(db)
+    con.execute("create table grounding_facts (event_id text primary key, start_date text)")
+    con.executemany("insert into grounding_facts values (?,?)", [("a", "2026-04-01"), ("b", "2027-01-01"), ("c", None)])
+    con.commit(); con.close()
+    pins = [{"canonical": "a", "until": "2026-12-31", "set": {"START DATE": ""}},          # a blank ruling: clears
+            {"canonical": "b", "until": "2027-02-01", "set": {"START DATE": "2027-01-01"}},   # a dated ruling: untouched
+            {"canonical": "c", "until": "2026-12-31", "set": {"START DATE": ""}}]            # already blank: nothing to clear
+    assert clear_pinned_blank_starts(db, pins, T) == ["a"]
+    rows = sqlite3.connect(db).execute("select event_id, start_date from grounding_facts order by 1").fetchall()
+    assert rows == [("a", None), ("b", "2027-01-01"), ("c", None)]
+    assert clear_pinned_blank_starts(db, [{"canonical": "a", "until": "2026-01-01", "set": {"START DATE": ""}}], T) == []   # a lapsed pin does nothing
+
+
+def test_every_pin_records_the_pages_it_was_verified_on():
+    for p in load_pins():
+        assert p.get("links") and all(u.startswith("https://") for u in p["links"]), p["canonical"]
+        assert p["by"] == "operator" and p["ruled_on"]

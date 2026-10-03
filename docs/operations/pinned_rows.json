@@ -1,5 +1,5 @@
 {
-  "note": "A person's ruling on a row holds over the research until `until` (the day after the pinned deadline) or until the pin is deleted. See scripts/pinned_rows.py. Only these cells may be pinned: SUBMISSION DEADLINE, DEADLINE_EVIDENCE_URL, DEADLINE_QUOTE, IS_PROJECTED, CFP_SUBMISSION_URL, STATUS DETAILS. Identity (event id, name, edition) and customer-owned columns never.",
+  "note": "Everything a person has VERIFIED on the event's own page. A pin holds over the weekly research until `until` or until it is deleted, so the same fact is never asked twice and never overridden. `links` are the pages the person verified on. A value of \"\" means the page states nothing: leave it blank (the database is cleared too). See scripts/pinned_rows.py and docs/operations/QA-REGISTER.md. Only these cells may be pinned: SUBMISSION DEADLINE, DEADLINE_EVIDENCE_URL, DEADLINE_QUOTE, IS_PROJECTED, CFP_SUBMISSION_URL, STATUS DETAILS, START DATE, CONFERENCE DATES, LOCATION, CITY, STATE_PROVINCE, COUNTRY, ORGANIZER, FORMAT, MAIN_INFO_URL. Identity (event id, name, edition) and customer-owned columns never.",
   "pins": [
     {
       "canonical": "2027-acm-codaspy-alexandria-speaking",
@@ -15,7 +15,11 @@
         "IS_PROJECTED": "false",
         "CFP_SUBMISSION_URL": "https://codaspy27.hotcrp.com/",
         "STATUS DETAILS": "Two tracks: abstract submission deadline November 16, 2026 (the date shown, and the earliest); research paper submission deadline November 23, 2026. Submit at https://codaspy27.hotcrp.com/. Conference June 14-17, 2027, Fort Collins, Colorado."
-      }
+      },
+      "links": [
+        "https://www.codaspy.org/2027/cfp.html",
+        "https://codaspy27.hotcrp.com/"
+      ]
     },
     {
       "canonical": "2027-apres-cyber-slopes-summit-steamboat-springs-speaking",
@@ -30,6 +34,117 @@
         "DEADLINE_QUOTE": "Call closes at 11:59 PM 20 Nov 2026",
         "IS_PROJECTED": "false",
         "STATUS DETAILS": "The call for papers is open on the organizer's Sessionize page and closes 11:59 PM on 20 November 2026."
+      },
+      "links": [
+        "https://sessionize.com/apres-cyber-slopes-summit-2027"
+      ]
+    },
+    {
+      "canonical": "2027-european-carbon-capture-utilization-storage-amsterdam",
+      "event": "European Carbon Capture, Utilization & Storage 2027",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "Operator verified: start date 2027-01-26 is correct; 'March 9-10, 2027' appears on no page. The event's own page reads '26 - 27 January 2027 | Amsterdam'.",
+      "until": "2027-01-27",
+      "links": [
+        "https://ccus-carbon-capture.com/"
+      ],
+      "set": {
+        "START DATE": "2027-01-26",
+        "CONFERENCE DATES": "January 26 - January 27, 2027"
+      }
+    },
+    {
+      "canonical": "2026-carbon-capture-usa-houston",
+      "event": "Carbon Capture USA 2026",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "Operator verified: November 16-17, 2026, Houston (the earlier 'October 14-15' was a past edition's value). Speaker submission link verified.",
+      "until": "2026-11-18",
+      "links": [
+        "https://www.usa.carbon-capture-conference.com/",
+        "https://www.usa.carbon-capture-conference.com/speakers"
+      ],
+      "set": {
+        "START DATE": "2026-11-16",
+        "CONFERENCE DATES": "November 16 - November 17, 2026",
+        "CFP_SUBMISSION_URL": "https://www.usa.carbon-capture-conference.com/speakers"
+      }
+    },
+    {
+      "canonical": "2027-sustainable-fuels-global-summit-rotterdam",
+      "event": "Sustainable Fuels Global Summit 2027 (SAF Europe Summit)",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "Operator verified: start date 4/13/2027 is correct; 'February 16-17, 2027' appears on no page. The site now redirects to safeusummit.com: '13-14 April 2027 | Rotterdam'.",
+      "until": "2027-04-15",
+      "links": [
+        "https://www.sustainablefuelsglobal.com/",
+        "https://www.safeusummit.com/"
+      ],
+      "set": {
+        "START DATE": "2027-04-13",
+        "CONFERENCE DATES": "April 13 - April 14, 2027"
+      }
+    },
+    {
+      "canonical": "2026-carbon-capture-technology-expo-mena-abu-dhabi",
+      "event": "Carbon Capture Technology Expo MENA 2026",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "Operator verified: the 2026 edition is closed and the site shows the 2027 edition (8-9 June 2027, ADNEC Centre, Abu Dhabi), which is its own row. The 2026 edition's dates are on no page: leave blank (never the 2027 dates, never a guess).",
+      "until": "2027-06-10",
+      "links": [
+        "https://www.hydrogenccs-menaexpo.com/"
+      ],
+      "set": {
+        "START DATE": "",
+        "CONFERENCE DATES": ""
+      }
+    },
+    {
+      "canonical": "2026-future-fuels-mena-summit-dubai",
+      "event": "Future Fuels MENA Summit 2026",
+      "ruled_on": "2026-10-03",
+      "by": "operator",
+      "why": "Operator could not find the event: futurefuelsmena.com is a dead domain. No dates are stated anywhere: leave blank. 'Discontinued' needs its own evidence page (R16).",
+      "until": "2026-12-31",
+      "links": [
+        "https://futurefuelsmena.com/"
+      ],
+      "set": {
+        "START DATE": "",
+        "CONFERENCE DATES": ""
+      }
+    },
+    {
+      "canonical": "2027-odsc-east-boston-speaking",
+      "event": "ODSC East 2027",
+      "ruled_on": "2026-10-02",
+      "by": "operator",
+      "why": "Operator verified: the page shows the 2026 edition (Boston, April 28-30, 2026) and no 2027 dates; the research's guess 2027-05-10 is not accepted. Remove this pin when a page announces the 2027 edition.",
+      "until": "2027-12-31",
+      "links": [
+        "https://odsc.ai/east/"
+      ],
+      "set": {
+        "START DATE": "",
+        "CONFERENCE DATES": ""
+      }
+    },
+    {
+      "canonical": "2027-global-energy-show-canada-calgary",
+      "event": "Global Energy Show Canada 2027",
+      "ruled_on": "2026-10-01",
+      "by": "operator",
+      "why": "Operator confirmed on the live page: the 'SUBMIT AN ABSTRACT' button after the deadline sentence links to the dmg events submitter page (the old /speak/abstract-submission/ link is a 404).",
+      "until": "2026-12-05",
+      "links": [
+        "https://www.globalenergyshow.com/",
+        "https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login"
+      ],
+      "set": {
+        "CFP_SUBMISSION_URL": "https://www.dmgeventsconferences.com/global-energy-show-2027/submitter/login"
       }
     }
   ]

@@ -51,6 +51,7 @@ moment (runbook section in brackets). **Report** = where the result lands.
 | C11 | After ANY load, by hand or scheduled | `check_invariants.py`, `watchlist_check.py --previous-db <backup>`, a second-process read-back | corrections still hold | 2026-10-01 |
 | C12 | Before sending a recap by hand | `weekend_recap.py ... --dry-run` and read it | wording that does not match what happened | 2026-10-03 ("loaded automatically" after a by-hand load) |
 | C13 | The weekend job looks hung or did not load | `Get-ScheduledTaskInfo`; read `Markets\logs\run_monthly_<stamp>.log`; run the import by hand (runbook section 7) | the 2026-10-03 load step that never ran | 2026-10-03 |
+| C14 | **You verified a fact on the event's own page** (a date, a city, a link, 'the page states nothing') | Add a pin to `docs/operations/pinned_rows.json` with the pages you checked (`links`), the date and a one-line why; do not edit files by hand. The weekly load applies it before the gate, clears the database for a blank, and the board's "Verified by you" panel lists it. | You are never asked about the same fact twice and the research cannot override it. | 2026-10-03: nine verified events |
 
 ## D. Standing principles the checks enforce
 
@@ -61,6 +62,7 @@ moment (runbook section in brackets). **Report** = where the result lands.
 5. A hand edit is re-signed and logged, never left as a silent difference (C7, C8).
 6. A change is rehearsed on a copy with the production checks before it touches the live database (C5, C6).
 7. We read, they format (UPSTREAM-QA-PROTOCOL.md).
+8. **Verify once, then learn.** A person's verification is entered ONCE (C14) and then does four jobs: it is a pin (the weekly run cannot override it), a line in the answer key (every method is scored on it), a row on the board's "Verified by you" panel (so it is not asked again), and, when it exposed a way the research goes wrong, a trap case and a rule or check. See section F.
 
 ## E. Known gaps (measured or suspected, not yet closed)
 
@@ -72,3 +74,17 @@ moment (runbook section in brackets). **Report** = where the result lands.
 | Research can return a different, evidenced deadline for a row we corrected by hand (CODASPY abstract vs paper, Apres-Cyber) | 2026-10-03 | a per-row "operator-pinned" list the carry rule honours |
 | Rows loaded by hand into the database but missing from the approved file get no carry the first Saturday | RSA/Black Hat Asia on 2026-10-03 | add hand-loaded rows to the approved file at load time |
 | `run_monthly.ps1` has only static tests | the flattened-array bug | a PowerShell dry-run mode that exercises the post-research steps |
+
+## F. The learning loop: how manual verifications turn into rules (so they are needed less and less)
+
+Every manual verification is a one-time cost and also a lesson. The loop, in order, for each one:
+
+1. **Pin it** (C14). Immediate: the fact holds, the board shows it, nobody re-verifies it.
+2. **Put it in the answer key** (`docs/qa/answer-key.csv`, with who confirmed it and when). It becomes a test every future method is scored on.
+3. **Ask what went wrong** and name the failure mode in one line: a wrong-edition page, a venue read as a city, an aggregator that does not list the event, two deadlines on one page, an input list that is stale.
+4. **Make it a trap case** (`docs/qa/trap-cases.json`) with the page text we saw, the wrong answer and the right one.
+5. **Turn it into a rule or a check** where the failure can be detected by code: a year check, a carry rule, a gate note, a load-QA flag, a prompt rule. Today's examples: the wrong-year start date became checks Y1-Y4; the guessed ODSC date became a load-QA flag; the empty delivery became gate note S; the stale dates text became an overlay rule.
+6. **Record what is still a gap** (section E) until a rule closes it, and measure whether the rule worked on the next run.
+
+What a pin cannot do: it holds one edition. When next year's edition appears it is a NEW row with no pin, and the research must get it right or a person verifies once more. The point of steps 3-5 is that the
+research gets it right more often every month, so that second verification is rare. Track the share of events that needed a manual verification each month on the board; it should fall.

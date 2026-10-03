@@ -50,6 +50,7 @@ DESCRIBED = {
     "scripts/post_load_qa.py": ROOT / "scripts" / "post_load_qa.py",
     "scripts/narrow_overlay.py": ROOT / "scripts" / "narrow_overlay.py",
     "scripts/start_date_arbiter.py": ROOT / "scripts" / "start_date_arbiter.py",
+    "scripts/pinned_rows.py": ROOT / "scripts" / "pinned_rows.py",
 }
 
 

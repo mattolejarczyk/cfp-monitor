@@ -7,7 +7,7 @@
     "run_all.ps1": "e7ae4f68ff580d1551e45cd7c2fb8d121c3678180afdbd32f09ae906ade2fda1",
     "scripts/weekly_intake.py": "c3950f4925cd61963837d03f304b3b697ea784572ba736f4c915c3424ba7710b",
     "scripts/stamp_input_ids.py": "e98e8a4494034a6d961ed65e3cc7a28a5cf1e073151c7d00b668a27aff2811bf",
-    "scripts/weekend_import.py": "c299f9d0332e021ddb4bf9ee7fb8e6dd8a4e991cabbd31d02aa20b90178de305",
+    "scripts/weekend_import.py": "8610eb1a175cf0535594d4a9812af7978d73edb808107516296de7203e94ce23",
     "scripts/weekend_recap.py": "12f2e609bce86bd080a205e0951330148a455396b540ecec4bb6e144aa58628f",
     "scripts/run_weekly.bat": "e34d53e10c3282e23d78d56cb9314dceff5e15db411d35e644f0a33c4d3d49de",
     "scripts/weekly_verify.py": "7f6b260f6ab1c574dee2c67df517f0fee07d6d3d0fab8871bbc3f4abb2ffdd68",
@@ -19,6 +19,7 @@
     "scripts/export_checks.py": "03248b087d91de83b4fdab76e0c1116d279a084adbc52822b707bf82c93e3d30",
     "scripts/post_load_qa.py": "808055618071fcbd195951a4946c3a810fc6d4128db39c1b7d0839bc34d10704",
     "scripts/narrow_overlay.py": "70eb60f734bc1dd140367537403b1be11daf3159814f41d2c02b5dde281861c5",
-    "scripts/start_date_arbiter.py": "f0cf604769908cdb7c42253e9286b31a05eadb4a07e9ac77734761d7b43e798d"
+    "scripts/start_date_arbiter.py": "f0cf604769908cdb7c42253e9286b31a05eadb4a07e9ac77734761d7b43e798d",
+    "scripts/pinned_rows.py": "bdd7baf450f306b6ceab7d5afaee74554f186382591537f4bd552b54a0b9da4d"
   }
 }

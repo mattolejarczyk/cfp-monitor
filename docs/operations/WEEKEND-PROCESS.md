@@ -123,6 +123,9 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    and has not passed, last week's page, quote and verified flag are kept together. A fresh answer is never overridden and
    the approval check in step 3 still reads the kept quote on its page. Every value kept is listed in the report.
    *(narrow_overlay.py)*
+   Then, since 2026-10-03, **pinned rows**: anything a person verified on an event's own page (`docs/operations/pinned_rows.json`: a deadline, a start date, dates text, a city, a link, or "the page states
+   nothing") is applied over this week's research until the pin's date passes or it is deleted. A blank pin also clears the database, because the load never erases a date on a blank. A pin is
+   applied before the approval check, so a pinned quote is still read on its page, and every pin that changed something is listed in the report. *(pinned_rows.py)*
 3. **[Safety check]** **Runs the approval check with the row-by-row rule.** Rows that pass use this week's research.
    Each row's years are checked first (start date inside its edition, conference-dates year equals start year, no
    past start still Open or Upcoming, deadline not after the start or more than 18 months before it); a row that fails

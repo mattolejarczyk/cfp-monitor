@@ -41,6 +41,7 @@ Stage 0 diagnose (done) - 1 narrow Gemini prompt (grounding proven, quality and 
 - **Claims about our own files are checked on our own files** (`check_delivery_ids.py`).
 - **A hand edit is re-signed and logged.** Edit the research output AND the input list, then promote again.
 - **Rehearse on a copy with the production checks, and replay a past situation against a new rule, before anything touches the live database.**
+- **Verify once.** What you verify on a page is pinned (`docs/operations/pinned_rows.json`), shown on the board's "Verified by you" panel, scored in the answer key, and turned into a trap case and a rule when it exposed a failure. The goal is that manual verification gets rarer, not that it gets better organised.
 
 ## The wisdom pattern (added 2026-10-01, operator's principle)
 When a code solution grows complex or keeps failing, **try a cheap or free model first** (DeepSeek, Hermes free capacity), with code verifying its output and an answer key scoring it, before spending more weeks on rules. Evidence so far: a rules reader took days and failed a fresh test (0.33); one DeepSeek call read the same table correctly for $0.0009. Result so far (10-01): promising, not proven. As run precision 0.85 / recall 9 of 12 on 27 fresh pages; 0 wrong-purpose in 69 accepted dates; post-hoc 0.875 / 11 of 12. Needs a larger fresh test before wiring: `experiments/whole_page_reader/RESULT.md`.

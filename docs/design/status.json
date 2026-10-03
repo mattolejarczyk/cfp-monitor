@@ -5,11 +5,7 @@
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "CONFIRM: CarbonZero Global Conference & Exhibition 2026. We ship a start date of 2026-11-12; the page states 27-29 October 2026 (Brussels). Please open the event's own page and tell me which is right; I will correct it as an operator ruling and pin it."
-    },
-    {
-      "added": "2026-10-03",
-      "text": "ANSWER KEY, confirm or correct these reads (docs/qa/answer-key-reads-20261003.md): page states our value: SecTor (Oct 6-8 2026 Toronto), CERAWeek 2027 (Mar 8-12 Houston), SecureWorld Gov & CI (Dec 9 2026 virtual). Please check on the event's own page: CES 2027 (we ship Jan 6 2027), Nullcon Goa 2027 (we ship no start date), Global Energy Show Canada 2027 (we ship Jun 8 2027; the page would not read for me). Also decide: the key should score start dates for upcoming events only, since past 2026 editions now show 2027 on their pages."
+      "text": "CHECK THESE PAGES, then tell me 'all as stated' or the corrections; I pin every one you verify (shown under 'Verified by you', never asked again, never overridden). 1 CarbonZero 2026 (we ship start 2026-11-12; the page says 27-29 October 2026, Brussels): https://industrylink.eu/event/carbonzero-global-conference-exhibition-2026/  2 CES 2027 (we ship 2027-01-06): https://www.ces.tech/about-ces/dates-and-hours/  and  https://www.ces.tech/  3 Nullcon Goa 2027 (we ship no start date): https://nullcon.net/  and  https://nullcon.net/cfp/  4 Global Energy Show Canada 2027 (we ship 2027-06-08): https://www.globalenergyshow.com/  and  https://www.globalenergyshow.com/about/about-exhibition/  5 German OWASP Day 2026 (we ship 2026-09-23 Karlsruhe; the input list has a second variant at 9/22/2026, probably a duplicate): https://god.owasp.de/2026/  and  https://owasp.org/www-chapter-germany/  6 Decarbonization Congress 2026 (input list 11/23/2026 Berlin, held back for no permanent id): https://decarboncongress.com/"
     },
     {
       "added": "2026-10-03",
@@ -755,6 +751,18 @@
           "t": "verify_grounding --apply without --market is refused",
           "r": "Done 10-03 after an unintended whole-database re-verify (13 rows' verification state changed, no deadlines). 1 test.",
           "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "'Verified by you' ledger: pinned rows extended to any fact you verify, with the pages, and a panel on this board",
+          "r": "Done 10-03: nine events pinned so far (CODASPY, Apres-Cyber, European CCUS, Carbon Capture USA, Sustainable Fuels, Carbon Capture Expo MENA 2026, Future Fuels MENA, ODSC East, Global Energy Show link). A blank pin ('the page states nothing') clears the database too. The panel is generated from the same file the weekly load enforces. 12 tests.",
+          "s": "done"
+        },
+        {
+          "kind": "decision",
+          "t": "The learning loop: every manual verification becomes a pin, an answer-key line and, when it exposes a failure, a trap case and a rule (QA-REGISTER section F)",
+          "r": "Standing process, agreed 10-03. Measure it: the share of events that needed a manual verification each month should fall. A pin holds one edition; next year's edition is a new row, so the rules (steps 3-5) are what make manual checks rarer.",
+          "s": "doing"
         }
       ]
     }
@@ -883,7 +891,7 @@
   "working_on": [
     {
       "state": "In progress",
-      "text": "Experiment 1, the answer key: draft done and the upcoming events read; waiting on your confirmations (see Waiting on you). Experiment 2 (trap cases) is done."
+      "text": "Experiment 1, the answer key: draft done and the upcoming events read; waiting on your page checks (see Waiting on you). Each fact you verify is pinned, listed under 'Verified by you' and entered in the key. Experiment 2 (trap cases) is done."
     },
     {
       "state": "Waiting on upstream",

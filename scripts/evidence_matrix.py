@@ -18,9 +18,13 @@ import subprocess
 import sys
 from datetime import date
 from pathlib import Path
-from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+# Display only: the host shown beside each source link. This script reads the database and
+# never fetches or follows a link, so it borrows fetch's host helper rather than growing its own.
+from src.cfp_monitor.fetch import _host as hostof     # noqa: E402
 
 LAYERS = {1: ("L1", "AI search (upstream)", True), 2: ("L2", "Code verify", False),
           3: ("L3", "Code: deadline passed", False), 4: ("L4", "Code: plain fetch", False),
@@ -31,13 +35,6 @@ SELFHEAL_LAYER = {"deadline-passed": 3, "fetch-plain+regex": 4,
 FIELDS = [("Deadline", "deadline", "_deadline"), ("Venue", "_loc", "venue"),
           ("Dates", "start_date", "conference_dates"), ("Sub URL", "submission_url", "submission_url"),
           ("Status", "status", "status"), ("Lifecycle", "lifecycle_quote", "lifecycle")]
-
-
-def hostof(u):
-    try:
-        return urlparse(u or "").netloc.replace("www.", "")
-    except Exception:
-        return ""
 
 
 def best_evidence(con, eid, efield):
