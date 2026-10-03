@@ -5,15 +5,15 @@
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "Pick the quality-loop experiments to run first (my recommendation: pass-1 narrowness and a page-anchored cheap second pass, both in SHADOW so nothing reaches a customer). Costs are about 5 dollars for the first and under 1 dollar for the second on the 40-event key; the labelled set of about 40 rows is the real work. See the proposed items in stages A and E."
+      "text": "RUN THIS (approved): set Saturday's task time limit to 5 hours. In PowerShell (run as administrator if it says access denied): $n='CFP Weekly Re-Research (live markets)'; $t=Get-ScheduledTask -TaskName $n; $t.Settings.ExecutionTimeLimit='PT5H'; Set-ScheduledTask -TaskName $n -Settings $t.Settings; (Get-ScheduledTask -TaskName $n).Settings.ExecutionTimeLimit   (should print PT5H). Saturday 10-03 ran 2 hours on the narrow prompt; the longest runs on record (about 6.5 hours) were full-prompt runs started by hand."
     },
     {
       "added": "2026-10-03",
-      "text": "CODASPY (abstract 11-16 vs paper 11-23) and Apres-Cyber (11-20 vs 11-21) came back from research with different, evidenced deadlines. I restored your earlier 11-16 and 11-20 for now. Tell me which should win, and I will pin it (the pinned list is not built yet)."
+      "text": "VERIFY BY HAND, then tell me which date wins. CODASPY: open https://www.codaspy.org/2027/cfp.html and find the abstract deadline (we hold 2026-11-16) and the research-paper deadline (research returned 2026-11-23). Apres-Cyber Slopes Summit: open https://sessionize.com/apres-cyber-slopes-summit-2027 (we hold 2026-11-20: 'Call closes at 11:59 PM 20 Nov 2026'); research instead cited the aggregator https://cfptime.org/ for 2026-11-21 (6:59 AM PST on the 21st, which is 11:59 PM on the 20th in the US Mountain zone, so it may be the same moment)."
     },
     {
       "added": "2026-10-03",
-      "text": "Tighten Saturday's scheduled-task time limit from 10 hours to about 5, so a hang like 10-03's cannot hold the job until noon. Needs an elevated PowerShell; I will give you the exact command."
+      "text": "PICK THE QUALITY-LOOP EXPERIMENTS (nothing runs until you do; all in shadow, nothing reaches a customer). Cost basis: one narrow grounded call costs about 6 cents (measured 09-30: 6.1 cents narrow, 7.7 cents full; estimate until the Google bill confirms); reading one web page with a cheap model costs about 0.13 cents (measured: 347 pages for 45 cents). 1 Answer key (about 40 events, every field checked on the live page, pre-filled by me for you to confirm): no cash, about 1 to 2 hours of your review. 2 Trap cases (the ten known tricky events): no cost. 3 Narrowness test (ask 10 fields vs 4 fields vs deadline only, same 40 events): 3 x 40 = 120 calls = about 7 dollars (2 variants about 5 dollars; with a repeat of each about 15 dollars; I would repeat only if results are close). 4 Read-the-page pass (cheap model reads each verified page and must quote what it reports): 40 events x 3 pages = 120 pages = about 16 cents; about 50 cents with three tries. 5 Two-model agreement: about 20 to 50 cents (or free on the Hermes model). Recommended path 1 + 2 + 4 + 3 = about 8 dollars in total, about one Saturday's research. Weekly running cost for context: about 131 calls x 6 cents = about 8 dollars per Saturday, about the same for Friday awards (September's whole Gemini bill was 134 dollars on the full prompt)."
     }
   ],
   "headline": {
@@ -417,8 +417,8 @@
         },
         {
           "kind": "experiment",
-          "t": "PROPOSED: how narrow is best? Ultra-narrow first pass (deadline + quote + page only) against today's 10 fields",
-          "r": "Not approved. Score on the locked key plus the operator-verified rows: grounded rate, deadline right, quote on the page, cost, seconds.",
+          "t": "PROPOSED (experiment 3): Narrowness test: ask 10 fields vs 4 fields vs deadline only, on the same 40 events",
+          "r": "Not approved. About 120 grounded calls = about 7 dollars. Scored on the answer key and the trap cases: grounded rate, deadline right, quote on the page, wrong-year answers, cost, seconds.",
           "s": "todo"
         }
       ]
@@ -621,6 +621,18 @@
           "t": "Upstream: SAF Europe / Sustainable Fuels duplicate and Future Fuels MENA",
           "r": "Their rulings (merge, discontinued) carry no R16 evidence and use ids we do not hold. Both rows keep blank dates; the SAF pair has the same URL and date (probably one event under two names). Waiting for proper evidence.",
           "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "PROPOSED (experiment 1): Answer key: about 40 events with every field checked on the live page",
+          "r": "Not approved. No cash; about 1 to 2 hours of your review (I pre-fill from page reads, you confirm). Everything else is scored against it.",
+          "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "PROPOSED (experiment 2): Trap cases: the ten events that have fooled us (wrong-year page, next-edition page, dead domain, blocked site, two names for one event, two deadlines on one page)",
+          "r": "Not approved. No cost. Every method must pass them before it is trusted.",
+          "s": "todo"
         }
       ]
     },
@@ -673,14 +685,14 @@
         },
         {
           "kind": "experiment",
-          "t": "PROPOSED: a second, cheap pass that reads the verified page for the fields the short question never asks (DeepSeek v4.1 flash, about 0.1 cent per page)",
-          "r": "Not approved. The first pass finds the right page; later passes read it. Score against the labelled set; compare with a second grounded call on cost and accuracy.",
+          "t": "PROPOSED (experiment 4): Read-the-page pass: a cheap model reads each verified page and must quote every fact it reports",
+          "r": "Not approved. 40 events x 3 pages = 120 pages, about 16 cents (about 0.13 cents a page measured). Our code checks each quote is on the page; anything not quoted stays blank.",
           "s": "todo"
         },
         {
           "kind": "experiment",
-          "t": "PROPOSED: two cheap models must agree before a fact is accepted; disagreements go to a person or one grounded call",
-          "r": "Not approved. Measures how much a second opinion buys per cent spent.",
+          "t": "PROPOSED (experiment 5): Two-model agreement: two cheap models must agree before a fact is accepted",
+          "r": "Not approved. About 20 to 50 cents. Measures whether disagreements catch most of the errors, so a person only looks at those.",
           "s": "todo"
         }
       ]
