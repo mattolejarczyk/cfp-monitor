@@ -77,7 +77,7 @@ Same 14 gold events. GROUNDED = the raw Saturday 2026-10-03 research output (bef
 | Event not in Saturday's research list | 3 (CO2 Fuels, European Biomass, FEW) | n/a (covers any site with a page) |
 | Does the page it cites state the date it gave? | yes 5, **no 3**, unreadable by plain fetch 2 | yes by construction (a quote on the page is required) |
 | Cost per event | about 6 cents (the narrow call, measured 09-30) | about 0.4 cent (this run: 5 cents for 14 events) |
-| Time per event | seconds | about 45 seconds (page renders, 2 s apart) |
+| Time per event | seconds | about 2.5 to 3 minutes (measured 10-04; page renders 2 s apart plus a model call per page) |
 
 How the two relate: both right and agree on 7; real-URL right where grounded was blank or different on 5 (Nullcon, CODASPY, Apres-Cyber, plus CO2 Fuels and European Biomass, which grounded did not research); grounded right where real-URL was blank on 1 (BASC); neither on 1 (FEW).
 **Whenever the two agreed (7 of 7) the date was right. In both disagreements (CODASPY, Apres-Cyber) the real-URL date was the right one and grounded was the one off by a week or a day.**
@@ -87,4 +87,4 @@ Honest limits: n = 14. The 10 customer-verified gold dates are rows the customer
 ## Reading
 - The real-URL path is **more accurate and more provable** on this set and **about 15 times cheaper**, but **slower** and unproven at scale; it reaches pages, not the whole web, so it fails safe (blank) where a site hides the date.
 - The two paths are **complementary**: agreement is a strong signal (7 of 7 right), disagreement is exactly where a person should look (2 of 2, and the real-URL side held the right date).
-- Not done and not recommended yet: replacing the grounded call. The decision supported is a **shadow run**: on Saturday 10-10 run the real-URL path on the same rows, record both answers and the disagreements, change nothing in the data, read the result Monday. About 130 events x 0.4 cent = about 50 cents, an hour or two of rendering; no keys.
+- Not done and not recommended yet: replacing the grounded call. The decision supported is a **shadow run**: on Saturday 10-10 run the real-URL path on the same rows, record both answers and the disagreements, change nothing in the data, read the result Monday. About 40 live events, about 15 cents and about 100 minutes of rendering; no keys. (Correction 10-04: an earlier line said 45 seconds per event and about 130 events; the measured time is 2.5 to 3 minutes and only about 40 rows are live.)

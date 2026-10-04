@@ -151,6 +151,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 9. **[Publish]** **Approves the files for Monday** and records the approval. *(promote_delivery.py)*
 10. **[Report]** **Emails the Saturday recap** - worked or failed, the results table, "Did the load lose anything?" with every flag, and what it means for
    Sunday and Monday. Sent on failure too; the subject reads "WORKED - n to check" when there are flags. *(weekend_recap.py saturday)*
+11. **[Experiment, changes nothing]** **Shadow run of the real-URL deadline finder (added 2026-10-04).** Last, after the load and the recap, so it can delay neither. For every live row (Open or Upcoming, about 40) it reads the event's own home page, sitemap and menu, picks the pages that look like the call, reads each with a cheap model and accepts a deadline only if a verbatim sentence on the page states it. It sets that next to what we ship and emails a short note: how many agree, and every place the pages state a different date (look at these) or a date where we ship none. It writes nothing to the database or the approved files, takes about 2 to 3 minutes per event (about 40 events, so roughly 100 minutes), stops at 120 minutes or 0.60 USD, skips itself if the job has already run 4.25 hours, and never fails the run. Files: `runs_out\shadow\shadow_<stamp>.md/.csv/.json`. Purpose: collect Saturday-by-Saturday evidence on whether it should become a second opinion or a fallback. *(shadow_finder.py)*
 
 ## Sunday 1:00 AM - Weekly link and deadline check (all markets)
 

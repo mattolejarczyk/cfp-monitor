@@ -5,7 +5,7 @@
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "NEXT (your pick, nothing running): (a) SHADOW RUN on Saturday 10-10: run the real-URL path on the same weekly rows, record both answers and every disagreement, change NOTHING in the data, read it Monday (about 50 cents, an hour or two of rendering, no keys; needs a small scheduler hook, which I would build and test first); (b) answer key: decide whether 'page-proven and agrees with our value' counts as confirmed for scoring the grounded call (not the reader), and whether to check the 3 unproven start dates (SecTor, CERAWeek, Innovation Zero); (c) recall gaps (two date ranges, country-from-state); (d) just wait for Sat 10-10 and read the first step-failure trend."
+      "text": "NEXT (your pick, nothing running): (a) wait for the first shadow run (Sat 10-10, about 15 cents) and read its email Monday: the disagreements are where a person looks; (b) answer key: decide whether 'page-proven and agrees with our value' counts as confirmed for scoring the grounded call (not the reader), and whether to check the 3 unproven start dates (SecTor, CERAWeek, Innovation Zero); (c) recall gaps (two date ranges, country-from-state); (d) read the first step-failure trend after Saturday."
     }
   ],
   "headline": {
@@ -782,6 +782,12 @@
           "t": "Page-finding options: alternatives to Google grounding for FINDING the right page (docs/design/page-finding-options.md)",
           "r": "List and test plan written 10-03 with current prices. Already tested once: Codex through your ChatGPT subscription, with its experimental search flag on, ran a real search and returned exactly Nullcon's verified call-for-papers page (about 12,500 tokens). Can start now with no new keys: OpenRouter ':online' with DeepSeek, Codex batches, successor-URL probing, JSON-LD coverage on the saved pages. Free API keys needed from you for Tavily / Serper / Brave / Exa.",
           "s": "todo"
+        },
+        {
+          "kind": "build",
+          "t": "Shadow run of the real-URL deadline finder, last step of Saturday's job (read-only)",
+          "r": "Built 10-04 (scripts/shadow_finder.py, hooked into run_monthly.ps1 after the load and the recap; 8 tests; Markets/run_monthly.pre-shadow-20261004.ps1 is the backup). Reads each live row's own pages (about 40 rows, about 2.7 minutes per event measured, so about 100 minutes), accepts a deadline only with a verbatim quote, sets it next to what we ship, emails the disagreements. Changes no data; stops at 120 minutes, 0.60 USD or 4.25 hours into the job. First real run: Sat 10-10.",
+          "s": "done"
         }
       ]
     },
@@ -951,7 +957,7 @@
   "working_on": [
     {
       "state": "In progress",
-      "text": "Nothing running. Side-by-side done: the real-URL path matched the known deadline for 12 of 14 events (grounded 8 of 14), complementary rather than a replacement. Next real data: Fri 10-09 awards, Sat 10-10 load."
+      "text": "Nothing running. The shadow run is wired into Saturday's job (last step, read-only). First real data: Fri 10-09 awards, Sat 10-10 load + shadow run."
     },
     {
       "state": "Waiting on upstream",

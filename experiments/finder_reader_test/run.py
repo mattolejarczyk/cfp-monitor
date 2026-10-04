@@ -21,6 +21,7 @@ import re
 import sqlite3
 import sys
 from datetime import date, datetime, timedelta
+from types import SimpleNamespace
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -109,6 +110,77 @@ async def render(url, settings, _f):
         return "", []
 
 
+async def find_and_read(ev, ctx, max_pages, model, today, pages_cache, plan_only=False, say=print):
+    """ONE event, end to end: build the page list (sitemap + home page menu), select with the frozen v3.1 rules, read the selected pages and the home page one by one with the cheap reader,
+    accept only code-proven deadlines, pick the main call. `ev` needs event, home, hosts (and optionally gold, control). Used by this experiment and by scripts/shadow_finder.py.
+    Reads the network; writes nothing. Returns a record; rec['pick'] is choose_main's answer, rec['skipped'] says why nothing was read."""
+    d2, r31, R, _f, sitewalk, cs, settings = ctx.d2, ctx.r31, ctx.R, ctx._f, ctx.sitewalk, ctx.cs, ctx.settings
+    urls, labels = [], {}
+    origin = sitewalk.origin(ev["home"])
+    if hasattr(_f, "_force_fallback_domain") and _f._force_fallback_domain(ev["home"]):
+        say("  hard anti-bot host: skipped without touching the network")
+        return {**ev, "skipped": "anti-bot host"}
+    try:
+        pages, how, _capped, _n, _r = await cs.collect(origin)
+        urls += [u for u, _lm in pages]
+    except Exception as e:                                         # noqa: BLE001
+        how = type(e).__name__
+    body, anchors = await render(ev["home"], settings, _f)
+    if not anchors:                                                # a flaky render (AAIML, run 1): one more try before the finder gives up
+        await asyncio.sleep(3)
+        body, anchors = await render(ev["home"], settings, _f)
+    for href, text in anchors:
+        u = urljoin(ev["home"], href).split("#")[0]
+        if urlparse(u).netloc.lower().removeprefix("www.") in ev["hosts"] and u.startswith("http"):
+            urls.append(u)
+            if text:
+                labels[u] = text
+    urls = list(dict.fromkeys(urls))
+    plan = r31.plan(urls, labels)[:max_pages]
+    say(f"  sitemap: {how}; {len(urls)} candidate URLs ({len(labels)} with menu text) -> {len(plan)} pages selected")
+    rec = {**ev, "candidates": len(urls), "selected": len(plan), "pages": [], "selection_hit": None, "reader_hit": None, "reader_wrong": []}
+    if plan_only:
+        for u, t in plan:
+            say(f"    {t[:2]} {u[:100]}")
+        return rec
+    gold = ev.get("gold") or ""
+    gold_d = date.fromisoformat(gold) if gold else None
+    targets = [(i + 1, u, t) for i, (u, t) in enumerate(plan)]
+    if not any(canon_url(u) == canon_url(ev["home"]) for u, _t in plan):
+        targets.append((-1, ev["home"], "home"))                     # the home page is always read: the date is often only there (ICRAI, AAIML)
+    if ev.get("control"):
+        targets.append((0, ev["control"], "control"))
+    cands = []
+    for rank, u, tier in targets:
+        text = pages_cache.get(u) or (await render(u, settings, _f))[0]
+        pages_cache[u] = text
+        states = bool(text) and gold_d is not None and bool(d2.find_target(text, gold_d))
+        got, why, what, quote = "", "page unreadable", "", ""
+        if text.strip():
+            fields, _c = R.ask_with(SYSTEM, model, ev["event"], text)
+            fields = fields or {}
+            got, why = accept_deadline(fields.get("deadline", {}), text, today)
+            what, quote = str(fields.get("what", "")), str((fields.get("deadline") or {}).get("quote", ""))
+        rec["pages"].append({"rank": rank, "tier": tier[:2], "url": u, "chars": len(text), "states_gold": states, "accepted": got, "why": why, "what": what, "quote": quote if got else ""})
+        if got and rank != 0:                                        # the control is the database's own page: a finder would not have it
+            cands.append({"value": got, "url": u, "what": what, "quote": quote, "home": rank == -1})
+        if rank and states and rec["selection_hit"] is None:
+            rec["selection_hit"] = rank
+        if rank and gold and got == gold and rec["reader_hit"] is None:
+            rec["reader_hit"] = rank
+        if rank and gold and got and got != gold:
+            rec["reader_wrong"].append({"rank": rank, "url": u, "accepted": got})
+        say(f"   {rank:>2} {tier[:2]:3} chars={len(text):>6} states-gold={'Y' if states else '-'} reader={got or why[:30]:<12} {urlparse(u).path[:56]}")
+        await asyncio.sleep(2)
+    pick = choose_main(cands, today)
+    rec["pick"] = pick
+    rec["pick_correct"] = bool(gold) and pick["pick"] == gold
+    ctl = [p for p in rec["pages"] if p["rank"] == 0]
+    rec["control_states_gold"] = bool(ctl and ctl[0]["states_gold"])
+    rec["control_reader"] = ctl[0]["accepted"] if ctl else ""
+    return rec
+
+
 async def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser()
@@ -130,80 +202,20 @@ async def main():
     settings = Settings()
     events = [e for e in gold_events(a.today) if a.only.lower() in e["event"].lower()]
     pages_cache = json.loads((HERE / "pages.json").read_text(encoding="utf-8")) if (HERE / "pages.json").exists() else {}
+    ctx = SimpleNamespace(d2=d2, r31=r31, R=R, _f=_f, sitewalk=sitewalk, cs=cs, settings=settings)
     results = []
     for ev in events:
         print(f"\n=== {ev['event']}  gold {ev['gold']} ({ev['source']})  {ev['home']}", flush=True)
-        urls, labels = [], {}
-        origin = sitewalk.origin(ev["home"])
-        blocked = _f._force_fallback_domain(ev["home"]) if hasattr(_f, "_force_fallback_domain") else False
-        if blocked:
-            print("  hard anti-bot host: skipped without touching the network", flush=True)
-            results.append({**ev, "skipped": "anti-bot host"})
-            continue
-        try:
-            pages, how, _capped, _n, _r = await cs.collect(origin)
-            urls += [u for u, _lm in pages]
-        except Exception as e:                                         # noqa: BLE001
-            how = type(e).__name__
-        body, anchors = await render(ev["home"], settings, _f)
-        if not anchors:                                                # a flaky render (AAIML, run 1): one more try before the finder gives up
-            await asyncio.sleep(3)
-            body, anchors = await render(ev["home"], settings, _f)
-        base = ev["home"]
-        for href, text in anchors:
-            u = urljoin(base, href).split("#")[0]
-            if urlparse(u).netloc.lower().removeprefix("www.") in ev["hosts"] and u.startswith("http"):
-                urls.append(u)
-                if text:
-                    labels[u] = text
-        urls = list(dict.fromkeys(urls))
-        plan = r31.plan(urls, labels)[:a.max_pages]
-        print(f"  sitemap: {how}; {len(urls)} candidate URLs ({len(labels)} with menu text) -> {len(plan)} pages selected", flush=True)
-        rec = {**ev, "candidates": len(urls), "selected": len(plan), "pages": [], "selection_hit": None, "reader_hit": None, "reader_wrong": []}
-        if a.plan_only:
-            for u, t in plan:
-                print("   ", t[:2], u[:100])
+        rec = await find_and_read(ev, ctx, a.max_pages, a.model, a.today, pages_cache, plan_only=a.plan_only)
+        if rec.get("skipped") or a.plan_only:
             results.append(rec)
             continue
-        gold_d = date.fromisoformat(ev["gold"])
-        targets = [(i + 1, u, t) for i, (u, t) in enumerate(plan)]
-        if not any(canon_url(u) == canon_url(ev["home"]) for u, _t in plan):
-            targets.append((-1, ev["home"], "home"))                     # the home page is always read: the date is often only there (ICRAI, AAIML)
-        if ev["control"]:
-            targets.append((0, ev["control"], "control"))
-        cands = []
-        for rank, u, tier in targets:
-            text = pages_cache.get(u) or (await render(u, settings, _f))[0]
-            pages_cache[u] = text
-            states = bool(text) and bool(d2.find_target(text, gold_d))
-            got, why, what, quote = "", "page unreadable", "", ""
-            if text.strip():
-                fields, _c = R.ask_with(SYSTEM, a.model, ev["event"], text) if hasattr(R, "ask_with") else (None, None)
-                fields = fields or {}
-                got, why = accept_deadline(fields.get("deadline", {}), text, a.today)
-                what, quote = str(fields.get("what", "")), str((fields.get("deadline") or {}).get("quote", ""))
-            rec["pages"].append({"rank": rank, "tier": tier[:2], "url": u, "chars": len(text), "states_gold": states, "accepted": got, "why": why, "what": what})
-            if got and rank != 0:                                        # the control is the database's own page: a finder would not have it
-                cands.append({"value": got, "url": u, "what": what, "quote": quote, "home": rank == -1})
-            if rank and states and rec["selection_hit"] is None:
-                rec["selection_hit"] = rank
-            if rank and got == ev["gold"] and rec["reader_hit"] is None:
-                rec["reader_hit"] = rank
-            if rank and got and got != ev["gold"]:
-                rec["reader_wrong"].append({"rank": rank, "url": u, "accepted": got})
-            print(f"   {rank:>2} {tier[:2]:3} chars={len(text):>6} states-gold={'Y' if states else '-'} reader={got or why[:30]:<12} {urlparse(u).path[:56]}", flush=True)
-            (HERE / "pages.json").write_text(json.dumps(pages_cache, ensure_ascii=False), encoding="utf-8")
-            await asyncio.sleep(2)
-        pick = choose_main(cands, a.today)
-        rec["pick"] = pick
-        rec["pick_correct"] = pick["pick"] == ev["gold"]
-        ctl = [p for p in rec["pages"] if p["rank"] == 0]
-        rec["control_states_gold"] = bool(ctl and ctl[0]["states_gold"])
-        rec["control_reader"] = ctl[0]["accepted"] if ctl else ""
+        (HERE / "pages.json").write_text(json.dumps(pages_cache, ensure_ascii=False), encoding="utf-8")
+        pick = rec["pick"]
         print(f"  => selection {'HIT rank %s' % rec['selection_hit'] if rec['selection_hit'] else 'MISS'} | reader {'HIT rank %s' % rec['reader_hit'] if rec['reader_hit'] else 'MISS'}"
               f" | MAIN-CALL PICK {pick['pick'] or 'none'} {'= gold' if rec['pick_correct'] else ('!= gold ' + ev['gold'] if pick['pick'] else '')} ({pick['why'][:60]}; other calls set aside {len(pick['other_calls'])}) | control states gold: {rec['control_states_gold']}, reader on control: {rec['control_reader'] or '-'}", flush=True)
         results.append(rec)
-        (HERE / "results.json").write_text(json.dumps(results, indent=1, ensure_ascii=False), encoding="utf-8")
+        (HERE / ("results_only.json" if a.only else "results.json")).write_text(json.dumps(results, indent=1, ensure_ascii=False), encoding="utf-8")   # a partial run never overwrites the full one
     try:
         await _f.close_fallback_browser()
     except Exception:                                                  # noqa: BLE001
