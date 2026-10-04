@@ -1,0 +1,86 @@
+id,market,event,field,claimed,reader_value,status,quote,why,pages
+B05,Cybersecurity,SecTor 2026 (Black Hat Canada / SecTor),START DATE,2026-10-06,,unproven,,page unreadable,https://www.blackhat.com/sector/ | https://www.blackhat.com/sector/2026/ | https://www.blackhat.com/sector/2026/call-for-papers.html
+B05,Cybersecurity,SecTor 2026 (Black Hat Canada / SecTor),CITY,Toronto,,unproven,,page unreadable,https://www.blackhat.com/sector/ | https://www.blackhat.com/sector/2026/ | https://www.blackhat.com/sector/2026/call-for-papers.html
+B05,Cybersecurity,SecTor 2026 (Black Hat Canada / SecTor),COUNTRY,Canada,,unproven,,page unreadable,https://www.blackhat.com/sector/ | https://www.blackhat.com/sector/2026/ | https://www.blackhat.com/sector/2026/call-for-papers.html
+B05,Cybersecurity,SecTor 2026 (Black Hat Canada / SecTor),ORGANIZER,Informa Tech,,unproven,,page unreadable,https://www.blackhat.com/sector/ | https://www.blackhat.com/sector/2026/ | https://www.blackhat.com/sector/2026/call-for-papers.html
+B05,Cybersecurity,SecTor 2026 (Black Hat Canada / SecTor),FORMAT,In-Person,,unproven,,page unreadable,https://www.blackhat.com/sector/ | https://www.blackhat.com/sector/2026/ | https://www.blackhat.com/sector/2026/call-for-papers.html
+B08,Cybersecurity,Cloud & Cyber Security Expo London 2027,START DATE,2027-03-10,2027-03-10,agree,10 - 11 March 2027,ok,https://www.cloudsecurityexpo.com/ | https://www.cloudsecurityexpo.com/why-attend | https://www.techshowlondon.co.uk/call-for-papers
+B08,Cybersecurity,Cloud & Cyber Security Expo London 2027,CITY,London,London,agree,Excel London,ok,https://www.cloudsecurityexpo.com/ | https://www.cloudsecurityexpo.com/why-attend | https://www.techshowlondon.co.uk/call-for-papers
+B08,Cybersecurity,Cloud & Cyber Security Expo London 2027,COUNTRY,United Kingdom,UK,agree,The UK's Leading Cyber Security & Cloud Event,ok,https://www.cloudsecurityexpo.com/ | https://www.cloudsecurityexpo.com/why-attend | https://www.techshowlondon.co.uk/call-for-papers
+B08,Cybersecurity,Cloud & Cyber Security Expo London 2027,ORGANIZER,CloserStill Media,,unproven,,the value is not in the quote,https://www.cloudsecurityexpo.com/ | https://www.cloudsecurityexpo.com/why-attend | https://www.techshowlondon.co.uk/call-for-papers
+B08,Cybersecurity,Cloud & Cyber Security Expo London 2027,FORMAT,In-Person,,unproven,,the value is not in the quote,https://www.cloudsecurityexpo.com/ | https://www.cloudsecurityexpo.com/why-attend | https://www.techshowlondon.co.uk/call-for-papers
+B14,Cybersecurity,it-sa Expo & Congress 2026,START DATE,2026-10-27,2026-10-27,agree,27 - 29 October 2026,ok,https://www.itsa365.de/en/it-sa-expo-congress
+B14,Cybersecurity,it-sa Expo & Congress 2026,CITY,Nuremberg,Nuremberg,agree,"Nuremberg, Germany",ok,https://www.itsa365.de/en/it-sa-expo-congress
+B14,Cybersecurity,it-sa Expo & Congress 2026,COUNTRY,Germany,Germany,agree,"Nuremberg, Germany",ok,https://www.itsa365.de/en/it-sa-expo-congress
+B14,Cybersecurity,it-sa Expo & Congress 2026,ORGANIZER,NürnbergMesse GmbH,,unproven,,blank,https://www.itsa365.de/en/it-sa-expo-congress
+B14,Cybersecurity,it-sa Expo & Congress 2026,FORMAT,In-Person,,unproven,,the value is not in the quote,https://www.itsa365.de/en/it-sa-expo-congress
+B19,Cybersecurity,SecureWorld Government & Critical Infrastructure 2026,START DATE,2026-12-09,2026-12-09,agree,2026-12-09,ok,https://www.secureworld.io/events
+B19,Cybersecurity,SecureWorld Government & Critical Infrastructure 2026,CITY,Virtual,,unproven,,blank,https://www.secureworld.io/events
+B19,Cybersecurity,SecureWorld Government & Critical Infrastructure 2026,COUNTRY,,,both-blank,,blank,https://www.secureworld.io/events
+B19,Cybersecurity,SecureWorld Government & Critical Infrastructure 2026,ORGANIZER,SecureWorld,,unproven,,blank,https://www.secureworld.io/events
+B19,Cybersecurity,SecureWorld Government & Critical Infrastructure 2026,FORMAT,Virtual,Virtual,agree,Virtual Conference,ok,https://www.secureworld.io/events
+B20,Cybersecurity,ShmooCon 2027,START DATE,,,both-blank,,page unreadable,https://shmoocon.org/ | https://www.scmagazine.com/brief/shmoocon-ends-20-year-run-with-tears-malware-and-electronic-fun
+B20,Cybersecurity,ShmooCon 2027,CITY,Washington,,unproven,,page unreadable,https://shmoocon.org/ | https://www.scmagazine.com/brief/shmoocon-ends-20-year-run-with-tears-malware-and-electronic-fun
+B20,Cybersecurity,ShmooCon 2027,COUNTRY,USA,,unproven,,page unreadable,https://shmoocon.org/ | https://www.scmagazine.com/brief/shmoocon-ends-20-year-run-with-tears-malware-and-electronic-fun
+B20,Cybersecurity,ShmooCon 2027,ORGANIZER,The Shmoo Group,,unproven,,page unreadable,https://shmoocon.org/ | https://www.scmagazine.com/brief/shmoocon-ends-20-year-run-with-tears-malware-and-electronic-fun
+B20,Cybersecurity,ShmooCon 2027,FORMAT,,,both-blank,,page unreadable,https://shmoocon.org/ | https://www.scmagazine.com/brief/shmoocon-ends-20-year-run-with-tears-malware-and-electronic-fun
+B21,Utility,Carbon Capture Technology Expo MENA 2026,START DATE,,,both-blank,,blank,https://www.hydrogenccs-menaexpo.com/
+B21,Utility,Carbon Capture Technology Expo MENA 2026,CITY,Abu Dhabi,,unproven,,blank,https://www.hydrogenccs-menaexpo.com/
+B21,Utility,Carbon Capture Technology Expo MENA 2026,COUNTRY,United Arab Emirates,,unproven,,blank,https://www.hydrogenccs-menaexpo.com/
+B21,Utility,Carbon Capture Technology Expo MENA 2026,ORGANIZER,Trans-Global Events,,unproven,,blank,https://www.hydrogenccs-menaexpo.com/
+B21,Utility,Carbon Capture Technology Expo MENA 2026,FORMAT,In-Person,,unproven,,blank,https://www.hydrogenccs-menaexpo.com/
+B22,Utility,CERAWeek 2027 (by S&P Global),START DATE,2027-03-08,,unproven,,blank,https://ceraweek.com/ | https://ceraweek.com/about/faq.html
+B22,Utility,CERAWeek 2027 (by S&P Global),CITY,Houston,,unproven,,blank,https://ceraweek.com/ | https://ceraweek.com/about/faq.html
+B22,Utility,CERAWeek 2027 (by S&P Global),COUNTRY,USA,,unproven,,blank,https://ceraweek.com/ | https://ceraweek.com/about/faq.html
+B22,Utility,CERAWeek 2027 (by S&P Global),ORGANIZER,S&P Global,S&P Global,agree,CERAWeek by S&P Global,ok,https://ceraweek.com/ | https://ceraweek.com/about/faq.html
+B22,Utility,CERAWeek 2027 (by S&P Global),FORMAT,In-Person,,unproven,,blank,https://ceraweek.com/ | https://ceraweek.com/about/faq.html
+B24,Utility,Clean Fuels Conference 2027,START DATE,2027-02-01,2027-02-01,agree,"Join us February 1-4, 2027!",ok,https://www.cleanfuelsconference.org/ | https://www.cleanfuelsconference.org/accommodations/ | https://www.cleanfuelsconference.org/agenda/
+B24,Utility,Clean Fuels Conference 2027,CITY,Phoenix,Phoenix,agree,Sheraton Phoenix Downtown,ok,https://www.cleanfuelsconference.org/ | https://www.cleanfuelsconference.org/accommodations/ | https://www.cleanfuelsconference.org/agenda/
+B24,Utility,Clean Fuels Conference 2027,COUNTRY,USA,,unproven,,the value is not in the quote,https://www.cleanfuelsconference.org/ | https://www.cleanfuelsconference.org/accommodations/ | https://www.cleanfuelsconference.org/agenda/
+B24,Utility,Clean Fuels Conference 2027,ORGANIZER,Clean Fuels Alliance America,Clean Fuels Alliance America,agree,"Clean Fuels Alliance America Offices Missouri Headquarters 605 Clark Ave. PO Box 104898 Jefferson City, MO 65110 (800) 841.5849 Washington D.C. Office 1331 Pennsylvania Ave., NW Suite 505 Washington, D.C. 20004 (888) 246.3437",ok,https://www.cleanfuelsconference.org/ | https://www.cleanfuelsconference.org/accommodations/ | https://www.cleanfuelsconference.org/agenda/
+B24,Utility,Clean Fuels Conference 2027,FORMAT,In-Person,,unproven,,blank,https://www.cleanfuelsconference.org/ | https://www.cleanfuelsconference.org/accommodations/ | https://www.cleanfuelsconference.org/agenda/
+B25,Utility,Decarb Connect North America 2027,START DATE,2027-02-09,2027-02-09,agree,"09 - 11 February, 2027",ok,https://decarbconnectnorthamerica.com/ | https://decarbconnectnorthamerica.com/venue/ | https://decarbconnectnorthamerica.com/speakers/
+B25,Utility,Decarb Connect North America 2027,CITY,Houston,Houston,agree,"Houston, TX",ok,https://decarbconnectnorthamerica.com/ | https://decarbconnectnorthamerica.com/venue/ | https://decarbconnectnorthamerica.com/speakers/
+B25,Utility,Decarb Connect North America 2027,COUNTRY,USA,,unproven,,the value is not in the quote,https://decarbconnectnorthamerica.com/ | https://decarbconnectnorthamerica.com/venue/ | https://decarbconnectnorthamerica.com/speakers/
+B25,Utility,Decarb Connect North America 2027,ORGANIZER,Decarb Connect Limited,Decarb Connect Limited,agree,Decarb Connect Limited,ok,https://decarbconnectnorthamerica.com/ | https://decarbconnectnorthamerica.com/venue/ | https://decarbconnectnorthamerica.com/speakers/
+B25,Utility,Decarb Connect North America 2027,FORMAT,In-Person,,unproven,,blank,https://decarbconnectnorthamerica.com/ | https://decarbconnectnorthamerica.com/venue/ | https://decarbconnectnorthamerica.com/speakers/
+B28,Utility,Decarb TechInvest 2027,START DATE,,,both-blank,,blank,https://decarbtechinvest.com/
+B28,Utility,Decarb TechInvest 2027,CITY,Boston,,unproven,,blank,https://decarbtechinvest.com/
+B28,Utility,Decarb TechInvest 2027,COUNTRY,USA,,unproven,,blank,https://decarbtechinvest.com/
+B28,Utility,Decarb TechInvest 2027,ORGANIZER,Industrial Connect Group Ltd,,unproven,,blank,https://decarbtechinvest.com/
+B28,Utility,Decarb TechInvest 2027,FORMAT,,,both-blank,,blank,https://decarbtechinvest.com/
+B29,Utility,ESF MENA 2026 (Middle East Energy & Sustainability Forum),START DATE,,,both-blank,,blank,https://europetro.com/esfmena
+B29,Utility,ESF MENA 2026 (Middle East Energy & Sustainability Forum),CITY,Dubai,,unproven,,blank,https://europetro.com/esfmena
+B29,Utility,ESF MENA 2026 (Middle East Energy & Sustainability Forum),COUNTRY,United Arab Emirates,,unproven,,blank,https://europetro.com/esfmena
+B29,Utility,ESF MENA 2026 (Middle East Energy & Sustainability Forum),ORGANIZER,Euro Petroleum Consultants,,unproven,,blank,https://europetro.com/esfmena
+B29,Utility,ESF MENA 2026 (Middle East Energy & Sustainability Forum),FORMAT,,,both-blank,,blank,https://europetro.com/esfmena
+B32,Utility,Horizons Clean Energy Expansion Week 2026 (HCEE Week 2026),START DATE,2026-11-24,2026-11-24,agree,24 – 27 November 2026,ok,https://www.hceeweek.com/
+B32,Utility,Horizons Clean Energy Expansion Week 2026 (HCEE Week 2026),CITY,Copenhagen,Copenhagen,agree,"Bella Center, Copenhagen",ok,https://www.hceeweek.com/
+B32,Utility,Horizons Clean Energy Expansion Week 2026 (HCEE Week 2026),COUNTRY,Denmark,,unproven,,blank,https://www.hceeweek.com/
+B32,Utility,Horizons Clean Energy Expansion Week 2026 (HCEE Week 2026),ORGANIZER,S&P Global Energy,,unproven,,blank,https://www.hceeweek.com/
+B32,Utility,Horizons Clean Energy Expansion Week 2026 (HCEE Week 2026),FORMAT,In-Person,,unproven,,blank,https://www.hceeweek.com/
+B33,Utility,Hydrogen Technology World Expo Europe 2026,START DATE,2026-10-20,2026-10-20,agree,20-22 October 2026,ok,https://www.hydrogen-worldexpo.com/
+B33,Utility,Hydrogen Technology World Expo Europe 2026,CITY,Hamburg,Hamburg,agree,"Hamburg Messe, Germany",ok,https://www.hydrogen-worldexpo.com/
+B33,Utility,Hydrogen Technology World Expo Europe 2026,COUNTRY,Germany,Germany,agree,"Hamburg Messe, Germany",ok,https://www.hydrogen-worldexpo.com/
+B33,Utility,Hydrogen Technology World Expo Europe 2026,ORGANIZER,Trans-Global Events,Trans-Global Events - Part of CloserStill Media Limited,agree,ORGANISED BY Trans-Global Events - Part of CloserStill Media Limited,ok,https://www.hydrogen-worldexpo.com/
+B33,Utility,Hydrogen Technology World Expo Europe 2026,FORMAT,In-Person,,unproven,,blank,https://www.hydrogen-worldexpo.com/
+B36,Utility,Industrial Net Zero Conference 2027,START DATE,,,both-blank,,blank,https://www.industrialnetzeroconference.com.au/
+B36,Utility,Industrial Net Zero Conference 2027,CITY,Sydney,,unproven,,blank,https://www.industrialnetzeroconference.com.au/
+B36,Utility,Industrial Net Zero Conference 2027,COUNTRY,Australia,,unproven,,blank,https://www.industrialnetzeroconference.com.au/
+B36,Utility,Industrial Net Zero Conference 2027,ORGANIZER,Informa Connect Australia,,unproven,,blank,https://www.industrialnetzeroconference.com.au/
+B36,Utility,Industrial Net Zero Conference 2027,FORMAT,In-Person,,unproven,,blank,https://www.industrialnetzeroconference.com.au/
+B38,Utility,Innovation Zero World Congress 2027,START DATE,2027-04-27,,unproven,,"the quote does not state that day, month and year",https://www.innovationzero.com/
+B38,Utility,Innovation Zero World Congress 2027,CITY,London,London,agree,Olympia London,ok,https://www.innovationzero.com/
+B38,Utility,Innovation Zero World Congress 2027,COUNTRY,United Kingdom,UK,agree,the UK's leading platform,ok,https://www.innovationzero.com/
+B38,Utility,Innovation Zero World Congress 2027,ORGANIZER,Mung Intl. Ltd,,unproven,,blank,https://www.innovationzero.com/
+B38,Utility,Innovation Zero World Congress 2027,FORMAT,In-Person,,unproven,,the value is not in the quote,https://www.innovationzero.com/
+B39,Utility,International Conference on Climate Change: Impacts & Responses,START DATE,2027-01-20,2027-01-20,agree,20-22 January 2027,ok,https://on-climate.com/2027-conference | https://on-climate.com/2027-conference/call-for-papers
+B39,Utility,International Conference on Climate Change: Impacts & Responses,CITY,Johannesburg,Johannesburg,agree,"Johannesburg, South Africa",ok,https://on-climate.com/2027-conference | https://on-climate.com/2027-conference/call-for-papers
+B39,Utility,International Conference on Climate Change: Impacts & Responses,COUNTRY,South Africa,South Africa,agree,"Johannesburg, South Africa",ok,https://on-climate.com/2027-conference | https://on-climate.com/2027-conference/call-for-papers
+B39,Utility,International Conference on Climate Change: Impacts & Responses,ORGANIZER,Common Ground Research Networks,Common Ground Research Networks,agree,Common Ground Research Networks,ok,https://on-climate.com/2027-conference | https://on-climate.com/2027-conference/call-for-papers
+B39,Utility,International Conference on Climate Change: Impacts & Responses,FORMAT,Hybrid,,unproven,,the value is not in the quote,https://on-climate.com/2027-conference | https://on-climate.com/2027-conference/call-for-papers
+B40,Utility,Hydrogen Americas 2026 Summit & Exhibition,START DATE,2026-10-06,2026-10-06,agree,6-7 October 2026,ok,https://www.world-hydrogen-summit.com/americas/ | https://www.world-hydrogen-summit.com/americas/venue-and-travel/
+B40,Utility,Hydrogen Americas 2026 Summit & Exhibition,CITY,Houston,Houston,agree,"Houston, Texas",ok,https://www.world-hydrogen-summit.com/americas/ | https://www.world-hydrogen-summit.com/americas/venue-and-travel/
+B40,Utility,Hydrogen Americas 2026 Summit & Exhibition,COUNTRY,USA,,unproven,,the value is not in the quote,https://www.world-hydrogen-summit.com/americas/ | https://www.world-hydrogen-summit.com/americas/venue-and-travel/
+B40,Utility,Hydrogen Americas 2026 Summit & Exhibition,ORGANIZER,Sustainable Energy Council,,unproven,,blank,https://www.world-hydrogen-summit.com/americas/ | https://www.world-hydrogen-summit.com/americas/venue-and-travel/
+B40,Utility,Hydrogen Americas 2026 Summit & Exhibition,FORMAT,In-Person,,unproven,,blank,https://www.world-hydrogen-summit.com/americas/ | https://www.world-hydrogen-summit.com/americas/venue-and-travel/
