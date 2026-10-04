@@ -173,7 +173,7 @@ def load_qa_lines(qa: dict | None) -> tuple[str, list[str]]:
     steps = f" Rows that did not ship this week's research, by the step that failed: {qa['step_summary']}." if qa.get("step_summary") else ""
     if not flags:
         return f"Load check: nothing we had proven was lost. {qa.get('summary', '')}{steps}".strip(), []
-    return f"Load check: {len(flags)} thing(s) a person should look at (full report: runs_out/qa/{qa.get('cycle', '')}/load.md).{steps}", flags[:8]
+    return f"Load check: {len(flags)} thing(s) a person should look at (full report: runs_out/qa/{qa.get('cycle', '')}/{qa.get('step', 'load')}.md).{steps}", flags[:8]
 
 
 def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
@@ -351,7 +351,7 @@ def main() -> int:
             qa = None
             try:
                 from src.cfp_monitor import qa_report
-                qp = qa_report.QA_ROOT / qa_report.cycle_of(datetime.now().date()).isoformat() / "load.json"
+                qp = qa_report.QA_ROOT / qa_report.cycle_of(datetime.now().date()).isoformat() / ("load_awards.json" if a.kind == "friday" else "load.json")
                 if qp.exists() and (datetime.now().timestamp() - qp.stat().st_mtime) < 86400:
                     qa = json.loads(qp.read_text(encoding="utf-8"))
             except Exception:                                                  # noqa: BLE001

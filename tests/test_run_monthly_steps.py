@@ -33,3 +33,20 @@ def test_the_shadow_run_is_last_saturday_only_and_time_boxed():
     assert t.index("[void]$steps.Add($recapStep)") < t.index("shadow_finder.py")             # after the load and the recap: it can delay neither
     block = t[t.index("SHADOW RUN of the real-URL"):]
     assert "$recapKind -eq 'saturday'" in block[:900] and '"--run-log", $env:CFP_RUN_LOG' in block[:900]   # Saturday conference markets only; time budget tied to the job's log
+
+
+def test_the_awards_refresh_plan_runs_before_the_canary_and_cannot_stop_the_run():
+    t = _text()
+    assert t.index("STEP 0a: PERMANENT IDS") < t.index("AWARDS REFRESH PLAN") < t.index("STEP 0b: CANARY")
+    block = t[t.index("AWARDS REFRESH PLAN"):t.index("STEP 0b: CANARY")]
+    assert "$Markets -contains 'Awards'" in block and "refresh_plan.py" in block and "try {" in block and "catch {" in block and "every award will be researched" in block
+
+
+def test_the_awards_load_gets_its_own_load_qa_step_before_the_recap():
+    t = _text()
+    assert t.index('"--markets", "Awards"))') < t.index("[void]$steps.Add($recapStep)")
+
+
+def test_the_audit_skips_refresh_marked_rows_in_the_pending_count_and_in_the_row_loop():
+    a = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets\run_market_audit.py").read_text(encoding="utf-8")
+    assert "def is_refresh_skip" in a and "and not is_refresh_skip(r)]" in a and "if is_refresh_skip(row):" in a

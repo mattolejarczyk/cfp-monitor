@@ -214,7 +214,8 @@ def check_research(market: str, markets_dir: Path, research_exit: int | None) ->
     if inp.exists():
         # rows labelled DUP_OF are skipped by the audit on purpose (one award listed twice), so
         # they are not "missing" - the awards list carries 14
-        n_in = sum(1 for r in read_csv(inp)[1] if not (r.get("DUP_OF") or "").strip())
+        # REFRESH_SKIP (refresh_plan.py, 2026-10-04) marks awards the audit deliberately did not research this week: also not "missing" (their last accepted row is carried over)
+        n_in = sum(1 for r in read_csv(inp)[1] if not (r.get("DUP_OF") or "").strip() and not (r.get("REFRESH_SKIP") or "").strip())
         n_out = len(read_csv(out)[1])
         if n_out < n_in:
             return f"{out.name} holds {n_out} rows for {n_in} input rows - the run stopped short"

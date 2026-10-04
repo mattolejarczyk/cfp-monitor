@@ -1,15 +1,16 @@
 {
   "document": "WEEKEND-PROCESS.md",
   "scripts": {
-    "run_monthly.ps1": "d6cccde0339ba24c7e58957bfc151b333894b07ae3bda14c7dae5a29c5780480",
+    "run_monthly.ps1": "b699dde0b17002d022e56ef4506dc98cad777ceda464a17b9e5214795ce3098f",
     "run_canary.ps1": "46e7431641fb57f621d1e8deb7bef889031e9fac5cbde7c2c53ecf2726d2bad2",
     "run_overnight.ps1": "3a9695ca0707743e933272f816450710c7eb7c598b8b895cc2b0b9005dbcd2ee",
     "run_all.ps1": "e7ae4f68ff580d1551e45cd7c2fb8d121c3678180afdbd32f09ae906ade2fda1",
     "scripts/weekly_intake.py": "c3950f4925cd61963837d03f304b3b697ea784572ba736f4c915c3424ba7710b",
     "scripts/stamp_input_ids.py": "e98e8a4494034a6d961ed65e3cc7a28a5cf1e073151c7d00b668a27aff2811bf",
-    "scripts/weekend_import.py": "8610eb1a175cf0535594d4a9812af7978d73edb808107516296de7203e94ce23",
-    "scripts/weekend_recap.py": "cc86eba47ac399a689a00efc8fe977854e86d6fc032ffec8b365e73132ae125d",
+    "scripts/weekend_import.py": "7d333280a70200fa16d156ee790b1dc8c821022dcfbbc9a06f8101ecfb591d7d",
+    "scripts/weekend_recap.py": "20cde60da49515b418d83f3d3b9cbe8afcc209f4a263f2a61aa76bb4005dd146",
     "scripts/shadow_finder.py": "3d438d0b9ed35b32a0cb8a7bd242f8806d62513c123ac92a5b447e0c6b0298c0",
+    "scripts/refresh_plan.py": "db1751c0cf7534277e14ed772fb0dd3b636d36b69ed31b603a2cd9818fb368fc",
     "scripts/run_weekly.bat": "e34d53e10c3282e23d78d56cb9314dceff5e15db411d35e644f0a33c4d3d49de",
     "scripts/weekly_verify.py": "7f6b260f6ab1c574dee2c67df517f0fee07d6d3d0fab8871bbc3f4abb2ffdd68",
     "scripts/weekly_discovery.py": "28e7247f63c4b85782117dfd1f3f154989b32853ed2cce7cc5014a7724c3d811",
@@ -18,7 +19,7 @@
     "scripts/qa_build.py": "d2298ebb54a8aed9fb63c5dad657ecf3cc3dc55e2875fd25736a4f64c01817e4",
     "scripts/import_awards.py": "78bfee46a469805826b0b928cb9b147ab9ba6012c7369c37c48901a60a742774",
     "scripts/export_checks.py": "03248b087d91de83b4fdab76e0c1116d279a084adbc52822b707bf82c93e3d30",
-    "scripts/post_load_qa.py": "0090e1a03689be9637ad2e6197812f742dae20a28961575d0975bae7df7b7512",
+    "scripts/post_load_qa.py": "93f5429c4a7470520620013417ef7881a49dd4f57a8239c7d441eeedc3385308",
     "scripts/narrow_overlay.py": "70eb60f734bc1dd140367537403b1be11daf3159814f41d2c02b5dde281861c5",
     "scripts/start_date_arbiter.py": "ab8c13a43d043a47fa6e7ecf8f93c08e95ade3941d2afb23967d8b9addcc0998",
     "scripts/pinned_rows.py": "289fe281034ff81208286e852fa280e08f307b4e23ec869c34e127b78ca2cdcb"

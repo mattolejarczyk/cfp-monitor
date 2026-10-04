@@ -298,6 +298,7 @@ def process_drivers(db_markets_dir: str, today: str, kind: str) -> list[str]:
 
 
 GRACE_DAYS = 90
+NO_DEADLINE_MODELS = ("Not Announced", "Invitation Only", "Rolling Form")
 FACT_FIELDS = {"conference": ("start_date", "city", "country", "main_info_url"), "award": ("main_info_url",)}
 CALL_FIELDS = ("deadline", "submission_url", "deadline_evidence_url", "deadline_quote")
 PIN_COLUMN = {"START DATE": "start_date", "CITY": "city", "COUNTRY": "country", "MAIN_INFO_URL": "main_info_url", "DEADLINE": "deadline",
@@ -312,7 +313,7 @@ def call_is_open(r: dict, today: str) -> bool:
 
 def far_future(r: dict, today: str, kind: str = "conference") -> bool:
     """Start date more than GRACE_DAYS ahead and no open call: no evidence is expected to exist yet (operator's 90-day rule, 2026-10-03).
-    Awards have no event start, so no grace applies to them."""
+    Awards have no event start: their grace is a Closed award with no new cycle announced."""
     s = (r.get("start_date") or "").strip()
     if kind != "conference" or not s or call_is_open(r, today):
         return False
@@ -320,6 +321,15 @@ def far_future(r: dict, today: str, kind: str = "conference") -> bool:
         return (date.fromisoformat(s) - date.fromisoformat(today)).days > GRACE_DAYS
     except ValueError:
         return False
+
+
+def dormant_award(r: dict, today: str) -> bool:
+    """An award whose cycle has ended and whose next one has not been announced: Closed, no deadline or opening date still ahead, no open call. Nothing is published to find yet,
+    so a blank deadline, link or evidence is not a miss (the awards version of the 90-day rule; awards have no event start date, 2026-10-04)."""
+    if (r.get("status") or "").strip().lower() != "closed":
+        return False
+    ahead = [d for d in ((r.get("deadline") or "").strip(), (r.get("submission_opens") or "").strip()) if d and d >= today]
+    return not ahead and not call_is_open(r, today)
 
 
 def in_scope(r: dict, today: str) -> bool:
@@ -335,8 +345,11 @@ def expected_fields(r: dict, today: str, kind: str = "conference") -> tuple[list
     and no call is open, and when the start date itself is unknown and no call is open."""
     exp = list(FACT_FIELDS[kind])
     excused = []
-    if far_future(r, today, kind) or (kind == "conference" and not (r.get("start_date") or "").strip() and not call_is_open(r, today)):
+    if far_future(r, today, kind) or (kind == "conference" and not (r.get("start_date") or "").strip() and not call_is_open(r, today)) or (kind == "award" and dormant_award(r, today)):
         excused = list(CALL_FIELDS)
+    elif kind == "award" and (r.get("cfp_model") or "").strip() in NO_DEADLINE_MODELS:
+        excused = [f for f in CALL_FIELDS if f != "submission_url"]       # research says no date is published (Not Announced) or there is none by design (Invitation Only, Rolling Form)
+        exp += ["submission_url"]
     else:
         exp += list(CALL_FIELDS)
     return exp, excused
@@ -525,7 +538,7 @@ def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | 
                              f"(start date, city, country, main page) are always expected; the call fields (deadline, link, evidence) are excused while the event starts more than "
                              f"{GRACE_DAYS} days ahead and no call is open, because nothing is published yet. ACCURATE % = proven / (proven + contradicted) over facts we state "
                              "(deadline vs its cited page, start year vs edition, pinned facts, customer-verified dates, spot checks); unproven is shown beside it and never counted wrong; "
-                             "a contradiction is never excused by the 90-day rule. Awards have no event start, so no grace applies."),
+                             "a contradiction is never excused by the 90-day rule. Awards have no event start: their grace is a Closed award with no new cycle announced (no deadline or opening date ahead, no open call)."),
             "source": "scripts/board_metrics.py split_for, process_drivers; docs/design/field_spotchecks.json"}
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 

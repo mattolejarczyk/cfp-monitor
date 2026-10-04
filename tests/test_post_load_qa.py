@@ -63,3 +63,16 @@ def test_a_pinned_event_is_not_flagged_for_an_introduced_start_date():
     old, new = {"o": _r(**{**unv, "start_date": ""})}, {"o": _r(**unv)}
     assert guessed_dates(old, new)                       # unpinned: listed for a person to confirm
     assert not guessed_dates(old, new, {"o"})            # pinned (operator verified): nothing to confirm
+
+
+def test_the_awards_report_has_its_own_name_no_dates_or_watchlist_and_a_section_for_skipped_awards():
+    from datetime import date as _date
+    from scripts.post_load_qa import build
+    old = {"a": {"event_id": "a", "name": "A", "deadline": "2026-11-01", "deadline_evidence_url": "u", "deadline_quote": "q", "submission_url": "s", "is_projected": "false", "status": "Open"}}
+    new = {"a": {**old["a"], "deadline_evidence_url": "", "deadline_quote": ""}}
+    rep = build(old, new, {}, {}, "", _date(2026, 10, 9), None, None, "award", ["dormant (closed, next cycle not near, researched 14 days ago): X", "dormant (closed, next cycle not near, researched 14 days ago): Y"])
+    assert rep["step"] == "load_awards"
+    titles = [s["title"] for s in rep["sections"]]
+    assert not any("Watch-list" in t or "Dates on the shipped" in t or "Start dates" in t for t in titles)
+    assert any("refresh policy" in t for t in titles)
+    assert any("evidence page LOST" in f for f in rep["flags"])                    # the regression checks are the same ones conferences get

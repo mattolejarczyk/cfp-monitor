@@ -174,3 +174,22 @@ def test_award_ids_come_from_the_awards_table_not_the_conference_seeds(tmp_path)
     # last week's page names it -> our id, through upstream_event_id (5.4), never the raw id
     assert resolve("Stevie Awards - American Business Awards", "", known, sources, published) \
         == ("2026-ours-awards", "last week's file")
+
+
+def test_rows_the_refresh_policy_skipped_are_not_counted_as_missing_but_a_short_run_still_is(tmp_path):
+    import csv as _csv
+    from scripts.weekend_import import check_research
+    with open(tmp_path / "Awards_input.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["CONFERENCE", "DUP_OF", "REFRESH_SKIP"])
+        w.writerows([["A", "", ""], ["B", "", "dormant (closed)"], ["C", "", "dormant (closed)"], ["D", "", ""]])
+    with open(tmp_path / "Awards_audited.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["CONFERENCE"])
+        w.writerows([["A"], ["D"]])
+    assert check_research("Awards", tmp_path, 0) is None            # 2 researched of 2 due: complete
+    with open(tmp_path / "Awards_audited.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["CONFERENCE"])
+        w.writerows([["A"]])
+    assert "stopped short" in check_research("Awards", tmp_path, 0)  # one due row missing is still a short run

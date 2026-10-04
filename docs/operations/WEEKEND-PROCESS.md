@@ -63,6 +63,10 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 2. **[Safety check]** **Checks the AI key is present.**
 3. **[Update]** **Adds permanent IDs to the awards list**, from last week's awards page, exact names only.
    *(stamp_input_ids.py)*
+3b. **[Setup]** **Marks the dormant awards so they are not researched this week (added 2026-10-04).** A Closed award whose next cycle is not near cannot have changed, so it is skipped
+   (about a third of the list, about $2.60 a week) and its last accepted row is carried over untouched. Every award that is live, has a date ahead, is due to open within 60 days, is new or has
+   not been researched for 56 days is researched; each other Closed award is looked at about once every four weeks, a quarter of them each week. If the plan ever wanted to skip over 70% it
+   skips nothing. A fault in this step leaves every award to be researched. *(refresh_plan.py -> the REFRESH_SKIP column; the audit skips marked rows like duplicates)*
 4. **[Safety check]** **Runs a 5-row test** - researches 5 awards and checks real Google searches
    happened. If not, the job stops before spending the full budget. *(run_canary.ps1 -ResearchOnly)*
 5. **[Setup]** **Files away last week's awards research** into the archive.
@@ -74,6 +78,9 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 9. **[Load]** **Backs up the database, then loads each award onto its permanent ID.** *(import_awards.py --ids)*
 10. **[Safety check]** **Runs the database health check** (its awards half); anything wrong and
     everything is undone from the backup. *(check_invariants.py)*
+10b. **[Safety check]** **Checks what the awards load changed and whether it lost anything we had proven (added 2026-10-04)** - the same check Saturday has: for every award whose deadline is still ahead,
+    a deadline, evidence page, quote or submission link that went missing is flagged; plus the per-step failure count (finding, proving, reading, identity) and how many awards were deliberately
+    not researched. Filed as `runs_out\qa\<Monday>\load_awards.md`. *(post_load_qa.py --markets Awards)*
 11. **[Publish]** **Approves the awards file for Monday.** *(promote_delivery.py)*
 12. **[Report]** **Emails the Friday recap.** A failed Friday never stops Monday's conferences page;
     Monday's summary says loudly if the awards page is not this week's. *(weekend_recap.py friday)*

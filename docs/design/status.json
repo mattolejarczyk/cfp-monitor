@@ -5,7 +5,7 @@
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "NEXT (your pick, nothing running): (a) wait for the first shadow run (Sat 10-10, about 15 cents) and read its email Monday: the disagreements are where a person looks; (b) answer key: decide whether 'page-proven and agrees with our value' counts as confirmed for scoring the grounded call (not the reader), and whether to check the 3 unproven start dates (SecTor, CERAWeek, Innovation Zero); (c) recall gaps (two date ranges, country-from-state); (d) read the first step-failure trend after Saturday."
+      "text": "NEXT (your pick, nothing running): (a) WATCH FRIDAY 10-09 02:00, the first scheduled awards run and the first under the new refresh plan, narrow prompt and load QA: I would read the canary, the recap and load_awards.md that morning (the rehearsal covered skip-and-carry, not a fresh awards load); (b) the awards answer key + finder/shadow for awards (about 5 to 10 cents, plus you confirming a handful of disagreements; the main-call rule must be inverted for awards); (c) pins for awards (the held Global Energy Show awards row and the six STATUS corrections need it); (d) answer-key decision for conferences, recall gaps, and the Saturday shadow-run email on 10-11."
     }
   ],
   "headline": {
@@ -17,7 +17,7 @@
         {
           "key": "confirmed",
           "label": "Date on the cited page",
-          "n": 14,
+          "n": 13,
           "tone": "good"
         },
         {
@@ -29,13 +29,13 @@
         {
           "key": "nopage",
           "label": "Cited page blocks our plain reader (a browser read would settle it)",
-          "n": 0,
+          "n": 3,
           "tone": "mute"
         },
         {
           "key": "absent",
           "label": "Page read, date not on it",
-          "n": 2,
+          "n": 0,
           "tone": "bad"
         },
         {
@@ -46,9 +46,9 @@
         }
       ],
       "open_rows": 17,
-      "open_confirmed": 14,
+      "open_confirmed": 13,
       "note": "The earlier 28% (11 of 39) counted every stored deadline, including 44 of 48 that had already passed; the purpose audit itself said 15 of 16 'absent' and 11 of 12 'unreadable' rows were already-passed deadlines, 'not errors'. On live deadlines the unproven ones are a deliberate citation withdrawal and pages that refuse a plain fetch, not wrong dates.",
-      "source": "scripts/board_metrics.py provable_live, 2026-10-03; experiments/purpose_audit/RESULT.md for the all-rows audit"
+      "source": "scripts/board_metrics.py provable_live, 2026-10-04; experiments/purpose_audit/RESULT.md for the all-rows audit"
     },
     "customer": {
       "label": "Agreement with customer-verified dates (live rows)",
@@ -87,7 +87,7 @@
         }
       ],
       "note": "All rows, rough (includes past dates and old editions): 32 of 39 agree. Scored: the live rows where both sides name the same edition. Not scored, shown beside it: a customer row holding another edition or an earlier round (more than 180 days apart, or their date already passed while ours is ahead: Troopers, CyberDefenseCon, Climate Change), and our blank on an event more than 90 days off, where no call is expected to be published yet. Those are coverage or timing questions, not disagreements about one date.",
-      "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-03; customer-withdrawn rows excluded"
+      "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-04; customer-withdrawn rows excluded"
     }
   },
   "methods": [
@@ -319,7 +319,7 @@
     "good": [
       {
         "label": "Provable submission dates",
-        "now": "14 of 17 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
+        "now": "13 of 17 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
         "target": "90% of open-call rows; the rest honestly blank, never guessed"
       },
       {
@@ -788,6 +788,18 @@
           "t": "Shadow run of the real-URL deadline finder, last step of Saturday's job (read-only)",
           "r": "Built 10-04 (scripts/shadow_finder.py, hooked into run_monthly.ps1 after the load and the recap; 8 tests; Markets/run_monthly.pre-shadow-20261004.ps1 is the backup). Reads each live row's own pages (about 40 rows, about 2.7 minutes per event measured, so about 100 minutes), accepts a deadline only with a verbatim quote, sets it next to what we ship, emails the disagreements. Changes no data; stops at 120 minutes, 0.60 USD or 4.25 hours into the job. First real run: Sat 10-10.",
           "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Awards refresh plan: skip dormant Closed awards (REFRESH_SKIP), carry their last row, rotate each closed award in about every four weeks",
+          "r": "Built 10-04 (scripts/refresh_plan.py, audit + importer + Friday job hooks; 14 tests; Markets backups run_monthly.pre-refresh-20261004.ps1 and run_market_audit.pre-refresh-20261004.py). The plan skips about 35% of awards (43 of 123 on the 10-09 date) for about $2.60 a week (about $135 a year), estimated at the conference call price. Rehearsed offline: with 43 skipped the final file and database are identical to a full run (121 rows, 0 differences). Fuse: skips nothing above 70%.",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Awards load QA + per-step failure count (load_awards report) and the awards grace in Complete %",
+          "r": "Built 10-04 (post_load_qa.py --markets Awards, wired into the Friday job and recap; board_metrics awards grace for Closed-with-no-new-cycle and Not Announced / Invitation Only / Rolling Form). Awards Complete 68% -> 77%; what is left is real: 12 missing submission links, 6 missing main pages, 4 deadlines. Correction: my earlier note that Closed rows explained the low figure was wrong; 21 of the 29 blank deadlines were awards whose dates are not announced or that have none by design.",
+          "s": "done"
         }
       ]
     },
@@ -880,7 +892,7 @@
     }
   ],
   "quality": {
-    "as_of": "2026-10-03",
+    "as_of": "2026-10-04",
     "conference": {
       "split": {
         "kind": "conference",
@@ -902,12 +914,12 @@
         },
         "excused_fields": 108,
         "excused_rows": 27,
-        "accurate": 94,
-        "proven": 50,
+        "accurate": 95,
+        "proven": 53,
         "contradicted": 3,
         "unproven": 5,
-        "unproven_excused": 2,
-        "unproven_share": 9,
+        "unproven_excused": 1,
+        "unproven_share": 8,
         "contradicted_names": [],
         "drivers": [
           "130 of 130 rows genuinely researched in the Saturday run (0 stubs)",
@@ -921,20 +933,20 @@
         "kind": "award",
         "rows_scored": 44,
         "grace_days": 90,
-        "complete": 68,
-        "fill_pct": 68,
+        "complete": 77,
+        "fill_pct": 77,
         "coverage_pct": null,
-        "expected": 220,
-        "filled": 149,
+        "expected": 137,
+        "filled": 105,
         "missing_by_field": {
-          "deadline": 29,
-          "deadline_quote": 12,
-          "submission_url": 13,
-          "deadline_evidence_url": 11,
-          "main_info_url": 6
+          "submission_url": 12,
+          "main_info_url": 6,
+          "deadline": 4,
+          "deadline_evidence_url": 5,
+          "deadline_quote": 5
         },
-        "excused_fields": 0,
-        "excused_rows": 0,
+        "excused_fields": 83,
+        "excused_rows": 25,
         "accurate": 100,
         "proven": 12,
         "contradicted": 0,
@@ -950,14 +962,14 @@
       "label": "Awards: complete and accurate"
     },
     "not_measured": "Sponsorship, overview and categories have no measure at all for conferences, and nothing beyond the deadline is measured for awards. The non-deadline facts rest on a small spot-check (docs/design/field_spotchecks.json). Conferences and awards are deliberately not blended. The old six-component weighted index was retired on 2026-10-03: its parts are now Complete and Accurate, and freshness is shown as process health.",
-    "split_method": "COMPLETE % = expected fields that are filled (a pinned honest blank counts as filled) averaged with coverage of customer-tracked events. Edition facts (start date, city, country, main page) are always expected; the call fields (deadline, link, evidence) are excused while the event starts more than 90 days ahead and no call is open, because nothing is published yet. ACCURATE % = proven / (proven + contradicted) over facts we state (deadline vs its cited page, start year vs edition, pinned facts, customer-verified dates, spot checks); unproven is shown beside it and never counted wrong; a contradiction is never excused by the 90-day rule. Awards have no event start, so no grace applies.",
+    "split_method": "COMPLETE % = expected fields that are filled (a pinned honest blank counts as filled) averaged with coverage of customer-tracked events. Edition facts (start date, city, country, main page) are always expected; the call fields (deadline, link, evidence) are excused while the event starts more than 90 days ahead and no call is open, because nothing is published yet. ACCURATE % = proven / (proven + contradicted) over facts we state (deadline vs its cited page, start year vs edition, pinned facts, customer-verified dates, spot checks); unproven is shown beside it and never counted wrong; a contradiction is never excused by the 90-day rule. Awards have no event start: their grace is a Closed award with no new cycle announced (no deadline or opening date ahead, no open call).",
     "source": "scripts/board_metrics.py split_for, process_drivers; docs/design/field_spotchecks.json"
   },
   "now_updated": "2026-10-03",
   "working_on": [
     {
       "state": "In progress",
-      "text": "Nothing running. The shadow run is wired into Saturday's job (last step, read-only). First real data: Fri 10-09 awards, Sat 10-10 load + shadow run."
+      "text": "Nothing running. Awards items 1 to 3 are built (refresh plan, load QA, Complete % grace). Next real data: Fri 10-09 02:00 awards, Sat 10-10 research, load and shadow run."
     },
     {
       "state": "Waiting on upstream",

@@ -325,3 +325,32 @@ def test_provable_live_counts_operator_pins_as_proven_and_excuses_far_future_wit
          ("near", "Near", "2026-11-01", "unverified", "", "", "2026-12-01", "Upcoming", 1)]
     r = bm.provable_live(_mini_db(tmp_path, g, []), "2026-10-03")
     assert (r["rows"], r["counts"]["verified"], r["operator_verified"], r["excused_far_future"]) == (3, 1, 1, 1)
+
+
+# --- awards grace (2026-10-04): a Closed award with no new cycle announced is not expected to carry a deadline, link or evidence ---
+def _award(**k):
+    base = {"event_id": "a", "name": "A", "edition": "2026", "status": "Closed", "deadline": "", "submission_opens": "", "main_info_url": "http://a", "submission_url": "",
+            "deadline_evidence_url": "", "deadline_quote": "", "is_projected": 0, "verify_state": ""}
+    base.update(k)
+    return base
+
+
+def test_a_closed_award_with_no_new_cycle_is_not_penalised_for_a_blank_call():
+    r = _award()
+    exp, excused = expected_fields(r, TODAY, "award")
+    assert "deadline" in excused and exp == ["main_info_url"]
+    assert split_scores([r], TODAY, "award")["complete"] == 100
+
+
+def test_an_award_with_a_date_ahead_or_an_open_call_is_expected_to_be_complete():
+    for r in (_award(status="Open"), _award(status="Upcoming"), _award(deadline="2026-12-01"), _award(submission_opens="2026-11-01"), _award(status="Needs Verification")):
+        exp, excused = expected_fields(r, TODAY, "award")
+        assert "deadline" in exp and not excused, r
+
+
+def test_an_award_whose_dates_are_not_announced_or_that_has_no_deadline_by_design_is_not_expected_to_carry_one():
+    for model in ("Not Announced", "Invitation Only", "Rolling Form"):
+        exp, excused = expected_fields(_award(status="Upcoming", cfp_model=model), TODAY, "award")
+        assert set(excused) == {"deadline", "deadline_evidence_url", "deadline_quote"} and "submission_url" in exp
+    exp, excused = expected_fields(_award(status="Upcoming", cfp_model="Fixed Deadline"), TODAY, "award")
+    assert "deadline" in exp and not excused

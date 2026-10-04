@@ -142,12 +142,13 @@ def guessed_dates(old: dict, new: dict, pinned: set | None = None) -> list[str]:
     return out
 
 
-def read_db(path: Path) -> dict:
+def read_db(path: Path, table: str = "grounding_facts") -> dict:
+    """The rows of `table` (grounding_facts for conferences, award_grounding_facts for awards: the two kinds never mix)."""
     con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
     con.row_factory = sqlite3.Row
-    have = {r[1] for r in con.execute("pragma table_info(grounding_facts)")}
+    have = {r[1] for r in con.execute(f"pragma table_info({table})")}
     cols = [c for c in COLS if c in have]
-    out = {r["event_id"]: dict(r) for r in con.execute(f"select {','.join(cols)} from grounding_facts")}
+    out = {r["event_id"]: dict(r) for r in con.execute(f"select {','.join(cols)} from {table}")}
     con.close()
     return out
 
@@ -158,8 +159,10 @@ def read_csv_rows(path: Path) -> list[dict]:
         return list(csv.DictReader(fh))
 
 
-def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str, tuple[bool, str]], watch: str, today: date, steps: dict | None = None, pinned: set | None = None) -> dict:
-    rep = qa_report.new_report("load", today)
+def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str, tuple[bool, str]], watch: str, today: date, steps: dict | None = None, pinned: set | None = None,
+          kind: str = "conference", skipped: list | None = None) -> dict:
+    awards = kind == "award"
+    rep = qa_report.new_report("load_awards" if awards else "load", today)
     rows, flags, past = deadline_changes(old, new, today)
     rep["sections"].append({"title": "Rows with a deadline still ahead: what the load changed",
                             "note": "REGRESSION = something we had proven was lost. A move or an evidence swap is listed without a flag.",
@@ -169,17 +172,24 @@ def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str,
     brows, bflags = blank_rates(old, new)
     rep["sections"].append({"title": "Fields the short research question does not ask", "columns": ["Field", "Blank before", "Blank after"], "rows": brows, "flags": bflags})
     rep["flags"] += bflags
-    drows, dflags = [], []
-    for m, rs in finals.items():
-        r, f = date_checks(m, rs, today)
-        drows.append(r)
-        dflags += f
-    rep["sections"].append({"title": "Dates on the shipped approved files", "columns": ["Market", "Rows", "Start agrees with dates text", "Disagrees", "One side blank"],
-                            "rows": drows, "flags": dflags})
-    rep["flags"] += dflags
-    g = guessed_dates(old, new, pinned)
-    rep["sections"].append({"title": "Start dates with no page behind the edition", "columns": ["Row"], "rows": [[x] for x in g], "flags": g})
-    rep["flags"] += g
+    if not awards:                                    # awards have no event start date: nothing here applies to them
+        drows, dflags = [], []
+        for m, rs in finals.items():
+            r, f = date_checks(m, rs, today)
+            drows.append(r)
+            dflags += f
+        rep["sections"].append({"title": "Dates on the shipped approved files", "columns": ["Market", "Rows", "Start agrees with dates text", "Disagrees", "One side blank"],
+                                "rows": drows, "flags": dflags})
+        rep["flags"] += dflags
+        g = guessed_dates(old, new, pinned)
+        rep["sections"].append({"title": "Start dates with no page behind the edition", "columns": ["Row"], "rows": [[x] for x in g], "flags": g})
+        rep["flags"] += g
+    if skipped is not None:
+        from collections import Counter
+        why = Counter(s.split(":")[0] for s in skipped)
+        rep["sections"].append({"title": "Awards the refresh policy did not research this week (kept as they were)",
+                                "note": "Closed awards whose next cycle is not near are researched about once every four weeks, in rotation (scripts/refresh_plan.py). They are not a failure and not counted as stale.",
+                                "columns": ["Reason", "Awards"], "rows": [[k, v] for k, v in why.most_common()], "flags": []})
     if steps:
         from scripts.failure_steps import STEPS, line
         stp_rows = [[m, v["researched"], v["shipped_fresh"], *[v["counts"][s] for s in STEPS]] for m, v in steps.items()]
@@ -200,10 +210,11 @@ def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str,
     sflags = [f"{m}: Monday's page will NOT publish - {why}" for m, (ok, why) in signed.items() if not ok]
     rep["sections"].append({"title": "Approved files signed and fresh (Monday's pages publish)", "columns": ["Market", "Will publish", "Reason"], "rows": srows, "flags": sflags})
     rep["flags"] += sflags
-    rep["sections"].append({"title": "Watch-list of named rows", "note": watch or "not run", "columns": [], "rows": [], "flags": []})
-    if watch and "ALL OK" not in watch:
-        rep["flags"].append("watch-list: " + watch)
-    return qa_report.finish(rep, "the load lost nothing we had proven; every shipped date and year is consistent")
+    if not awards:
+        rep["sections"].append({"title": "Watch-list of named rows", "note": watch or "not run", "columns": [], "rows": [], "flags": []})
+        if watch and "ALL OK" not in watch:
+            rep["flags"].append("watch-list: " + watch)
+    return qa_report.finish(rep, "the load lost nothing we had proven" + ("" if awards else "; every shipped date and year is consistent"))
 
 
 def main() -> int:
@@ -225,17 +236,21 @@ def main() -> int:
     if not prev or not Path(prev).exists():
         print("post_load_qa: no pre-load backup to compare with (give --previous-db)", file=sys.stderr)
         return 2
-    old, new = read_db(Path(prev)), read_db(Path(a.db))
+    awards = a.markets == ["Awards"]                  # the Friday awards load: its own table, its own report (load_awards), no dates or watch-list
+    table = "award_grounding_facts" if awards else "grounding_facts"
+    old, new = read_db(Path(prev), table), read_db(Path(a.db), table)
     mdir = Path(a.markets_dir)
     finals = {m: read_csv_rows(mdir / f"{m}_audited.final.csv") for m in a.markets if (mdir / f"{m}_audited.final.csv").exists()}
     from src.cfp_monitor.publish_guard import check_publish_fresh
-    signed = {m: check_publish_fresh(mdir / f"{m}_audited.final.csv", today) for m in a.markets}
+    signed = {m: check_publish_fresh(mdir / f"{m}_audited.final.csv", today) for m in a.markets if (mdir / f"{m}_audited.final.csv").exists() or not awards}
     try:
+        if awards:
+            raise RuntimeError("not applicable to awards")
         w = subprocess.run([sys.executable, str(ROOT / "scripts" / "watchlist_check.py"), "--previous-db", str(prev)], capture_output=True, text=True,
                            encoding="utf-8", timeout=300).stdout
         watch = next((ln.strip("* ").strip() for ln in w.splitlines() if "ALL OK" in ln or "need a look" in ln), "")
     except Exception as e:                                                  # noqa: BLE001
-        watch = f"watch-list did not run: {e}"
+        watch = "" if awards else f"watch-list did not run: {e}"
     steps = None
     if a.import_json and Path(a.import_json).exists():
         from scripts import failure_steps as fs
@@ -252,9 +267,13 @@ def main() -> int:
             prior = hist[-2]["counts"] if len(hist) >= 2 else None
             steps[mk["market"]] = {"counts": cnt, "researched": mk.get("rows"), "shipped_fresh": mk.get("from_this_week"), "history": hist, "rises": fs.rises(cnt, prior)}
     from scripts.pinned_rows import load_pins
-    rep = build(old, new, finals, signed, watch, today, steps, {p['canonical'] for p in load_pins()})
-    d = qa_report.write(rep, qa_report.to_markdown(rep, "Saturday load - what changed and what was lost"), Path(a.out))
-    print(f"{rep['status']}: {rep['summary']}  ->  {d / 'load.md'}")
+    skipped = None
+    if awards:
+        from scripts.refresh_plan import skipped_reasons
+        skipped = skipped_reasons(mdir / "Awards_input.csv")
+    rep = build(old, new, finals, signed, watch, today, steps, {p['canonical'] for p in load_pins()}, "award" if awards else "conference", skipped)
+    d = qa_report.write(rep, qa_report.to_markdown(rep, "Friday awards load - what changed and what was lost" if awards else "Saturday load - what changed and what was lost"), Path(a.out))
+    print(f"{rep['status']}: {rep['summary']}  ->  {d / ('load_awards.md' if awards else 'load.md')}")
     for f in rep["flags"]:
         print("  FLAG:", f)
     return 1 if (a.strict and rep["flags"]) else 0
