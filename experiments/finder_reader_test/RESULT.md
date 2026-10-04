@@ -38,3 +38,27 @@ row will carry whichever page happened to answer first. That rule is the next pi
 2. A main-call rule so several accepted dates resolve to one (call-for-papers page first, then earliest open date).
 3. Repeat the run once more to separate flaky renders from real misses.
 4. Compare with the grounded call on the same 14 events (the current weekly path found 10 of 13 gold deadlines on 10-03).
+
+---
+
+# UPDATE (2026-10-04, later): main-call rule + always read the home page, run again
+
+**What changed:** (1) `main_call.py`: of the quote-proven dates found, set aside other calls (posters, awards, workshops, sponsors, students...), prefer a page named for the call (call for papers / speakers / abstracts / submission) over the home page,
+then take the earliest date still ahead; if only other-call dates exist, NO pick. (2) The home page is read as one extra page for every event. (3) One retry when the home page render comes back empty. Tests: `tests/test_main_call.py`.
+Same 14 events, same gold, same reader; the code is told nothing about the answer. Run 1 kept in `results_run1.json`. Cost of this run about 5 cents (every page re-read, plus the home pages), no new keys.
+
+| | Run 1 | Run 2 |
+|---|---|---|
+| A selected page states the gold deadline | 11 of 14 | **13 of 14** |
+| The main-call pick equals the gold deadline | not built | **12 of 14** |
+| A WRONG date picked as the main call | n/a (3 events held a real date for another call) | **0 of 14** |
+| No pick (honest blank) | n/a | 2 (FEW, BASC) |
+
+- **The rule worked where it was needed:** other-call dates were set aside at CO2 Fuels (3), WSED (1), CODASPY (1) and FEW (1); the pick was the right call every time. No case in which several rounds competed (rounds = 1 everywhere).
+- **Home page:** found ICRAI's date, which only the home page states. AAIML's miss was the flaky render; the retry fixed it.
+- **The 2 blanks (both safe failures):** FEW Sustainable Fuels Summit (a sub-summit; the plan still does not select its own page: a selection gap) and OWASP BASC (the page states the date; this run the reader's quote did not state day, month and year, run 1 it did: reader variance, two repeats or a second model would recover it).
+- **Honest limits:** n = 14; gold biased toward open calls a customer tracks; no event had competing rounds, so the earliest-open-date rule is untested; one reader, one repeat. This is an experiment script: nothing here feeds a weekly row yet.
+
+## Decision it supports
+Real-URL finding plus the quote-checked reader plus the main-call rule reached the right deadline for 12 of 14 events with 0 wrong, for about 5 cents. The grounded call on the Saturday 10-03 run found 10 of 13 gold deadlines exactly (a different set and size: indicative only). The cheap way to know whether
+this path should become the weekly row's fallback or a second opinion is to run it side by side on the same events: next step (not started).

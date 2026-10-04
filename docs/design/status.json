@@ -5,7 +5,7 @@
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "NEXT (your pick, nothing running): (a) the main-call rule + always read the home page, then repeat the finder test (about 3 cents, no keys): the finder reached the right page for 11 of 14 events and the reader never missed or made a wrong claim, so this is the step that decides whether real-URL finding can feed the weekly row; (b) answer key: the reader proved 29 of 85 facts for 17 upcoming events and found 0 disagreements; decide whether 'page-proven and agrees with our value' may count as confirmed for scoring the grounded call (not for scoring the reader, which would be circular), and which of the 3 unproven start dates (SecTor, CERAWeek, Innovation Zero) you want to check; (c) the recall gaps (two date ranges, country-from-state); (d) wait for Sat 10-10 and read the first step-failure trend."
+      "text": "NEXT (your pick, nothing running): (a) run the real-URL path SIDE BY SIDE with the weekly grounded call on the same events and score both against the answer key (about 10 cents, no keys): it settles whether it should be the fallback, a second opinion, or stay an experiment; (b) answer key: decide whether 'page-proven and agrees with our value' counts as confirmed for scoring the grounded call (not the reader), and whether to check the 3 unproven start dates (SecTor, CERAWeek, Innovation Zero); (c) recall gaps (two date ranges, country-from-state); (d) wait for Sat 10-10 and read the first step-failure trend."
     }
   ],
   "headline": {
@@ -479,6 +479,12 @@
           "t": "Finder + reader end to end: real menu/sitemap URLs, v3.1 page rules, cheap reader, code-proven quotes (14 events with a known live deadline)",
           "r": "Done 10-04 (experiments/finder_reader_test/RESULT.md, about 2 cents, no new keys). A selected page states the gold deadline for 11 of 14 events and the reader accepted it in the same 11; 0 wrong dates in 73 page reads. Misses are access or selection (a flaky render, a date on the home page only, a sub-summit page), never the reader. Three events also returned a real date for a different call (posters, awards): a main-call rule is needed before this can feed a weekly row.",
           "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Main-call rule (set aside posters/awards, prefer the call page, earliest open date) + always read the home page; finder test repeated",
+          "r": "Done 10-04 (experiments/finder_reader_test, main_call.py, 5 tests; about 5 cents). The pick equals the known deadline for 12 of 14 events, 0 wrong, 2 honest blanks (a sub-summit page not selected; one reader variance). A page states the gold date for 13 of 14. Experiment only: nothing feeds a weekly row yet.",
+          "s": "done"
         }
       ]
     },
@@ -939,7 +945,7 @@
   "working_on": [
     {
       "state": "In progress",
-      "text": "Nothing running. Options 2 and 3 are done (answer-key candidates; finder + reader test). Waiting on your pick for what follows; Fri 10-09 awards and Sat 10-10 load are next."
+      "text": "Nothing running. The finder + reader path now picks the right deadline for 12 of 14 events with 0 wrong (experiment only). Next real data: Fri 10-09 awards, Sat 10-10 load."
     },
     {
       "state": "Waiting on upstream",

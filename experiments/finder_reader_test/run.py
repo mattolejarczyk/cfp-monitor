@@ -37,8 +37,15 @@ If there are several rounds (early, regular, late), report the one that closes n
 If the page states no submission deadline with its year, return empty value and empty quote. Never guess a year or a date."""
 
 
+def canon_url(u: str) -> str:
+    return re.sub(r"^https?://(www\.)?", "", (u or "").lower()).split("#")[0].split("?")[0].rstrip("/")
+
+
 def norm(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").lower()).strip()
+
+
+from experiments.finder_reader_test.main_call import choose_main      # noqa: E402
 
 
 def accept_deadline(item: dict, page: str, today: str) -> tuple[str, str]:
@@ -139,6 +146,9 @@ async def main():
         except Exception as e:                                         # noqa: BLE001
             how = type(e).__name__
         body, anchors = await render(ev["home"], settings, _f)
+        if not anchors:                                                # a flaky render (AAIML, run 1): one more try before the finder gives up
+            await asyncio.sleep(3)
+            body, anchors = await render(ev["home"], settings, _f)
         base = ev["home"]
         for href, text in anchors:
             u = urljoin(base, href).split("#")[0]
@@ -157,18 +167,24 @@ async def main():
             continue
         gold_d = date.fromisoformat(ev["gold"])
         targets = [(i + 1, u, t) for i, (u, t) in enumerate(plan)]
+        if not any(canon_url(u) == canon_url(ev["home"]) for u, _t in plan):
+            targets.append((-1, ev["home"], "home"))                     # the home page is always read: the date is often only there (ICRAI, AAIML)
         if ev["control"]:
             targets.append((0, ev["control"], "control"))
+        cands = []
         for rank, u, tier in targets:
             text = pages_cache.get(u) or (await render(u, settings, _f))[0]
             pages_cache[u] = text
             states = bool(text) and bool(d2.find_target(text, gold_d))
-            got, why = "", "page unreadable"
+            got, why, what, quote = "", "page unreadable", "", ""
             if text.strip():
                 fields, _c = R.ask_with(SYSTEM, a.model, ev["event"], text) if hasattr(R, "ask_with") else (None, None)
                 fields = fields or {}
                 got, why = accept_deadline(fields.get("deadline", {}), text, a.today)
-            rec["pages"].append({"rank": rank, "tier": tier[:2], "url": u, "chars": len(text), "states_gold": states, "accepted": got, "why": why})
+                what, quote = str(fields.get("what", "")), str((fields.get("deadline") or {}).get("quote", ""))
+            rec["pages"].append({"rank": rank, "tier": tier[:2], "url": u, "chars": len(text), "states_gold": states, "accepted": got, "why": why, "what": what})
+            if got and rank != 0:                                        # the control is the database's own page: a finder would not have it
+                cands.append({"value": got, "url": u, "what": what, "quote": quote, "home": rank == -1})
             if rank and states and rec["selection_hit"] is None:
                 rec["selection_hit"] = rank
             if rank and got == ev["gold"] and rec["reader_hit"] is None:
@@ -178,11 +194,14 @@ async def main():
             print(f"   {rank:>2} {tier[:2]:3} chars={len(text):>6} states-gold={'Y' if states else '-'} reader={got or why[:30]:<12} {urlparse(u).path[:56]}", flush=True)
             (HERE / "pages.json").write_text(json.dumps(pages_cache, ensure_ascii=False), encoding="utf-8")
             await asyncio.sleep(2)
+        pick = choose_main(cands, a.today)
+        rec["pick"] = pick
+        rec["pick_correct"] = pick["pick"] == ev["gold"]
         ctl = [p for p in rec["pages"] if p["rank"] == 0]
         rec["control_states_gold"] = bool(ctl and ctl[0]["states_gold"])
         rec["control_reader"] = ctl[0]["accepted"] if ctl else ""
         print(f"  => selection {'HIT rank %s' % rec['selection_hit'] if rec['selection_hit'] else 'MISS'} | reader {'HIT rank %s' % rec['reader_hit'] if rec['reader_hit'] else 'MISS'}"
-              f" | wrong {len(rec['reader_wrong'])} | control states gold: {rec['control_states_gold']}, reader on control: {rec['control_reader'] or '-'}", flush=True)
+              f" | MAIN-CALL PICK {pick['pick'] or 'none'} {'= gold' if rec['pick_correct'] else ('!= gold ' + ev['gold'] if pick['pick'] else '')} ({pick['why'][:60]}; other calls set aside {len(pick['other_calls'])}) | control states gold: {rec['control_states_gold']}, reader on control: {rec['control_reader'] or '-'}", flush=True)
         results.append(rec)
         (HERE / "results.json").write_text(json.dumps(results, indent=1, ensure_ascii=False), encoding="utf-8")
     try:
@@ -190,6 +209,8 @@ async def main():
     except Exception:                                                  # noqa: BLE001
         pass
     done = [r for r in results if "pages" in r and r["pages"]]
+    print(f"\nMAIN-CALL PICK correct for {sum(1 for r in done if r.get('pick_correct'))} of {len(done)} events; picked a WRONG date for {sum(1 for r in done if r.get('pick', {}).get('pick') and not r.get('pick_correct'))}; "
+          f"no pick (honest blank) for {sum(1 for r in done if not r.get('pick', {}).get('pick'))}")
     print(f"\nEVENTS {len(done)}: selection hit {sum(1 for r in done if r['selection_hit'])}, reader hit {sum(1 for r in done if r['reader_hit'])}, "
           f"events with a wrong accepted date {sum(1 for r in done if r['reader_wrong'])}; spent so far {R.spent()[1]:.4f} USD (all experiments)")
 

@@ -1,0 +1,959 @@
+[
+ {
+  "id": "2027-global-energy-show-canada-calgary",
+  "event": "Global Energy Show Canada 2027",
+  "gold": "2026-12-04",
+  "source": "operator pin",
+  "home": "https://www.globalenergyshow.com/",
+  "control": "https://www.globalenergyshow.com/conference/energy-influencers-conference/call-for-submissions/",
+  "hosts": [
+   "globalenergyshow.com"
+  ],
+  "candidates": 70,
+  "selected": 6,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://www.globalenergyshow.com/conferences/2027-call-for-submissions/",
+    "chars": 6007,
+    "states_gold": true,
+    "accepted": "2026-12-04",
+    "why": "ok"
+   },
+   {
+    "rank": 2,
+    "tier": "P2",
+    "url": "https://www.globalenergyshow.com/awards/global-energy-show-canada-awards/",
+    "chars": 0,
+    "states_gold": false,
+    "accepted": "",
+    "why": "page unreadable"
+   },
+   {
+    "rank": 3,
+    "tier": "P3",
+    "url": "https://www.globalenergyshow.com/forms/become-a-sponsor/",
+    "chars": 0,
+    "states_gold": false,
+    "accepted": "",
+    "why": "page unreadable"
+   },
+   {
+    "rank": 4,
+    "tier": "P3",
+    "url": "https://www.globalenergyshow.com/exhibition/about-exhibition/",
+    "chars": 0,
+    "states_gold": false,
+    "accepted": "",
+    "why": "page unreadable"
+   },
+   {
+    "rank": 5,
+    "tier": "P3",
+    "url": "https://www.globalenergyshow.com/exhibition/exhibition-packages/",
+    "chars": 0,
+    "states_gold": false,
+    "accepted": "",
+    "why": "page unreadable"
+   },
+   {
+    "rank": 6,
+    "tier": "P4",
+    "url": "https://www.globalenergyshow.com/forms/2027-executive-conference-interest/",
+    "chars": 0,
+    "states_gold": false,
+    "accepted": "",
+    "why": "page unreadable"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://www.globalenergyshow.com/conference/energy-influencers-conference/call-for-submissions/",
+    "chars": 0,
+    "states_gold": false,
+    "accepted": "",
+    "why": "page unreadable"
+   }
+  ],
+  "selection_hit": 1,
+  "reader_hit": 1,
+  "reader_wrong": [],
+  "control_states_gold": false,
+  "control_reader": ""
+ },
+ {
+  "id": "2026-nullcon-goa-bambolim",
+  "event": "Nullcon Goa 2027",
+  "gold": "2026-10-30",
+  "source": "operator pin",
+  "home": "https://nullcon.net/event/nullcon-goa-2027/",
+  "control": "https://nullcon.net/event/nullcon-goa-2027/call-for-papers/",
+  "hosts": [
+   "nullcon.net"
+  ],
+  "candidates": 2162,
+  "selected": 7,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://nullcon.net/event/nullcon-goa-2026/cfp/",
+    "chars": 5950,
+    "states_gold": false,
+    "accepted": "",
+    "why": "date is long past"
+   },
+   {
+    "rank": 2,
+    "tier": "P1",
+    "url": "https://nullcon.net/event/nullcon-berlin-2026/cfp/",
+    "chars": 7917,
+    "states_gold": false,
+    "accepted": "",
+    "why": "date is long past"
+   },
+   {
+    "rank": 3,
+    "tier": "P1",
+    "url": "https://nullcon.net/event/nullcon-goa-2027/call-for-papers/",
+    "chars": 10079,
+    "states_gold": true,
+    "accepted": "2026-10-30",
+    "why": "ok"
+   },
+   {
+    "rank": 4,
+    "tier": "P2",
+    "url": "https://nullcon.net/event/nullcon-hyderabad-2026/schedule/",
+    "chars": 1009,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 5,
+    "tier": "P3",
+    "url": "https://nullcon.net/sponsor-us/",
+    "chars": 2800,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 6,
+    "tier": "P3",
+    "url": "https://nullcon.net/event/nullcon-goa-2027/sponsors/",
+    "chars": 939,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 7,
+    "tier": "P4",
+    "url": "https://nullcon.net/event/nullcon-goa-2027/registration/",
+    "chars": 2960,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://nullcon.net/event/nullcon-goa-2027/call-for-papers/",
+    "chars": 10079,
+    "states_gold": true,
+    "accepted": "2026-10-30",
+    "why": "ok"
+   }
+  ],
+  "selection_hit": 3,
+  "reader_hit": 3,
+  "reader_wrong": [],
+  "control_states_gold": true,
+  "control_reader": "2026-10-30"
+ },
+ {
+  "id": "2027-rsa-conference-san-francisco",
+  "event": "RSAC Conference",
+  "gold": "2026-10-09",
+  "source": "customer-verified, matches ours",
+  "home": "https://www.rsaconference.com/usa",
+  "control": "https://www.rsaconference.com/usa/call-for-submissions",
+  "hosts": [
+   "rsaconference.com"
+  ],
+  "candidates": 49,
+  "selected": 8,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://www.rsaconference.com/USA/Call-for-Submissions",
+    "chars": 2410,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   },
+   {
+    "rank": 2,
+    "tier": "P1",
+    "url": "https://www.rsaconference.com/usa/call-for-submissions/faq",
+    "chars": 9714,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   },
+   {
+    "rank": 3,
+    "tier": "P1",
+    "url": "https://www.rsaconference.com/usa/call-for-submissions/tips",
+    "chars": 6700,
+    "states_gold": true,
+    "accepted": "",
+    "why": "the quote does not state that day, month and year"
+   },
+   {
+    "rank": 4,
+    "tier": "P1",
+    "url": "https://www.rsaconference.com/usa/call-for-submissions/tracks",
+    "chars": 1928,
+    "states_gold": true,
+    "accepted": "",
+    "why": "the quote does not state that day, month and year"
+   },
+   {
+    "rank": 5,
+    "tier": "P1",
+    "url": "https://www.rsaconference.com/usa/call-for-submissions/process",
+    "chars": 4064,
+    "states_gold": true,
+    "accepted": "",
+    "why": "the quote does not state that day, month and year"
+   },
+   {
+    "rank": 6,
+    "tier": "P1",
+    "url": "https://www.rsaconference.com/usa/call-for-submissions/examples",
+    "chars": 17351,
+    "states_gold": true,
+    "accepted": "",
+    "why": "the quote does not state that day, month and year"
+   },
+   {
+    "rank": 7,
+    "tier": "P1",
+    "url": "https://www.rsaconference.com/usa/call-for-submissions/overview",
+    "chars": 2410,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   },
+   {
+    "rank": 8,
+    "tier": "P3",
+    "url": "https://www.rsaconference.com/about/sponsorship-opportunities",
+    "chars": 2384,
+    "states_gold": true,
+    "accepted": "",
+    "why": "the quote does not state that day, month and year"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://www.rsaconference.com/usa/call-for-submissions",
+    "chars": 2410,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   }
+  ],
+  "selection_hit": 1,
+  "reader_hit": 1,
+  "reader_wrong": [],
+  "control_states_gold": true,
+  "control_reader": "2026-10-09"
+ },
+ {
+  "id": "2027-world-sustainable-energy-days-wsed-wels-speaking",
+  "event": "World Sustainable Energy Days (WSED)",
+  "gold": "2026-10-09",
+  "source": "customer-verified, matches ours",
+  "home": "https://www.wsed.at/",
+  "control": "https://www.wsed.at/call-for-papers",
+  "hosts": [
+   "wsed.at"
+  ],
+  "candidates": 34,
+  "selected": 6,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://www.wsed.at/call",
+    "chars": 2192,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   },
+   {
+    "rank": 2,
+    "tier": "P4",
+    "url": "https://www.wsed.at/workshop-2027",
+    "chars": 2896,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   },
+   {
+    "rank": 3,
+    "tier": "P4",
+    "url": "https://www.wsed.at/young-energy-researchers-2027",
+    "chars": 8051,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   },
+   {
+    "rank": 4,
+    "tier": "P4",
+    "url": "https://www.wsed.at/european-pellet-conference-2027",
+    "chars": 4344,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   },
+   {
+    "rank": 5,
+    "tier": "P4",
+    "url": "https://www.wsed.at/smart-e-mobility-conference-2027",
+    "chars": 3394,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   },
+   {
+    "rank": 6,
+    "tier": "P4",
+    "url": "https://www.wsed.at/energy-efficiency-policy-conference-2027",
+    "chars": 3096,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://www.wsed.at/call-for-papers",
+    "chars": 1783,
+    "states_gold": true,
+    "accepted": "2026-10-09",
+    "why": "ok"
+   }
+  ],
+  "selection_hit": 1,
+  "reader_hit": 1,
+  "reader_wrong": [],
+  "control_states_gold": true,
+  "control_reader": "2026-10-09"
+ },
+ {
+  "id": "2026-co2-based-fuels-and-chemicals-conference-cologne",
+  "event": "CO2-based Fuels and Chemicals Conference",
+  "gold": "2026-11-16",
+  "source": "customer-verified, matches ours",
+  "home": "https://co2-chemistry.eu/",
+  "control": "https://co2-chemistry.eu/call-for-abstracts/",
+  "hosts": [
+   "co2-chemistry.eu"
+  ],
+  "candidates": 41,
+  "selected": 6,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://co2-chemistry.eu/call-for-posters/",
+    "chars": 5582,
+    "states_gold": true,
+    "accepted": "2027-04-05",
+    "why": "ok"
+   },
+   {
+    "rank": 2,
+    "tier": "P1",
+    "url": "https://co2-chemistry.eu/award-application/",
+    "chars": 6727,
+    "states_gold": false,
+    "accepted": "",
+    "why": "the quote has no call wording"
+   },
+   {
+    "rank": 3,
+    "tier": "P1",
+    "url": "https://co2-chemistry.eu/call-for-abstracts/",
+    "chars": 5230,
+    "states_gold": true,
+    "accepted": "2026-11-16",
+    "why": "ok"
+   },
+   {
+    "rank": 4,
+    "tier": "P3",
+    "url": "https://co2-chemistry.eu/sponsors/",
+    "chars": 1140,
+    "states_gold": true,
+    "accepted": "2026-11-16",
+    "why": "ok"
+   },
+   {
+    "rank": 5,
+    "tier": "P3",
+    "url": "https://co2-chemistry.eu/sponsoring/",
+    "chars": 812,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 6,
+    "tier": "P3",
+    "url": "https://co2-chemistry.eu/exhibitors/",
+    "chars": 2001,
+    "states_gold": true,
+    "accepted": "2026-11-16",
+    "why": "ok"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://co2-chemistry.eu/call-for-abstracts/",
+    "chars": 5230,
+    "states_gold": true,
+    "accepted": "2026-11-16",
+    "why": "ok"
+   }
+  ],
+  "selection_hit": 1,
+  "reader_hit": 3,
+  "reader_wrong": [
+   {
+    "rank": 1,
+    "url": "https://co2-chemistry.eu/call-for-posters/",
+    "accepted": "2027-04-05"
+   }
+  ],
+  "control_states_gold": true,
+  "control_reader": "2026-11-16"
+ },
+ {
+  "id": "2026-european-biomass-conference-exhibition-reims",
+  "event": "European Biomass Conference & Exhibition",
+  "gold": "2026-10-30",
+  "source": "customer-verified, matches ours",
+  "home": "https://www.eubce.com/",
+  "control": "https://www.eubce.com/call-for-papers-2027/",
+  "hosts": [
+   "eubce.com"
+  ],
+  "candidates": 618,
+  "selected": 8,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://www.eubce.com/call-for-papers-2027/",
+    "chars": 8018,
+    "states_gold": true,
+    "accepted": "2026-10-30",
+    "why": "ok"
+   },
+   {
+    "rank": 2,
+    "tier": "P1",
+    "url": "https://www.eubce.com/abstract-submission-guidelines/",
+    "chars": 4290,
+    "states_gold": false,
+    "accepted": "",
+    "why": "date is long past"
+   },
+   {
+    "rank": 3,
+    "tier": "P1",
+    "url": "https://www.eubce.com/prizes-and-awards/linneborn-prize-nominations/",
+    "chars": 5733,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 4,
+    "tier": "P2",
+    "url": "https://www.eubce.com/prizes-and-awards/",
+    "chars": 1696,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 5,
+    "tier": "P2",
+    "url": "https://www.eubce.com/message-from-the-technical-programme-chair/",
+    "chars": 4513,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 6,
+    "tier": "P2",
+    "url": "https://www.eubce.com/message-from-the-technical-programme-chair-2026/",
+    "chars": 6313,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 7,
+    "tier": "P2",
+    "url": "https://www.eubce.com/message-from-the-industry-programme-coordinator-2026/",
+    "chars": 3551,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 8,
+    "tier": "P2",
+    "url": "https://www.eubce.com/prizes-and-awards/poster-awards/",
+    "chars": 3739,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://www.eubce.com/call-for-papers-2027/",
+    "chars": 8018,
+    "states_gold": true,
+    "accepted": "2026-10-30",
+    "why": "ok"
+   }
+  ],
+  "selection_hit": 1,
+  "reader_hit": 1,
+  "reader_wrong": [],
+  "control_states_gold": true,
+  "control_reader": "2026-10-30"
+ },
+ {
+  "id": "2027-fuel-ethanol-workshop-sustainable-fuels-summit-omaha-speaking",
+  "event": "Fuel Ethanol Workshop & Expo (FEW) Sustainable Fuels Summit",
+  "gold": "2027-02-12",
+  "source": "customer-verified, matches ours",
+  "home": "https://few.bbiconferences.com/ema/DisplayPage.aspx?pageId=Sustainable_Fuels_Summit__SAF__Renewable_Diesel__Biodiesel",
+  "control": "https://few.bbiconferences.com/ema/DisplayPage.aspx?pageId=Sustainable_Fuels_Summit__SAF__Renewable_Diesel__Biodiesel",
+  "hosts": [
+   "few.bbiconferences.com"
+  ],
+  "candidates": 127,
+  "selected": 2,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P2",
+    "url": "https://few.bbiconferences.com/ema/DisplayPage.aspx?pageId=FEW_Awards",
+    "chars": 6152,
+    "states_gold": false,
+    "accepted": "2027-05-07",
+    "why": "ok"
+   },
+   {
+    "rank": 2,
+    "tier": "P3",
+    "url": "https://few.bbiconferences.com/sponsorlist.aspx",
+    "chars": 754,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://few.bbiconferences.com/ema/DisplayPage.aspx?pageId=Sustainable_Fuels_Summit__SAF__Renewable_Diesel__Biodiesel",
+    "chars": 7792,
+    "states_gold": true,
+    "accepted": "2027-02-12",
+    "why": "ok"
+   }
+  ],
+  "selection_hit": null,
+  "reader_hit": null,
+  "reader_wrong": [
+   {
+    "rank": 1,
+    "url": "https://few.bbiconferences.com/ema/DisplayPage.aspx?pageId=FEW_Awards",
+    "accepted": "2027-05-07"
+   }
+  ],
+  "control_states_gold": true,
+  "control_reader": "2027-02-12"
+ },
+ {
+  "id": "2027-acm-codaspy-alexandria-speaking",
+  "event": "ACM CODASPY 2027",
+  "gold": "2026-11-16",
+  "source": "operator pin",
+  "home": "https://www.codaspy.org/2027/index.html",
+  "control": "https://www.codaspy.org/2027/cfp.html",
+  "hosts": [
+   "codaspy.org",
+   "codaspy27.hotcrp.com"
+  ],
+  "candidates": 22,
+  "selected": 3,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://www.codaspy.org/2027/cfp.html",
+    "chars": 11695,
+    "states_gold": true,
+    "accepted": "2026-11-16",
+    "why": "ok"
+   },
+   {
+    "rank": 2,
+    "tier": "P1",
+    "url": "https://www.codaspy.org/2027/important-dates.html",
+    "chars": 901,
+    "states_gold": true,
+    "accepted": "2026-11-16",
+    "why": "ok"
+   },
+   {
+    "rank": 3,
+    "tier": "P1",
+    "url": "https://www.codaspy.org/2027/call-for-posters.html",
+    "chars": 2494,
+    "states_gold": false,
+    "accepted": "2027-02-15",
+    "why": "ok"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://www.codaspy.org/2027/cfp.html",
+    "chars": 11695,
+    "states_gold": true,
+    "accepted": "2026-11-16",
+    "why": "ok"
+   }
+  ],
+  "selection_hit": 1,
+  "reader_hit": 1,
+  "reader_wrong": [
+   {
+    "rank": 3,
+    "url": "https://www.codaspy.org/2027/call-for-posters.html",
+    "accepted": "2027-02-15"
+   }
+  ],
+  "control_states_gold": true,
+  "control_reader": "2026-11-16"
+ },
+ {
+  "id": "2026-icrai-international-conference-robotics-ai-guangzhou-speaking",
+  "event": "ICRAI International Conference on Robotics, and Artificial Intelligence",
+  "gold": "2026-10-10",
+  "source": "customer-verified, matches ours",
+  "home": "https://www.icrai.org/",
+  "control": "https://www.icrai.org/",
+  "hosts": [
+   "icrai.org"
+  ],
+  "candidates": 35,
+  "selected": 3,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://www.icrai.org/submission.html",
+    "chars": 1505,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 2,
+    "tier": "P2",
+    "url": "https://www.icrai.org/awards.html",
+    "chars": 689,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 3,
+    "tier": "P2",
+    "url": "https://www.icrai.org/program.html",
+    "chars": 1862,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://www.icrai.org/",
+    "chars": 2869,
+    "states_gold": true,
+    "accepted": "2026-10-10",
+    "why": "ok"
+   }
+  ],
+  "selection_hit": null,
+  "reader_hit": null,
+  "reader_wrong": [],
+  "control_states_gold": true,
+  "control_reader": "2026-10-10"
+ },
+ {
+  "id": "2026-raai-international-conference-robotics-automation-ai-singapore-speaking",
+  "event": "RAAI International Conference on Robotics, Automation, and Artificial Intelligence",
+  "gold": "2026-10-10",
+  "source": "customer-verified, matches ours",
+  "home": "https://raai.net/",
+  "control": "https://raai.net/",
+  "hosts": [
+   "raai.net"
+  ],
+  "candidates": 32,
+  "selected": 2,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://raai.net/cfp.html",
+    "chars": 1634,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 2,
+    "tier": "P1",
+    "url": "https://raai.net/sub.html",
+    "chars": 2362,
+    "states_gold": true,
+    "accepted": "2026-10-10",
+    "why": "ok"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://raai.net/",
+    "chars": 3917,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   }
+  ],
+  "selection_hit": 2,
+  "reader_hit": 2,
+  "reader_wrong": [],
+  "control_states_gold": false,
+  "control_reader": ""
+ },
+ {
+  "id": "2027-apres-cyber-slopes-summit-steamboat-springs-speaking",
+  "event": "Apres-Cyber Slopes Summit 2027",
+  "gold": "2026-11-20",
+  "source": "operator pin",
+  "home": "https://www.aprescyber.com/2027-summit",
+  "control": "https://sessionize.com/apres-cyber-slopes-summit-2027",
+  "hosts": [
+   "aprescyber.com",
+   "sessionize.com"
+  ],
+  "candidates": 20,
+  "selected": 4,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://sessionize.com/apres-cyber-slopes-summit-2027",
+    "chars": 4157,
+    "states_gold": true,
+    "accepted": "2026-11-20",
+    "why": "ok"
+   },
+   {
+    "rank": 2,
+    "tier": "P2",
+    "url": "https://www.aprescyber.com/schedule",
+    "chars": 2891,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 3,
+    "tier": "P3",
+    "url": "https://www.aprescyber.com/sponsor",
+    "chars": 3168,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 4,
+    "tier": "P4",
+    "url": "https://www.aprescyber.com/2027-summit",
+    "chars": 3482,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://sessionize.com/apres-cyber-slopes-summit-2027",
+    "chars": 4157,
+    "states_gold": true,
+    "accepted": "2026-11-20",
+    "why": "ok"
+   }
+  ],
+  "selection_hit": 1,
+  "reader_hit": 1,
+  "reader_wrong": [],
+  "control_states_gold": true,
+  "control_reader": "2026-11-20"
+ },
+ {
+  "id": "2027-aaiml-conference-london-speaking",
+  "event": "AAIML Conference",
+  "gold": "2026-10-10",
+  "source": "customer-verified, matches ours",
+  "home": "https://aaiml.net/",
+  "control": "https://www.aaiml.net/",
+  "hosts": [
+   "aaiml.net"
+  ],
+  "candidates": 0,
+  "selected": 0,
+  "pages": [
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://www.aaiml.net/",
+    "chars": 2984,
+    "states_gold": true,
+    "accepted": "",
+    "why": "the quote has no call wording"
+   }
+  ],
+  "selection_hit": null,
+  "reader_hit": null,
+  "reader_wrong": [],
+  "control_states_gold": true,
+  "control_reader": ""
+ },
+ {
+  "id": "2027-owasp-boston-application-security-conference-boston-speaking",
+  "event": "OWASP BASC Boston Application Security Conference",
+  "gold": "2027-01-15",
+  "source": "customer-verified, matches ours",
+  "home": "https://basconf.org/",
+  "control": "https://basconf.org/",
+  "hosts": [
+   "basconf.org"
+  ],
+  "candidates": 7,
+  "selected": 2,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://basconf.org/call-for-papers",
+    "chars": 3827,
+    "states_gold": true,
+    "accepted": "",
+    "why": "the quote does not state that day, month and year"
+   },
+   {
+    "rank": 2,
+    "tier": "P3",
+    "url": "https://basconf.org/sponsorship",
+    "chars": 3827,
+    "states_gold": true,
+    "accepted": "2027-01-15",
+    "why": "ok"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://basconf.org/",
+    "chars": 3827,
+    "states_gold": true,
+    "accepted": "",
+    "why": "the quote does not state that day, month and year"
+   }
+  ],
+  "selection_hit": 1,
+  "reader_hit": 2,
+  "reader_wrong": [],
+  "control_states_gold": true,
+  "control_reader": ""
+ },
+ {
+  "id": "2027-ai-con-usa-las-vegas-speaking",
+  "event": "AI Con USA",
+  "gold": "2026-10-18",
+  "source": "customer-verified, matches ours",
+  "home": "https://aiconusa.techwell.com/",
+  "control": "https://aiconusa.techwell.com/",
+  "hosts": [
+   "aiconusa.techwell.com"
+  ],
+  "candidates": 9,
+  "selected": 2,
+  "pages": [
+   {
+    "rank": 1,
+    "tier": "P1",
+    "url": "https://aiconusa.techwell.com/speak-ai-con-usa",
+    "chars": 5810,
+    "states_gold": true,
+    "accepted": "2026-10-18",
+    "why": "ok"
+   },
+   {
+    "rank": 2,
+    "tier": "P3",
+    "url": "https://aiconusa.techwell.com/expo/become-sponsor",
+    "chars": 4817,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   },
+   {
+    "rank": 0,
+    "tier": "co",
+    "url": "https://aiconusa.techwell.com/",
+    "chars": 3997,
+    "states_gold": false,
+    "accepted": "",
+    "why": "blank"
+   }
+  ],
+  "selection_hit": 1,
+  "reader_hit": 1,
+  "reader_wrong": [],
+  "control_states_gold": false,
+  "control_reader": ""
+ }
+]
