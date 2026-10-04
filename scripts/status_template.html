@@ -129,33 +129,17 @@ function objective(o) {
     <p class="def">${esc(o.note)}</p>
     <span class="lbl" style="margin-top:12px">How we grade a field: four levels of proof</span><ol class="ladder">${o.ladder.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div></div></section>`;
 }
-function qcard(q) {
-  const rows = q.components.map(c => `<tr><td>${esc(c.key.replace('_', ' '))}</td><td class="num">${c.value}%</td><td class="num">${c.weight}</td><td>${esc(c.detail)}</td></tr>`).join('');
-  const ex = q.excluded.map(e => `<li><b>${esc(e.key.replace('_', ' '))}</b> (weight ${e.weight}) <i>not scored</i>: ${esc(e.reason)}</li>`).join('');
-  const partial = q.measured_weight < 100 ? `<div class="callout">Built from the components that have data: <b class="num">${q.measured_weight} of 100</b> points of weight. The rest are not scored, not scored as zero.</div>` : '';
-  return `<section class="band"><h2>${esc(q.label)}</h2>
-    <div class="big"><span class="n">${q.overall}%</span><span class="of num">range ${q.low}% to ${q.high}%; equal-weight ${q.equal_weight}%</span></div>
-    ${partial}
-    <table class="good-tbl q-tbl"><thead><tr><th>Component</th><th>Score</th><th>Weight</th><th>Measured how</th></tr></thead><tbody>${rows}</tbody></table>
-    ${ex ? `<ul class="dec">${ex}</ul>` : ''}
-    ${q.drivers.map(d => `<p class="def">Driver, not scored: ${esc(d)}</p>`).join('')}</section>`;
-}
 function splitCard(label, s) {
   if (!s) return '';
   const p = v => v === null || v === undefined ? 'n/a' : v + '%';
   return `<section class="band"><h2>${esc(label)}</h2>
     <p class="def" style="margin:0 0 6px"><b>Complete ${p(s.complete)}</b> &nbsp; <span class="num">${s.filled} of ${s.expected} expected fields filled (${p(s.fill_pct)}); coverage ${p(s.coverage_pct)}; ${s.excused_fields} call fields on ${s.excused_rows} far-future rows excused</span></p>
-    <p class="def" style="margin:0"><b>Accurate ${p(s.accurate)}</b> &nbsp; <span class="num">${s.proven} proven, ${s.contradicted} contradicted; ${s.unproven} unproven (not counted wrong, ${p(s.unproven_share)} of stated facts), ${s.unproven_excused} excused</span></p></section>`;
+    <p class="def" style="margin:0"><b>Accurate ${p(s.accurate)}</b> &nbsp; <span class="num">${s.proven} proven, ${s.contradicted} contradicted; ${s.unproven} unproven (not counted wrong, ${p(s.unproven_share)} of stated facts), ${s.unproven_excused} excused</span></p>${(s.drivers || []).map(d => `<p class="def" style="margin:6px 0 0">Process, not scored: ${esc(d)}</p>`).join('')}</section>`;
 }
 function splitStrip(Q) {
   if (!Q) return '';
   return `<div class="two">${splitCard('Conferences: complete and accurate', Q.conference.split)}${splitCard('Awards: complete and accurate', Q.awards.split)}</div>
-    <p class="def" style="margin:0 0 14px">${esc(Q.split_method || '')}</p>`;
-}
-function quality(Q) {
-  if (!Q) return '';
-  return `<div class="two">${qcard(Q.conference)}${qcard(Q.awards)}</div>
-    <p class="def" style="margin:0 0 14px">${esc(Q.method)} <b>Not measured:</b> ${esc(Q.not_measured)} <span class="num">as of ${esc(Q.as_of)}</span></p>`;
+    <p class="def" style="margin:0 0 14px">${esc(Q.split_method || '')} <b>Not measured:</b> ${esc(Q.not_measured || '')} <span class="num">as of ${esc(Q.as_of)}</span></p>`;
 }
 const ageDays = d => Math.round((Date.parse(D.as_of) - Date.parse(d)) / 86400000);
 function nowBlock() {
@@ -181,7 +165,6 @@ function render() {
     ${splitStrip(D.quality)}
     ${objective(D.objective)}
     ${nowBlock()}
-    ${quality(D.quality)}
     <div class="two">${headline(D.headline.provable)}${headline(D.headline.customer)}</div>
     <section class="band"><h2>Build progress &nbsp;<span class="num">${done} of ${items.length} items done</span></h2>
       <p class="arrow">How the work connects: each step below is a stage of the production process. An <span class="kind experiment">experiment</span> asks one question about that step and records the answer; a <span class="kind fix">fix</span> corrects data; a <span class="kind build">build</span> makes a thing; a <span class="kind decision">decision</span> is open for you. A step is finished when its question is answered and the winner is wired in.</p>

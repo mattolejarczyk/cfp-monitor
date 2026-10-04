@@ -194,20 +194,9 @@ def test_customer_agreement_and_coverage_never_cross_kinds(tmp_path):
     assert bm.coverage_live(db, "2026-10-02", "conference")["rows"] == 1 and bm.coverage_live(db, "2026-10-02", "award")["rows"] == 0
 
 
-def test_a_component_with_no_data_is_excluded_not_scored_as_zero():
-    cur = {"live_counts": {"agree": 0, "blank": 0, "differ": 0}}
-    prov = {"rows": 4, "counts": {"verified": 3, "withdrawn": 0, "unreadable": 0, "notfound": 1, "contradicted": 0, "unchecked": 0}}
-    q = bm.quality_index(cur, prov, {"rows": 0, "covered": 0}, {"rows": 10, "researched": 10, "stubs": 0}, None, None, "award")
-    assert {e["key"] for e in q["excluded"]} == {"alignment", "coverage", "other"}
-    assert q["measured_weight"] == 25 + 10 + 15                        # proof + no_error + freshness
-    assert q["overall"] == round((25 * 75 + 10 * 100 + 15 * 100) / 50) # renormalised, zeros not injected
-
-
-def test_award_index_names_the_disabled_job(tmp_path):
-    q = bm.quality_index({"live_counts": {"agree": 0, "blank": 0, "differ": 0}}, {"rows": 0, "counts": {k: 0 for k in
-                         ("verified", "withdrawn", "unreadable", "notfound", "contradicted", "unchecked")}},
-                         {"rows": 0, "covered": 0}, {"rows": 1, "researched": 0, "stubs": 0}, None, None, "award")
-    assert any("disabled" in d for d in q["drivers"])
+def test_award_process_driver_names_the_disabled_job(tmp_path):
+    d = bm.process_drivers(str(tmp_path), "2026-10-02", "award")
+    assert any("disabled" in x for x in d)
 
 
 def test_award_freshness_reads_the_awards_file_and_ignores_stale_and_stub_rows(tmp_path):

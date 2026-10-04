@@ -32,17 +32,10 @@ headlines are reported for LIVE rows (the date a customer would act on is still 
                    unreadable the verifier could not read the cited page (HTTP 403, script-built page): unproven, a browser read would settle it
                    notfound   the page was read and the date is not on it
                    contradicted  the page was read and states a different date
-OVERALL QUALITY INDEX (2026-10-02, operator asked for one data-based percentage covering the end-to-end process). Five measured components,
-each 0 to 100, combined with stated weights (a judgment, shown on the board with a low/high range):
-  proof      25  live deadlines proven on their cited page (provable_live)
-  no_error   10  live deadlines whose own cited page shows a DIFFERENT date: 100 minus that share
-  alignment  15  live customer-verified dates that match ours (customer_agreement, live)
-  freshness  15  rows genuinely researched in the last Saturday run (stub rows, where every search attempt failed, are not)
-  coverage   15  live, customer-tracked, verified-dated events that exist in our database (matched by event or by site)
-  other      20  non-deadline facts (city, venue, event dates, names) free of known errors, from the recorded spot-checks in
-                 docs/design/field_spotchecks.json. Weak evidence (7 rows so far): it is the only measure of the ~24 other fields
-Not scored, shown as drivers: the share of Saturday's individual calls that grounded (cost and reliability, not customer quality: retries rescue most rows).
-Range: low = unproven pages count as unknown (as scored); high = pages a plain fetch cannot read count half; a flat equal-weight mean is also shown.
+COMPLETE % and ACCURATE % (2026-10-03; replace the weighted six-component overall index, which was retired the same day). See split_scores:
+  complete  expected fields filled (a pinned honest blank counts) averaged with coverage; call fields excused while the event is >90 days off and no call is open
+  accurate  proven / (proven + contradicted) over stated facts; unproven shown beside it, never wrong; a contradiction is never excused
+Process health (freshness of the last run, share of research calls that grounded) is shown beside them as drivers, never scored.
 --update-status rewrites `headline.customer`, `headline.provable` and `quality` in docs/design/status.json (levels, row counts, notes) and nothing else.
 Read-only otherwise. The 2026-10-01 figure (40 rows) also counted rows the customer had withdrawn; excluding them gives the
 34 this script reports for the same database.
@@ -277,7 +270,6 @@ def call_health(markets_dir: str) -> dict:
     return {"calls": tot, "grounded": ok}
 
 
-WEIGHTS = {"proof": 25, "no_error": 10, "alignment": 15, "freshness": 15, "coverage": 15, "other": 20}
 SPOTCHECKS = ROOT / "docs" / "design" / "field_spotchecks.json"
 
 
@@ -288,62 +280,21 @@ def spotcheck_summary(path: Path = SPOTCHECKS, kind: str = "conference") -> dict
     return {"rows": sum(c["rows"] for c in checks), "bad": sum(c["rows_with_error"] for c in checks), "checks": len(checks)}
 
 
-def quality_index(cur: dict, prov: dict, cov: dict, fresh: dict, calls: dict | None, spot: dict | None = None, kind: str = "conference") -> dict:
-    """Combine the measured components for ONE kind (conference or award). Pure: every input is a result computed above.
-    A component with no data is EXCLUDED (the remaining weights are renormalised) and listed under `excluded` with its reason; it is
-    never scored as zero, which would punish a part we cannot measure as if we had measured it and found it bad."""
-    lc = cur.get("live_counts") or {"agree": 0, "blank": 0, "differ": 0}
-    readable = lc["agree"] + lc["blank"] + lc["differ"]
-    pc = prov["counts"]
-    n = prov["rows"]
-    spot = spot or {"rows": 0, "bad": 0}
-    what = "Saturday run" if kind == "conference" else "awards file the page reads (stamped within 14 days, not a stub)"
-    comp: dict[str, tuple[float | None, str]] = {
-        "proof": (100 * pc["verified"] / n if n else None, f"{pc['verified']} of {n} live deadlines proven on their cited page"
-                  if n else "no live deadlines to score"),
-        "no_error": (100 * (n - pc["contradicted"]) / n if n else None, f"{pc['contradicted']} of {n} live deadlines contradicted by their own page"
-                     if n else "no live deadlines to score"),
-        "alignment": (100 * lc["agree"] / readable if readable else None,
-                      f"{lc['agree']} of {readable} live customer-verified dates match ours" if readable else
-                      "no customer-verified, dated rows link to this kind: nothing to compare"),
-        "freshness": (100 * fresh["researched"] / fresh["rows"] if fresh["rows"] else None,
-                      f"{fresh['researched']} of {fresh['rows']} rows genuinely researched in the {what} ({fresh['stubs']} stubs)"
-                      if fresh["rows"] else "no research file found"),
-        "coverage": (100 * cov["covered"] / cov["rows"] if cov["rows"] else None,
-                     f"{cov['covered']} of {cov['rows']} live customer-tracked events exist in our database" if cov["rows"] else
-                     "no customer-tracked rows of this kind: coverage cannot be measured"),
-        "other": (100 * (spot["rows"] - spot["bad"]) / spot["rows"] if spot["rows"] else None,
-                  f"{spot['rows'] - spot['bad']} of {spot['rows']} sampled rows free of known wrong city, venue, dates or name (weak evidence: small sample)"
-                  if spot["rows"] else "no non-deadline fact has been read against its page for this kind"),
-    }
-    live = {k: v[0] for k, v in comp.items() if v[0] is not None}
-    wsum = sum(WEIGHTS[k] for k in live)
-    score = sum(WEIGHTS[k] * live[k] for k in live) / wsum if wsum else 0.0
-    equal = sum(live.values()) / len(live) if live else 0.0
-    half = dict(live)
-    if "proof" in half:
-        half["proof"] = 100 * (pc["verified"] + 0.5 * pc["unreadable"]) / n
-    high = sum(WEIGHTS[k] * half[k] for k in half) / wsum if wsum else 0.0
-    drivers = []
-    if calls and calls.get("calls"):
-        drivers.append(f"{calls['grounded']} of {calls['calls']} Saturday research calls returned a grounded answer "
-                       f"({round(100 * calls['grounded'] / calls['calls'])}%): retries and last week's approved rows cover most of the gap")
-    if kind == "award":
-        drivers.append("The Friday awards research job was disabled from 2026-09-30 and re-enabled on 2026-10-03; awards freshness stays low until its first run (Fri 2026-10-09 02:00)")
-    return {"kind": kind, "measured_weight": wsum, "overall": round(score), "low": round(min(score, equal)), "high": round(max(high, equal)), "equal_weight": round(equal),
-            "components": [{"key": k, "value": round(comp[k][0]), "weight": WEIGHTS[k], "detail": comp[k][1]} for k in WEIGHTS if comp[k][0] is not None],
-            "excluded": [{"key": k, "weight": WEIGHTS[k], "reason": comp[k][1]} for k in WEIGHTS if comp[k][0] is None],
-            "drivers": drivers}
-
-
-def quality_for(db: str, markets_dir: str, today: str, kind: str) -> dict:
-    """Measure and combine one kind. Conference and award rows are never mixed: every input is read for `kind` only."""
-    cur = customer_agreement(db, today, kind)
-    prov = provable_live(db, today, kind)
-    cov = coverage_live(db, today, kind)
-    fresh = freshness_last_run(markets_dir, today, kind)
-    calls = call_health(markets_dir) if kind == "conference" else None
-    return quality_index(cur, prov, cov, fresh, calls, spotcheck_summary(kind=kind), kind)
+def process_drivers(db_markets_dir: str, today: str, kind: str) -> list[str]:
+    """Process health shown beside Complete/Accurate, never scored (the old index scored freshness as quality; it is a measure of the job, not the data)."""
+    fresh = freshness_last_run(db_markets_dir, today, kind)
+    out = []
+    if fresh["rows"]:
+        what = "Saturday run" if kind == "conference" else "awards file the page reads (stamped within 14 days, not a stub)"
+        out.append(f"{fresh['researched']} of {fresh['rows']} rows genuinely researched in the {what} ({fresh['stubs']} stubs)")
+    if kind == "conference":
+        calls = call_health(db_markets_dir)
+        if calls.get("calls"):
+            out.append(f"{calls['grounded']} of {calls['calls']} Saturday research calls returned a grounded answer ({round(100 * calls['grounded'] / calls['calls'])}%): "
+                       "retries and last week's approved rows cover most of the gap")
+    else:
+        out.append("The Friday awards research job was disabled from 2026-09-30 and re-enabled on 2026-10-03; awards freshness stays low until its first run (Fri 2026-10-09 02:00)")
+    return out
 
 
 GRACE_DAYS = 90
@@ -563,23 +514,19 @@ def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | 
                 lr = lc["agree"] + lc["blank"] + lc["differ"]
                 g["now"] = f"{lc['agree']} of {lr} live rows today ({100 * lc['agree'] // lr if lr else 0}%); {c['agree']} of {c['agree'] + c['blank'] + c['differ']} counting past dates and old editions"
     if quality is not None:
-        method = ("Components, each 0 to 100, combined with the weights shown (a judgment). A component with no data is excluded and the weights "
-                  "renormalised, never scored as zero. Range: the lower of the weighted and equal-weight figure up to the higher of the equal-weight "
-                  "figure and the figure if pages our plain reader cannot open count half. Deadlines are scored on LIVE rows only (a passed "
-                  "deadline's page moves on to the next edition).")
         data["quality"] = {
-            "as_of": today, "method": method,
-            "conference": {**quality["conference"], "label": "Conferences: overall data quality"},
-            "awards": {**quality["awards"], "label": "Awards: overall data quality"},
-            "not_measured": ("Sponsorship, organizer, overview and categories have no measure at all for conferences, and nothing beyond the deadline is measured "
-                             "for awards. The conference 'other facts' component rests on one 7-row read: 3 of the 7 events upstream delivered on 2026-10-02 carried "
-                             "a wrong city, venue or date that only a read of the page caught. Conferences and awards are deliberately not blended into one number."),
+            "as_of": today,
+            "conference": {**quality["conference"], "label": "Conferences: complete and accurate"},
+            "awards": {**quality["awards"], "label": "Awards: complete and accurate"},
+            "not_measured": ("Sponsorship, overview and categories have no measure at all for conferences, and nothing beyond the deadline is measured for awards. "
+                             "The non-deadline facts rest on a small spot-check (docs/design/field_spotchecks.json). Conferences and awards are deliberately not blended. "
+                             "The old six-component weighted index was retired on 2026-10-03: its parts are now Complete and Accurate, and freshness is shown as process health."),
             "split_method": (f"COMPLETE % = expected fields that are filled (a pinned honest blank counts as filled) averaged with coverage of customer-tracked events. Edition facts "
                              f"(start date, city, country, main page) are always expected; the call fields (deadline, link, evidence) are excused while the event starts more than "
                              f"{GRACE_DAYS} days ahead and no call is open, because nothing is published yet. ACCURATE % = proven / (proven + contradicted) over facts we state "
                              "(deadline vs its cited page, start year vs edition, pinned facts, customer-verified dates, spot checks); unproven is shown beside it and never counted wrong; "
                              "a contradiction is never excused by the 90-day rule. Awards have no event start, so no grace applies."),
-            "source": "scripts/board_metrics.py quality_for, split_for; docs/design/field_spotchecks.json"}
+            "source": "scripts/board_metrics.py split_for, process_drivers; docs/design/field_spotchecks.json"}
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -601,25 +548,18 @@ def main(argv: list[str] | None = None) -> int:
     for d in prov["detail"]:
         if d["class"] != "verified":
             print(f"    {d['class']:12} {d['deadline']}  {d['name'][:56]}")
-    qc = quality_for(a.db, str(MARKETS_DIR), a.today, "conference")
-    qa = quality_for(a.db, str(MARKETS_DIR), a.today, "award")
-    for label, q in (("CONFERENCES", qc), ("AWARDS", qa)):
-        print(f"OVERALL DATA QUALITY, {label}: {q['overall']}% (range {q['low']} to {q['high']}; equal-weight {q['equal_weight']}%)")
-        for c in q["components"]:
-            print(f"    {c['key']:10} {c['value']:3}%  weight {c['weight']:2}  {c['detail']}")
-        for e in q["excluded"]:
-            print(f"    {e['key']:10} n/a   weight {e['weight']:2}  EXCLUDED: {e['reason']}")
-        for dr in q["drivers"]:
-            print(f"    driver: {dr}")
     sc = split_for(a.db, str(MARKETS_DIR), a.today, "conference")
     sa = split_for(a.db, str(MARKETS_DIR), a.today, "award")
     for label, s in (("CONFERENCES", sc), ("AWARDS", sa)):
         print(f"COMPLETE {s['complete']}% (fields filled {s['filled']} of {s['expected']} expected = {s['fill_pct']}%, coverage {s['coverage_pct'] if s['coverage_pct'] is not None else 'n/a'}%; "
               f"{s['excused_fields']} call fields on {s['excused_rows']} far-future rows excused) | ACCURATE {s['accurate']}% "
               f"({s['proven']} proven, {s['contradicted']} contradicted; unproven {s['unproven']} not counted wrong, {s['unproven_excused']} excused) - {label}")
+    sc["drivers"], sa["drivers"] = process_drivers(str(MARKETS_DIR), a.today, "conference"), process_drivers(str(MARKETS_DIR), a.today, "award")
+    for label, s in (("CONFERENCES", sc), ("AWARDS", sa)):
+        for dr in s["drivers"]:
+            print(f"    process, not scored ({label}): {dr}")
     if a.update_status:
-        qc["split"], qa["split"] = sc, sa
-        update_status(cur, a.today, prov=prov, quality={"conference": qc, "awards": qa})
+        update_status(cur, a.today, prov=prov, quality={"conference": {"split": sc}, "awards": {"split": sa}})
         print(f"updated headline.customer in {STATUS_JSON}")
     return 0
 
