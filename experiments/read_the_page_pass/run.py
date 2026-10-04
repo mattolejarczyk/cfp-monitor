@@ -69,10 +69,19 @@ def edition_of(pin):
 
 
 def ask(model_key, event, edition, text):
+    return _call(model_key, event, [{"role": "system", "content": L.SYSTEM}, {"role": "user", "content": L.user_message(event, edition, text)}])
+
+
+def ask_with(system, model_key, event, text, cap=12000):
+    """Same call and budget log with a different system prompt (used by experiments/finder_reader_test: the submission deadline instead of the edition facts)."""
+    page = text[:cap]
+    return _call(model_key, event, [{"role": "system", "content": system}, {"role": "user", "content": "EVENT: " + event + chr(10) * 2 + "PAGE TEXT:" + chr(10) + page}])
+
+
+def _call(model_key, event, msgs):
     n, usd = spent()
     if n >= MAX_REQUESTS or usd >= MAX_USD:
         sys.exit(f"budget reached: {n} requests, {usd:.3f} USD")
-    msgs = [{"role": "system", "content": L.SYSTEM}, {"role": "user", "content": L.user_message(event, edition, text)}]
     body, cost, secs, r = {}, None, 0, None
     for attempt, pause in enumerate((0, 8, 20, 45)):          # a rate limit (429) or a server error is a FAILED CALL, never a blank answer
         if pause:

@@ -5,7 +5,7 @@
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "NEXT (your pick, nothing running): (a) page-finding tests from docs/design/page-finding-options.md, now that the per-step failure count will say which step pays off; (b) the next recall gaps: pages with two date ranges (Nullcon), the country-from-state rule, growing the answer key; (c) wait for Saturday 10-10 and read the first trend line. I would do (c) first: it costs nothing."
+      "text": "NEXT (your pick, nothing running): (a) the main-call rule + always read the home page, then repeat the finder test (about 3 cents, no keys): the finder reached the right page for 11 of 14 events and the reader never missed or made a wrong claim, so this is the step that decides whether real-URL finding can feed the weekly row; (b) answer key: the reader proved 29 of 85 facts for 17 upcoming events and found 0 disagreements; decide whether 'page-proven and agrees with our value' may count as confirmed for scoring the grounded call (not for scoring the reader, which would be circular), and which of the 3 unproven start dates (SecTor, CERAWeek, Innovation Zero) you want to check; (c) the recall gaps (two date ranges, country-from-state); (d) wait for Sat 10-10 and read the first step-failure trend."
     }
   ],
   "headline": {
@@ -473,6 +473,12 @@
           "t": "Countdown timers on event pages signal the upcoming edition (operator idea, seen on CarbonZero, Nullcon, Carbon Capture Expo MENA)",
           "r": "Not built. A page that shows a countdown to the event is showing the NEXT edition's dates in a structured way; Nullcon's pages also carry a timeline (call opens, call closes, event) each with its own timer. Idea: use the presence of a countdown and the timeline block as evidence for the page reader and the refresh scheduler. First step: count how many saved pages have one.",
           "s": "todo"
+        },
+        {
+          "kind": "experiment",
+          "t": "Finder + reader end to end: real menu/sitemap URLs, v3.1 page rules, cheap reader, code-proven quotes (14 events with a known live deadline)",
+          "r": "Done 10-04 (experiments/finder_reader_test/RESULT.md, about 2 cents, no new keys). A selected page states the gold deadline for 11 of 14 events and the reader accepted it in the same 11; 0 wrong dates in 73 page reads. Misses are access or selection (a flaky render, a date on the home page only, a sub-summit page), never the reader. Three events also returned a real date for a different call (posters, awards): a main-call rule is needed before this can feed a weekly row.",
+          "s": "done"
         }
       ]
     },
@@ -533,6 +539,12 @@
           "kind": "fix",
           "t": "Narrow overlay: last week's same-edition values for the fields the short question does not ask (scripts/narrow_overlay.py)",
           "r": "Done 10-03, live in weekend_import: organizer blank on 130 rows -> 14 and 2; venue in CITY 28 -> 1 and 0; conference-dates text restored when it names the same full date as the start date. 11 tests.",
+          "s": "done"
+        },
+        {
+          "kind": "experiment",
+          "t": "Answer-key candidates: reader over the unconfirmed upcoming benchmark events",
+          "r": "Done 10-04 (docs/qa/answer-key-CANDIDATES.csv, about 1 cent). 17 events, 85 facts: 29 proven by the page and agree with our value, 47 not provable from the pages, 0 where the page and our value differ, 0 where we are blank and the page states it. Nothing is added to the confirmed key without you.",
           "s": "done"
         }
       ]
@@ -927,7 +939,7 @@
   "working_on": [
     {
       "state": "In progress",
-      "text": "Nothing running. The board's quality figures were rebuilt today (Complete / Accurate under the header; old weighted index retired). Next real data points: Friday 10-09 awards run and Saturday 10-10 research and load (first with the per-step failure trend)."
+      "text": "Nothing running. Options 2 and 3 are done (answer-key candidates; finder + reader test). Waiting on your pick for what follows; Fri 10-09 awards and Sat 10-10 load are next."
     },
     {
       "state": "Waiting on upstream",
