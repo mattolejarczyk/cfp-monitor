@@ -243,6 +243,24 @@
         "CITY": "Abu Dhabi",
         "LOCATION": "ADNEC Centre, Abu Dhabi"
       }
+    },
+    {
+      "canonical": "2027-odsc-east-boston-speaking",
+      "event": "ODSC East 2027 (Open Data Science Conference)",
+      "ruled_on": "2026-10-04",
+      "by": "operator",
+      "why": "Operator read the event's own page (https://odsc.ai/east/): Menino Convention and Exhibition Center, Boston, MA, May 10-12th, 2027. Pinned so a weekly run cannot move it; the date was already stored correctly.",
+      "until": "2027-05-13",
+      "links": [
+        "https://odsc.ai/east/"
+      ],
+      "set": {
+        "START DATE": "2027-05-10",
+        "CONFERENCE DATES": "May 10 - May 12, 2027",
+        "LOCATION": "Menino Convention and Exhibition Center, Boston, MA",
+        "CITY": "Boston",
+        "STATE_PROVINCE": "MA"
+      }
     }
   ]
 }

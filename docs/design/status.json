@@ -6,14 +6,6 @@
     {
       "added": "2026-10-03",
       "text": "NEXT (your pick, nothing running): (a) page-finding tests from docs/design/page-finding-options.md, now that the per-step failure count will say which step pays off; (b) the next recall gaps: pages with two date ranges (Nullcon), the country-from-state rule, growing the answer key; (c) wait for Saturday 10-10 and read the first trend line. I would do (c) first: it costs nothing."
-    },
-    {
-      "added": "2026-10-03",
-      "text": "SEND upstream NOTE-TO-UPSTREAM-25.md (copy/paste): the two rows now parse and Decarbonization Congress 2027 is loaded; their OWASP evidence page is a 404; asks where Nullcon's 'provisional' March dates came from and to stop patching pinned facts."
-    },
-    {
-      "added": "2026-10-03",
-      "text": "OPTIONAL: ODSC East 2027. The page header (read in a real browser) states 'May 10-12th, 2027' and upstream now agrees. Verify once at https://odsc.ai/east/ and say 'as stated' if you want it pinned."
     }
   ],
   "headline": {
