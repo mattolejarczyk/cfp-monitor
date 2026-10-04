@@ -62,3 +62,29 @@ Same 14 events, same gold, same reader; the code is told nothing about the answe
 ## Decision it supports
 Real-URL finding plus the quote-checked reader plus the main-call rule reached the right deadline for 12 of 14 events with 0 wrong, for about 5 cents. The grounded call on the Saturday 10-03 run found 10 of 13 gold deadlines exactly (a different set and size: indicative only). The cheap way to know whether
 this path should become the weekly row's fallback or a second opinion is to run it side by side on the same events: next step (not started).
+
+---
+
+# UPDATE (2026-10-04, evening): side by side with the weekly grounded call (`side_by_side.py`, `side_by_side.json`)
+
+Same 14 gold events. GROUNDED = the raw Saturday 2026-10-03 research output (before any overlay, pin or carry; matched through identity.to_canonical). REAL-URL = run 2 (main-call pick). Cost of the comparison: nothing (no model or research call; one plain fetch per cited page).
+
+| | Grounded (Saturday 10-03) | Real-URL (finder + reader + main-call rule) |
+|---|---|---|
+| Equals the known deadline | **8 of 14** (8 of the 11 it researched) | **12 of 14** (10 of the same 11) |
+| A different date | 2 (CODASPY 2026-11-23 vs 11-16; Apres-Cyber 2026-11-21 vs 11-20) | **0** |
+| Blank | 1 (Nullcon) | 2 (FEW, BASC) |
+| Event not in Saturday's research list | 3 (CO2 Fuels, European Biomass, FEW) | n/a (covers any site with a page) |
+| Does the page it cites state the date it gave? | yes 5, **no 3**, unreadable by plain fetch 2 | yes by construction (a quote on the page is required) |
+| Cost per event | about 6 cents (the narrow call, measured 09-30) | about 0.4 cent (this run: 5 cents for 14 events) |
+| Time per event | seconds | about 45 seconds (page renders, 2 s apart) |
+
+How the two relate: both right and agree on 7; real-URL right where grounded was blank or different on 5 (Nullcon, CODASPY, Apres-Cyber, plus CO2 Fuels and European Biomass, which grounded did not research); grounded right where real-URL was blank on 1 (BASC); neither on 1 (FEW).
+**Whenever the two agreed (7 of 7) the date was right. In both disagreements (CODASPY, Apres-Cyber) the real-URL date was the right one and grounded was the one off by a week or a day.**
+
+Honest limits: n = 14. The 10 customer-verified gold dates are rows the customer verified AND that match ours, and ours came from the grounded path or its carry, so the gold favours the grounded call; the 4 operator-pinned ones do not have that bias. One run of each. The three events grounded did not research are not a grounded failure, only a coverage difference, so the fair comparison is the 11-event column. Grounded's 3 exact answers whose cited page does not state the date (GES, Apres-Cyber, BASC) are right but unproven, the pattern the board counts as "date not on page".
+
+## Reading
+- The real-URL path is **more accurate and more provable** on this set and **about 15 times cheaper**, but **slower** and unproven at scale; it reaches pages, not the whole web, so it fails safe (blank) where a site hides the date.
+- The two paths are **complementary**: agreement is a strong signal (7 of 7 right), disagreement is exactly where a person should look (2 of 2, and the real-URL side held the right date).
+- Not done and not recommended yet: replacing the grounded call. The decision supported is a **shadow run**: on Saturday 10-10 run the real-URL path on the same rows, record both answers and the disagreements, change nothing in the data, read the result Monday. About 130 events x 0.4 cent = about 50 cents, an hour or two of rendering; no keys.
