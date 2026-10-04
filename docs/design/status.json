@@ -5,7 +5,7 @@
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "NEXT (your pick, nothing running): (a) page-finding tests from docs/design/page-finding-options.md, now that the weekly per-step failure count exists to say which step pays off; (b) the next gap from the board: Nullcon-style pages with two date ranges, the country rule, and growing the answer key with the other benchmark events; (c) wait for Saturday 10-10 and read the first trend line. I would do (c) first: it costs nothing."
+      "text": "NEXT (your pick, nothing running): (a) page-finding tests from docs/design/page-finding-options.md, now that the per-step failure count will say which step pays off; (b) the next recall gaps: pages with two date ranges (Nullcon), the country-from-state rule, growing the answer key; (c) wait for Saturday 10-10 and read the first trend line. I would do (c) first: it costs nothing."
     },
     {
       "added": "2026-10-03",
@@ -833,6 +833,12 @@
           "t": "Per-step failure count in every Saturday load report (FIND / PROVE / READ / IDENTITY), with history and trend",
           "r": "Done 10-03 (scripts/failure_steps.py, wired into post_load_qa and the recap; 4 tests). First load: Cybersecurity IDENTITY 3, FIND 5, PROVE 2; Utility IDENTITY 8, FIND 2, PROVE 4, READ 2 (FIND 7, PROVE 6, READ 2, IDENTITY 11 in all, matching the hand count). The trend file builds itself weekly; a rise of 5 or more is flagged.",
           "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Complete % and Accurate % replace the weighted six-component index; 90-day rule, pins count as proven, other-edition class",
+          "r": "Done 10-03 (board_metrics.py split_scores, 13 new tests; QA-REGISTER A14-A16). Conferences: Complete 92%, Accurate 94%. Awards: Complete 68%, Accurate 100% (12 facts, thin). Provable now 14 of 17 (4 verified by you); customer agreement 14 of 15 (3 other-edition rows and 1 far-future blank shown, not scored). Freshness and call health kept as process health, never scored.",
+          "s": "done"
         }
       ]
     }
@@ -929,7 +935,7 @@
   "working_on": [
     {
       "state": "In progress",
-      "text": "The per-step failure count is built and recorded for the 10-03 load. Nothing is running. Next real data point: Saturday 10-10 (and Friday 10-09 awards)."
+      "text": "Nothing running. The board's quality figures were rebuilt today (Complete / Accurate under the header; old weighted index retired). Next real data points: Friday 10-09 awards run and Saturday 10-10 research and load (first with the per-step failure trend)."
     },
     {
       "state": "Waiting on upstream",

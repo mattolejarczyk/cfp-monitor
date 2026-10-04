@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-03 (night) - complete/accurate metrics, per-step failure count
+
+- Board: Complete % and Accurate % (board_metrics.py split_scores, 90-day grace, pins count as proven, year rule); old six-component index retired; process health shown unscored; 'Verified by you' moved to the end. QA-REGISTER A13-A16.
+- Provable and customer-agreement metrics refined: operator pins prove a deadline; far-future events excused; other-edition/earlier-round class (more than 180 days apart, or their date passed while ours is ahead).
+- scripts/failure_steps.py + post_load_qa wiring: rows that did not ship this week's research counted by step (FIND/PROVE/READ/IDENTITY/FORMAT); history file; rise of 5+ flagged.
+- Pin added: Carbon Capture Technology Expo MENA 2027 (operator-verified). Recall limiters committed. Full suite 1,455 passed.
+
 ## 2026-10-03 (late) - experiment 4, 13 pinned events, and the ODSC correction
 
 - Verified-by-you ledger: pins extended to any fact (start date, dates text, location, city, country, links, deadline); scripts/apply_pins_live.py; scripts/answer_key_from_pins.py; board panel; 12 events pinned. Applied to both approved files and the database; re-gated and re-promoted twice.
