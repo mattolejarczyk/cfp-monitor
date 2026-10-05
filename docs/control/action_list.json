@@ -468,7 +468,7 @@
       "wave": "W2",
       "step": "B",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "About 5 to 10 cents",
       "title": "Awards answer key candidates, the awards finder (main-call rule inverted) and an awards shadow run",
       "detail": "Awards accuracy has no measure. Build candidates from the reader for the live awards, invert the main-call rule (a nomination or entry page is the call), and add awards to the shadow run.",
@@ -482,7 +482,9 @@
       "depends": [
         "ACT-21"
       ],
-      "evidence": [],
+      "evidence": [
+        "builder/wave2 commit 9450009: awards finder (main-call rule inverted), live-awards loader, awards answer-key candidates tool, awards shadow run; patch docs/control/patches/ACT-22-run_monthly.ps1.patch for the reviewer; tests tests/test_awards_finder.py; live awards candidates run was PARTIAL (about 11 of 34 awards read when the builder was cut off). Set to review by the reviewer on the builder's behalf after two API drops."
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
@@ -516,7 +518,7 @@
       "wave": "W2",
       "step": "B",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "A few cents",
       "title": "The finder proposes replacements for dead links",
       "detail": "For each dead link in the weekly digest, find the live page on the same site and read the sentence, so the hand-back to upstream carries a proposed replacement instead of only a complaint.",
@@ -526,7 +528,9 @@
       ],
       "acceptance": "A proposal list for the 15 new and 62 backlog links with quotes proven on the page.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "builder/wave2 commit 936c517: finder proposes replacements for dead links in the weekly digest (scripts/propose_replacements.py, tests/test_propose_replacements.py); live run PARTIAL (about 7 of 42 events when the builder was cut off); output is a CSV for the reviewer, never sent to upstream. Set to review by the reviewer on the builder's behalf after two API drops."
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "B3": {
