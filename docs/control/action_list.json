@@ -27,6 +27,11 @@
       "id": "W4",
       "name": "Upstream batch",
       "goal": "Everything that only upstream can close, drafted for you to send."
+    },
+    {
+      "id": "W5",
+      "name": "Customer coverage and tool hardening",
+      "goal": "Builder wave 3 (2026-10-05): every customer-tracked event gets classified and requested, our own sponsorship quotes get proven, the replacement-link tool becomes trustworthy, quote dashes and clean-checkout tests are fixed. No live change by the builder."
     }
   ],
   "owners": {
@@ -714,22 +719,20 @@
     },
     {
       "id": "ACT-40",
-      "wave": "W4",
+      "wave": "W5",
       "step": "A",
-      "owner": "you",
+      "owner": "builder",
       "state": "todo",
       "cost": "$0",
-      "title": "Sponsorship needs a quote: a contract question for upstream (draft)",
-      "detail": "About 90% of sponsorship answers are Yes with a link and no quote. The builder drafts the question; you send it.",
+      "title": "Sponsorship quotes are OUR half (R20a): prove scripts/extract_sponsor_quotes.py in the sandbox and write the apply procedure",
+      "detail": "Contract R20a: SPONSOR_QUOTE is populated downstream. The live database has 114 rows answering Yes with a SPONSOR_URL and none with a quote; the gate says a Yes must carry both. scripts/extract_sponsor_quotes.py exists. Rehearse it on a COPY of the live database and the approved files (sandbox), measure how many quotes it proves verbatim, how many pages fail, the cost, and whether the gate accepts the result; write the exact live apply procedure. The reviewer applies it.",
       "needs_you": "",
       "closes": [
         "A13"
       ],
-      "acceptance": "Note drafted and sent; upstream's answer recorded.",
+      "acceptance": "Sandbox result with counts; the apply procedure; a test for any change; no live file touched.",
       "depends": [],
-      "evidence": [
-        "2026-10-05 CORRECTION: this is OUR half, not a question for upstream. Contract R20a says SPONSOR_QUOTE is populated downstream. Live database: 114 rows answer Yes with a URL and 0 carry a quote (approved files: 112 of 125). scripts/extract_sponsor_quotes.py exists for this; the work is to run and prove it (reviewer, needs rehearsal), not to write to upstream."
-      ],
+      "evidence": [],
       "updated": "2026-10-05",
       "on_verify": {}
     },
@@ -759,24 +762,22 @@
     },
     {
       "id": "ACT-42",
-      "wave": "W4",
+      "wave": "W5",
       "step": "B",
-      "owner": "you",
+      "owner": "builder",
       "state": "todo",
       "cost": "$0",
-      "title": "Hand-back of the 62 backlog dead links with proposed replacements (draft)",
-      "detail": "After ACT-24 produces the proposals.",
+      "title": "Make the replacement-link tool safe to trust, then hand back only person-readable results",
+      "detail": "ACT-24 ran on 77 links and was not fit to send: 25 are past editions, only 3 of 22 proposals were call pages, and the SANS CDI proposal was another event deadline (the page Oct 19 belongs to the CTI and OSINT summits). Fix the tool so a proposal is only made when the page names THIS event next to the date (a generic speak-at-a-summit page covering several events is a LEAD, not a proposal), drop proposals of the wrong kind (an awards page, a PhD programme page for an event), and re-run on the same 77 links. Report precision by reading each PROPOSED page yourself.",
       "needs_you": "",
       "closes": [
         "B3"
       ],
-      "acceptance": "Note drafted and sent.",
+      "acceptance": "A test reproducing the SANS CDI false proposal; the re-run table; every PROPOSED row verified by you against its page.",
       "depends": [
         "ACT-24"
       ],
-      "evidence": [
-        "2026-10-05: the mechanical replacement run (ACT-24, 77 links) is NOT fit to hand back: 25 are past editions (nothing to replace), only 3 of 22 proposals are call pages, and the SANS CDI proposal was a different event's deadline (the page's Oct 19 belongs to the CTI/OSINT summits). Only person-read replacements go to upstream; the one verified so far (World of Concrete) is in note 29."
-      ],
+      "evidence": [],
       "updated": "2026-10-05",
       "on_verify": {}
     },
@@ -808,18 +809,18 @@
     },
     {
       "id": "ACT-44",
-      "wave": "W4",
+      "wave": "W5",
       "step": "A",
-      "owner": "you",
+      "owner": "builder",
       "state": "todo",
       "cost": "$0",
-      "title": "Decide which of the 41 customer-tracked events we do not research are live and worth adding",
-      "detail": "29 Arnica and 12 Utility Global rows with no match of ours, mostly older or out of scope. The builder prepares a ranked proposal; you decide.",
+      "title": "Every event on the two customer sheets must be in our research queue: classify the unmatched rows and prepare the request to upstream",
+      "detail": "Operator rule (2026-10-05): any event the customer tracks on the Arnica (Cybersecurity) or Utility Global sheet that we do not research should be. The 2026-10-03 match files show 59 Arnica and 25 Utility rows with no confident match; some are ours already under another name or edition (it-sa Expo 2026, Industrial Net Zero 2027), others are genuinely missing (World Summit AI, CDAO Fall, European Hydrogen Week, LNG Americas). Classify EVERY unmatched row: (A) we hold it (matcher miss: say which id), (B) we hold another edition, (C) not held and still ahead: the request list, (D) over or not an event. For C read the event page to confirm it is live and find the right URL; for the matcher misses say what the matcher missed. Output: a CSV, a short report and a DRAFT note 30 for the operator to send asking upstream to add the C rows to their research (we never mint ids; upstream supplies them).",
       "needs_you": "",
       "closes": [
         "A14"
       ],
-      "acceptance": "A decision per event or per group.",
+      "acceptance": "Every unmatched row has a class A to D with its evidence; the C list has a page-confirmed URL; a draft note is written; no live file touched.",
       "depends": [],
       "evidence": [],
       "updated": "2026-10-05",
@@ -919,6 +920,40 @@
         "scripts/migrate_verify_basis.py live report: verified/date 67, verified/status 34",
         "Operator chose the suggested wording 10-05. Implemented in customer_format.confidence (STATUS_ONLY_LABEL) and storage.export_dicts; on a copy of the live database 15 export rows carry the new label (67 Confirmed). The weekly HTML pages take their badge from the evidence layer and needed no change (8 of the 34 status-only rows are date-evidenced and stay Confirmed). Board provable/Accurate now count the evidence-layer proof too. Tests: test_customer_format (new), test_board_metrics, test_storage, test_export: 62 passed"
       ],
+      "updated": "2026-10-05",
+      "on_verify": {}
+    },
+    {
+      "id": "ACT-49",
+      "wave": "W5",
+      "step": "D",
+      "owner": "builder",
+      "state": "todo",
+      "cost": "$0",
+      "title": "Quote dash tolerance: does the gate treat an ASCII hyphen like the page en dash?",
+      "detail": "Upstream quotes use an ASCII hyphen where the page has an en dash (note 29: World of Concrete, SAF Europe, ISCC listing). Find out how acceptance criterion 3 and our own quote proving (verify, pass_lib, extract_sponsor_quotes) compare quotes. If a dash difference rejects a true quote, or makes us re-cut it silently, say which; propose the smallest normalisation that is safe (dashes, non-breaking spaces and quote marks only, never words) with a test; prove the World of Concrete row from note 29 in the sandbox. Do not change the gate without a failing test first.",
+      "needs_you": "",
+      "closes": [],
+      "acceptance": "A finding with the exact code path; a failing test then a fix if needed; the World of Concrete row passes criterion 3 in the sandbox.",
+      "depends": [],
+      "evidence": [],
+      "updated": "2026-10-05",
+      "on_verify": {}
+    },
+    {
+      "id": "ACT-50",
+      "wave": "W5",
+      "step": "F",
+      "owner": "builder",
+      "state": "todo",
+      "cost": "$0",
+      "title": "Tests must pass in a clean checkout",
+      "detail": "tests/test_reader_call_resilience.py fails at collection in a fresh worktree because experiments/sitemap_discovery/crawl_pages.json is gitignored (the review of Wave 2 had to copy it in). Make tests that need such files skip with a clear reason (or build the fixture), then run the full suite on a clean `git archive` of your branch and report the count. Look for any other test that depends on an untracked or ignored file.",
+      "needs_you": "",
+      "closes": [],
+      "acceptance": "Full suite on a clean archive: 0 failures, skips named.",
+      "depends": [],
+      "evidence": [],
       "updated": "2026-10-05",
       "on_verify": {}
     }
