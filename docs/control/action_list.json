@@ -727,7 +727,9 @@
       ],
       "acceptance": "Note drafted and sent; upstream's answer recorded.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "2026-10-05 CORRECTION: this is OUR half, not a question for upstream. Contract R20a says SPONSOR_QUOTE is populated downstream. Live database: 114 rows answer Yes with a URL and 0 carry a quote (approved files: 112 of 125). scripts/extract_sponsor_quotes.py exists for this; the work is to run and prove it (reviewer, needs rehearsal), not to write to upstream."
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
@@ -736,11 +738,11 @@
       "wave": "W4",
       "step": "D",
       "owner": "you",
-      "state": "todo",
+      "state": "needs-you",
       "cost": "$0",
       "title": "Duplicates and discontinuations without evidence: a note for upstream (draft)",
       "detail": "SAF Europe, Future Fuels, the German OWASP pair, the Indonesia pair. Each needs evidence or a ruling.",
-      "needs_you": "",
+      "needs_you": "Send NOTE-TO-UPSTREAM-29.md (experiments/purpose_audit/): START DATE ruling R-001, evidence requests for HITB 2026, SAF Europe 2027 and Future Fuels MENA 2026, and the World of Concrete 2027 correction. Every page in it was opened on 2026-10-05.",
       "closes": [
         "D4",
         "A12"
@@ -749,7 +751,9 @@
       "depends": [
         "ACT-02"
       ],
-      "evidence": [],
+      "evidence": [
+        "Draft written 2026-10-05 after checking each page; one draft claim (Future Fuels not findable) was wrong on re-check and was rewritten before it went anywhere."
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
@@ -770,7 +774,9 @@
       "depends": [
         "ACT-24"
       ],
-      "evidence": [],
+      "evidence": [
+        "2026-10-05: the mechanical replacement run (ACT-24, 77 links) is NOT fit to hand back: 25 are past editions (nothing to replace), only 3 of 22 proposals are call pages, and the SANS CDI proposal was a different event's deadline (the page's Oct 19 belongs to the CTI/OSINT summits). Only person-read replacements go to upstream; the one verified so far (World of Concrete) is in note 29."
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
