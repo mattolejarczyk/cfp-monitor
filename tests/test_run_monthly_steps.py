@@ -81,7 +81,9 @@ def test_the_saturday_steps_are_whole_real_commands_in_the_right_order():
 
 def test_the_friday_awards_steps_include_the_awards_load_qa_and_no_shadow_run():
     steps = _list_steps("'Awards'")
-    assert [Path(s[0]).name for s in steps] == ["weekend_import.py", "post_load_qa.py", "weekend_recap.py"]
+    # ACT-22: once the reviewer applies docs/control/patches/ACT-22-run_monthly.ps1.patch Friday also ends with the awards shadow run (tests/test_shadow_reader_hook.py guards that list)
+    names = [Path(s[0]).name for s in steps]
+    assert names in (["weekend_import.py", "post_load_qa.py", "weekend_recap.py"], ["weekend_import.py", "post_load_qa.py", "weekend_recap.py", "shadow_finder.py"])
     assert steps[1][-2:] == ["--markets", "Awards"] and steps[2][1] == "friday"
 
 
