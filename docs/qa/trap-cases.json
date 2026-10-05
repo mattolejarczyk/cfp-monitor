@@ -50,9 +50,7 @@
         {
           "type": "arbiter_proves",
           "date": "2027-05-10",
-          "expect": true,
-          "gap": true,
-          "note": "GAP in start_date_arbiter: it needs a 'held' / 'takes place' word beside the date, and a header prints the dates bare ('Boston, MA | May 10-12th, 2027'). The read-the-page pass reads it correctly."
+          "expect": true
         },
         {
           "type": "year_check",
@@ -88,6 +86,11 @@
           "quote": "April 28-30",
           "edition": "2027",
           "expect": ""
+        },
+        {
+          "type": "arbiter_proves",
+          "date": "2026-05-10",
+          "expect": false
         }
       ]
     },
@@ -132,7 +135,9 @@
         {
           "type": "earliest_deadline",
           "expect": "2026-11-16",
-          "gap": true
+          "others": [
+            "2026-11-23"
+          ]
         }
       ]
     },
@@ -155,7 +160,8 @@
         {
           "type": "aggregator_citation_flag",
           "url": "https://cfptime.org/",
-          "gap": true
+          "event": "Apres-Cyber Slopes Summit",
+          "expect": true
         }
       ]
     },
@@ -172,7 +178,7 @@
       "checks": [
         {
           "type": "human",
-          "note": "Does the method notice that two rows share URL host, city and start date, and refuse to call either dead?"
+          "note": "Does the method notice that two rows share URL host, city and start date, and refuse to call either dead? AUTOMATED (tests/test_trap_cases_judgeable.py): same page + city + start date is reported as a pair (find_duplicate_events.same_site_pairs), and a discontinued claim with no evidence page is refused (gate R16). NEEDS A PERSON: which name is right and whether the merge is correct."
         }
       ]
     },
@@ -189,7 +195,7 @@
       "checks": [
         {
           "type": "human",
-          "note": "With no page, does the method return blanks and say so?"
+          "note": "With no page, does the method return blanks and say so? AUTOMATED (tests/test_trap_cases_judgeable.py): with no page nothing is accepted, proven or read; a blank stays blank. NEEDS A PERSON: whether the event really is over."
         }
       ]
     },
@@ -206,7 +212,7 @@
       "checks": [
         {
           "type": "human",
-          "note": "Does the method keep the two events apart and give each its own dates?"
+          "note": "Does the method keep the two events apart and give each its own dates? AUTOMATED (tests/test_trap_cases_judgeable.py): the two events get two ids and are never paired. NEEDS A PERSON: whether a research method keeps each event's own dates apart."
         }
       ]
     },

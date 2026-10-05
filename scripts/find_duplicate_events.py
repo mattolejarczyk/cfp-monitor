@@ -218,6 +218,49 @@ def city_date_pairs(con: sqlite3.Connection, table: str,
     return out
 
 
+def _host(url: str) -> str:
+    u = (url or "").strip().lower()
+    host = u.split("//", 1)[-1].split("/", 1)[0].split("@")[-1].split(":")[0]
+    return host[4:] if host.startswith("www.") else host
+
+
+def _site(url: str) -> str:
+    """Scheme-less, www-less, query-less, trailing-slash-less URL: 'the same page'."""
+    u = (url or "").strip().lower().split("#")[0].split("?")[0]
+    u = u.split("//", 1)[-1]
+    u = u[4:] if u.startswith("www.") else u
+    return u.rstrip("/")
+
+
+# Hosts that carry MANY events (listings, ticketing and CFP platforms): sharing one proves nothing.
+SHARED_HOSTS = ("sessionize.com", "easychair.org", "hotcrp.com", "papercall.io", "cvent.com", "linkedin.com", "facebook.com")
+
+
+def same_site_pairs(rows: list[dict]) -> list[tuple[dict, dict]]:
+    """ACT-19 (trap case T06, 2026-10-05): the pairs the NAME detectors cannot see because the event was RENAMED. Two rows with the SAME event page (URL, ignoring scheme, www and a trailing slash), the
+    same city and a start date within a day are one event under two names (SAF Europe Summit 2027 / Sustainable Fuels Global Summit 2027). Report only: neither row
+    is called dead, nothing is merged (a retire or merge claim needs its own evidence page, R16). Same page in DIFFERENT cities or on different dates is a
+    brand with two events and is NOT paired (trap case T08, Wild West Hackin' Fest); sister events of one show on different pages (IFA Next / IFA Berlin) are not paired either (measured
+    2026-10-05: matching on the host alone gave 26 pairs on the live database, the page 20: the sister events of one show are the difference). Listing and platform hosts (SHARED_HOSTS and the aggregator list) are
+    never a signal. Rows are dicts with event_id, name, url, city, start_date. Pure."""
+    from src.cfp_monitor.rules import is_aggregator_url
+    out = []
+    for a, b in itertools.combinations(rows, 2):
+        ha, hb = _host(a.get("url", "")), _host(b.get("url", ""))
+        if not ha or _site(a.get("url", "")) != _site(b.get("url", "")) or is_aggregator_url(a.get("url", "")) or any(ha == h or ha.endswith("." + h) for h in SHARED_HOSTS):
+            continue
+        ca, cb = (a.get("city") or "").strip().lower(), (b.get("city") or "").strip().lower()
+        if not ca or ca != cb:
+            continue
+        try:
+            delta = abs((date.fromisoformat(a["start_date"]) - date.fromisoformat(b["start_date"])).days)
+        except (ValueError, KeyError, TypeError):
+            continue
+        if delta <= SAME_DAYS:
+            out.append((a, b))
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0],
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -305,6 +348,25 @@ def main() -> int:
                             "EDITION": r["edition"], "DEADLINE": r["deadline"],
                             "VERIFY_STATE": r["verify_state"],
                             "SOURCE_AS_OF": r["source_as_of"], "NEWER": ""})
+    # THE THIRD DETECTOR (ACT-19): one site, one city, one start date, two NAMES (a rename). Report only.
+    for kind4 in kinds:
+        if kind4 != "conference":
+            continue
+        rs = [dict(r) for r in con.execute("SELECT event_id, name, url, city, start_date FROM grounding_facts WHERE COALESCE(start_date,'') <> ''")]
+        sp = same_site_pairs(rs)
+        if sp:
+            bar = "=" * 78
+            print()
+            print(bar)
+            print(f"CONFERENCE: {len(sp)} pair(s) on one site, in one city, starting within a day: probably a rename")
+            print(bar)
+            for left, right in sp:
+                tally["conference/SAME_SITE"] += 1
+                print()
+                print(f"  [SAME_SITE]   {left[chr(99)+chr(105)+chr(116)+chr(121)]}, {left[chr(115)+chr(116)+chr(97)+chr(114)+chr(116)+chr(95)+chr(100)+chr(97)+chr(116)+chr(101)]}   {_host(left[chr(117)+chr(114)+chr(108)])}")
+                for r in (left, right):
+                    print("    " + r["event_id"])
+                    print("           " + r["name"][:58])
     con.close()
 
     # Printed, never hidden - a decision stays reviewable, it just stops counting as work.
