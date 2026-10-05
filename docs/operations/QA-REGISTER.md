@@ -46,7 +46,7 @@ moment (runbook section in brackets). **Report** = where the result lands.
 
 | # | Moment | Command | What it answers | Born from |
 |---|---|---|---|---|
-| C1 | A delivery arrives from upstream | `python scripts/check_delivery_ids.py <csv> --market <Market>` | do their ids exist HERE, and is each event on the input list? A sparse patch cannot apply on an unknown id (5.4) | three false "it is in the file" claims, 2026-10-02/03 |
+| C1 | A delivery arrives from upstream | `python scripts/check_delivery_ids.py <csv> --market <Market>` | do their ids exist HERE, and is each event on the input list? A sparse patch cannot apply on an unknown id (5.4): since ACT-16 it exits 1 without --strict, and prints the table 'your id -> the id we hold (city, name, status)' for the reply. `accept_delivery.py --db <db>` runs the same check as check 9 (a sparse patch with an unknown id fails; a full delivery only gets a note) | three false "it is in the file" claims, 2026-10-02/03 |
 | C2 | Same | `python scripts/accept_delivery.py <csv>` (network) and read note S | ACCEPTED is not the same as researched | 2026-10-03 |
 | C3 | A cited page is walled or script-built | read it in the built-in browser (or the page library) and record the verbatim sentence | the plain fetch cannot see it | Black Hat Asia, OWASP BASC, AI Con USA |
 | C4 | Two dates disagree for one event | `python scripts/start_date_arbiter.py <csv>` (reads the event's own pages, year-specific), then a person reads the unproven ones | which is right; never a guess | 66 start-date conflicts, 2026-10-03 |

@@ -844,6 +844,23 @@ class Gate:
             self.note("STUB", f"{len(stubs)} ungrounded stub row(s) - valid under 2.1 but "
                               f"they must be declared in the manifest", stubs)
 
+    # ---- 9. ids we hold (ACT-16) -------------------------------------------
+    def check_ids(self, db: str, market: str = "", markets_dir: str = ""):
+        """Every EVENT_ID must be one we hold or can translate (contract 5.4). A SPARSE patch (not 43/45 columns) with an unknown id FAILS:
+        it cannot be applied. A full delivery with unknown ids only gets a note (new events are legitimate there). The table of
+        'their id -> the id we hold' is printed as a note. Reads only; shares its logic with scripts/check_delivery_ids.py."""
+        from scripts.check_delivery_ids import MARKETS, analyse, format_table, is_sparse
+        with open(self.path, encoding="utf-8-sig", newline="") as fh:
+            sparse = is_sparse(csv.reader(fh).__next__())
+        m = market or next((r.get("Market") for r in self.rows if r.get("Market")), "")
+        m = {"cybersecurity": "Cybersecurity", "arnica": "Cybersecurity", "utility": "Utility", "utility global": "Utility"}.get((m or "").lower(), m)
+        out = analyse(self.rows, m, db, markets_dir or str(MARKETS))
+        unk = [r for r in out["results"] if r["unknown"]]
+        if unk:
+            self.note("9", f"ids we do not hold ({len(unk)}) - your id -> the id we hold", format_table(unk).splitlines())
+        self.add("9", "Every EVENT_ID is one we hold (sparse patches only)",
+                 [f"sparse patch keyed on {len(unk)} id(s) we do not hold; it cannot be applied (5.4)"] if (sparse and unk) else [])
+
     # ---- 7 & 8. downstream criteria, once the delivery is loaded ----------
     def check_loaded(self, db: str, market: str):
         """Contract criteria 7 and 8, which need the database rather than the file."""
@@ -889,7 +906,7 @@ class Gate:
         self.add("8", "Open rows are labelled Confirmed or Unconfirmed", blank)
         store.close()
 
-    def run(self, today: date, db: str = "", market: str = ""):
+    def run(self, today: date, db: str = "", market: str = "", markets_dir: str = ""):
         # check_citations needs the date for the v1.4 staleness exemption.
         self.today = today
         self.check_structure()
@@ -901,6 +918,8 @@ class Gate:
         self.check_past(today)
         self.check_schema_rules()
         self.check_substance()
+        if db:
+            self.check_ids(db, market, markets_dir)
         if db and market:
             self.check_loaded(db, market)
 
@@ -966,13 +985,14 @@ def main() -> int:
     ap.add_argument("--json", help="write machine-readable results here")
     ap.add_argument("--db", help="database to check criteria 7-8 against (needs --market)")
     ap.add_argument("--market", help="canonical market name, e.g. \"Consumer Electronics\"")
+    ap.add_argument("--markets-dir", default="", help="where <Market>_audited.csv etc. live (check 9; default the live Markets folder)")
     a = ap.parse_args()
 
     today = date.today()
     all_ok, payload = True, {}
     for p in a.csv_paths:
         gate = Gate(p, network=not a.no_network)
-        gate.run(today, db=a.db or "", market=a.market or "")
+        gate.run(today, db=a.db or "", market=a.market or "", markets_dir=a.markets_dir)
         all_ok &= gate.report()
         payload[Path(p).name] = [
             {"check": n, "name": nm, "passed": ok, "failures": f}
