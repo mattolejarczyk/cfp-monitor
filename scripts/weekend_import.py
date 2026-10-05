@@ -285,11 +285,21 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     # the row rule looks prior versions up by canonical id; give it the carried ids
     lookup = {**up_to_canon, **canon_of}
     sources = ["new"] * len(rows)
+    # HAND-LOADED ROWS (ACT-10, 2026-10-05): a database row the approved file does not hold has no prior row to carry evidence from, so the
+    # first Saturday blanked three verified deadlines (2026-10-03). Build a prior from the database row for every event researched this week
+    # that lacks one. In memory only: the signed approved file is not edited; the promotion after this load writes the row into it.
+    from scripts.narrow_overlay import add_db_priors
+    # A COPY, used only by the carry rules: the row rule must keep falling back to a whole accepted row, never to a partial one built here.
+    carry_priors = dict(prior_by_canon)
+    res["db_priors_added"] = add_db_priors(carry_priors, set(canon_of.values()), db_rows_by_id(db, market == AWARDS))
+    if res["db_priors_added"]:
+        log.append(f"[{market}] hand-loaded rows: {len(res['db_priors_added'])} row(s) not in the approved file got their prior from the database "
+                   f"so evidence can be carried: " + "; ".join(e["conference"][:30] for e in res["db_priors_added"][:6]))
     # NARROW-PROMPT OVERLAY (2026-10-03, scripts/narrow_overlay.py): the narrow research question does not ask ORGANIZER, CITY,
     # OVERVIEW and the like; they came back blank or as the input list's older text (a venue in CITY on 28 rows, ORGANIZER blank on
     # all 130). Keep last week's accepted value of those fields, same edition only; fresh answers are never touched; reported.
     from scripts.narrow_overlay import overlay_narrow
-    rows, ov = overlay_narrow(rows, sources, prior_by_canon, lookup, to_canonical)
+    rows, ov = overlay_narrow(rows, sources, carry_priors, lookup, to_canonical)
     res["narrow_overlay"] = ov
     if ov["overlaid"]:
         log.append(f"[{market}] narrow overlay: {len(ov['overlaid'])} row(s) kept last week's unasked fields "
@@ -300,13 +310,14 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     # PINNED ROWS (2026-10-03, scripts/pinned_rows.py, docs/operations/pinned_rows.json): a person's ruling on a row holds over this week's research until the
     # call closes or the pin is removed. Applied after the carry rules and BEFORE the year checks and the gate, so a pinned value is checked like any other
     # (the gate still reads the pinned quote on its page). Every pin that changed something is in the report with what the research said.
-    if market != AWARDS:
-        from scripts.pinned_rows import apply_pins, load_pins
-        rows, pr = apply_pins(rows, lookup, to_canonical, load_pins())
-        res["pins"] = pr
-        if pr["applied"]:
-            log.append(f"[{market}] pinned rows: {len(pr['applied'])} ruling(s) held over this week's research: "
-                       + "; ".join(a["conference"][:34] for a in pr["applied"]))
+    # ACT-11 (2026-10-05): awards too. An award's pin is keyed on OUR award id (award_grounding_facts.event_id); `lookup` is the awards
+    # crossing (upstream id -> ours) for that market, so the same function applies. The customer-owned STATUS columns are still never pinnable.
+    from scripts.pinned_rows import apply_pins, load_pins
+    rows, pr = apply_pins(rows, lookup, to_canonical, load_pins())
+    res["pins"] = pr
+    if pr["applied"]:
+        log.append(f"[{market}] pinned rows: {len(pr['applied'])} ruling(s) held over this week's research: "
+                   + "; ".join(a["conference"][:34] for a in pr["applied"]))
     # YEAR CHECKS (2026-10-03, scripts/start_date_arbiter.py year_checks): a row whose start date is not in its edition, whose
     # conference-dates year differs from its start date, whose past start is still Open/Upcoming, or whose deadline is after the
     # start (or 18 months before it) mixes editions. It fails here, so the row rule gives it last week's version or holds it back.
@@ -370,6 +381,10 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
                        from_last_week=sum(1 for s in sources if s == "prior"),
                        rounds=rnd)
             res["held_back"] = sum(1 for d in res["decisions"] if d["action"] == "held-back")
+            # ACT-17: what this week carried instead of re-confirming, for the carry-age ledger (written by main() only after the load sticks)
+            from scripts.carry_age import carried_units
+            res["carry_age"] = {"carried": carried_units(ov, sp, prior_by_canon),
+                                "researched": sorted({to_canonical(r.get("EVENT_ID", ""), lookup) for r, src in zip(rows, sources) if src == "new"})}
             return res
         if verdict != "REJECTED":
             res["why"] = f"the gate did not run to completion ({verdict})"
@@ -448,6 +463,18 @@ def db_ids(db: Path) -> set[str]:
     con = sqlite3.connect(str(db))
     try:
         return {r[0] for r in con.execute("select event_id from grounding_facts")}
+    finally:
+        con.close()
+
+
+def db_rows_by_id(db: Path, awards: bool = False) -> dict[str, dict]:
+    """event_id -> the database row as a dict (ACT-10). Read only."""
+    import sqlite3
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    con.row_factory = sqlite3.Row
+    try:
+        t = "award_grounding_facts" if awards else "grounding_facts"
+        return {r["event_id"]: dict(r) for r in con.execute(f"select * from {t}")}
     finally:
         con.close()
 
@@ -676,6 +703,19 @@ def main() -> int:
             r["status"], r["why"] = "FAILED", "import rolled back: " + why
         return finish("FAILED", f"{why} - database restored from the backup, nothing promoted")
     report["database"] = "updated"
+    # ACT-17: record which values this load carried and since when they were last confirmed (the load QA flags the old ones). After the load stuck, so a
+    # rolled-back load never ages anything. A failure here must not fail the load.
+    try:
+        from scripts.carry_age import load_ledger, save_ledger, update_ledger
+        led_path = data_root / "carry_ledger.json"
+        ledger_now = load_ledger(led_path)
+        for r in resolved:
+            ca = r.get("carry_age") or {}
+            ledger_now = update_ledger(ledger_now, datetime.now().date(), ca.get("carried", {}), set(ca.get("researched", [])))
+        save_ledger(led_path, ledger_now)
+        log.append(f"carry ledger: {sum(len(v['units']) for v in ledger_now.values())} carried value(s) tracked in {led_path.name}")
+    except Exception as e:                                                  # noqa: BLE001
+        log.append(f"carry ledger NOT updated: {type(e).__name__}: {e}")
 
     for r in resolved:
         m = r["market"]
