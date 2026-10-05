@@ -945,7 +945,7 @@
       "wave": "W5",
       "step": "F",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Tests must pass in a clean checkout",
       "detail": "tests/test_reader_call_resilience.py fails at collection in a fresh worktree because experiments/sitemap_discovery/crawl_pages.json is gitignored (the review of Wave 2 had to copy it in). Make tests that need such files skip with a clear reason (or build the fixture), then run the full suite on a clean `git archive` of your branch and report the count. Look for any other test that depends on an untracked or ignored file.",
@@ -953,7 +953,9 @@
       "closes": [],
       "acceptance": "Full suite on a clean archive: 0 failures, skips named.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "builder/wave3: sentence_pick.py tolerates a missing crawl_pages.json (PAGES_MISSING), test_control_list no longer depends on live register state; full suite on a clean git archive of the ACT-50 commit: 1658 passed, 0 failed, 0 skipped (baseline in worktree: 1 failed [test_control_list D3], 1657 passed; collection of test_reader_call_resilience failed in the clean archive before the fix)"
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     }
