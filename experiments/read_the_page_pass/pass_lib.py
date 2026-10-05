@@ -11,6 +11,8 @@ from __future__ import annotations
 import re
 from datetime import date, datetime
 
+from src.cfp_monitor.verify import fold_punctuation
+
 FIELDS = ("start_date", "end_date", "city", "country", "venue", "organizer", "format")
 SYSTEM = """You read ONE web page about a conference or event and report facts about ONE edition of it.
 You are given the event name and the EDITION YEAR to report. Report ONLY what the page states for that edition.
@@ -36,7 +38,7 @@ def user_message(event: str, edition: str, page_text: str, cap: int = 12000) -> 
 
 
 def norm(s: str) -> str:
-    return re.sub(r"\s+", " ", (s or "").replace(" ", " ")).strip().lower()
+    return re.sub(r"\s+", " ", fold_punctuation(s)).strip().lower()                 # ACT-49: dashes, quote marks and nbsp folded; never words
 
 
 def year_from_heading(page: str, quote: str, window: int = 400) -> str:

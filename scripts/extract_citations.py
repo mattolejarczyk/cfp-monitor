@@ -70,7 +70,7 @@ _spec.loader.exec_module(_ae)          # escalate / call_label / readable
 
 from src.cfp_monitor.config import Settings                        # noqa: E402
 from src.cfp_monitor.verify import (                                # noqa: E402
-    _parse_date, fetch_text, find_date, is_homepage, other_deadline_dates,
+    _parse_date, fetch_text, find_date, fold_punctuation, is_homepage, other_deadline_dates,
 )
 
 SETTINGS = Settings()
@@ -84,7 +84,7 @@ _KEEP = re.compile(r"[a-z0-9/\-: ]")
 def _norm_map(s: str) -> tuple[str, list[int]]:
     chars: list[str] = []
     idx: list[int] = []
-    for i, ch in enumerate(s.lower()):
+    for i, ch in enumerate(fold_punctuation(s).lower()):      # ACT-49: a page en dash and a quote hyphen are the same character here
         c = ch if _KEEP.match(ch) else " "
         if c == " " and (not chars or chars[-1] == " "):
             continue
