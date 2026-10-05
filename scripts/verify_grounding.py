@@ -19,9 +19,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.cfp_monitor.storage import Store                      # noqa: E402
 from src.cfp_monitor.verify import Outcome                     # noqa: E402
+from src.cfp_monitor.verify_basis import write_verify          # noqa: E402
 from src.cfp_monitor.verify import (                            # noqa: E402
     CONTRADICTED, NOT_FOUND, VERIFIED, check_link, cross_check, cross_check_status,
-    fetch_text, l2_detail, no_page_detail, verify_against_page,
+    fetch_page_text, fetch_text, l2_detail, no_page_detail, verify_against_page,
 )
 
 
@@ -90,7 +91,7 @@ def main() -> int:
                 candidate = (candidate or "").strip()
                 if not candidate:
                     continue
-                text, note = fetch_text(candidate)
+                text, note = fetch_page_text(candidate)
                 if text:
                     outcome = verify_against_page(
                         text, r["deadline"], r["status"],
@@ -105,9 +106,9 @@ def main() -> int:
         results[outcome.state].append((r, outcome))
         layer_used[outcome.layer] = layer_used.get(outcome.layer, 0) + 1
         if a.apply:
-            store.db.execute(
-                "UPDATE grounding_facts SET verify_state=?, verify_detail=? WHERE event_id=?",
-                (outcome.state, "[{}] {}".format(outcome.layer, outcome.detail), r["event_id"]))
+            # ACT-18: also records the BASIS (date | status | link | none-found) when the column exists; the state itself is unchanged
+            write_verify(store.db, "grounding_facts", "event_id", r["event_id"], outcome.state,
+                         "[{}] {}".format(outcome.layer, outcome.detail))
     if a.apply:
         store.db.commit()
 
