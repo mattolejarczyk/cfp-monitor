@@ -12,13 +12,19 @@
     "provable": {
       "label": "Provable submission date (live deadlines)",
       "definition": "Deadlines still ahead for events on the Cybersecurity and Utility market lists. Proven = our verifier found the stored date on the cited page and a citation exists. A deadline that has already passed is not scored: its page moves on to the next edition. Proven also includes dates you verified yourself on the event's own page (pinned: 4 today). Events more than 90 days off with no firm call are not counted (1 today): no page is expected to state a date yet.",
-      "rows": 17,
+      "rows": 16,
       "levels": [
         {
           "key": "confirmed",
           "label": "Date on the cited page",
-          "n": 13,
+          "n": 11,
           "tone": "good"
+        },
+        {
+          "key": "statusonly",
+          "label": "Call status confirmed, but the date was not found on the page",
+          "n": 1,
+          "tone": "warn"
         },
         {
           "key": "withdrawn",
@@ -45,10 +51,10 @@
           "tone": "bad"
         }
       ],
-      "open_rows": 17,
-      "open_confirmed": 13,
+      "open_rows": 16,
+      "open_confirmed": 11,
       "note": "The earlier 28% (11 of 39) counted every stored deadline, including 44 of 48 that had already passed; the purpose audit itself said 15 of 16 'absent' and 11 of 12 'unreadable' rows were already-passed deadlines, 'not errors'. On live deadlines the unproven ones are a deliberate citation withdrawal and pages that refuse a plain fetch, not wrong dates.",
-      "source": "scripts/board_metrics.py provable_live, 2026-10-04; experiments/purpose_audit/RESULT.md for the all-rows audit"
+      "source": "scripts/board_metrics.py provable_live, 2026-10-05; experiments/purpose_audit/RESULT.md for the all-rows audit"
     },
     "customer": {
       "label": "Agreement with customer-verified dates (live rows)",
@@ -87,7 +93,7 @@
         }
       ],
       "note": "All rows, rough (includes past dates and old editions): 32 of 39 agree. Scored: the live rows where both sides name the same edition. Not scored, shown beside it: a customer row holding another edition or an earlier round (more than 180 days apart, or their date already passed while ours is ahead: Troopers, CyberDefenseCon, Climate Change), and our blank on an event more than 90 days off, where no call is expected to be published yet. Those are coverage or timing questions, not disagreements about one date.",
-      "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-04; customer-withdrawn rows excluded"
+      "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-05; customer-withdrawn rows excluded"
     }
   },
   "methods": [
@@ -319,7 +325,7 @@
     "good": [
       {
         "label": "Provable submission dates",
-        "now": "13 of 17 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
+        "now": "11 of 16 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
         "target": "90% of open-call rows; the rest honestly blank, never guessed"
       },
       {
@@ -910,7 +916,7 @@
     }
   ],
   "quality": {
-    "as_of": "2026-10-04",
+    "as_of": "2026-10-05",
     "conference": {
       "split": {
         "kind": "conference",
@@ -932,12 +938,12 @@
         },
         "excused_fields": 108,
         "excused_rows": 27,
-        "accurate": 95,
-        "proven": 53,
+        "accurate": 94,
+        "proven": 51,
         "contradicted": 3,
-        "unproven": 5,
+        "unproven": 6,
         "unproven_excused": 1,
-        "unproven_share": 8,
+        "unproven_share": 10,
         "contradicted_names": [],
         "drivers": [
           "130 of 130 rows genuinely researched in the Saturday run (0 stubs)",
@@ -966,11 +972,11 @@
         "excused_fields": 83,
         "excused_rows": 25,
         "accurate": 100,
-        "proven": 12,
+        "proven": 5,
         "contradicted": 0,
-        "unproven": 3,
+        "unproven": 10,
         "unproven_excused": 0,
-        "unproven_share": 20,
+        "unproven_share": 67,
         "contradicted_names": [],
         "drivers": [
           "2 of 129 rows genuinely researched in the awards file the page reads (stamped within 14 days, not a stub) (10 stubs)",

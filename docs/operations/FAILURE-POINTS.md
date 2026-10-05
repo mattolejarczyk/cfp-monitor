@@ -8,15 +8,15 @@ Every way the CFP process can produce missing, wrong or late data, described by 
 
 | Macro step | Failure points | Overcome | Mitigated | Watch | Pending |
 |---|---:|---:|---:|---:|---:|
-| **A** Ask Gemini (research and upstream delivery) | 15 | 7 | 5 | 0 | 3 |
-| **B** Find the right pages | 10 | 0 | 3 | 2 | 5 |
-| **C** Read and label the date | 9 | 4 | 5 | 0 | 0 |
-| **D** Check and clean stored data | 12 | 4 | 5 | 1 | 2 |
+| **A** Ask Gemini (research and upstream delivery) | 15 | 8 | 5 | 0 | 2 |
+| **B** Find the right pages | 10 | 1 | 3 | 2 | 4 |
+| **C** Read and label the date | 9 | 5 | 4 | 0 | 0 |
+| **D** Check and clean stored data | 12 | 5 | 5 | 0 | 2 |
 | **E** Spend less and run weekly | 9 | 3 | 4 | 2 | 0 |
 | **F** Project control | 5 | 2 | 2 | 0 | 1 |
-| **All** | 60 | 20 | 24 | 5 | 11 |
+| **All** | 60 | 24 | 23 | 4 | 9 |
 
-20 of 60 are overcome and 29 more are mitigated or being proven. Weighted by score, 101 of 293 points of risk are overcome.
+24 of 60 are overcome and 27 more are mitigated or being proven. Weighted by score, 121 of 293 points of risk are overcome.
 
 ## How far we have come
 
@@ -40,21 +40,21 @@ Every way the CFP process can produce missing, wrong or late data, described by 
 Not yet overcome, highest score first (the order to attack them in):
 
 1. **B1** [WATCH, score 9] The page that states the call is not found, or not selected. - *open:* Not in the weekly path yet; about 2.7 minutes per event; sub-summit pages are not selected; n = 14.
-2. **D1** [MITIGATED, score 9] An event cannot be tied to one permanent id (no id returned, a rename, a second row for one event, ids we do not hold). - *open:* About 11 rows a week still cannot load fresh until upstream returns the stamped ids (note 26).
+2. **D1** [MITIGATED, score 9] An event cannot be tied to one permanent id (no id returned, a rename, a second row for one event, ids we do not hold). - *open:* About 11 rows a week still cannot load fresh until upstream returns the stamped ids; our side now triages replies by command.
 3. **F2** [MITIGATED, score 9] A claim is treated as fact before it is checked against the data (ours and upstream's). - *open:* It recurred several times this week. The control depends on discipline, not on code.
 4. **A7** [MITIGATED, score 6] Research states a date or status for an edition that no page states (wrong year, next or previous edition). - *open:* No prompt rule yet. A plausible guess with no page can still reach a projected row; a flag is for a person to confirm, not proof it is wrong.
 5. **B4** [MITIGATED, score 6] The page shows another edition, or two editions at once. - *open:* Pages with no year beside the date stay blank (safe, but a lost answer).
 6. **B5** [WATCH, score 6] Several calls on one site (posters, awards, workshops, tracks) and the wrong one is read. - *open:* No tested event had competing rounds; the rule is inverted for awards and not yet built.
-7. **C5** [MITIGATED, score 6] Several rounds or tracks (early, regular, late; abstract versus paper) and the wrong one is shipped. - *open:* The arbiter does not yet pick the earliest of two deadlines on one page (trap case T04, a known gap).
-8. **C6** [MITIGATED, score 6] A 'verified' label means the call status was confirmed, not the date. - *open:* The stored verification label itself still conflates the two.
-9. **A13** [PENDING, score 6] Sponsorship 'Yes' is accepted with a link but no quote, and sponsorship questions dominate the weekend's cost. - *open:* A quote requirement is a contract question for upstream; option B and a reader pass are not built.
-10. **A2** [MITIGATED, score 6] Research cites pages it never opened, or composes URL paths that do not exist. - *open:* Composed URLs still arrive every week and the fix depends on upstream replacing them. The finder is not yet a fallback in the weekly path.
-11. **B2** [MITIGATED, score 6] The page cannot be read by a plain fetch (HTTP 403 wall, anti-bot, script-built content). - *open:* The weekly verifier cannot fall back to the render (priority 10).
-12. **B3** [PENDING, score 6] Links die between runs (moved pages, expired call pages, stale evidence pages). - *open:* Replacement depends on upstream; nothing proposes a replacement automatically.
+7. **C6** [MITIGATED, score 6] A 'verified' label means the call status was confirmed, not the date. - *open:* The customer page still labels status-only rows 'Confirmed': changing a customer-facing label is the operator's decision (listed under Needs you).
+8. **A13** [PENDING, score 6] Sponsorship 'Yes' is accepted with a link but no quote, and sponsorship questions dominate the weekend's cost. - *open:* A quote requirement is a contract question for upstream; option B and a reader pass are not built.
+9. **A2** [MITIGATED, score 6] Research cites pages it never opened, or composes URL paths that do not exist. - *open:* Composed URLs still arrive every week and the fix depends on upstream replacing them. The finder is not yet a fallback in the weekly path.
+10. **B3** [PENDING, score 6] Links die between runs (moved pages, expired call pages, stale evidence pages). - *open:* Replacement depends on upstream; nothing proposes a replacement automatically.
+11. **C3** [MITIGATED, score 6] Date formats and layouts the reader does not know (other languages, ordinals, ranges, dd.mm.yyyy). - *open:* No year beside the date; two date ranges on one page (training and conference); country from a state.
+12. **D3** [PENDING, score 6] Non-deadline facts (city, venue, format, organizer, categories) are wrong or unproven and nothing measures them. - *open:* A weekly reader pass on these fields (priority 6) is proposed, not built.
 
 ## A. Ask Gemini (research and upstream delivery)
 
-15 failure points: 7 overcome, 5 mitigated, 0 to prove live, 3 pending.
+15 failure points: 8 overcome, 5 mitigated, 0 to prove live, 2 pending.
 
 ### A1. Research answers from memory instead of searching (ungrounded answers).
 
@@ -77,8 +77,8 @@ Rank 2 of 15 in this step. **OVERCOME** (since 2026-10-03); score 6 (frequency 2
 Rank 3 of 15 in this step. **OVERCOME** (since 2026-10-03); score 6 (frequency 2 x impact 3)
 
 - **Seen as:** Research returned a different, evidenced deadline for rows corrected by hand (abstract vs paper deadline; an aggregator date; a wrong start date); 15 events are pinned.
-- **What overcame or reduces it:** Pinned rows ledger applied before the gate on every load; blank pins clear the database; 'Verified by you' panel; answer key generated from the same ledger.
-- **What remains:** A pin holds one edition; the next edition is a new row. Awards have no pins yet (priority 5). A ruling only protects once it is entered.
+- **What overcame or reduces it:** Pinned rows ledger applied before the gate on every load; blank pins clear the database; 'Verified by you' panel; answer key generated from the same ledger. [ACT-11, verified 2026-10-05]
+- **What remains:** A pin holds one edition; the next edition is a new row. A ruling only protects once it is entered.
 
 ### A7. Research states a date or status for an edition that no page states (wrong year, next or previous edition).
 
@@ -130,11 +130,11 @@ Rank 9 of 15 in this step. **MITIGATED**; score 4 (frequency 2 x impact 2) - clo
 
 ### A11. Statements about upstream's own files do not match what is on disk.
 
-Rank 10 of 15 in this step. **MITIGATED** (since 2026-10-03); score 4 (frequency 2 x impact 2) - closed only by upstream
+Rank 10 of 15 in this step. **OVERCOME** (since 2026-10-05); score 4 (frequency 2 x impact 2) - closed only by upstream
 
 - **Seen as:** Three false 'it is in the file' claims, ids that do not exist here, input lists claimed stamped but not (10-02 to 10-04).
-- **What overcame or reduces it:** check_delivery_ids.py (claims are checked on disk first); gate note S (ACCEPTED is not the same as researched); the upstream QA protocol.
-- **What remains:** The check is run by hand on each delivery.
+- **What overcame or reduces it:** check_delivery_ids.py (claims are checked on disk first); gate note S (ACCEPTED is not the same as researched); the upstream QA protocol. [ACT-16, verified 2026-10-05]
+- **What remains:** None known.
 
 ### A12. Status and lifecycle claims without evidence (discontinued, merged, out of scope).
 
@@ -170,15 +170,15 @@ Rank 14 of 15 in this step. **OVERCOME** (since 2026-09-12); score 3 (frequency 
 
 ### A15. Renamed, closed and successor events are not handled deliberately.
 
-Rank 15 of 15 in this step. **PENDING**; score 2 (frequency 1 x impact 2)
+Rank 15 of 15 in this step. **MITIGATED**; score 2 (frequency 1 x impact 2)
 
 - **Seen as:** Not tested; a probable duplicate pair is held with blank dates; trap case T06 needs a person to judge.
-- **What overcame or reduces it:** Identity rules (never mint an id, never join on upstream ids) prevent the worst outcome.
-- **What remains:** There is no test that the method keeps two names of one event, or two events of one brand, apart.
+- **What overcame or reduces it:** Identity rules (never mint an id, never join on upstream ids) prevent the worst outcome. [ACT-19, verified 2026-10-05]
+- **What remains:** The cases a person must judge are listed; no data-driven test of a live rename.
 
 ## B. Find the right pages
 
-10 failure points: 0 overcome, 3 mitigated, 2 to prove live, 5 pending.
+10 failure points: 1 overcome, 3 mitigated, 2 to prove live, 4 pending.
 
 ### B1. The page that states the call is not found, or not selected.
 
@@ -193,7 +193,7 @@ Rank 1 of 10 in this step. **WATCH**; score 9 (frequency 3 x impact 3)
 Rank 2 of 10 in this step. **MITIGATED** (since 2026-10-03); score 6 (frequency 2 x impact 3)
 
 - **Seen as:** A page showing next year's edition; a page with both editions; a header date with no year beside it.
-- **What overcame or reduces it:** Year-specific reading; nearest-heading year rule checked in code; trap cases T01 and T02; the reader stays blank rather than guess.
+- **What overcame or reduces it:** Year-specific reading; nearest-heading year rule checked in code; trap cases T01 and T02; the reader stays blank rather than guess. [ACT-15, verified 2026-10-05]
 - **What remains:** Pages with no year beside the date stay blank (safe, but a lost answer).
 
 ### B5. Several calls on one site (posters, awards, workshops, tracks) and the wrong one is read.
@@ -206,11 +206,11 @@ Rank 3 of 10 in this step. **WATCH** (since 2026-10-04); score 6 (frequency 2 x 
 
 ### B2. The page cannot be read by a plain fetch (HTTP 403 wall, anti-bot, script-built content).
 
-Rank 4 of 10 in this step. **MITIGATED** (since 2026-10-03); score 6 (frequency 3 x impact 2)
+Rank 4 of 10 in this step. **OVERCOME** (since 2026-10-05); score 6 (frequency 3 x impact 2)
 
 - **Seen as:** Rows that read 'unconfirmed' because of a 403; a script-built page returning no text; a walled page failing the quote check.
-- **What overcame or reduces it:** Real-Chrome render fallback in the reader; the gate reports a walled page as a note, not a failure; offline page library (350 of 360 pages usable); hard anti-bot hosts skipped by design.
-- **What remains:** The weekly verifier cannot fall back to the render (priority 10).
+- **What overcame or reduces it:** Real-Chrome render fallback in the reader; the gate reports a walled page as a note, not a failure; offline page library (350 of 360 pages usable); hard anti-bot hosts skipped by design. [ACT-12, verified 2026-10-05]
+- **What remains:** Hard anti-bot hosts are skipped by design.
 
 ### B3. Links die between runs (moved pages, expired call pages, stale evidence pages).
 
@@ -230,11 +230,11 @@ Rank 6 of 10 in this step. **PENDING**; score 4 (frequency 2 x impact 2)
 
 ### B6. A third-party or aggregator page is cited in place of the organizer's.
 
-Rank 7 of 10 in this step. **PENDING**; score 4 (frequency 2 x impact 2) - closed only by upstream
+Rank 7 of 10 in this step. **MITIGATED**; score 4 (frequency 2 x impact 2) - closed only by upstream
 
 - **Seen as:** An aggregator that does not list the event cited as evidence (trap case T05, a known gap).
-- **What overcame or reduces it:** A pin handled the one known case.
-- **What remains:** No automatic aggregator-citation flag (priority 11).
+- **What overcame or reduces it:** A pin handled the one known case. [ACT-14, verified 2026-10-05]
+- **What remains:** Detected and flagged; the replacement page still has to come from upstream.
 
 ### B7. The date is only on the home page, or on a sub-event page inside a larger site.
 
@@ -262,7 +262,7 @@ Rank 10 of 10 in this step. **PENDING**; score 2 (frequency 2 x impact 1)
 
 ## C. Read and label the date
 
-9 failure points: 4 overcome, 5 mitigated, 0 to prove live, 0 pending.
+9 failure points: 5 overcome, 4 mitigated, 0 to prove live, 0 pending.
 
 ### C1. The wrong kind of date is taken as the submission deadline (registration, early-bird, event, notification, ceremony).
 
@@ -282,19 +282,19 @@ Rank 2 of 9 in this step. **OVERCOME** (since 2026-10-02); score 9 (frequency 3 
 
 ### C5. Several rounds or tracks (early, regular, late; abstract versus paper) and the wrong one is shipped.
 
-Rank 3 of 9 in this step. **MITIGATED**; score 6 (frequency 2 x impact 3)
+Rank 3 of 9 in this step. **OVERCOME** (since 2026-10-05); score 6 (frequency 2 x impact 3)
 
 - **Seen as:** Abstract vs paper deadlines; a registration end read as a proposal deadline.
-- **What overcame or reduces it:** Earliest open round by default; the main-call rule; pins for rulings.
-- **What remains:** The arbiter does not yet pick the earliest of two deadlines on one page (trap case T04, a known gap).
+- **What overcame or reduces it:** Earliest open round by default; the main-call rule; pins for rulings. [ACT-13, verified 2026-10-05]
+- **What remains:** None known.
 
 ### C6. A 'verified' label means the call status was confirmed, not the date.
 
 Rank 4 of 9 in this step. **MITIGATED** (since 2026-10-03); score 6 (frequency 2 x impact 3)
 
 - **Seen as:** 13 of 48 stored deadlines were 'verified' from the status layer; 5 more had no evidence page.
-- **What overcame or reduces it:** All board figures count proof from quoted evidence, never from the label.
-- **What remains:** The stored verification label itself still conflates the two.
+- **What overcame or reduces it:** CORRECTION 2026-10-05: this register said all board figures counted proof from quoted evidence, never from the label. That was wrong: the provable-deadline figure and Accurate % counted a status-only 'verified' as proof (34 of 101 verified conference rows; 1 of the 16 live market-list deadlines moved from proven to status-only when this was fixed). Now each verification records its BASIS (date, status, link, none-found; column verify_basis, migration applied live 10-05 with proofs) and the board counts the date basis only; status-only rows are shown separately. [ACT-18, verified 2026-10-05]
+- **What remains:** The customer page still labels status-only rows 'Confirmed': changing a customer-facing label is the operator's decision (listed under Needs you).
 
 ### C3. Date formats and layouts the reader does not know (other languages, ordinals, ranges, dd.mm.yyyy).
 
@@ -338,15 +338,15 @@ Rank 9 of 9 in this step. **MITIGATED**; score 2 (frequency 2 x impact 1)
 
 ## D. Check and clean stored data
 
-12 failure points: 4 overcome, 5 mitigated, 1 to prove live, 2 pending.
+12 failure points: 5 overcome, 5 mitigated, 0 to prove live, 2 pending.
 
 ### D1. An event cannot be tied to one permanent id (no id returned, a rename, a second row for one event, ids we do not hold).
 
 Rank 1 of 12 in this step. **MITIGATED** (since 2026-09-27); score 9 (frequency 3 x impact 3) - closed only by upstream
 
 - **Seen as:** The largest failure step: 11 rows (3 Cybersecurity, 8 Utility) in the first live load; duplicates and renames in the first weeks.
-- **What overcame or reduces it:** Ids are stamped on the input and carried through; identity.to_canonical (never join on upstream ids); we never mint an id; a row with no id is held, never guessed.
-- **What remains:** About 11 rows a week still cannot load fresh until upstream returns the stamped ids (note 26).
+- **What overcame or reduces it:** Ids are stamped on the input and carried through; identity.to_canonical (never join on upstream ids); we never mint an id; a row with no id is held, never guessed. [ACT-16, verified 2026-10-05]
+- **What remains:** About 11 rows a week still cannot load fresh until upstream returns the stamped ids; our side now triages replies by command.
 
 ### D2. Silent loss or regression during a load.
 
@@ -390,19 +390,19 @@ Rank 6 of 12 in this step. **PENDING**; score 4 (frequency 2 x impact 2) - close
 
 ### D6. Data enters outside the process (hand edits, rows loaded by hand) and breaks signing or carry.
 
-Rank 7 of 12 in this step. **MITIGATED** (since 2026-10-03); score 4 (frequency 2 x impact 2)
+Rank 7 of 12 in this step. **OVERCOME** (since 2026-10-05); score 4 (frequency 2 x impact 2)
 
 - **Seen as:** A hand edit broke Monday's publish; hand-loaded rows had no carry and lost evidence.
-- **What overcame or reduces it:** Re-gate and re-promote procedure; pins; the publish guard.
-- **What remains:** Hand-loaded rows are not added to the approved file automatically (priority 4).
+- **What overcame or reduces it:** Re-gate and re-promote procedure; pins; the publish guard. [ACT-10, verified 2026-10-05]
+- **What remains:** None known.
 
 ### D8. A carried value outlives its truth (carry rules keep last week's organizer, evidence, sponsorship).
 
-Rank 8 of 12 in this step. **WATCH** (since 2026-10-03); score 4 (frequency 2 x impact 2)
+Rank 8 of 12 in this step. **MITIGATED** (since 2026-10-03); score 4 (frequency 2 x impact 2)
 
 - **Seen as:** A new risk created by the carry rules; no case yet.
-- **What overcame or reduces it:** Same-edition only; load QA; verified evidence carried only for the same or a future deadline.
-- **What remains:** No age limit on a carried fact.
+- **What overcame or reduces it:** Same-edition only; load QA; verified evidence carried only for the same or a future deadline. [ACT-17, verified 2026-10-05]
+- **What remains:** Flagged when older than the limit; nobody re-verifies it automatically.
 
 ### D11. Accidental whole-database operations.
 
@@ -520,7 +520,7 @@ Rank 9 of 9 in this step. **MITIGATED** (since 2026-10-03); score 1 (frequency 1
 
 Rank 1 of 5 in this step. **MITIGATED**; score 9 (frequency 3 x impact 3)
 
-- **Seen as:** A defect report blamed upstream wrongly (08-08); a date cleared wrongly after a summary was taken for a read of the page (10-03); this week an estimate of 45 seconds per event, a reason for a low awards score and the urgency of 15 dead links were each stated and later corrected.
+- **Seen as:** A defect report blamed upstream wrongly (08-08); a date cleared wrongly after a summary was taken for a read of the page (10-03); this week an estimate of 45 seconds per event, a reason for a low awards score and the urgency of 15 dead links were each stated and later corrected. The register itself carried a wrong claim (C6: board figures never used the label), found by the builder's review on 10-05.
 - **What overcame or reduces it:** Verify against the data before it leaves the building; claims about files are checked on disk; rehearsal on copies; a pin only when the operator said so; corrections written down.
 - **What remains:** It recurred several times this week. The control depends on discipline, not on code.
 
@@ -560,14 +560,13 @@ Rank 5 of 5 in this step. **MITIGATED**; score 4 (frequency 2 x impact 2)
 
 We can detect these and hold the row; the fix is in upstream's research or writer:
 
-- **D1** [MITIGATED] An event cannot be tied to one permanent id (no id returned, a rename, a second row for one event, ids we do not hold). - About 11 rows a week still cannot load fresh until upstream returns the stamped ids (note 26).
+- **D1** [MITIGATED] An event cannot be tied to one permanent id (no id returned, a rename, a second row for one event, ids we do not hold). - About 11 rows a week still cannot load fresh until upstream returns the stamped ids; our side now triages replies by command.
 - **A13** [PENDING] Sponsorship 'Yes' is accepted with a link but no quote, and sponsorship questions dominate the weekend's cost. - A quote requirement is a contract question for upstream; option B and a reader pass are not built.
 - **A2** [MITIGATED] Research cites pages it never opened, or composes URL paths that do not exist. - Composed URLs still arrive every week and the fix depends on upstream replacing them. The finder is not yet a fallback in the weekly path.
 - **B3** [PENDING] Links die between runs (moved pages, expired call pages, stale evidence pages). - Replacement depends on upstream; nothing proposes a replacement automatically.
 - **A10** [MITIGATED] Upstream's writer produces malformed files. - Upstream's writer is unfixed, so it recurs.
-- **A11** [MITIGATED] Statements about upstream's own files do not match what is on disk. - The check is run by hand on each delivery.
 - **A12** [MITIGATED] Status and lifecycle claims without evidence (discontinued, merged, out of scope). - Waiting on upstream's evidence for the open cases.
-- **B6** [PENDING] A third-party or aggregator page is cited in place of the organizer's. - No automatic aggregator-citation flag (priority 11).
+- **B6** [MITIGATED] A third-party or aggregator page is cited in place of the organizer's. - Detected and flagged; the replacement page still has to come from upstream.
 - **D10** [MITIGATED] A passed deadline shipped with STATUS Open. - Closed once upstream's corrected patch is loaded; watch for the next passed-deadline-Open row.
 - **D4** [PENDING] The same event appears as two rows. - Upstream must retire the duplicates with evidence.
 

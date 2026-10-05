@@ -18,17 +18,17 @@ def test_the_committed_data_is_valid_and_every_closed_failure_point_exists():
 
 def test_verifying_an_action_applies_its_rules_to_the_register_and_needs_evidence():
     d, fp = copy.deepcopy(D), copy.deepcopy(FP)
-    before = next(i for i in fp["items"] if i["id"] == "D6")["status"]
+    before = next(i for i in fp["items"] if i["id"] == "D3")["status"]
     try:
-        cl.apply_verify(d, fp, "ACT-10", "   ", "2026-10-06")
+        cl.apply_verify(d, fp, "ACT-20", "   ", "2026-10-06")
         raise AssertionError("verify without evidence must be refused")
     except SystemExit:
         pass
-    changes = cl.apply_verify(d, fp, "ACT-10", "reviewed; suite green; sandbox rehearsal clean", "2026-10-06")
-    item = next(i for i in fp["items"] if i["id"] == "D6")
-    assert item["status"] == "OVERCOME" and item["since"] == "2026-10-06" and "ACT-10" in item["controls"]
-    assert before != "OVERCOME" and any("D6" in c for c in changes)
-    assert next(a for a in d["actions"] if a["id"] == "ACT-10")["state"] == "verified"
+    changes = cl.apply_verify(d, fp, "ACT-20", "reviewed; suite green; sandbox rehearsal clean", "2026-10-06")
+    item = next(i for i in fp["items"] if i["id"] == "D3")
+    assert item["status"] == "WATCH" and "ACT-20" in item["controls"]
+    assert before != "WATCH" and any("D3" in c for c in changes)
+    assert next(a for a in d["actions"] if a["id"] == "ACT-20")["state"] == "verified"
     assert cl.validate(d, fp) == []
 
 
@@ -46,7 +46,7 @@ def test_validation_catches_the_mistakes_that_would_mislead():
 
 def test_the_builder_can_set_every_state_but_verified():
     assert "verified" not in cl.BUILDER_STATES and "review" in cl.BUILDER_STATES
-    r = subprocess.run([sys.executable, "scripts/control_list.py", "set", "ACT-10", "--state", "verified"], capture_output=True, text=True, cwd=str(Path(cl.ROOT)))
+    r = subprocess.run([sys.executable, "scripts/control_list.py", "set", "ACT-20", "--state", "verified"], capture_output=True, text=True, cwd=str(Path(cl.ROOT)))
     assert r.returncode == 1 and "reviewer" in r.stdout
 
 

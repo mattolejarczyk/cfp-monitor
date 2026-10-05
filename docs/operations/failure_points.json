@@ -71,8 +71,8 @@
       "upstream": false,
       "cause": "Research overrides or contradicts a ruling a person made after reading the event's own page.",
       "evidence": "Research returned a different, evidenced deadline for rows corrected by hand (abstract vs paper deadline; an aggregator date; a wrong start date); 15 events are pinned.",
-      "controls": "Pinned rows ledger applied before the gate on every load; blank pins clear the database; 'Verified by you' panel; answer key generated from the same ledger.",
-      "remains": "A pin holds one edition; the next edition is a new row. Awards have no pins yet (priority 5). A ruling only protects once it is entered."
+      "controls": "Pinned rows ledger applied before the gate on every load; blank pins clear the database; 'Verified by you' panel; answer key generated from the same ledger. [ACT-11, verified 2026-10-05]",
+      "remains": "A pin holds one edition; the next edition is a new row. A ruling only protects once it is entered."
     },
     {
       "id": "A6",
@@ -144,13 +144,13 @@
       "step": "A",
       "freq": 2,
       "impact": 2,
-      "status": "MITIGATED",
-      "since": "2026-10-03",
+      "status": "OVERCOME",
+      "since": "2026-10-05",
       "upstream": true,
       "cause": "Statements about upstream's own files do not match what is on disk.",
       "evidence": "Three false 'it is in the file' claims, ids that do not exist here, input lists claimed stamped but not (10-02 to 10-04).",
-      "controls": "check_delivery_ids.py (claims are checked on disk first); gate note S (ACCEPTED is not the same as researched); the upstream QA protocol.",
-      "remains": "The check is run by hand on each delivery."
+      "controls": "check_delivery_ids.py (claims are checked on disk first); gate note S (ACCEPTED is not the same as researched); the upstream QA protocol. [ACT-16, verified 2026-10-05]",
+      "remains": "None known."
     },
     {
       "id": "A12",
@@ -196,13 +196,13 @@
       "step": "A",
       "freq": 1,
       "impact": 2,
-      "status": "PENDING",
+      "status": "MITIGATED",
       "since": "",
       "upstream": false,
       "cause": "Renamed, closed and successor events are not handled deliberately.",
       "evidence": "Not tested; a probable duplicate pair is held with blank dates; trap case T06 needs a person to judge.",
-      "controls": "Identity rules (never mint an id, never join on upstream ids) prevent the worst outcome.",
-      "remains": "There is no test that the method keeps two names of one event, or two events of one brand, apart."
+      "controls": "Identity rules (never mint an id, never join on upstream ids) prevent the worst outcome. [ACT-19, verified 2026-10-05]",
+      "remains": "The cases a person must judge are listed; no data-driven test of a live rename."
     },
     {
       "id": "B1",
@@ -222,13 +222,13 @@
       "step": "B",
       "freq": 3,
       "impact": 2,
-      "status": "MITIGATED",
-      "since": "2026-10-03",
+      "status": "OVERCOME",
+      "since": "2026-10-05",
       "upstream": false,
       "cause": "The page cannot be read by a plain fetch (HTTP 403 wall, anti-bot, script-built content).",
       "evidence": "Rows that read 'unconfirmed' because of a 403; a script-built page returning no text; a walled page failing the quote check.",
-      "controls": "Real-Chrome render fallback in the reader; the gate reports a walled page as a note, not a failure; offline page library (350 of 360 pages usable); hard anti-bot hosts skipped by design.",
-      "remains": "The weekly verifier cannot fall back to the render (priority 10)."
+      "controls": "Real-Chrome render fallback in the reader; the gate reports a walled page as a note, not a failure; offline page library (350 of 360 pages usable); hard anti-bot hosts skipped by design. [ACT-12, verified 2026-10-05]",
+      "remains": "Hard anti-bot hosts are skipped by design."
     },
     {
       "id": "B3",
@@ -253,7 +253,7 @@
       "upstream": false,
       "cause": "The page shows another edition, or two editions at once.",
       "evidence": "A page showing next year's edition; a page with both editions; a header date with no year beside it.",
-      "controls": "Year-specific reading; nearest-heading year rule checked in code; trap cases T01 and T02; the reader stays blank rather than guess.",
+      "controls": "Year-specific reading; nearest-heading year rule checked in code; trap cases T01 and T02; the reader stays blank rather than guess. [ACT-15, verified 2026-10-05]",
       "remains": "Pages with no year beside the date stay blank (safe, but a lost answer)."
     },
     {
@@ -274,13 +274,13 @@
       "step": "B",
       "freq": 2,
       "impact": 2,
-      "status": "PENDING",
+      "status": "MITIGATED",
       "since": "",
       "upstream": true,
       "cause": "A third-party or aggregator page is cited in place of the organizer's.",
       "evidence": "An aggregator that does not list the event cited as evidence (trap case T05, a known gap).",
-      "controls": "A pin handled the one known case.",
-      "remains": "No automatic aggregator-citation flag (priority 11)."
+      "controls": "A pin handled the one known case. [ACT-14, verified 2026-10-05]",
+      "remains": "Detected and flagged; the replacement page still has to come from upstream."
     },
     {
       "id": "B7",
@@ -391,13 +391,13 @@
       "step": "C",
       "freq": 2,
       "impact": 3,
-      "status": "MITIGATED",
-      "since": "",
+      "status": "OVERCOME",
+      "since": "2026-10-05",
       "upstream": false,
       "cause": "Several rounds or tracks (early, regular, late; abstract versus paper) and the wrong one is shipped.",
       "evidence": "Abstract vs paper deadlines; a registration end read as a proposal deadline.",
-      "controls": "Earliest open round by default; the main-call rule; pins for rulings.",
-      "remains": "The arbiter does not yet pick the earliest of two deadlines on one page (trap case T04, a known gap)."
+      "controls": "Earliest open round by default; the main-call rule; pins for rulings. [ACT-13, verified 2026-10-05]",
+      "remains": "None known."
     },
     {
       "id": "C6",
@@ -409,8 +409,8 @@
       "upstream": false,
       "cause": "A 'verified' label means the call status was confirmed, not the date.",
       "evidence": "13 of 48 stored deadlines were 'verified' from the status layer; 5 more had no evidence page.",
-      "controls": "All board figures count proof from quoted evidence, never from the label.",
-      "remains": "The stored verification label itself still conflates the two."
+      "controls": "CORRECTION 2026-10-05: this register said all board figures counted proof from quoted evidence, never from the label. That was wrong: the provable-deadline figure and Accurate % counted a status-only 'verified' as proof (34 of 101 verified conference rows; 1 of the 16 live market-list deadlines moved from proven to status-only when this was fixed). Now each verification records its BASIS (date, status, link, none-found; column verify_basis, migration applied live 10-05 with proofs) and the board counts the date basis only; status-only rows are shown separately. [ACT-18, verified 2026-10-05]",
+      "remains": "The customer page still labels status-only rows 'Confirmed': changing a customer-facing label is the operator's decision (listed under Needs you)."
     },
     {
       "id": "C7",
@@ -461,8 +461,8 @@
       "upstream": true,
       "cause": "An event cannot be tied to one permanent id (no id returned, a rename, a second row for one event, ids we do not hold).",
       "evidence": "The largest failure step: 11 rows (3 Cybersecurity, 8 Utility) in the first live load; duplicates and renames in the first weeks.",
-      "controls": "Ids are stamped on the input and carried through; identity.to_canonical (never join on upstream ids); we never mint an id; a row with no id is held, never guessed.",
-      "remains": "About 11 rows a week still cannot load fresh until upstream returns the stamped ids (note 26)."
+      "controls": "Ids are stamped on the input and carried through; identity.to_canonical (never join on upstream ids); we never mint an id; a row with no id is held, never guessed. [ACT-16, verified 2026-10-05]",
+      "remains": "About 11 rows a week still cannot load fresh until upstream returns the stamped ids; our side now triages replies by command."
     },
     {
       "id": "D2",
@@ -521,13 +521,13 @@
       "step": "D",
       "freq": 2,
       "impact": 2,
-      "status": "MITIGATED",
-      "since": "2026-10-03",
+      "status": "OVERCOME",
+      "since": "2026-10-05",
       "upstream": false,
       "cause": "Data enters outside the process (hand edits, rows loaded by hand) and breaks signing or carry.",
       "evidence": "A hand edit broke Monday's publish; hand-loaded rows had no carry and lost evidence.",
-      "controls": "Re-gate and re-promote procedure; pins; the publish guard.",
-      "remains": "Hand-loaded rows are not added to the approved file automatically (priority 4)."
+      "controls": "Re-gate and re-promote procedure; pins; the publish guard. [ACT-10, verified 2026-10-05]",
+      "remains": "None known."
     },
     {
       "id": "D7",
@@ -547,13 +547,13 @@
       "step": "D",
       "freq": 2,
       "impact": 2,
-      "status": "WATCH",
+      "status": "MITIGATED",
       "since": "2026-10-03",
       "upstream": false,
       "cause": "A carried value outlives its truth (carry rules keep last week's organizer, evidence, sponsorship).",
       "evidence": "A new risk created by the carry rules; no case yet.",
-      "controls": "Same-edition only; load QA; verified evidence carried only for the same or a future deadline.",
-      "remains": "No age limit on a carried fact."
+      "controls": "Same-edition only; load QA; verified evidence carried only for the same or a future deadline. [ACT-17, verified 2026-10-05]",
+      "remains": "Flagged when older than the limit; nobody re-verifies it automatically."
     },
     {
       "id": "D9",
@@ -746,7 +746,7 @@
       "since": "",
       "upstream": false,
       "cause": "A claim is treated as fact before it is checked against the data (ours and upstream's).",
-      "evidence": "A defect report blamed upstream wrongly (08-08); a date cleared wrongly after a summary was taken for a read of the page (10-03); this week an estimate of 45 seconds per event, a reason for a low awards score and the urgency of 15 dead links were each stated and later corrected.",
+      "evidence": "A defect report blamed upstream wrongly (08-08); a date cleared wrongly after a summary was taken for a read of the page (10-03); this week an estimate of 45 seconds per event, a reason for a low awards score and the urgency of 15 dead links were each stated and later corrected. The register itself carried a wrong claim (C6: board figures never used the label), found by the builder's review on 10-05.",
       "controls": "Verify against the data before it leaves the building; claims about files are checked on disk; rehearsal on copies; a pin only when the operator said so; corrections written down.",
       "remains": "It recurred several times this week. The control depends on discipline, not on code."
     },

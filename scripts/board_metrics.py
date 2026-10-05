@@ -143,6 +143,13 @@ def customer_agreement(db: str, today: str = "", kind: str = "conference") -> di
             "live_counts": live_counts, "live_rows": sum(live_counts.values())}
 
 
+def _basis_expr(con, table: str, alias: str) -> str:
+    """SQL for the row's verification BASIS (ACT-18): what the 'verified' state actually found. A database without the column (not yet migrated, or a test copy) reads as 'date',
+    which is the old behaviour. A status-only 'verified' (the call was seen open or closed, the date was not found on the page) is NOT proof of the date."""
+    have = {r[1] for r in con.execute(f"pragma table_info({table})")}
+    return f"coalesce({alias}verify_basis,'date')" if "verify_basis" in have else "'date'"
+
+
 def provable_live(db: str, today: str, kind: str = "conference") -> dict:
     """How many LIVE stored deadlines (on or after `today`) are proven on their cited page. See the module docstring.
     kind "conference": events on the Cybersecurity/Utility seed sheets (grounding_facts).
@@ -151,8 +158,8 @@ def provable_live(db: str, today: str, kind: str = "conference") -> dict:
     try:
         if kind == "award":
             rows = con.execute(
-                "select a.event_id, a.name, a.deadline, a.verify_state, coalesce(a.verify_detail,''), coalesce(a.deadline_evidence_url,''), '', '', 0 "
-                "from award_grounding_facts a where trim(a.deadline) != '' and a.deadline >= ? "
+                "select a.event_id, a.name, a.deadline, a.verify_state, coalesce(a.verify_detail,''), coalesce(a.deadline_evidence_url,''), '', '', 0, "
+                f"{_basis_expr(con, 'award_grounding_facts', 'a.')} from award_grounding_facts a where trim(a.deadline) != '' and a.deadline >= ? "
                 "and a.event_id in (select award_key from award_markets where market in ('Cybersecurity','Utility'))", (today,)).fetchall()
             ids = {r[0] for r in rows}
         else:
@@ -161,16 +168,16 @@ def provable_live(db: str, today: str, kind: str = "conference") -> dict:
             have = {r[1] for r in con.execute("pragma table_info(grounding_facts)")}
             extra = ", ".join(f"coalesce({c},{d})" if c in have else d for c, d in (("start_date", "''"), ("status", "''"), ("is_projected", "0")))
             rows = con.execute("select event_id, name, deadline, verify_state, coalesce(verify_detail,''), coalesce(deadline_evidence_url,''), "
-                               f"{extra} from grounding_facts where trim(deadline) != '' and deadline >= ?", (today,)).fetchall()
+                               f"{extra}, {_basis_expr(con, 'grounding_facts', '')} from grounding_facts where trim(deadline) != '' and deadline >= ?", (today,)).fetchall()
     finally:
         con.close()
-    counts = {k: 0 for k in ("verified", "withdrawn", "unreadable", "notfound", "contradicted", "unchecked")}
+    counts = {k: 0 for k in ("verified", "withdrawn", "unreadable", "notfound", "contradicted", "unchecked", "status_only")}
     detail = []
     operator = excused = 0
     from scripts.pinned_rows import load_pins
     pinned_deadline = {p["canonical"]: str(p["set"].get("SUBMISSION DEADLINE", "")).strip() for p in load_pins()
                        if kind == "conference" and p.get("set", {}).get("SUBMISSION DEADLINE") and (not p.get("until") or p["until"] >= today)}
-    for eid, name, dl, state, why, ev, start, status, proj in rows:
+    for eid, name, dl, state, why, ev, start, status, proj, basis in rows:
         if eid not in ids:
             continue
         if pinned_deadline.get(eid) == dl:
@@ -182,7 +189,7 @@ def provable_live(db: str, today: str, kind: str = "conference") -> dict:
         elif not ev.strip():
             cls = "withdrawn"
         elif state == "verified":
-            cls = "verified"
+            cls = "verified" if basis == "date" else "status_only"        # status-only is shown, not counted as proof of the date
         elif state == "contradicted":
             cls = "contradicted"
         elif "could not be read" in why or why.startswith("unreadable"):
@@ -388,7 +395,7 @@ def split_scores(rows: list[dict], today: str, kind: str, pins: list[dict] | Non
         dl = (r.get("deadline") or "").strip()
         if dl and dl >= today:                                          # a passed deadline's page moves on to the next edition: not scored
             st = r.get("verify_state")
-            facts.append("proven" if st == "verified" and (r.get("deadline_evidence_url") or "").strip() else "contradicted" if st == "contradicted" else "unproven")
+            facts.append("proven" if st == "verified" and (r.get("deadline_evidence_url") or "").strip() and (r.get("verify_basis") or "date") == "date" else "contradicted" if st == "contradicted" else "unproven")
         s = (r.get("start_date") or "").strip()
         if s and (r.get("edition") or "").isdigit() and s[:4] != r["edition"]:
             facts.append("contradicted")                                  # year rule: the date is not in the edition it sits on
@@ -510,6 +517,7 @@ def update_status(cur: dict, today: str, path: Path = STATUS_JSON, prov: dict | 
         ph["open_confirmed"] = pc["verified"]
         ph["levels"] = [
             {"key": "confirmed", "label": "Date on the cited page", "n": pc["verified"], "tone": "good"},
+            {"key": "statusonly", "label": "Call status confirmed, but the date was not found on the page", "n": pc.get("status_only", 0), "tone": "warn"},
             {"key": "withdrawn", "label": "Citation withdrawn by agreement (honestly unproven)", "n": pc["withdrawn"], "tone": "warn"},
             {"key": "nopage", "label": "Cited page blocks our plain reader (a browser read would settle it)", "n": pc["unreadable"], "tone": "mute"},
             {"key": "absent", "label": "Page read, date not on it", "n": pc["notfound"], "tone": "bad"},
@@ -556,7 +564,7 @@ def main(argv: list[str] | None = None) -> int:
     print(render(cur, prev, a.examples))
     prov = provable_live(a.db, a.today)
     pc = prov["counts"]
-    print(f"Provable submission date, LIVE deadlines ({a.today} or later, on the market lists): {pc['verified']} of {prov['rows']} proven on the cited page"
+    print(f"Provable submission date, LIVE deadlines ({a.today} or later, on the market lists): {pc['verified']} of {prov['rows']} proven on the cited page (status-only, not counted: {pc.get('status_only', 0)})"
           f" | of which verified by you {prov.get('operator_verified', 0)} | excused (90 days) {prov.get('excused_far_future', 0)} | citation withdrawn {pc['withdrawn']} | page unreadable by plain fetch {pc['unreadable']} | date not on page {pc['notfound']} | different date {pc['contradicted']}")
     for d in prov["detail"]:
         if d["class"] != "verified":

@@ -116,7 +116,7 @@ def _live_db(tmp_path):
 def test_provable_live_classes_and_scope(tmp_path):
     r = bm.provable_live(_live_db(tmp_path), "2026-10-02")
     assert r["rows"] == 5                                              # past and off-list rows are not scored
-    assert r["counts"] == {"verified": 1, "withdrawn": 1, "unreadable": 1, "notfound": 1, "contradicted": 1, "unchecked": 0}
+    assert r["counts"] == {"verified": 1, "withdrawn": 1, "unreadable": 1, "notfound": 1, "contradicted": 1, "unchecked": 0, "status_only": 0}
 
 
 def test_a_deadline_equal_to_today_is_live(tmp_path):
@@ -354,3 +354,24 @@ def test_an_award_whose_dates_are_not_announced_or_that_has_no_deadline_by_desig
         assert set(excused) == {"deadline", "deadline_evidence_url", "deadline_quote"} and "submission_url" in exp
     exp, excused = expected_fields(_award(status="Upcoming", cfp_model="Fixed Deadline"), TODAY, "award")
     assert "deadline" in exp and not excused
+
+
+def test_a_status_only_verification_is_shown_but_not_counted_as_proof_of_the_date(tmp_path, monkeypatch):
+    """ACT-18 (2026-10-05): 'verified' can mean the call was seen open, not that the date was found on the page (34 of 101 verified conference rows). The board counts the date basis only."""
+    import sqlite3
+    import src.cfp_monitor.identity as idn
+    monkeypatch.setattr(idn, "market_canonical_ids", lambda db: {"a", "b"})
+    db = str(tmp_path / "m.db")
+    con = sqlite3.connect(db)
+    con.execute("create table grounding_facts (event_id, name, deadline, verify_state, verify_detail, deadline_evidence_url, start_date, status, is_projected, verify_basis)")
+    con.executemany("insert into grounding_facts values (?,?,?,?,?,?,?,?,?,?)", [
+        ("a", "Date proven", "2026-12-01", "verified", "", "u", "2027-06-01", "Open", 0, "date"),
+        ("b", "Status only", "2026-12-02", "verified", "", "u", "2027-06-01", "Open", 0, "status")])
+    con.commit()
+    con.close()
+    r = bm.provable_live(db, "2026-10-05")
+    assert (r["counts"]["verified"], r["counts"]["status_only"], r["rows"]) == (1, 1, 2)
+    rows = [{"event_id": "b", "name": "B", "edition": "2027", "start_date": "2026-12-20", "city": "x", "country": "y", "main_info_url": "u", "deadline": "2026-12-02", "submission_url": "s",
+             "deadline_evidence_url": "u", "deadline_quote": "q", "status": "Open", "is_projected": 0, "verify_state": "verified", "verify_basis": "status"}]
+    s = bm.split_scores(rows, "2026-10-05", "conference")
+    assert (s["proven"], s["unproven"]) == (0, 1)                    # unproven, never counted wrong
