@@ -961,7 +961,7 @@
       "id": "ACT-51",
       "wave": "W5",
       "step": "A",
-      "owner": "reviewer",
+      "owner": "me",
       "state": "todo",
       "cost": "$0 to build; research cost only for the added rows",
       "title": "TOP PRIORITY: every event on a customer sheet must enter our research queue automatically (intake feeds the queue)",
