@@ -38,6 +38,14 @@ If there are several rounds (early, regular, late), report the one that closes n
 If the page states no submission deadline with its year, return empty value and empty quote. Never guess a year or a date."""
 
 
+# ACT-22: the awards version. An award's main call is a NOMINATION or an ENTRY, so the reader is asked for that deadline, and entry/nomination wording counts as call wording.
+AWARDS_SYSTEM = """You read ONE web page about an award or awards programme and report the deadline to ENTER or NOMINATE for the next upcoming cycle, only if the page states it.
+Return ONLY JSON: {"deadline": {"value": "YYYY-MM-DD or empty", "quote": "one sentence copied verbatim from the page that states the date"}, "what": "the page's own words for what the date is for"}.
+If there are several rounds (early, regular, late/extended), report the one that closes next. Never report the announcement of winners, judging, shortlist, ceremony, notification or event dates.
+If the page states no entry or nomination deadline with its year, return empty value and empty quote. Never guess a year or a date."""
+CALL_WORDS_AWARD = re.compile(CALL_WORDS.pattern + r"|entr(?:y|ies)|enter\b|apply|nominations?|nominee|submissions?", re.I)
+
+
 def canon_url(u: str) -> str:
     return re.sub(r"^https?://(www\.)?", "", (u or "").lower()).split("#")[0].split("?")[0].rstrip("/")
 
@@ -49,8 +57,8 @@ def norm(s: str) -> str:
 from experiments.finder_reader_test.main_call import choose_main      # noqa: E402
 
 
-def accept_deadline(item: dict, page: str, today: str) -> tuple[str, str]:
-    """(value or '', why). The model's claim stands only if the page itself supports it (quote on the page, date year-specific, call wording)."""
+def accept_deadline(item: dict, page: str, today: str, kind: str = "conference") -> tuple[str, str]:
+    """(value or '', why). The model's claim stands only if the page itself supports it (quote on the page, date year-specific, call wording; for kind='award' entry and nomination wording)."""
     from scripts.start_date_arbiter import expand_ranges
     from src.cfp_monitor.verify import find_date
     value, quote = (item or {}).get("value", ""), (item or {}).get("quote", "")
@@ -64,7 +72,7 @@ def accept_deadline(item: dict, page: str, today: str) -> tuple[str, str]:
         return "", "not an ISO date"
     if not find_date(expand_ranges(quote), d):
         return "", "the quote does not state that day, month and year"
-    if not CALL_WORDS.search(quote):
+    if not (CALL_WORDS_AWARD if kind == "award" else CALL_WORDS).search(quote):
         return "", "the quote has no call wording"
     if value < (date.fromisoformat(today) - timedelta(days=30)).isoformat():
         return "", "date is long past"
@@ -115,6 +123,8 @@ async def find_and_read(ev, ctx, max_pages, model, today, pages_cache, plan_only
     accept only code-proven deadlines, pick the main call. `ev` needs event, home, hosts (and optionally gold, control). Used by this experiment and by scripts/shadow_finder.py.
     Reads the network; writes nothing. Returns a record; rec['pick'] is choose_main's answer, rec['skipped'] says why nothing was read."""
     d2, r31, R, _f, sitewalk, cs, settings = ctx.d2, ctx.r31, ctx.R, ctx._f, ctx.sitewalk, ctx.cs, ctx.settings
+    kind = ev.get("kind", "conference")                              # 'award': the nomination/entry deadline, awards wording, the inverted main-call rule (ACT-22)
+    system = AWARDS_SYSTEM if kind == "award" else SYSTEM
     urls, labels = [], {}
     origin = sitewalk.origin(ev["home"])
     if hasattr(_f, "_force_fallback_domain") and _f._force_fallback_domain(ev["home"]):
@@ -157,9 +167,9 @@ async def find_and_read(ev, ctx, max_pages, model, today, pages_cache, plan_only
         states = bool(text) and gold_d is not None and bool(d2.find_target(text, gold_d))
         got, why, what, quote = "", "page unreadable", "", ""
         if text.strip():
-            fields, _c = R.ask_with(SYSTEM, model, ev["event"], text)
+            fields, _c = R.ask_with(system, model, ev["event"], text)
             fields = fields or {}
-            got, why = accept_deadline(fields.get("deadline", {}), text, today)
+            got, why = accept_deadline(fields.get("deadline", {}), text, today, kind)
             what, quote = str(fields.get("what", "")), str((fields.get("deadline") or {}).get("quote", ""))
         rec["pages"].append({"rank": rank, "tier": tier[:2], "url": u, "chars": len(text), "states_gold": states, "accepted": got, "why": why, "what": what, "quote": quote if got else ""})
         if got and rank != 0:                                        # the control is the database's own page: a finder would not have it
@@ -172,7 +182,7 @@ async def find_and_read(ev, ctx, max_pages, model, today, pages_cache, plan_only
             rec["reader_wrong"].append({"rank": rank, "url": u, "accepted": got})
         say(f"   {rank:>2} {tier[:2]:3} chars={len(text):>6} states-gold={'Y' if states else '-'} reader={got or why[:30]:<12} {urlparse(u).path[:56]}")
         await asyncio.sleep(2)
-    pick = choose_main(cands, today)
+    pick = choose_main(cands, today, kind)
     rec["pick"] = pick
     rec["pick_correct"] = bool(gold) and pick["pick"] == gold
     ctl = [p for p in rec["pages"] if p["rank"] == 0]

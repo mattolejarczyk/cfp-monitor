@@ -9,7 +9,7 @@
     "scripts/stamp_input_ids.py": "e98e8a4494034a6d961ed65e3cc7a28a5cf1e073151c7d00b668a27aff2811bf",
     "scripts/weekend_import.py": "d88c0980fbf01abd02959c6f0cf9ea526db577b2ac8d335602f1226fff1eb76a",
     "scripts/weekend_recap.py": "20cde60da49515b418d83f3d3b9cbe8afcc209f4a263f2a61aa76bb4005dd146",
-    "scripts/shadow_finder.py": "3d438d0b9ed35b32a0cb8a7bd242f8806d62513c123ac92a5b447e0c6b0298c0",
+    "scripts/shadow_finder.py": "0fb1de2942bde32bdc95b2d2cfed4a4a87046cbe5e7495ea7e18e4cf01a1799e",
     "scripts/refresh_plan.py": "db1751c0cf7534277e14ed772fb0dd3b636d36b69ed31b603a2cd9818fb368fc",
     "scripts/run_weekly.bat": "e34d53e10c3282e23d78d56cb9314dceff5e15db411d35e644f0a33c4d3d49de",
     "scripts/weekly_verify.py": "7f6b260f6ab1c574dee2c67df517f0fee07d6d3d0fab8871bbc3f4abb2ffdd68",

@@ -99,6 +99,22 @@ def report_md(recs: list[dict], summ: dict, meta: dict) -> str:
     return "\n".join(lines)
 
 
+def build_ctx(log_path: Path, max_usd: float) -> SimpleNamespace:
+    """The context find_and_read needs (page rules, date reader, reader runner, fetch, sitewalk, sitemap collector, settings), with the reader's request log and cost cap pointed at
+    `log_path` / `max_usd` so a caller never spends against the experiments' shared log. Shared by shadow_finder, shadow_reader-style runs and scripts/propose_replacements.py."""
+    import dates_v2 as d2
+    import rules_v31 as r31
+    from experiments.read_the_page_pass import run as R
+    from src.cfp_monitor import fetch as _f, sitewalk
+    from src.cfp_monitor.config import Settings
+    spec = importlib.util.spec_from_file_location("cs", ROOT / "experiments" / "sitemap_discovery" / "collect_sitemaps.py")
+    cs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cs)
+    R.LOG = Path(log_path)
+    R.MAX_REQUESTS, R.MAX_USD = 2000, max_usd
+    return SimpleNamespace(d2=d2, r31=r31, R=R, _f=_f, sitewalk=sitewalk, cs=cs, settings=Settings())
+
+
 async def run(a) -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     today = a.today
@@ -106,7 +122,10 @@ async def run(a) -> int:
     from src.cfp_monitor.identity import seed_map, to_canonical
     from scripts.board_metrics import LIVE_DB
     up_to_canon, _roots = seed_map(str(LIVE_DB))
-    for m in a.markets:
+    global OUT_DIR
+    if a.out_dir:                                                          # rehearsals write here, never under the live data root
+        OUT_DIR = Path(a.out_dir)
+    for m in [m for m in a.markets if m != "Awards"]:
         fin = MARKETS_DIR / f"{m}_audited.final.csv"
         if fin.exists():
             with open(fin, encoding="utf-8-sig", newline="") as fh:
@@ -116,26 +135,22 @@ async def run(a) -> int:
             with open(raw, encoding="utf-8-sig", newline="") as fh:
                 for r in csv.DictReader(fh):
                     grounded[to_canonical(r.get("EVENT_ID", ""), up_to_canon)] = (r.get("SUBMISSION DEADLINE") or "").strip()
-    events = select_events(rows, today, a.max_events)
-    print(f"shadow: {len(events)} live events selected from {len(rows)} approved rows", flush=True)
+    events = select_events(rows, today, a.max_events) if rows else []
+    if "Awards" in a.markets:
+        # ACT-22: the live awards (kind='award': the entry or nomination deadline, the inverted main-call rule). There is no approved awards file; they come from the table, read-only.
+        from scripts.awards_shadow import live_awards
+        events += live_awards(a.db or LIVE_DB, today, a.max_events)
+    stem_name = "shadow_awards" if a.markets == ["Awards"] else "shadow"
+    print(f"shadow: {len(events)} live events selected from {len(rows)} approved rows{' plus the awards table' if 'Awards' in a.markets else ''}", flush=True)
     if a.dry_run:
         for e in events:
             print(f"  {e['market'][:5]} {e['ours'] or '-':10} {e['event'][:50]:50} {e['home'][:70]}")
         return 0
-    import dates_v2 as d2
-    import rules_v31 as r31
     from experiments.finder_reader_test import run as F
-    from experiments.read_the_page_pass import run as R
-    from src.cfp_monitor import fetch as _f, sitewalk
-    from src.cfp_monitor.config import Settings
-    spec = importlib.util.spec_from_file_location("cs", ROOT / "experiments" / "sitemap_discovery" / "collect_sitemaps.py")
-    cs = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(cs)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    R.LOG = OUT_DIR / f"shadow_llm_log_{stamp}.jsonl"                    # its own request log and cap: never the experiments' shared log
-    R.MAX_REQUESTS, R.MAX_USD = 2000, a.max_usd
-    ctx = SimpleNamespace(d2=d2, r31=r31, R=R, _f=_f, sitewalk=sitewalk, cs=cs, settings=Settings())
+    ctx = build_ctx(OUT_DIR / f"shadow_llm_log_{stamp}.jsonl", a.max_usd)      # its own request log and cap: never the experiments' shared log
+    R, _f = ctx.R, ctx._f
     recs, skipped, stopped, t0 = [], 0, "", time.time()
     for i, ev in enumerate(events, 1):
         if (time.time() - t0) / 60 > a.max_minutes:
@@ -169,7 +184,7 @@ async def run(a) -> int:
         pass
     meta = {"stamp": stamp, "selected": len(events), "skipped": skipped, "stopped": stopped, "minutes": (time.time() - t0) / 60, "usd": R.spent()[1]}
     summ = summarize(recs)
-    stem = OUT_DIR / f"shadow_{stamp}"
+    stem = OUT_DIR / f"{stem_name}_{stamp}"
     if recs:
         with open(f"{stem}.csv", "w", encoding="utf-8", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(recs[0]))
@@ -184,7 +199,7 @@ async def run(a) -> int:
     if not a.no_email:
         try:
             from src.cfp_monitor.alerts import maybe_send_email
-            subject = f"CFP shadow run: {summ['differs']} differ, {summ['real-only']} real-only, {summ['agree']} agree"
+            subject = f"CFP {'awards ' if stem_name == 'shadow_awards' else ''}shadow run: {summ['differs']} differ, {summ['real-only']} real-only, {summ['agree']} agree"
             sent = maybe_send_email(subject, md, to_env="CFP_RECAP_TO")
             print("shadow recap emailed" if sent else "shadow recap NOT emailed - CFP_RECAP_TO or CFP_SMTP_* not set")
         except Exception as e:                                            # noqa: BLE001
@@ -201,6 +216,8 @@ def main() -> int:
     ap.add_argument("--today", default=date.today().isoformat())
     ap.add_argument("--run-log", help="the weekend job's log: its creation time is the job's start, used with --total-hours")
     ap.add_argument("--total-hours", type=float, default=4.25, help="with --run-log: never run past this many hours since the job started (the task itself is limited to 5)")
+    ap.add_argument("--db", help="the database the awards come from (read-only; default the live one)")
+    ap.add_argument("--out-dir", help="write the reports and the request log here instead of runs_out/shadow (a rehearsal uses a scratch folder)")
     ap.add_argument("--no-email", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="list the events it would read; no network, no model")
     a = ap.parse_args()
