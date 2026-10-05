@@ -162,6 +162,17 @@ def other_deadline_dates(haystack: str, exclude: Optional[date] = None,
     return sorted(set(found))
 
 
+def earliest_deadline(haystack: str, today: Optional[date] = None) -> dict:
+    """ACT-13 (trap case T04, operator rule 2026-10-03): when one page states two deadlines (two tracks: abstract and paper), the DEFAULT is the earliest
+    one that is still open on `today`, and the others are recorded, not dropped. Reads only deadline-labelled dates (other_deadline_dates), so a
+    conference date or a price date is never taken for a deadline. Returns {"date": "YYYY-MM-DD" or "", "others": [later open dates], "passed": [earlier,
+    already-closed dates]}. Pure. The main-call experiment applies the same rule to its candidates (experiments/finder_reader_test/main_call.py)."""
+    today = today or date.today()
+    ds = sorted({d for d in (_parse_date(t) for t in other_deadline_dates(haystack, None, today)) if d is not None})
+    open_ = [d for d in ds if d >= today]
+    return {"date": open_[0].isoformat() if open_ else "", "others": [d.isoformat() for d in open_[1:]], "passed": [d.isoformat() for d in ds if d < today]}
+
+
 @dataclass
 class Outcome:
     state: str
@@ -453,6 +464,41 @@ def fetch_text(url: str, timeout: int = 20, max_bytes: int = 900_000) -> tuple[s
     text = (text.replace("&nbsp;", " ").replace("&amp;", "&")
                 .replace("&#8217;", "'").replace("&#8211;", "-"))
     return re.sub(r"\s+", " ", text), "ok"
+
+
+# ACT-12 (2026-10-05): a plain fetch is answered with HTTP 403, an anti-bot notice or an empty script shell on pages a person reads without trouble (Black Hat
+# Asia: blackhat.com answers 403, so its rows read "the cited page could not be read" every Sunday). The reader (read-the-page pass, page library) already falls
+# back to the real Chrome; the weekly verifier now does the same, for exactly those answers and no others.
+MAX_RENDERS_PER_RUN = 40          # a stuck Chrome costs up to 90 s a page: the weekly job must not be able to wait for hours
+_renders_used = [0]
+RENDER_STATUSES = ("HTTP 403", "HTTP 401", "HTTP 429", "HTTP 503", "HTTP 202")
+
+
+def needs_render(text: str, note: str) -> bool:
+    """True when the plain fetch failed in a way a real browser may cure: a wall status, a block page or a script shell. A 404 or 410 is a dead page and a
+    timeout is an outage: neither is retried in a browser. Pure."""
+    if (note or "").strip() in RENDER_STATUSES:
+        return True
+    return bool(text) and (is_block_page(text) or is_script_shell(text))
+
+
+def fetch_page_text(url: str, plain=None, render=None) -> tuple[str, str]:
+    """(text, note): the plain fetch first, unchanged for every page it reads; the real-Chrome render only when `needs_render` says the plain answer was a wall. If the render
+    also returns nothing or a block page the plain result is kept (hard anti-bot hosts stay unreadable, by design). The note says when the text came from the render. `plain`
+    and `render` are injectable for tests; the default render is `render_text.render_text` (needs Chrome on 127.0.0.1:9222, else it returns nothing and nothing changes)."""
+    plain = plain or fetch_text
+    text, note = plain(url)
+    if not needs_render(text, note):
+        return text, note
+    if _renders_used[0] >= MAX_RENDERS_PER_RUN:
+        return text, note
+    _renders_used[0] += 1
+    if render is None:
+        from .render_text import render_text as render
+    rtext, rnote = render(url)
+    if rtext and not is_block_page(rtext) and not is_script_shell(rtext):
+        return rtext, f"rendered after {note or 'a wall'} ({rnote})"
+    return text, note
 
 
 def verify_against_page(page_text: str, claim_deadline: str,
