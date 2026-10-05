@@ -91,9 +91,36 @@ def find_deadline_sentence(page_text: str, iso: str, context_window: int = 160):
     return _find_date_in_context(page_text, iso, DEADLINE_CONTEXT, context_window)
 
 
+# ACT-15 (trap case T02, 2026-10-05). A page HEADER prints the event's dates bare, beside the place, with no 'held' word: "Menino Convention and
+# Exhibition Center, Boston, MA | May 10-12th, 2027". The shape is "<place ending in a state or country>, a separator, the date" (or the reverse). A date that
+# merely sits near a pipe is NOT enough: the text just before (or after) it must end (or start) with ", <STATE or Country>" and a separator. The YEAR check is intact:
+# the date form searched for carries the edition's year, so a 2026 header can never prove a 2027 date.
+_SEP = r"[|•·–—-]"
+_PLACE = r"[A-Z][A-Za-z.'À-ſ -]{2,40},\s*(?:[A-Z]{2}|[A-Z][a-z]+(?:\s[A-Z][a-z]+)?)"
+_HEADER_BEFORE = re.compile(_PLACE + r"\s*" + _SEP + r"\s*$")
+_HEADER_AFTER = re.compile(r"^(?:\s*-\s*(?:" + "|".join(m for m in _MONTHS) + r")\s+\d{1,2},?\s+20\d\d)?\s*" + _SEP + r"\s*" + _PLACE)
+
+
+def _find_header_date(page_text: str, iso: str):
+    """(found, quote): the date stated bare in a page header beside a place (see above). Deterministic."""
+    if not page_text or not iso:
+        return False, ""
+    for form in deadline_forms(iso):
+        idx = page_text.find(form)
+        while idx != -1:
+            before = page_text[max(0, idx - 70):idx]
+            after = page_text[idx + len(form):idx + len(form) + 90]
+            if _HEADER_BEFORE.search(before) or _HEADER_AFTER.match(after):
+                lo = max(0, idx - 70)
+                return True, re.sub(r"\s+", " ", page_text[lo:idx + len(form) + 40]).strip()
+            idx = page_text.find(form, idx + 1)
+    return False, ""
+
+
 def find_conference_dates_sentence(page_text: str, iso_start: str, context_window: int = 140):
-    """The conference's OWN dates, confirmed in an EVENT context (held, takes place, venue)."""
-    return _find_date_in_context(page_text, iso_start, EVENT_CONTEXT, context_window)
+    """The conference's OWN dates, confirmed in an EVENT context (held, takes place, venue) or, since ACT-15, stated bare in a page header beside the place."""
+    ok, quote = _find_date_in_context(page_text, iso_start, EVENT_CONTEXT, context_window)
+    return (ok, quote) if ok else _find_header_date(page_text, iso_start)
 
 
 @dataclass

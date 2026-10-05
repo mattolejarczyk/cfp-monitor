@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.cfp_monitor.verify import fetch_text, is_block_page, is_script_shell, link_status      # noqa: E402
+from src.cfp_monitor.rules import is_aggregator_url                                           # noqa: E402,F401  (ACT-14; trap_cases probes it here)
 
 # 36 since the v1.2 amendment added FORMAT as the last column (2026-08-05).
 # Deliveries still emitting 35 columns predate the amendment and fail check 1,
@@ -776,6 +777,15 @@ class Gate:
                 if not ok:
                     bad_source.append(f'{self.g(r, "CONFERENCE")[:36]}: {col} - {why}')
         self.add("R22", "Citations come from an admissible source", bad_source)
+        # ACT-14 (trap case T05): a third-party listing is not banned (it can say true things) but it is not the organizer, and may not list the event
+        # at all. ADVISORY, offline: reported as a note, never a rejection. Check 3 reads the page; this is the host-only warning.
+        agg = []
+        for r in self.rows:
+            msg = rules.aggregator_citation_flag(self.g(r, "DEADLINE_EVIDENCE_URL"))
+            if msg:
+                agg.append(f'{self.g(r, "CONFERENCE")[:40]}: {msg}')
+        if agg:
+            self.note("R22a", "Deadline evidence cites a third-party listing, not the organizer", agg)
 
         # A URL a person cannot open. SEPARATE FROM R22 ON PURPOSE - R22 asks who is speaking,
         # this asks whether there is anything to read. Keeping them apart is what stops the

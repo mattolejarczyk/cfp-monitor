@@ -154,6 +154,37 @@ def citation_source_admissible(url: str) -> tuple[bool, str]:
     return True, f"{host} is an admissible source"
 
 
+# ACT-14 (2026-10-05, trap case T05). A THIRD-PARTY LISTING is a different thing from an inadmissible host: it can say true things, so it is not
+# banned by R22, but it is not the organizer on the record and it may not list the event at all (Apres-Cyber Slopes Summit: research cited
+# cfptime.org, which does not list it; the gate accepted the page because the host was admissible and the quote was on it). Flagged, never
+# rejected: the organizer's own page (or a CFP platform the organizer runs, such as Sessionize or EasyChair) is the replacement.
+AGGREGATOR_HOSTS = (
+    "cfptime.org", "confs.tech", "wikicfp.com", "conferencealerts.com", "allconferencealert.com", "internationalconferencealerts.com",
+    "10times.com", "allevents.in", "conferenceindex.org", "developers.events", "waset.org", "eventbrite.com",
+)
+
+
+def is_aggregator_url(url: str) -> bool:
+    """True when the URL is on a third-party listing site (AGGREGATOR_HOSTS), by host. Pure, offline."""
+    u = (url or "").strip().lower()
+    if not u:
+        return False
+    host = u.split("//", 1)[-1].split("/", 1)[0].split("@")[-1].split(":")[0]
+    host = host[4:] if host.startswith("www.") else host
+    return any(host == a or host.endswith("." + a) for a in AGGREGATOR_HOSTS)
+
+
+def aggregator_citation_flag(url: str, page_text: str = "", event: str = "") -> str:
+    """'' when fine; otherwise why a citation to a third-party listing needs a person. With the page text and the event name it says whether the
+    listing even names the event (it did not, for Apres-Cyber); without them it is the host-only warning. Pure."""
+    if not is_aggregator_url(url):
+        return ""
+    host = url.split("//", 1)[-1].split("/", 1)[0].replace("www.", "")
+    if page_text and event and event.strip().lower() not in page_text.lower():
+        return f"cites {host}, a third-party listing that does not name the event: the organizer's own page is needed"
+    return f"cites {host}, a third-party listing and not the organizer's page: replace it with the organizer's own page"
+
+
 # Machine endpoints: the address a form POSTs to, or an API a script calls. Not a page.
 #
 # DELIBERATELY NARROW. The temptation on 2026-09-01 was to ban `hsforms.com` outright, the way
