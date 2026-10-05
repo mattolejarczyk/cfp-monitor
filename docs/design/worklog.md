@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-04 - finder + reader, shadow run, awards refresh plan
+
+- ODSC East 2027 pinned (operator-verified); note 25 sent. Answer-key candidates (reader over 17 upcoming benchmark events): 29 agree, 0 differ. Finder + reader test (14 known deadlines): 12 right, 0 wrong with the main-call rule and home page; side by side with the grounded call: 12 vs 8.
+- scripts/shadow_finder.py: read-only shadow run, last step of Saturday's job. Corrected my own figures: about 2.7 minutes per event (not 45 s), about 40 live rows.
+- Awards: inspected the process; built refresh_plan.py (REFRESH_SKIP, audit + importer + job hooks), awards load QA (load_awards), awards grace in Complete % (68 to 77). Corrected: Closed rows did not explain low awards Complete; saving is about 2.60 a week.
+- Board: Complete/Accurate under the header, old index retired, Verified-by-you last. QA-REGISTER A13-A20. Full suite 1,483 passed.
+
 ## 2026-10-03 (night) - complete/accurate metrics, per-step failure count
 
 - Board: Complete % and Accurate % (board_metrics.py split_scores, 90-day grace, pins count as proven, year rule); old six-component index retired; process health shown unscored; 'Verified by you' moved to the end. QA-REGISTER A13-A16.
