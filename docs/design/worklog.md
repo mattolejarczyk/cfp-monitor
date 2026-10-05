@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-05 - control list, builder waves, identity fixes, status-only label
+
+- Failure-point register by root cause (60) and the control list (docs/control): data-driven pages, `scripts/control_list.py set/verify`, builder brief, builder in an isolated worktree, reviewer verifies. Wave 1 built, reviewed (independent suite 1,553 passed, Friday awards rehearsal identical), merged and verified; Wave 2 started.
+- Upstream notes 26 to 28 triaged against our files and the pages: ids, quotes and cities checked; two city claims refuted by the events' own pages; identity decisions applied to the input lists.
+- verify_basis migration live; board and customer export distinguish a status-only verification from a date proof; a register claim that was wrong was corrected.
+- Resume instructions for a fresh session: docs/control/RESUME.md.
+
 ## 2026-10-04 - finder + reader, shadow run, awards refresh plan
 
 - ODSC East 2027 pinned (operator-verified); note 25 sent. Answer-key candidates (reader over 17 upcoming benchmark events): 29 agree, 0 differ. Finder + reader test (14 known deadlines): 12 right, 0 wrong with the main-call rule and home page; side by side with the grounded call: 12 vs 8.
