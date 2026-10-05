@@ -46,6 +46,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import sqlite3
 import sys
 from datetime import date, datetime
@@ -469,6 +470,68 @@ def split_for(db: str, markets_dir: str, today: str, kind: str) -> dict:
     return split_scores(rows, today, kind, pins, coverage_live(db, today, kind), customer_agreement(db, today, kind), spotcheck_summary(kind=kind))
 
 
+EDITS_LOG = ROOT / "experiments" / "purpose_audit" / "OPERATOR-EDITS-LOG.md"
+_RULED = re.compile(r"(?:the )?operator (?:verified|confirmed|ruled|ruling)|operator-ruled|operator ruling", re.I)
+
+
+def edits_log_events(text: str, known_ids: set[str]) -> list[tuple[str, str]]:
+    """(YYYY-MM, canonical id) for every edits-log entry in which the operator verified or ruled on an event we hold. An entry counts only if (a) its heading starts with a date, (b) it says
+    the operator verified, confirmed or ruled (the log also holds identity stamping and database repairs: not a verification of a fact), (c) its heading does not say CORRECTION (the ODSC
+    entry that retracts a wrong 'operator verified'), and (d) it names the event by its canonical id in backticks. Entries that name events only in prose are covered by their pin."""
+    out = []
+    for block in re.split(r"\n(?=## )", text):
+        m = re.match(r"## (\d{4}-\d{2})-\d{2}\b([^\n]*)", block)
+        if not m or "CORRECTION" in m.group(2).upper() or not _RULED.search(block):
+            continue
+        for cid in re.findall(r"`([a-z0-9][a-z0-9-]+)`", block):
+            if cid in known_ids:
+                out.append((m.group(1), cid))
+    return out
+
+
+def manual_verification_share(pins: list[dict], log_text: str, roster: set[str], today: str) -> dict:
+    """ACT-26 / failure point F3: the share of events that needed a manual verification, by month. The learning loop (QA-REGISTER section F) says this should FALL.
+    DEFINITION. An event 'needed a manual verification' in month M when a person checked it on its own page and ruled, recorded as a pin whose `ruled_on` is in M, or as an
+    operator-edits-log entry dated in M that says the operator verified/confirmed/ruled and names the event's canonical id. Share = those distinct events / the events on the Cybersecurity and
+    Utility market lists TODAY (the roster is not kept by month: for a past month this is an estimate). The current month is partial. Months before the first record are not shown: nothing
+    was recorded before 2026-10-03, so a zero there would be a claim we cannot back."""
+    by: dict[str, set[str]] = {}
+    for p in pins:
+        if p.get("ruled_on"):
+            by.setdefault(str(p["ruled_on"])[:7], set()).add(p["canonical"])
+    known = set(roster) | {p["canonical"] for p in pins}
+    for month, cid in edits_log_events(log_text, known):
+        by.setdefault(month, set()).add(cid)
+    months = []
+    for mth in sorted(by):
+        n = len(by[mth])
+        months.append({"month": mth, "events": n, "share_pct": round(100 * n / len(roster), 1) if roster else None, "partial": mth == today[:7], "names": sorted(by[mth])})
+    return {"roster": len(roster), "months": months, "today": today,
+            "definition": ("Events a person had to verify on the event's own page, as a share of the events we track (Cybersecurity and Utility market lists, today's count). Counted from the pin "
+                           "ledger (ruled_on) and the operator edits log (entries where the operator verified or ruled on a named event). A month is shown from the first one with a record "
+                           "(2026-10); the current month is partial; the denominator is today's roster, so past months are an estimate. It should fall as the research gets more right.")}
+
+
+def manual_share_now(db: str, today: str) -> dict:
+    from scripts.pinned_rows import load_pins
+    from src.cfp_monitor.identity import market_canonical_ids
+    log = EDITS_LOG.read_text(encoding="utf-8") if EDITS_LOG.exists() else ""
+    return manual_verification_share(load_pins(), log, market_canonical_ids(db), today)
+
+
+def render_manual_share(share: dict) -> str:
+    rows = [f"  {m['month']}{' (partial, to ' + share['today'] + ')' if m['partial'] else ''}: {m['events']} events = {m['share_pct']}% of {share['roster']}" for m in share["months"]]
+    return "Events that needed a manual verification (share of the tracked events; roster = today's count, so past months are an estimate):\n" + ("\n".join(rows) or "  none recorded")
+
+
+def update_manual_status(share: dict, today: str, path: Path = STATUS_JSON) -> None:
+    """Write quality.manual_verification and nothing else (the board shows it under the Complete/Accurate strip)."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data.setdefault("quality", {})["manual_verification"] = {"as_of": today, "roster": share["roster"], "definition": share["definition"],
+                                                             "months": [{k: m[k] for k in ("month", "events", "share_pct", "partial")} for m in share["months"]]}
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
 def render(cur: dict, prev: dict | None, examples: int) -> str:
     c = cur["counts"]
     readable = c["agree"] + c["blank"] + c["differ"]
@@ -575,7 +638,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--examples", type=int, default=6)
     ap.add_argument("--update-status", action="store_true")
     ap.add_argument("--today", default=date.today().isoformat())
+    ap.add_argument("--manual-share-only", action="store_true", help="print the manual-verification share; with --update-status write ONLY quality.manual_verification in status.json (no other figure moves)")
     a = ap.parse_args(argv)
+    if a.manual_share_only:
+        share = manual_share_now(a.db, a.today)
+        print(render_manual_share(share))
+        if a.update_status:
+            update_manual_status(share, a.today)
+            print(f"updated quality.manual_verification in {STATUS_JSON}")
+        return 0
     cur = customer_agreement(a.db, a.today)
     prev = customer_agreement(a.previous_db, a.today) if a.previous_db else None
     print(render(cur, prev, a.examples))
@@ -596,8 +667,11 @@ def main(argv: list[str] | None = None) -> int:
     for label, s in (("CONFERENCES", sc), ("AWARDS", sa)):
         for dr in s["drivers"]:
             print(f"    process, not scored ({label}): {dr}")
+    share = manual_share_now(a.db, a.today)
+    print(render_manual_share(share))
     if a.update_status:
         update_status(cur, a.today, prov=prov, quality={"conference": {"split": sc}, "awards": {"split": sa}})
+        update_manual_status(share, a.today)
         print(f"updated headline.customer in {STATUS_JSON}")
     return 0
 

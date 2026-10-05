@@ -412,7 +412,7 @@
       "wave": "W2",
       "step": "D",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "About 2 to 5 cents a week",
       "title": "Weekly shadow reader for city, venue, organizer and format",
       "detail": "Read each live row's own pages and propose the non-deadline facts with verbatim quotes, in shadow, next to what we ship. The one read so far found 3 of 7 upstream events with a wrong city, venue or date.",
@@ -425,7 +425,9 @@
       "depends": [
         "ACT-10"
       ],
-      "evidence": [],
+      "evidence": [
+        "builder/wave2 0ee736c; tests/test_shadow_reader.py, test_shadow_reader_hook.py; live read of 10 events 0.008 USD: 27 agree, 4 differ, 7 reader-only; NOT LIVE until reviewer applies docs/control/patches/ACT-20-run_monthly.ps1.patch"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "D3": {
@@ -439,7 +441,7 @@
       "wave": "W2",
       "step": "F",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Answer key gets a confidence tier (person-confirmed, page-proven and agrees) and takes the reader's candidates",
       "detail": "Implements your decision (ACT-04): the tier is shown, scoring of the reader uses only person-confirmed facts, scoring of the grounded call may use both.",
@@ -451,7 +453,9 @@
       "depends": [
         "ACT-04"
       ],
-      "evidence": [],
+      "evidence": [
+        "builder/wave2 942d526; tests/test_answer_key_tiers.py; key has tier column, reader score refuses non-person tier; 80 facts (51 person, 29 page-proven); no model calls"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "F4": {
@@ -487,7 +491,7 @@
       "wave": "W2",
       "step": "C",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "About 10 cents",
       "title": "Country from a state, and pages with two date ranges",
       "detail": "Accept a country when the page names a state or province of it (a checked lookup); ask for the main conference's days and require the page's own label when training and conference ranges both appear.",
@@ -497,7 +501,9 @@
       ],
       "acceptance": "Reader recall on the verified facts rises with 0 wrong accepted; tests.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "builder/wave2 63e8ffd; tests/test_regions_and_ranges.py; live reader on 23 pinned facts: found 20,18,19 -> 20,20,20 of 23, wrong 0 -> 0 (gain = CES country from NV); two-range rule fixture and one saved real page only"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "C3": {
@@ -533,7 +539,7 @@
       "wave": "W2",
       "step": "B",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Platform census, the six sites with no usable links, and the countdown-timer signal",
       "detail": "Which events sit on a standard platform we can read directly; why six sites return no links; whether a countdown on a page reliably signals the next edition.",
@@ -545,7 +551,9 @@
       ],
       "acceptance": "A short result file for each, with a recommendation.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "builder/wave2 0f70f71; three RESULT files in experiments/platform_census; recommendations only"
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
@@ -554,7 +562,7 @@
       "wave": "W2",
       "step": "F",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Board measure: the share of events that needed a manual verification each month",
       "detail": "The learning loop says this share should fall. Compute it from the pins and the operator edits log and show it on the board.",
@@ -564,7 +572,9 @@
       ],
       "acceptance": "The number is on the board with its definition.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "builder/wave2 90d0fc4; tests/test_manual_verification_share.py; board: 15 of 127 = 11.8% (2026-10 partial, estimate roster); other board figures unchanged"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "F3": {
@@ -829,7 +839,7 @@
       "wave": "W2",
       "step": "B",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "Code only",
       "title": "Clear the dead citations on past editions that upstream withdrew (safe path for approved files and database)",
       "detail": "Upstream withdrew the dead deadline citations for nine past editions plus OWASP USA, Argus and CES, and cleared unverified expo evidence to blanks. A sparse patch cannot carry it. Design the safe route (approved file and database, backups, re-gate, re-promote), prove it in the sandbox, and hand the live apply to the reviewer. Removes about 15 dead evidence links from the customer page.",
@@ -841,7 +851,9 @@
       "depends": [
         "ACT-02"
       ],
-      "evidence": [],
+      "evidence": [
+        "builder/wave2 3a74b5a; sandbox only. LIVE APPLY: python scripts/withdraw_citations.py --file docs/control/patches/ACT-46-withdrawals.csv --source 'upstream note 28' (plan) then --apply; then per market copy final to scratch <Market>_audited.csv, accept_delivery.py --json --db live --market, promote_delivery.py, check_invariants. Sandbox: 11 rows, dead URLs 64->53, board unchanged. BLOCKER: Cybersecurity gate fails check 6 on SecureWorld East 2026 (Open, deadline 2026-10-04) even unedited; list rebuilt from notes, confirm vs upstream"
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
@@ -850,7 +862,7 @@
       "wave": "W2",
       "step": "D",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "A few cents",
       "title": "Retire the duplicate database rows upstream ruled on (Hack In The Box, Indonesia CCS, German OWASP, India Energy Week 2026-key), after reading their evidence pages",
       "detail": "Upstream names the survivor for each pair and cites official pages (hitb.org, iiccsforum.com). Read those pages ourselves first (a ruling without a page is a claim), then retire the duplicate by the existing held-rows route (kept, declared, never deleted) and keep the customer page free of the duplicate.",
@@ -862,7 +874,9 @@
       "depends": [
         "ACT-02"
       ],
-      "evidence": [],
+      "evidence": [
+        "builder/wave2 d51f0e2; sandbox only. LIVE APPLY after Saturday 10-10 load puts HITB and IICCS survivors on the page: python scripts/retire_duplicates.py --check-pages (plan), then --apply (run for repo and live held_rows via --held-rows), re-gate/promote as ACT-46, check_invariants. Pages read; hitb.org lists no 2026 edition; customer links sit on retired rows for German OWASP and IEW"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "D4": {

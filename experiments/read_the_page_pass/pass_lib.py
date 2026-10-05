@@ -21,10 +21,13 @@ Fields:
   start_date  ISO YYYY-MM-DD, the first day of the event itself (not a call for papers, registration or sponsor date)
   end_date    ISO YYYY-MM-DD, the last day of the event itself
   city        the city where it is held (not the venue name)
-  country     the country where it is held
+  country     the country where it is held. If the page names only a state or province (for example 'Las Vegas, NV' or 'Toronto, Ontario'), return the country that state or province belongs to and quote the sentence that names the state or province
   venue       the venue or building name, if stated
   organizer   the organization that runs the event, if stated
   format      one of In-Person, Virtual, Hybrid, only if the page states it
+SEVERAL DATE RANGES (ACT-23): if the page states ONE range for the whole event ('held September 23-24, 2026'), use that range as stated.
+Only when the page states TWO OR MORE SEPARATE date ranges, each introduced by its own label (for example 'Training: June 1-3, 2027' and 'Conference: June 4-5, 2027'), use the range the page itself labels as the conference,
+and put that label in the quote. Never use a training, workshop, pre-conference or hackathon range. If several labelled ranges are shown and you cannot tell which is the conference, leave the date blank.
 Return ONLY JSON: {"start_date":{"value":"","quote":""},"end_date":{...},"city":{...},"country":{...},"venue":{...},"organizer":{...},"format":{...}}."""
 
 
@@ -61,6 +64,76 @@ def looks_dateless(text: str) -> bool:
     return not re.search(r"(?<!\d)\d{1,2}[ ./-]\d{1,2}[ ./-]20[12]\d", low)
 
 
+_EN_MON = r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?"
+_DASH = r"\s*(?:-|–|—|to)\s*"
+_RANGE = re.compile(rf"(?:{_EN_MON}\s+\d{{1,2}}(?:st|nd|rd|th)?{_DASH}(?:{_EN_MON}\s+)?\d{{1,2}}(?:st|nd|rd|th)?"
+                    rf"|\d{{1,2}}(?:st|nd|rd|th)?\s+{_EN_MON}{_DASH}\d{{1,2}}(?:st|nd|rd|th)?\s+{_EN_MON}"
+                    rf"|\d{{1,2}}(?:st|nd|rd|th)?{_DASH}\d{{1,2}}(?:st|nd|rd|th)?\s+{_EN_MON})", re.I)
+# a range that is NOT the main conference, by the page's own label
+NOT_MAIN = re.compile(r"training|workshop|course|bootcamp|boot camp|hackathon|tutorial|pre-?conference|pre-?event|pre-?summit|post-?conference|masterclass|certification|exam|capture the flag|\bctf\b", re.I)
+MAIN = re.compile(r"\b(?:conference|congress|summit|symposium|expo|exhibition|forum|main event|the event|convention|show|week|festival|meeting|con)\b", re.I)
+
+
+def date_ranges(text: str, year: int | None = None, require_year: bool = False) -> list[str]:
+    """The distinct date ranges written in a text ('June 1-3', '5-6 July', 'June 29 - July 1'), normalised, in order. With `year`, a range written with a DIFFERENT year right after it
+    ('April 28-30, 2026' when asking about 2027) belongs to another edition and is not counted; a range with no year after it is counted, unless `require_year` (then only ranges
+    that state `year` right after them count)."""
+    return [k for _s, _e, k in _range_spans(text or "", year, require_year)]
+
+
+def _range_spans(text: str, year: int | None, require_year: bool = False) -> list[tuple[int, int, str]]:
+    """(start, end, normalised key) of every distinct range in `text` that belongs to `year` (see date_ranges)."""
+    out, seen = [], set()
+    for m in _RANGE.finditer(text or ""):
+        if year is not None:
+            ty = re.match(r"\W{0,3}(20[12]\d)", (text or "")[m.end(): m.end() + 8])
+            if (ty and int(ty.group(1)) != year) or (require_year and not ty):
+                continue
+        k = re.sub(r"[^a-z0-9]+", " ", m.group(0).lower()).strip()
+        if k not in seen:
+            seen.add(k)
+            out.append((m.start(), m.end(), k))
+    return out
+
+
+def own_label(window: str, start: int, end: int) -> str:
+    """The page's OWN words that introduce or follow a range: up to 40 characters before it and 25 after, cut at the nearest sentence boundary (. ! ? | or a line break)."""
+    before = re.split(r"[.!?|\n]", window[max(0, start - 40): start])[-1]
+    after = re.split(r"[.!?|\n]", window[end: end + 25])[0]
+    return f"{before} {after}".strip()
+
+
+def label_verdict(page: str, quote: str, value: date | None, year: int | None = None) -> tuple[bool, str]:
+    """ACT-23: when the page shows TWO OR MORE separate date ranges and at least one OTHER range carries a label of its own (training, workshop... or conference, summit...), the range the
+    reader used must carry the page's own conference label, read BY CODE from the page text beside that range (not from the model). A page with one range, or whose other ranges carry no
+    label word (an 'early bird June 1-15'), is accepted as before. `page` and `quote` are normalised text; the range used = the one inside the quote whose first day is `value`'s day.
+    Ranges of another year are not rivals; with a year in the quote a year-less range is not either (the heading-year case, not a rival)."""
+    i = page.find(quote)
+    if i < 0 or value is None:
+        return True, "ok"
+    quote_has_year = bool(year) and bool(re.search(rf"(?<!\d){year}(?!\d)", quote))
+    spans = _range_spans(page, year, require_year=quote_has_year)
+    if len(spans) < 2:
+        return True, "ok"
+    mine = None
+    for s, e, k in spans:
+        first = re.search(r"\d{1,2}", k)
+        if i <= s and e <= i + len(quote) and first and int(first.group(0)) == value.day and (not re.search(r"[a-z]{3}", k) or value.strftime("%b").lower() in k):
+            mine = (s, e, k)
+            break
+    if mine is None:
+        return True, "ok"
+    rivals = [(k, own_label(page, s, e)) for s, e, k in spans if k != mine[2]]
+    if not any(NOT_MAIN.search(l) or MAIN.search(l) for _k, l in rivals):
+        return True, "ok"                                                  # the other ranges say nothing about what they are: nothing to tell apart
+    lab = own_label(page, mine[0], mine[1])
+    if NOT_MAIN.search(lab) and not MAIN.search(lab):
+        return False, f"the page shows {len(spans)} date ranges and labels this one '{lab}': a training or side range, not the conference"
+    if MAIN.search(lab) and not NOT_MAIN.search(lab):
+        return True, f"{len(spans)} ranges on the page; this one is labelled '{lab}' by the page"
+    return False, f"the page shows {len(spans)} date ranges and nothing labels this one as the conference"
+
+
 def accept(field: str, item: dict, page: str, edition: str) -> tuple[str, str]:
     """(value or '', why). The model's claim is accepted only if the page itself supports it."""
     value, quote = (item or {}).get("value", ""), (item or {}).get("quote", "")
@@ -68,6 +141,13 @@ def accept(field: str, item: dict, page: str, edition: str) -> tuple[str, str]:
         return "", "blank"
     if norm(quote) not in norm(page):
         return "", "quote is not on the page"
+    if field == "country" and norm(value) not in norm(quote):
+        # ACT-23: the page names a state or province, not the country ('Las Vegas, NV'). Accepted only when a CHECKED lookup puts that region in the claimed country.
+        from src.cfp_monitor.regions import country_from_region, country_matches
+        hit = country_from_region(quote)
+        if hit and country_matches(value, hit[0]):
+            return value, f"ok (country from {hit[1]} named in the quote)"
+        return "", "the value is not in the quote"
     if field in ("start_date", "end_date"):
         from scripts.start_date_arbiter import expand_ranges
         from src.cfp_monitor.verify import find_date
@@ -75,8 +155,11 @@ def accept(field: str, item: dict, page: str, edition: str) -> tuple[str, str]:
             d = datetime.strptime(value, "%Y-%m-%d").date()
         except ValueError:
             return "", "not an ISO date"
+        ok_label, label_why = label_verdict(norm(page), norm(quote), d, d.year)
+        if not ok_label:
+            return "", label_why
         q = expand_ranges(quote)
-        how = "ok"
+        how = "ok" if label_why == "ok" else f"ok ({label_why})"
         if not find_date(q, d):
             # LIMITER 3 (2026-10-03): a block such as 'ODSC AI East 2026 ... Join us April 28-30' states the year in the heading, not beside the date. The year may be taken from the
             # nearest EARLIER year on the page (within 400 characters) only when the quote itself states no year, and only if it is the date's year.
@@ -108,22 +191,31 @@ def gold_facts(pins: list[dict]) -> list[dict]:
         mapping = {"START DATE": "start_date", "CITY": "city", "COUNTRY": "country"}
         for k, f in mapping.items():
             if k in s:
-                out.append({"event": p["event"], "canonical": p["canonical"], "field": f, "gold": s[k], "links": p.get("links", [])})
+                out.append({"event": p["event"], "canonical": p["canonical"], "field": f, "gold": s[k], "links": p.get("links", []), "tier": "person-confirmed"})
         if "CONFERENCE DATES" in s and s["CONFERENCE DATES"]:
             iso = _first_iso(s["CONFERENCE DATES"])
             if iso and not any(o["canonical"] == p["canonical"] and o["field"] == "start_date" for o in out):
-                out.append({"event": p["event"], "canonical": p["canonical"], "field": "start_date", "gold": iso, "links": p.get("links", [])})
+                out.append({"event": p["event"], "canonical": p["canonical"], "field": "start_date", "gold": iso, "links": p.get("links", []), "tier": "person-confirmed"})
     return out
 
 
 def same(field: str, got: str, gold: str) -> bool:
     if field in ("start_date", "end_date"):
         return got == gold
+    if field == "country":                                                  # 'USA' and 'United States' are the same answer (ACT-23: the lookup returns the long form)
+        from src.cfp_monitor.regions import COUNTRY_ALIASES
+        g, w = " ".join(re.sub(r"[^a-z ]+", " ", got.lower()).split()), " ".join(re.sub(r"[^a-z ]+", " ", gold.lower()).split())
+        if any(g in al and w in al for al in COUNTRY_ALIASES.values()):
+            return True
     return norm(gold) in norm(got) or norm(got) in norm(gold)
 
 
 def score(items: list[dict]) -> dict:
-    """items: {event, field, gold, accepted ('' = blank)}. Precision, recall, blank-correct and false-accept counts."""
+    """items: {event, field, gold, accepted ('' = blank)}. Precision, recall, blank-correct and false-accept counts.
+    The READER is scored only on person-confirmed facts (ACT-04/ACT-21): an item whose `tier` is anything else raises. An item with no tier (a trap fixture, a page
+    a person read) is taken as person-confirmed, as before."""
+    from scripts.answer_key import assert_reader_tier
+    assert_reader_tier(items, "reader score")
     failed = sum(1 for i in items if i.get("call_failed"))
     items = [i for i in items if not i.get("call_failed")]            # a failed call says nothing about the model: it is reported, not scored
     acc = [i for i in items if i["accepted"]]

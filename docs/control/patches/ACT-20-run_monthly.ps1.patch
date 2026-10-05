@@ -1,0 +1,15 @@
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -59,6 +59,12 @@
+         [void]$steps.Add(@("$cfpDir\post_load_qa.py", "--import-json", $ImpJson, "--markets", "Awards"))
+     }
+     [void]$steps.Add(@("$cfpDir\weekend_recap.py", $kind, "--log", $RunLog, "--import-json", $ImpJson))
++    # 2026-10-05 (ACT-20): SHADOW READER of the non-deadline facts (scripts/shadow_reader.py): start date, city, country, venue, organizer and format, read from each live row's own pages
++    # and set against what we ship. BEFORE the deadline finder because it is the cheaper of the two (at most 3 pages and one model call per event) and would otherwise be starved of time;
++    # the finder's own 4.25-hour gate is unchanged. Read-only, capped (45 minutes, 0.60 USD), skips itself when the job has used 4.6 hours and never fails the run. Saturday only.
++    if ($kind -eq 'saturday' -and $conf.Count -gt 0) {
++        [void]$steps.Add(@("$cfpDir\shadow_reader.py", "--markets") + $conf + @("--max-minutes", "45", "--run-log", $RunLog))
++    }
+     # 2026-10-04: SHADOW RUN of the real-URL deadline finder (scripts/shadow_finder.py). LAST, after the load and the recap, so it can delay nothing.
+     # Read-only: it records what the pages say next to what we ship and emails the disagreements; it changes no data. It skips itself if the job
+     # has already used 4.25 hours (the task is limited to 5) and never fails the run. Saturday only.

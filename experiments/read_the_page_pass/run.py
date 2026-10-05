@@ -86,7 +86,12 @@ def _call(model_key, event, msgs):
     for attempt, pause in enumerate((0, 8, 20, 45)):          # a rate limit (429) or a server error is a FAILED CALL, never a blank answer
         if pause:
             time.sleep(pause)
-        r, secs = sp.call_model(sp.MODELS[model_key], msgs)
+        try:
+            r, secs = sp.call_model(sp.MODELS[model_key], msgs)
+        except Exception as e:                                    # noqa: BLE001  a network error (TLS reset, timeout) is a FAILED CALL like a 429, retried, never a crash (2026-10-05)
+            with open(LOG, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps({"model": sp.MODELS[model_key], "event": event, "seconds": 0, "cost_usd": None, "usage": None, "status": f"exception {type(e).__name__}", "attempt": attempt}) + "\n")
+            continue
         body = r.json() if r.status_code == 200 else {}
         cost = (body.get("usage") or {}).get("cost")
         with open(LOG, "a", encoding="utf-8") as fh:
@@ -154,7 +159,7 @@ def main():
                     got, why = "", "CALL FAILED (rate limit or server error after 4 tries): not scored"
                 else:
                     got, why = L.accept(f["field"], (fields or {}).get(f["field"], {}), text, edition) if readable else ("", "page unreadable")
-                items.append({"event": event, "field": f["field"], "gold": f["gold"], "accepted": got, "why": why, "readable": readable, "call_failed": failed})
+                items.append({"event": event, "field": f["field"], "gold": f["gold"], "accepted": got, "why": why, "readable": readable, "call_failed": failed, "tier": f.get("tier", "person-confirmed")})
         key = f"{mk}#{rep + 1}"
         results[key] = {"model": sp.MODELS[mk], "score": L.score(items), "cost_usd": round(total, 5), "items": items}
         s = results[key]["score"]
