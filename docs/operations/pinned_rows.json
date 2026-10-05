@@ -195,17 +195,17 @@
     {
       "canonical": "2026-german-owasp-day-karlsruhe",
       "event": "German OWASP Day 2026",
-      "ruled_on": "2026-10-03",
+      "ruled_on": "2026-10-05",
       "by": "operator",
-      "why": "Operator verified: September 23-24, 2026, and the event has already taken place. (The input list's other variant, 'OWASP German Chapter Conference (AppSec Karlsruhe 2026)', says 9/22/2026: wrong, and probably a duplicate for upstream to rule on.)",
+      "why": "Operator verified (2026-10-03): September 23-24, 2026, and the event has already taken place. (The input list's other variant, 'OWASP German Chapter Conference (AppSec Karlsruhe 2026)', says 9/22/2026: wrong, and probably a duplicate for upstream to rule on.) 2026-10-05: under operator ruling R-001 (START DATE = first day of the MAIN conference, docs/operations/OPERATOR-RULINGS.md) the page's own Conference Day is Thursday 24 September (23 September = trainings and an evening reception), so START DATE 2026-09-24; before this change the pin read START DATE 2026-09-23, CONFERENCE DATES 'September 23 - September 24, 2026'.",
       "until": "2026-12-31",
       "links": [
         "https://god.owasp.de/2026/",
         "https://owasp.org/www-chapter-germany/"
       ],
       "set": {
-        "START DATE": "2026-09-23",
-        "CONFERENCE DATES": "September 23 - September 24, 2026"
+        "START DATE": "2026-09-24",
+        "CONFERENCE DATES": "September 24, 2026"
       }
     },
     {
