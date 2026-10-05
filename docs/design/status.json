@@ -885,6 +885,12 @@
           "t": "Process failure points by root cause: 60 failure points in the six macro steps, scored, with what overcame each and what remains (docs/operations/FAILURE-POINTS.md)",
           "r": "Built 10-05 (docs/operations/failure_points.json + scripts/failure_points_doc.py, 4 tests). 20 of 60 overcome, 29 mitigated or being proven live, 11 pending; 101 of 293 risk points overcome. Highest remaining: finding the right page (B1), identity (D1), claims treated as fact before checking (F2). Add a failure point to the JSON and regenerate.",
           "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Control list: 31 actions in five waves behind the failure-point register, with a builder agent and a reviewer (docs/control/ACTION-LIST.html)",
+          "r": "Built 10-05 (docs/control/action_list.json, scripts/control_list.py, builder brief; 5 tests). Verifying an action updates the failure-point register automatically. Wave 1 (code-only hardening, 10 actions) handed to a builder agent in an isolated branch; the reviewer verifies and merges; only 'Needs you' items wait for you. Your decision recorded 10-05: a page-proven fact that agrees with our value counts as confirmed for scoring the grounded call, never the reader.",
+          "s": "done"
         }
       ]
     }
