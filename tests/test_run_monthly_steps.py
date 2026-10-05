@@ -13,14 +13,14 @@ def _text() -> str:
 
 def test_steps_are_built_whole_and_added_to_a_list():
     t = _text()
-    assert "New-Object System.Collections.ArrayList" in t and "[void]$steps.Add($importStep)" in t and "[void]$steps.Add($recapStep)" in t
+    assert "New-Object System.Collections.ArrayList" in t and "function New-PostSteps" in t and "return ,$steps" in t and "New-PostSteps -Mkts $Markets" in t
     # the buggy form: an array literal whose elements are '+' sums joined by a comma
     assert not re.search(r"foreach\s*\(\s*\$step\s+in\s+@\(\s*@\(", t), "steps flattened again (comma binds tighter than +)"
 
 
 def test_load_qa_runs_after_the_import_and_before_the_recap():
     t = _text()
-    assert t.index("[void]$steps.Add($importStep)") < t.index("post_load_qa.py") < t.index("[void]$steps.Add($recapStep)")
+    assert t.index("weekend_import.py") < t.index("post_load_qa.py") < t.index('weekend_recap.py", $kind')
 
 
 def test_a_stray_python_prompt_cannot_hang_the_job():
@@ -30,9 +30,9 @@ def test_a_stray_python_prompt_cannot_hang_the_job():
 
 def test_the_shadow_run_is_last_saturday_only_and_time_boxed():
     t = _text()
-    assert t.index("[void]$steps.Add($recapStep)") < t.index("shadow_finder.py")             # after the load and the recap: it can delay neither
+    assert t.index('weekend_recap.py", $kind') < t.index("shadow_finder.py")             # after the load and the recap: it can delay neither
     block = t[t.index("SHADOW RUN of the real-URL"):]
-    assert "$recapKind -eq 'saturday'" in block[:900] and '"--run-log", $env:CFP_RUN_LOG' in block[:900]   # Saturday conference markets only; time budget tied to the job's log
+    assert "$kind -eq 'saturday'" in block[:900] and '"--run-log", $RunLog' in block[:900]   # Saturday conference markets only; time budget tied to the job's log
 
 
 def test_the_awards_refresh_plan_runs_before_the_canary_and_cannot_stop_the_run():
@@ -44,9 +44,46 @@ def test_the_awards_refresh_plan_runs_before_the_canary_and_cannot_stop_the_run(
 
 def test_the_awards_load_gets_its_own_load_qa_step_before_the_recap():
     t = _text()
-    assert t.index('"--markets", "Awards"))') < t.index("[void]$steps.Add($recapStep)")
+    assert t.index('"--markets", "Awards"))') < t.index('weekend_recap.py", $kind')
 
 
 def test_the_audit_skips_refresh_marked_rows_in_the_pending_count_and_in_the_row_loop():
     a = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets\run_market_audit.py").read_text(encoding="utf-8")
     assert "def is_refresh_skip" in a and "and not is_refresh_skip(r)]" in a and "if is_refresh_skip(row):" in a
+
+
+# --- 2026-10-05: -ListPostSteps runs the REAL step builder and prints every step (nothing is researched, loaded, emailed or written) ---
+import subprocess
+
+
+def _list_steps(markets: str) -> list[list[str]]:
+    cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", f"& '{PS1}' -Markets {markets} -ListPostSteps"]
+    out = subprocess.run(cmd, capture_output=True, text=True, timeout=120).stdout
+    steps = [line.split(": ", 1)[1].split(" | ") for line in out.splitlines() if line.startswith("STEP ") and "[" in line]
+    assert f"STEPS: {len(steps)}" in out, out
+    for line in out.splitlines():
+        if line.startswith("STEP "):
+            assert "[found]" in line, f"a step's script is missing: {line}"
+    return steps
+
+
+def test_the_saturday_steps_are_whole_real_commands_in_the_right_order():
+    steps = _list_steps("'Cybersecurity','Utility'")
+    names = [Path(s[0]).name for s in steps]
+    assert names == ["weekend_import.py", "post_load_qa.py", "weekend_recap.py", "shadow_finder.py"]
+    for s in steps:
+        assert s[0].lower().endswith(".py") and all(len(tok) > 1 or tok.isdigit() for tok in s), f"flattened or malformed step: {s}"           # the 10-03 bug made single-character arguments
+    assert steps[0][1:3] == ["--markets", "Cybersecurity"] and "Utility" in steps[0] and steps[2][1] == "saturday"
+    assert steps[3][-2] == "--run-log"
+
+
+def test_the_friday_awards_steps_include_the_awards_load_qa_and_no_shadow_run():
+    steps = _list_steps("'Awards'")
+    assert [Path(s[0]).name for s in steps] == ["weekend_import.py", "post_load_qa.py", "weekend_recap.py"]
+    assert steps[1][-2:] == ["--markets", "Awards"] and steps[2][1] == "friday"
+
+
+def test_a_market_with_no_customer_page_has_no_post_steps():
+    cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", f"& '{PS1}' -Markets 'Robotics' -ListPostSteps"]
+    out = subprocess.run(cmd, capture_output=True, text=True, timeout=120).stdout
+    assert "STEPS: 0" in out                                      # the monthly prospect sweep reports through its own branch

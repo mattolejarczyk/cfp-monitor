@@ -5,7 +5,7 @@
   "decisions": [
     {
       "added": "2026-10-03",
-      "text": "NEXT (your pick, nothing running): (a) WATCH FRIDAY 10-09 02:00, the first scheduled awards run and the first under the new refresh plan, narrow prompt and load QA: I would read the canary, the recap and load_awards.md that morning (the rehearsal covered skip-and-carry, not a fresh awards load); (b) the awards answer key + finder/shadow for awards (about 5 to 10 cents, plus you confirming a handful of disagreements; the main-call rule must be inverted for awards); (c) pins for awards (the held Global Energy Show awards row and the six STATUS corrections need it); (d) answer-key decision for conferences, recall gaps, and the Saturday shadow-run email on 10-11."
+      "text": "Pick from the PRIORITY queue on this board. My suggested start today: PRIORITY 1 (note 26 draft), then 3, 4 and 5 (code only; none changes Friday's or Saturday's job behaviour). PRIORITY 7 is yours to decide."
     }
   ],
   "headline": {
@@ -800,6 +800,12 @@
           "t": "Awards load QA + per-step failure count (load_awards report) and the awards grace in Complete %",
           "r": "Built 10-04 (post_load_qa.py --markets Awards, wired into the Friday job and recap; board_metrics awards grace for Closed-with-no-new-cycle and Not Announced / Invitation Only / Rolling Form). Awards Complete 68% -> 77%; what is left is real: 12 missing submission links, 6 missing main pages, 4 deadlines. Correction: my earlier note that Closed rows explained the low figure was wrong; 21 of the 29 blank deadlines were awards whose dates are not announced or that have none by design.",
           "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "PowerShell rehearsal mode: run_monthly.ps1 -ListPostSteps runs the real step builder and prints every step (nothing run, loaded or emailed), checked by a test",
+          "r": "Built 10-05 (PRIORITY 3; Markets backup run_monthly.pre-liststeps-20261005.ps1; 3 tests that call PowerShell). A flattened or malformed step list now fails a test, not a Saturday.",
+          "s": "done"
         }
       ]
     },
@@ -872,6 +878,12 @@
           "kind": "build",
           "t": "Complete % and Accurate % replace the weighted six-component index; 90-day rule, pins count as proven, other-edition class",
           "r": "Done 10-03 (board_metrics.py split_scores, 13 new tests; QA-REGISTER A14-A16). Conferences: Complete 92%, Accurate 94%. Awards: Complete 68%, Accurate 100% (12 facts, thin). Provable now 14 of 17 (4 verified by you); customer agreement 14 of 15 (3 other-edition rows and 1 far-future blank shown, not scored). Freshness and call health kept as process health, never scored.",
+          "s": "done"
+        },
+        {
+          "kind": "build",
+          "t": "Process failure points by root cause: 60 failure points in the six macro steps, scored, with what overcame each and what remains (docs/operations/FAILURE-POINTS.md)",
+          "r": "Built 10-05 (docs/operations/failure_points.json + scripts/failure_points_doc.py, 4 tests). 20 of 60 overcome, 29 mitigated or being proven live, 11 pending; 101 of 293 risk points overcome. Highest remaining: finding the right page (B1), identity (D1), claims treated as fact before checking (F2). Add a failure point to the JSON and regenerate.",
           "s": "done"
         }
       ]
@@ -983,5 +995,137 @@
       "state": "Queued, after the answer key",
       "text": "Experiments 3 (narrowness), 4 (read-the-page pass) and 5 (two-model agreement); the 'we read, they format' packet tool; sponsorship option B; the refresh scheduler; closing the two trap-case gaps."
     }
-  ]
+  ],
+  "priorities": {
+    "as_of": "2026-10-05",
+    "note": "Ranked by value for the cost. Costs are estimates (the basis is in the item). The step letter is the macro step the work belongs to.",
+    "items": [
+      {
+        "n": 1,
+        "step": "D",
+        "t": "Hand-back note to upstream (note 26, DRAFTED: experiments/purpose_audit/NOTE-TO-UPSTREAM-26.md, for you to copy and send): 4 dead links on events still ahead, 11 dead evidence links on past editions, 8 awards held back as 'deadline passed but STATUS=Open', and 11 rows with no permanent id",
+        "cost": "$0",
+        "why": "Of the 15 'new dead links', 4 are on events still ahead (Argus Biofuels Europe, ShowStoppers @ CES 2027, CES 2027, OWASP AppSec USA); the other 11 are evidence pages for editions that have passed, so less urgent than I first said. Identity is the largest failure step (11 rows).",
+        "state": "drafted: you send"
+      },
+      {
+        "n": 2,
+        "step": "E",
+        "t": "Watch Fri 10-09 (first scheduled awards run: narrow prompt, refresh plan, load_awards) and Sat 10-10 (first automatic load, step-failure trend, first shadow-run email)",
+        "cost": "$0 (the jobs run anyway)",
+        "why": "Three new job steps have never run live.",
+        "state": "scheduled"
+      },
+      {
+        "n": 3,
+        "step": "E",
+        "t": "PowerShell dry-run mode for run_monthly.ps1 that exercises the post-research steps",
+        "cost": "Code only",
+        "why": "The hardest-to-test file has had three silent failures and just gained three steps.",
+        "state": "done 10-05"
+      },
+      {
+        "n": 4,
+        "step": "D",
+        "t": "Rows loaded by hand get carried forward (add them to the approved file at load time)",
+        "cost": "Code only",
+        "why": "How RSA and Black Hat Asia lost evidence on 10-03; small fix, prevents a repeat.",
+        "state": "next"
+      },
+      {
+        "n": 5,
+        "step": "D",
+        "t": "Pins for awards (a verified award fact is entered once)",
+        "cost": "Code only",
+        "why": "Needed for the held Global Energy Show awards row and the six STATUS corrections.",
+        "state": "next"
+      },
+      {
+        "n": 6,
+        "step": "C",
+        "t": "Weekly reader pass on the non-deadline facts (city, venue, organizer, format), in shadow",
+        "cost": "About 2 to 5 cents a week plus code",
+        "why": "The biggest unmeasured gap: the one read so far found 3 of 7 upstream events with a wrong city, venue or date.",
+        "state": "proposed"
+      },
+      {
+        "n": 7,
+        "step": "F",
+        "t": "Answer-key decision: may 'page-proven and agrees with our value' count as confirmed for scoring the grounded call? Plus 3 unproven start dates (SecTor, CERAWeek, Innovation Zero)",
+        "cost": "$0 plus 3 checks from you",
+        "why": "Unblocks scoring everything else.",
+        "state": "waiting on you"
+      },
+      {
+        "n": 8,
+        "step": "B",
+        "t": "Awards answer key and awards shadow run (the main-call rule must be inverted for awards)",
+        "cost": "About 5 to 10 cents plus a handful of disagreements from you",
+        "why": "Awards accuracy has no measure today.",
+        "state": "proposed"
+      },
+      {
+        "n": 9,
+        "step": "E",
+        "t": "Refresh scheduler for conferences (lifecycle idea, designed 10-01), after Friday's awards evidence",
+        "cost": "Code only; estimated saving about $2 to $3 a week at a skip rate like awards",
+        "why": "A recurring saving; waits on Friday.",
+        "state": "after Fri 10-09"
+      },
+      {
+        "n": 10,
+        "step": "B",
+        "t": "Verifier fallback for walled pages (403s such as blackhat.com), using the Chrome render we already have",
+        "cost": "Code only",
+        "why": "Turns 'unconfirmed' into proof on a few high-profile rows.",
+        "state": "proposed"
+      },
+      {
+        "n": 11,
+        "step": "C",
+        "t": "The 3 trap-case gaps: T02 header dates, T04 earliest deadline, T05 aggregator citations",
+        "cost": "Code only",
+        "why": "Cheap; each hardens a check.",
+        "state": "proposed"
+      },
+      {
+        "n": 12,
+        "step": "A",
+        "t": "Sponsorship quotes: about 90% say Yes with a link but no quote (a contract question for upstream, then a reader pass)",
+        "cost": "Reader pass about 3 to 5 cents (a grounded pass would be about $8)",
+        "why": "The right fix needs upstream, so it needs more than code.",
+        "state": "proposed"
+      }
+    ],
+    "later": [
+      {
+        "id": "LATER a",
+        "step": "E",
+        "t": "Two-model agreement experiment",
+        "cost": "20 to 50 cents",
+        "why": "The shadow run already gives a two-route agreement signal; wait for its first Saturdays."
+      },
+      {
+        "id": "LATER b",
+        "step": "B",
+        "t": "Search-provider comparison",
+        "cost": "Under $1 to $2; needs free API keys from you",
+        "why": "Only if the finding step dominates the trend (first record: identity 11, finding 7)."
+      },
+      {
+        "id": "LATER c",
+        "step": "E",
+        "t": "Switch on the real-URL path as a second opinion or fallback",
+        "cost": "About $0.15 a week",
+        "why": "Decide after 3 to 4 shadow Saturdays."
+      },
+      {
+        "id": "DROPPED",
+        "step": "A",
+        "t": "Narrowness test (about $7, 120 grounded calls)",
+        "cost": "-",
+        "why": "The narrow prompt has since grounded 130 of 130."
+      }
+    ]
+  }
 }

@@ -141,6 +141,16 @@ function splitStrip(Q) {
   return `<div class="two">${splitCard('Conferences: complete and accurate', Q.conference.split)}${splitCard('Awards: complete and accurate', Q.awards.split)}</div>
     <p class="def" style="margin:0 0 14px">${esc(Q.split_method || '')} <b>Not measured:</b> ${esc(Q.not_measured || '')} <span class="num">as of ${esc(Q.as_of)}</span></p>`;
 }
+function priorityBand(P) {
+  if (!P) return '';
+  const stepName = id => { const s = (D.pipeline || []).find(x => x.id === id); return s ? `${id} ${s.name}` : id; };
+  const tone = st => /waiting|you/i.test(st) ? 'warn' : /next/i.test(st) ? 'good' : 'none';
+  const rows = P.items.map(i => `<tr><td class="num"><b>PRIORITY ${i.n}</b></td><td><span class="sub">${esc(stepName(i.step))}</span></td><td>${esc(i.t)}<div class="sub">${esc(i.why)}</div></td><td class="num">${esc(i.cost)}</td><td><span class="pill ${tone(i.state)}">${esc(i.state)}</span></td></tr>`).join('');
+  const later = P.later.map(i => `<tr><td class="num"><b>${esc(i.id)}</b></td><td><span class="sub">${esc(stepName(i.step))}</span></td><td>${esc(i.t)}<div class="sub">${esc(i.why)}</div></td><td class="num">${esc(i.cost)}</td><td></td></tr>`).join('');
+  return `<section class="band"><h2>Priority queue &nbsp;<span class="num">as of ${esc(P.as_of)}</span></h2>
+    <p class="def" style="margin:0 0 10px">${esc(P.note)}</p>
+    <div class="tbl"><table><thead><tr><th>Priority</th><th>Macro step</th><th>What and why</th><th>Estimated cost</th><th>State</th></tr></thead><tbody>${rows}${later}</tbody></table></div></section>`;
+}
 const ageDays = d => Math.round((Date.parse(D.as_of) - Date.parse(d)) / 86400000);
 function nowBlock() {
   const w = (D.working_on || []).map(x => `<li><b>${esc(x.state)}.</b> ${esc(x.text)}</li>`).join('');
@@ -165,6 +175,7 @@ function render() {
     ${splitStrip(D.quality)}
     ${objective(D.objective)}
     ${nowBlock()}
+    ${priorityBand(D.priorities)}
     <div class="two">${headline(D.headline.provable)}${headline(D.headline.customer)}</div>
     <section class="band"><h2>Build progress &nbsp;<span class="num">${done} of ${items.length} items done</span></h2>
       <p class="arrow">How the work connects: each step below is a stage of the production process. An <span class="kind experiment">experiment</span> asks one question about that step and records the answer; a <span class="kind fix">fix</span> corrects data; a <span class="kind build">build</span> makes a thing; a <span class="kind decision">decision</span> is open for you. A step is finished when its question is answered and the winner is wired in.</p>

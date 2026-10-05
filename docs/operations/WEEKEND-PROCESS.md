@@ -114,7 +114,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 
 ## Saturday, right after research - Automatic load into the database
 
-*Same scheduled task; `run_monthly.ps1` calls `weekend_import.py`, then `post_load_qa.py` (conference markets), then `weekend_recap.py`. Each step is skipped with a logged line if its script is missing, and runs with empty input, so a stray interactive prompt exits instead of waiting for a person (the 2026-10-03 hang).*
+*Same scheduled task; `run_monthly.ps1` calls `weekend_import.py`, then `post_load_qa.py` (conference markets), then `weekend_recap.py`. The steps are built by one function, and `run_monthly.ps1 -ListPostSteps` (added 2026-10-05) prints every post-research step it would run, with its whole arguments and whether its script exists, without researching, loading or emailing anything; a test runs it. Each step is skipped with a logged line if its script is missing, and runs with empty input, so a stray interactive prompt exits instead of waiting for a person (the 2026-10-03 hang).*
 
 1. **[Safety check]** **Stops if research failed.** Nothing is loaded and the database stays exactly as it was.
 2. **[Update]** **Fixes wording-only problems** - for example a quote copied slightly wrong from the cited
