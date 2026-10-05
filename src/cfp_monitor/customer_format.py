@@ -88,12 +88,18 @@ def _coerce_date(d) -> Optional[date]:
     return None
 
 
+STATUS_ONLY_LABEL = "Call confirmed, date not confirmed on page"
+
+
 def confidence(rec: dict) -> str:
     """How well-evidenced this row's deadline is, in the customer's terms.
 
-    Three states, chosen so the label answers "can I act on this without checking first?":
+    The states, chosen so the label answers "can I act on this without checking first?":
 
       Confirmed    we read this deadline on the event's own page
+      Call confirmed, date not confirmed on page
+                   the page showed the call open or closed, but the stored date was not found on it
+                   and nothing else read it (operator wording, 2026-10-05; see verify_basis)
       Check link   the submission link did not resolve - do not send a client to it
       Unconfirmed  it comes from research we could not confirm on the page
 
@@ -110,6 +116,10 @@ def confidence(rec: dict) -> str:
     if projected:
         return "Unconfirmed"
     if state == "verified":
+        # A status-only verification (the page said the call is open or closed) is not a read of the date. It stays Confirmed when the evidence layer independently found
+        # the stated date on the page (date_evidenced), and for databases that predate verify_basis (the key is absent).
+        if (rec.get("verify_basis") or "date") != "date" and not rec.get("date_evidenced"):
+            return STATUS_ONLY_LABEL
         return "Confirmed"
     if state in ("not_found", "unverified"):
         return "Unconfirmed"

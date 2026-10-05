@@ -10,13 +10,13 @@ Every way the CFP process can produce missing, wrong or late data, described by 
 |---|---:|---:|---:|---:|---:|
 | **A** Ask Gemini (research and upstream delivery) | 15 | 8 | 5 | 0 | 2 |
 | **B** Find the right pages | 10 | 1 | 3 | 2 | 4 |
-| **C** Read and label the date | 9 | 5 | 4 | 0 | 0 |
+| **C** Read and label the date | 9 | 6 | 3 | 0 | 0 |
 | **D** Check and clean stored data | 12 | 5 | 5 | 0 | 2 |
 | **E** Spend less and run weekly | 9 | 3 | 4 | 2 | 0 |
 | **F** Project control | 5 | 2 | 2 | 0 | 1 |
-| **All** | 60 | 24 | 23 | 4 | 9 |
+| **All** | 60 | 25 | 22 | 4 | 9 |
 
-24 of 60 are overcome and 27 more are mitigated or being proven. Weighted by score, 121 of 293 points of risk are overcome.
+25 of 60 are overcome and 26 more are mitigated or being proven. Weighted by score, 127 of 293 points of risk are overcome.
 
 ## How far we have come
 
@@ -45,12 +45,12 @@ Not yet overcome, highest score first (the order to attack them in):
 4. **A7** [MITIGATED, score 6] Research states a date or status for an edition that no page states (wrong year, next or previous edition). - *open:* No prompt rule yet. A plausible guess with no page can still reach a projected row; a flag is for a person to confirm, not proof it is wrong.
 5. **B4** [MITIGATED, score 6] The page shows another edition, or two editions at once. - *open:* Pages with no year beside the date stay blank (safe, but a lost answer).
 6. **B5** [WATCH, score 6] Several calls on one site (posters, awards, workshops, tracks) and the wrong one is read. - *open:* No tested event had competing rounds; the rule is inverted for awards and not yet built.
-7. **C6** [MITIGATED, score 6] A 'verified' label means the call status was confirmed, not the date. - *open:* The customer page still labels status-only rows 'Confirmed': changing a customer-facing label is the operator's decision (listed under Needs you).
-8. **A13** [PENDING, score 6] Sponsorship 'Yes' is accepted with a link but no quote, and sponsorship questions dominate the weekend's cost. - *open:* A quote requirement is a contract question for upstream; option B and a reader pass are not built.
-9. **A2** [MITIGATED, score 6] Research cites pages it never opened, or composes URL paths that do not exist. - *open:* Composed URLs still arrive every week and the fix depends on upstream replacing them. The finder is not yet a fallback in the weekly path.
-10. **B3** [PENDING, score 6] Links die between runs (moved pages, expired call pages, stale evidence pages). - *open:* Replacement depends on upstream; nothing proposes a replacement automatically.
-11. **C3** [MITIGATED, score 6] Date formats and layouts the reader does not know (other languages, ordinals, ranges, dd.mm.yyyy). - *open:* No year beside the date; two date ranges on one page (training and conference); country from a state.
-12. **D3** [PENDING, score 6] Non-deadline facts (city, venue, format, organizer, categories) are wrong or unproven and nothing measures them. - *open:* A weekly reader pass on these fields (priority 6) is proposed, not built.
+7. **A13** [PENDING, score 6] Sponsorship 'Yes' is accepted with a link but no quote, and sponsorship questions dominate the weekend's cost. - *open:* A quote requirement is a contract question for upstream; option B and a reader pass are not built.
+8. **A2** [MITIGATED, score 6] Research cites pages it never opened, or composes URL paths that do not exist. - *open:* Composed URLs still arrive every week and the fix depends on upstream replacing them. The finder is not yet a fallback in the weekly path.
+9. **B3** [PENDING, score 6] Links die between runs (moved pages, expired call pages, stale evidence pages). - *open:* Replacement depends on upstream; nothing proposes a replacement automatically.
+10. **C3** [MITIGATED, score 6] Date formats and layouts the reader does not know (other languages, ordinals, ranges, dd.mm.yyyy). - *open:* No year beside the date; two date ranges on one page (training and conference); country from a state.
+11. **D3** [PENDING, score 6] Non-deadline facts (city, venue, format, organizer, categories) are wrong or unproven and nothing measures them. - *open:* A weekly reader pass on these fields (priority 6) is proposed, not built.
+12. **D7** [MITIGATED, score 6] The customer's own view disagrees with ours (another edition, an earlier round, withdrawn rows, events they track that we lack). - *open:* The coverage gap needs a decision (A14).
 
 ## A. Ask Gemini (research and upstream delivery)
 
@@ -262,7 +262,7 @@ Rank 10 of 10 in this step. **PENDING**; score 2 (frequency 2 x impact 1)
 
 ## C. Read and label the date
 
-9 failure points: 5 overcome, 4 mitigated, 0 to prove live, 0 pending.
+9 failure points: 6 overcome, 3 mitigated, 0 to prove live, 0 pending.
 
 ### C1. The wrong kind of date is taken as the submission deadline (registration, early-bird, event, notification, ceremony).
 
@@ -290,11 +290,11 @@ Rank 3 of 9 in this step. **OVERCOME** (since 2026-10-05); score 6 (frequency 2 
 
 ### C6. A 'verified' label means the call status was confirmed, not the date.
 
-Rank 4 of 9 in this step. **MITIGATED** (since 2026-10-03); score 6 (frequency 2 x impact 3)
+Rank 4 of 9 in this step. **OVERCOME** (since 2026-10-05); score 6 (frequency 2 x impact 3)
 
 - **Seen as:** 13 of 48 stored deadlines were 'verified' from the status layer; 5 more had no evidence page.
-- **What overcame or reduces it:** CORRECTION 2026-10-05: this register said all board figures counted proof from quoted evidence, never from the label. That was wrong: the provable-deadline figure and Accurate % counted a status-only 'verified' as proof (34 of 101 verified conference rows; 1 of the 16 live market-list deadlines moved from proven to status-only when this was fixed). Now each verification records its BASIS (date, status, link, none-found; column verify_basis, migration applied live 10-05 with proofs) and the board counts the date basis only; status-only rows are shown separately. [ACT-18, verified 2026-10-05]
-- **What remains:** The customer page still labels status-only rows 'Confirmed': changing a customer-facing label is the operator's decision (listed under Needs you).
+- **What overcame or reduces it:** CORRECTION 2026-10-05: this register said all board figures counted proof from quoted evidence, never from the label. That was wrong: the provable-deadline figure and Accurate % counted a status-only 'verified' as proof (34 of 101 verified conference rows; 1 of the 16 live market-list deadlines moved from proven to status-only when this was fixed). Now each verification records its BASIS (date, status, link, none-found; column verify_basis, migration applied live 10-05 with proofs) and the board counts the date basis only; status-only rows are shown separately. [ACT-18, verified 2026-10-05] Operator decision 2026-10-05 (ACT-48): the customer export's CONFIDENCE column now reads 'Call confirmed, date not confirmed on page' for a status-only verification the evidence layer did not independently read (15 rows today); a status-only row whose date the evidence layer found on the page stays Confirmed (8 of the 34), and the board counts it as proven by that second route.
+- **What remains:** The weekly HTML pages take their badge from the evidence layer (already worst-first), so they needed no change; nothing else open.
 
 ### C3. Date formats and layouts the reader does not know (other languages, ordinals, ranges, dd.mm.yyyy).
 

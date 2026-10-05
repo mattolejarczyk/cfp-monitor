@@ -764,12 +764,22 @@ class Store:
         # value; it only lets the customer view state how well-evidenced a row is.
         claims: dict[str, list[dict]] = {}
         try:
+            # ACT-18 / operator decision 2026-10-05: what a 'verified' state actually found (verify_basis: date | status | link | none-found) and whether the evidence layer
+            # independently read the stated date on the cited page, so the customer label can tell 'date confirmed' from 'call status confirmed, date not found'.
+            have = {r[1] for r in self.db.execute("PRAGMA table_info(grounding_facts)")}
+            basis = "verify_basis" if "verify_basis" in have else "'date'"
+            try:
+                date_ev = {(e, v) for e, v in self.db.execute(
+                    "SELECT event_id, value_claimed FROM evidence WHERE origin='grounding' AND field LIKE '%deadline%' AND verdict='verified'")}
+            except Exception:
+                date_ev = set()
             for row in self.db.execute(
                     "SELECT conference_key, verify_state, verify_detail, deadline_quote,"
-                    " deadline_evidence_url, is_projected, name, edition FROM grounding_facts"):
+                    f" deadline_evidence_url, is_projected, name, edition, {basis}, event_id, deadline FROM grounding_facts"):
                 claims.setdefault(row[0], []).append(
                     {"verify_state": row[1], "verify_detail": row[2], "deadline_quote": row[3],
                      "deadline_evidence_url": row[4], "is_projected": row[5],
+                     "verify_basis": row[8] or "date", "date_evidenced": (row[9], row[10]) in date_ev,
                      "_name": row[6], "_edition": row[7]})
         except Exception:
             pass                     # a DB predating the discovery layer simply has none

@@ -805,11 +805,11 @@
       "wave": "W0",
       "step": "D",
       "owner": "you",
-      "state": "needs-you",
+      "state": "verified",
       "cost": "$0",
       "title": "Send note 28 to upstream (what we accepted, what the pages contradict, the ids we hold for the rest)",
       "detail": "Upstream's reply to note 27 fixed most ids, but two declared city changes (India Energy Week 2027 to Goa, WHEC 2026 to Istanbul) are contradicted by the events' own pages, two expo quotes are not on their pages, one main-page link is dead, and eleven rows still carry ids that are not ours.",
-      "needs_you": "Copy experiments/purpose_audit/NOTE-TO-UPSTREAM-28.md to upstream.",
+      "needs_you": "",
       "closes": [
         "D1",
         "A2",
@@ -818,7 +818,8 @@
       "acceptance": "Note sent; reply received.",
       "depends": [],
       "evidence": [
-        "experiments/purpose_audit/NOTE-TO-UPSTREAM-28.md"
+        "experiments/purpose_audit/NOTE-TO-UPSTREAM-28.md",
+        "Operator sent note 28 on 10-05; upstream replied the same day (location claims withdrawn, ids realigned, duplicates ruled); triaged and the identity decisions applied (ACT-02)"
       ],
       "updated": "2026-10-05",
       "on_verify": {}
@@ -875,18 +876,19 @@
       "wave": "W0",
       "step": "C",
       "owner": "you",
-      "state": "needs-you",
+      "state": "verified",
       "cost": "$0",
       "title": "Decide what the customer page says for a deadline whose call status was confirmed but whose date was not found on the page",
       "detail": "34 of 101 verified conference rows are status-only: the page showed the call open or closed, the stored date was not found on it. The board no longer counts them as proof. The customer page still labels them 'Confirmed'. A customer-facing label is your decision.",
-      "needs_you": "Choose the label for status-only rows (my suggestion: 'Call confirmed, date not confirmed on page', same colour as unconfirmed). I will apply it in the page build once you say.",
+      "needs_you": "",
       "closes": [
         "C6"
       ],
       "acceptance": "Decision recorded; the page build uses it; the build QA report shows the change.",
       "depends": [],
       "evidence": [
-        "scripts/migrate_verify_basis.py live report: verified/date 67, verified/status 34"
+        "scripts/migrate_verify_basis.py live report: verified/date 67, verified/status 34",
+        "Operator chose the suggested wording 10-05. Implemented in customer_format.confidence (STATUS_ONLY_LABEL) and storage.export_dicts; on a copy of the live database 15 export rows carry the new label (67 Confirmed). The weekly HTML pages take their badge from the evidence layer and needed no change (8 of the 34 status-only rows are date-evidenced and stay Confirmed). Board provable/Accurate now count the evidence-layer proof too. Tests: test_customer_format (new), test_board_metrics, test_storage, test_export: 62 passed"
       ],
       "updated": "2026-10-05",
       "on_verify": {}

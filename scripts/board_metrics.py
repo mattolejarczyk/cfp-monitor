@@ -143,6 +143,18 @@ def customer_agreement(db: str, today: str = "", kind: str = "conference") -> di
             "live_counts": live_counts, "live_rows": sum(live_counts.values())}
 
 
+def date_evidenced(db: str) -> set:
+    """{(event_id, value)} the evidence layer independently found on the cited page (a grounding-origin deadline claim with verdict 'verified'): a second proof route for a row whose
+    verification state is status-only. Empty when there is no evidence table (a test copy)."""
+    con = sqlite3.connect(db)
+    try:
+        return {(e, v) for e, v in con.execute("select event_id, value_claimed from evidence where origin='grounding' and field like '%deadline%' and verdict='verified'")}
+    except sqlite3.OperationalError:
+        return set()
+    finally:
+        con.close()
+
+
 def _basis_expr(con, table: str, alias: str) -> str:
     """SQL for the row's verification BASIS (ACT-18): what the 'verified' state actually found. A database without the column (not yet migrated, or a test copy) reads as 'date',
     which is the old behaviour. A status-only 'verified' (the call was seen open or closed, the date was not found on the page) is NOT proof of the date."""
@@ -177,6 +189,7 @@ def provable_live(db: str, today: str, kind: str = "conference") -> dict:
     from scripts.pinned_rows import load_pins
     pinned_deadline = {p["canonical"]: str(p["set"].get("SUBMISSION DEADLINE", "")).strip() for p in load_pins()
                        if kind == "conference" and p.get("set", {}).get("SUBMISSION DEADLINE") and (not p.get("until") or p["until"] >= today)}
+    date_ev = date_evidenced(db)
     for eid, name, dl, state, why, ev, start, status, proj, basis in rows:
         if eid not in ids:
             continue
@@ -189,7 +202,7 @@ def provable_live(db: str, today: str, kind: str = "conference") -> dict:
         elif not ev.strip():
             cls = "withdrawn"
         elif state == "verified":
-            cls = "verified" if basis == "date" else "status_only"        # status-only is shown, not counted as proof of the date
+            cls = "verified" if (basis == "date" or (eid, dl) in date_ev) else "status_only"   # status-only is shown, not counted as proof of the date unless the evidence layer read it
         elif state == "contradicted":
             cls = "contradicted"
         elif "could not be read" in why or why.startswith("unreadable"):
@@ -395,7 +408,7 @@ def split_scores(rows: list[dict], today: str, kind: str, pins: list[dict] | Non
         dl = (r.get("deadline") or "").strip()
         if dl and dl >= today:                                          # a passed deadline's page moves on to the next edition: not scored
             st = r.get("verify_state")
-            facts.append("proven" if st == "verified" and (r.get("deadline_evidence_url") or "").strip() and (r.get("verify_basis") or "date") == "date" else "contradicted" if st == "contradicted" else "unproven")
+            facts.append("proven" if st == "verified" and (r.get("deadline_evidence_url") or "").strip() and ((r.get("verify_basis") or "date") == "date" or r.get("date_evidenced")) else "contradicted" if st == "contradicted" else "unproven")
         s = (r.get("start_date") or "").strip()
         if s and (r.get("edition") or "").isdigit() and s[:4] != r["edition"]:
             facts.append("contradicted")                                  # year rule: the date is not in the edition it sits on
@@ -448,6 +461,10 @@ def split_for(db: str, markets_dir: str, today: str, kind: str) -> dict:
         rows = [dict(r) for r in con.execute(f"select * from {TABLE_OF[kind]}") if r["event_id"] in ids]
     finally:
         con.close()
+    if kind == "conference":
+        ev_ok = date_evidenced(db)
+        for r in rows:
+            r["date_evidenced"] = (r["event_id"], r.get("deadline")) in ev_ok
     pins = load_pins() if kind == "conference" else []
     return split_scores(rows, today, kind, pins, coverage_live(db, today, kind), customer_agreement(db, today, kind), spotcheck_summary(kind=kind))
 

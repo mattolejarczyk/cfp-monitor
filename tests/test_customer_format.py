@@ -155,3 +155,15 @@ def test_an_open_row_with_nothing_behind_it_reads_unconfirmed_not_blank():
 def test_a_closed_row_with_nothing_behind_it_stays_blank():
     row = to_customer_row(_rec(status="closed", submission_deadline="", quality="PARTIAL"))
     assert row["CONFIDENCE"] == ""
+
+
+# --- operator decision 2026-10-05 (ACT-48): a status-only verification is not 'Confirmed' ---
+def test_a_status_only_verification_gets_its_own_label_unless_the_evidence_layer_read_the_date():
+    from src.cfp_monitor.customer_format import STATUS_ONLY_LABEL, confidence
+    base = {"verify_state": "verified", "verify_detail": "[L0s] the page itself states the call is open", "is_projected": 0}
+    assert STATUS_ONLY_LABEL == "Call confirmed, date not confirmed on page"
+    assert confidence({**base, "verify_basis": "status", "date_evidenced": False}) == STATUS_ONLY_LABEL
+    assert confidence({**base, "verify_basis": "status", "date_evidenced": True}) == "Confirmed"       # the evidence layer found the stated date on the page
+    assert confidence({**base, "verify_basis": "date"}) == "Confirmed"
+    assert confidence(base) == "Confirmed"                                                            # a database that predates verify_basis behaves as before
+    assert confidence({**base, "verify_basis": "status", "is_projected": 1}) == "Unconfirmed"           # a forecast is never confirmed, whatever the basis

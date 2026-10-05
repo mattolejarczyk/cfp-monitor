@@ -404,13 +404,13 @@
       "step": "C",
       "freq": 2,
       "impact": 3,
-      "status": "MITIGATED",
-      "since": "2026-10-03",
+      "status": "OVERCOME",
+      "since": "2026-10-05",
       "upstream": false,
       "cause": "A 'verified' label means the call status was confirmed, not the date.",
       "evidence": "13 of 48 stored deadlines were 'verified' from the status layer; 5 more had no evidence page.",
-      "controls": "CORRECTION 2026-10-05: this register said all board figures counted proof from quoted evidence, never from the label. That was wrong: the provable-deadline figure and Accurate % counted a status-only 'verified' as proof (34 of 101 verified conference rows; 1 of the 16 live market-list deadlines moved from proven to status-only when this was fixed). Now each verification records its BASIS (date, status, link, none-found; column verify_basis, migration applied live 10-05 with proofs) and the board counts the date basis only; status-only rows are shown separately. [ACT-18, verified 2026-10-05]",
-      "remains": "The customer page still labels status-only rows 'Confirmed': changing a customer-facing label is the operator's decision (listed under Needs you)."
+      "controls": "CORRECTION 2026-10-05: this register said all board figures counted proof from quoted evidence, never from the label. That was wrong: the provable-deadline figure and Accurate % counted a status-only 'verified' as proof (34 of 101 verified conference rows; 1 of the 16 live market-list deadlines moved from proven to status-only when this was fixed). Now each verification records its BASIS (date, status, link, none-found; column verify_basis, migration applied live 10-05 with proofs) and the board counts the date basis only; status-only rows are shown separately. [ACT-18, verified 2026-10-05] Operator decision 2026-10-05 (ACT-48): the customer export's CONFIDENCE column now reads 'Call confirmed, date not confirmed on page' for a status-only verification the evidence layer did not independently read (15 rows today); a status-only row whose date the evidence layer found on the page stays Confirmed (8 of the 34), and the board counts it as proven by that second route.",
+      "remains": "The weekly HTML pages take their badge from the evidence layer (already worst-first), so they needed no change; nothing else open."
     },
     {
       "id": "C7",
