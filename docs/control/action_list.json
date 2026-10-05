@@ -134,7 +134,7 @@
       "wave": "W1",
       "step": "D",
       "owner": "builder",
-      "state": "building",
+      "state": "review",
       "cost": "Code only",
       "title": "Rows loaded by hand are added to the approved file at load time",
       "detail": "A database row that is missing from the approved file gets no evidence carry the first Saturday (this is how three verified deadlines lost evidence on 10-03). The load should add such rows to the approved file by itself, with a backup and a line in the report.",
@@ -144,7 +144,9 @@
       ],
       "acceptance": "Sandbox rehearsal: a hand-loaded row absent from the approved file keeps its evidence through a load; tests; QA register updated.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "branch builder/wave1 commit d911685 (+ weekend_import hook in e8ed1d5/ ACT-17 commit region); tests/test_narrow_overlay.py (5 new, pass). Sandbox replay (weekend_import --markets Cybersecurity --sandbox, old approved file = pre-promote-20261003-081209): log 'hand-loaded rows: 26 row(s) not in the approved file got their prior from the database'; Nullcon Goa 2027 (approved file holds it under a different id than the DB, the 10-03 casualty) kept deadline 2026-10-30 + evidence URL + quote + Verified label though research returned blank. The replay then stopped at gate check 2 on Black Hat Asia Call for Summits (cited link now 404 in a real browser), unrelated to this change. Full suite 1553 passed."
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "D6": {
@@ -158,7 +160,7 @@
       "wave": "W1",
       "step": "D",
       "owner": "builder",
-      "state": "building",
+      "state": "review",
       "cost": "Code only",
       "title": "Pins for awards",
       "detail": "The pins ledger skips awards. Extend it so a fact verified once on an award's own page is entered once, applied before the gate and shown on the board. Needed for the held Global Energy Show awards row and the status corrections.",
@@ -168,7 +170,9 @@
       ],
       "acceptance": "A pinned award fact survives a sandbox awards load; tests; board panel lists it.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "branch builder/wave1 commit d911685..d9a56b2 (d9a56b2 = ACT-11); weekend_import applies pins to awards (was skipped), apply_pins_live writes awards file + award_grounding_facts, board panel lists award pins; tests/test_pinned_rows.py (5 new). Sandbox AWARDS load (weekend_import --markets Awards --sandbox, research = Awards_20261002_out copy, one in-memory rehearsal pin, no file edited): status DONE, 121 rows promoted; pin applied (research said ANNOUNCEMENT_DATE 2026-04-30, pinned 2026-05-05) and the sandbox award_grounding_facts row holds 2026-05-05 (live holds 2026-04-30); post_load_qa --markets Awards PASS. Held Global Energy Show award row still needs the operator's ruling entered as a pin. Full suite 1553 passed (baseline 1497)."
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "A5": {
@@ -181,7 +185,7 @@
       "wave": "W1",
       "step": "B",
       "owner": "builder",
-      "state": "building",
+      "state": "review",
       "cost": "Code only",
       "title": "Verifier falls back to the real-Chrome render for walled pages",
       "detail": "Pages that answer HTTP 403 read as unconfirmed in the weekly verifier. The reader already has a render fallback; use it in the verifier too.",
@@ -191,7 +195,9 @@
       ],
       "acceptance": "A saved walled-page fixture verifies through the render path; tests; no change for pages the plain fetch reads.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "branch builder/wave1; commit d5d5291 (+ verify.py hunk in 9f72b97); tests/test_verify_render_fallback.py (6 pass): 403 fixture (Black Hat wall notice) verifies through the injected render path, 404/readable pages never render, render capped 40 per run. Not run against live Chrome.; full suite 1553 passed (baseline 1497)"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "B2": {
@@ -205,7 +211,7 @@
       "wave": "W1",
       "step": "C",
       "owner": "builder",
-      "state": "building",
+      "state": "review",
       "cost": "Code only",
       "title": "Arbiter picks the earliest of two deadlines on one page (trap case T04)",
       "detail": "Two tracks, two deadlines on one page: the arbiter should default to the earliest open round and record the other.",
@@ -215,7 +221,9 @@
       ],
       "acceptance": "Trap case T04 changes from GAP to PASS; tests.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "branch builder/wave1; commit 9f72b97; verify.earliest_deadline; scripts/trap_cases.py T04 GAP->PASS; tests/test_trap_cases.py. Not yet wired into the research path (main_call experiment already applies the rule).; full suite 1553 passed (baseline 1497)"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "C5": {
@@ -229,7 +237,7 @@
       "wave": "W1",
       "step": "B",
       "owner": "builder",
-      "state": "building",
+      "state": "review",
       "cost": "Code only",
       "title": "Flag an aggregator cited as evidence for an event it does not list (trap case T05)",
       "detail": "A third-party page cited in place of the organizer's should be flagged by the gate or the load QA.",
@@ -239,7 +247,9 @@
       ],
       "acceptance": "Trap case T05 changes from GAP to PASS; tests; the flag appears in the load report.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "branch builder/wave1; commit f4930eb; rules.is_aggregator_url / aggregator_citation_flag, gate note R22a (advisory), post_load_qa section; T05 GAP->PASS; tests/test_trap_cases.py. Checked live approved files: 0 rows cite a listing today.; full suite 1553 passed (baseline 1497)"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "B6": {
@@ -253,7 +263,7 @@
       "wave": "W1",
       "step": "B",
       "owner": "builder",
-      "state": "building",
+      "state": "review",
       "cost": "Code only",
       "title": "Arbiter reads a header date with no 'held' word beside it (trap case T02)",
       "detail": "A header prints dates bare ('Boston, MA | May 10-12th, 2027') and the arbiter wants a 'takes place' word. Teach it the header pattern with the year check intact.",
@@ -263,7 +273,9 @@
       ],
       "acceptance": "Trap case T02 changes from GAP to PASS; no false accepts on the other trap cases.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "branch builder/wave1; commit f4930eb; self_heal header-date rule (place + separator + date, year bound); T02 GAP->PASS; false-accept tests in tests/test_trap_cases.py; other 11 trap cases unchanged.; full suite 1553 passed (baseline 1497)"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "B4": {
@@ -306,7 +318,7 @@
       "wave": "W1",
       "step": "D",
       "owner": "builder",
-      "state": "building",
+      "state": "review",
       "cost": "Code only",
       "title": "Carried values keep their age, and the load QA flags an old carried value",
       "detail": "Carry rules keep last week's organizer, evidence and sponsorship. Record when each was last confirmed and flag any carried more than a set number of weeks.",
@@ -316,7 +328,10 @@
       ],
       "acceptance": "A carried value older than the limit appears in the load report; tests; limit stated in the QA register.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "branch builder/wave1; commit e8ed1d5; scripts/carry_age.py + ledger carry_ledger.json (written after a load that stuck), post_load_qa section/flags; limit 6 weeks (proposal, QA-REGISTER A26); tests/test_carry_age.py (6 pass). Ledger write exercised only by unit tests plus the awards sandbox run if it finishes.; full suite 1553 passed (baseline 1497)",
+        "branch builder/wave1 commit e8ed1d5; scripts/carry_age.py, carry ledger written after a load that stuck, post_load_qa section + flags; limit 6 weeks (a proposal and an estimate, QA-REGISTER A26); tests/test_carry_age.py (6 pass). Sandbox awards load wrote carry_ledger.json with 0 entries (awards research was the full prompt, nothing carried); a conference sandbox load that reaches ACCEPTED was not completed, so the non-empty ledger path is proven by unit tests only. Full suite 1553 passed (baseline 1497)"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "D8": {
@@ -330,7 +345,7 @@
       "wave": "W1",
       "step": "C",
       "owner": "builder",
-      "state": "building",
+      "state": "review",
       "cost": "Code only",
       "title": "Separate 'date confirmed' from 'call status confirmed' in the stored verification label (design and sandbox migration)",
       "detail": "A 'verified' label can mean the call was seen open, not that the date was found. Add a basis to the label. The builder designs it and proves it on a sandbox copy; the reviewer applies it to the live database with a backup.",
@@ -340,7 +355,9 @@
       ],
       "acceptance": "Sandbox migration passes invariants and the board figures do not change; tests; the reviewer applies it live.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "branch builder/wave1; commit 5c80b5f; verify_basis.py, scripts/migrate_verify_basis.py, writers set basis; tests/test_verify_basis.py (20 pass). Sandbox copy of live db: PROVED row counts 428/121 unchanged, every other column identical, 6 board blocks identical; check_invariants exit 0 on copy and live. REVIEWER APPLIES LIVE (see report). Live read-only report: 34 of 101 verified conference rows are status-only.; full suite 1553 passed (baseline 1497)"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "C6": {
@@ -354,7 +371,7 @@
       "wave": "W1",
       "step": "A",
       "owner": "builder",
-      "state": "building",
+      "state": "review",
       "cost": "Code only",
       "title": "Automatic tests for renamed, closed and successor events (trap cases T06 to T08)",
       "detail": "Make the parts of the human trap cases that code can judge into offline tests: two names of one event are not called dead; one brand with two events keeps two rows; a dead domain returns blanks.",
@@ -364,7 +381,9 @@
       ],
       "acceptance": "T06 to T08 have an automatic check where code can judge it; the rest are listed as needing a person.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "branch builder/wave1; commit 859e52c; tests/test_trap_cases_judgeable.py (4 pass), find_duplicate_events.same_site_pairs (report-only third detector; 20 pairs on live db, read-only run), trap-cases.json notes list what stays HUMAN.; full suite 1553 passed (baseline 1497)"
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "A15": {
