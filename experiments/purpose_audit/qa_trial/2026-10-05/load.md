@@ -1,0 +1,98 @@
+# Saturday load - what changed and what was lost - cycle 2026-10-05
+
+**FLAG** - 2 thing(s) to look at; 19 change(s) to dates that had already passed, listed separately  
+ran 2026-10-03T13:10:02
+
+## Look at
+
+- ODSC East 2027 (Open Data Science Conference): the load set start date 2027-05-10 (was blank) on a projected row with no evidence page: confirm a page states this edition
+- Carbon Capture Technology Expo MENA 2027: the load set start date 2027-06-08 (was blank) on a projected row with no evidence page: confirm a page states this edition
+
+## Changed, but the old date had already passed - no action needed
+
+These deadlines were already in the past last week, so the change cannot affect a call anyone can still act on. Listed for the record.
+
+- Wild West Hackin' Fest @ Mile High 2026: deadline - -> 2025-11-02 (already passed)
+- IEEE Symposium on Security & Privacy 2026 (47th IE: deadline 2025-11-13 -> 2025-11-14 (already passed)
+- OWASP Italy Day 2026: deadline - -> 2025-12-22 (already passed)
+- ADIPEC 2026 (Abu Dhabi International Petroleum Exh: deadline 2026-05-31 -> 2026-05-15 (already passed)
+- FIRST 38th Annual Conference 2026 (Forum of Incide: deadline - -> 2025-12-03 (already passed)
+- InfoSec World 2026: deadline 2026-04-03 -> - (already passed)
+- SecTor 2026 (Black Hat Canada / SecTor): deadline 2026-06-15 -> 2026-05-26 (already passed)
+- CyberDefenseCon 2026 (Cyber Defense Magazine): deadline - -> 2026-10-02 (already passed)
+- SANS Cyber Defense Initiative 2026 (CDI 2026): deadline 2026-05-26 -> - (already passed)
+- SecureWorld St. Louis 2026: deadline 2026-07-08 -> - (already passed)
+- SecureWorld Atlanta 2026: deadline 2026-07-24 -> - (already passed)
+- SecureWorld Denver 2026: deadline 2026-07-30 -> - (already passed)
+- SecureWorld Quantum Cryptography 2026: deadline 2026-08-09 -> - (already passed)
+- Hydrogen Innovation and Technology Conference 2026: deadline 2026-05-25 -> 2026-06-02 (already passed)
+- Singapore International Energy Week 2026 (SIEW 202: deadline - -> 2026-07-22 (already passed)
+- H2 MEET 2026 (World Hydrogen Expo Korea): deadline 2026-09-30 -> 2026-06-30 (already passed)
+- DEF CON Singapore 2026 (Inaugural Edition): deadline - -> 2026-02-15 (already passed)
+- OffensiveCon Berlin 2026: deadline - -> 2026-03-01 (already passed)
+- AppSec Israel 2026 (OWASP AppSec Israel): deadline 2026-03-06 -> - (already passed)
+
+## Rows with a deadline still ahead: what the load changed
+
+REGRESSION = something we had proven was lost. A move or an evidence swap is listed without a flag.
+
+| Event | Deadline before | Deadline now | Result | Other changes |
+|---|---|---|---|---|
+| Nullcon Goa 2027 (18th Edition) | - | 2026-10-30 | changed | deadline - -> 2026-10-30; evidence page changed; submission link changed |
+| Global Energy Show Canada 2027 | 2026-12-04 | 2026-12-04 | changed | evidence page changed; submission link changed |
+| TROOPERS27 | 2027-03-31 | 2027-03-31 | changed | evidence page changed |
+| 17th ACM Conference on Data and Application Securi | 2026-11-16 | 2026-11-16 | changed | submission link changed |
+| World Sustainable Energy Days 2027 | 2026-10-09 | 2026-10-09 | changed | evidence page changed |
+| AAIML Conference 2027 | 2026-10-10 | 2026-10-10 | changed | evidence page changed |
+| AI Con USA 2027 | 2026-10-18 | 2026-10-18 | changed | evidence page changed |
+
+## Fields the short research question does not ask
+
+| Field | Blank before | Blank after |
+|---|---|---|
+| organizer | 283 of 426 | 299 of 428 |
+| overview | 0 of 426 | 13 of 428 |
+| categories | 0 of 426 | 13 of 428 |
+| coordinator_email | 106 of 426 | 66 of 428 |
+| CITY holds a venue word | 0 | 2 |
+
+## Dates on the shipped approved files
+
+| Market | Rows | Start agrees with dates text | Disagrees | One side blank |
+|---|---|---|---|---|
+| Cybersecurity | 70 | 64 | 0 | 6 |
+| Utility | 55 | 49 | 0 | 6 |
+
+## Start dates with no page behind the edition
+
+| Row |
+|---|
+| ODSC East 2027 (Open Data Science Conference): the load set start date 2027-05-10 (was blank) on a projected row with no evidence page: confirm a page states this edition |
+| Carbon Capture Technology Expo MENA 2027: the load set start date 2027-06-08 (was blank) on a projected row with no evidence page: confirm a page states this edition |
+
+## Why rows did not ship this week's research, by step (FIND / PROVE / READ / IDENTITY)
+
+FIND = the cited page is a 404 or the search failed; PROVE = the page exists but the quote is not on it; READ = the claim is wrong or inconsistent (a year check, active-call wording on a projected row); IDENTITY = no permanent id or a duplicate id (not a tool); FORMAT = file shape; COVERAGE = last week's event not in this week's research (not a failure). A row is counted under the first step that failed it.
+
+| Market | Rows researched | Shipped fresh | IDENTITY | FIND | PROVE | READ | FORMAT | COVERAGE |
+|---|---|---|---|---|---|---|---|---|
+| Cybersecurity | 73 | 63 | 3 | 5 | 2 | 0 | 0 | 2 |
+| Utility | 57 | 41 | 8 | 2 | 4 | 2 | 0 | 8 |
+
+## The same counts for the last loads (the trend that tells us which step to improve)
+
+| Market | Load | IDENTITY | FIND | PROVE | READ | FORMAT | COVERAGE |
+|---|---|---|---|---|---|---|---|
+| Cybersecurity | 20261003 | 3 | 5 | 2 | 0 | 0 | 2 |
+| Utility | 20261003 | 8 | 2 | 4 | 2 | 0 | 8 |
+
+## Approved files signed and fresh (Monday's pages publish)
+
+| Market | Will publish | Reason |
+|---|---|---|
+| Cybersecurity | yes | fresh: ACCEPTED, promoted 2026-10-03 (0d ago), bytes match |
+| Utility | yes | fresh: ACCEPTED, promoted 2026-10-03 (0d ago), bytes match |
+
+## Watch-list of named rows
+
+ALL OK** (26 of 26 expectations hold)

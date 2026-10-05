@@ -65,21 +65,23 @@
       "wave": "W0",
       "step": "D",
       "owner": "me",
-      "state": "waiting",
+      "state": "verified",
       "cost": "$0",
-      "title": "Rebuild upstream's patch on our ids and load the rows whose facts check out",
-      "detail": "Upstream's 10-05 reply: 4 live rows and 6 of 7 awards on our ids; identity map usable. DONE: nine input rows stamped with the confirmed ids (live input lists, backups, logged). WAITING: a corrected sparse patch (note 28 rejects two city changes that the events' own pages contradict, two quotes not on their pages, one dead link, and eleven ids that are not ours). Then rehearse in the sandbox, gate with the network, and load through the safe procedure.",
+      "title": "Triage upstream's corrected patch and apply the identity decisions",
+      "detail": "Upstream's 10-05 replies (notes 26 to 28): all 20 rows of the corrected sparse patch are keyed on ids we hold; the two city claims were withdrawn (our pages-checked Kolkata and Singapore stand); unverified evidence cleared to blanks. APPLIED: nine input rows stamped with the confirmed ids, one OWASP row stamped with its survivor id, one marked DUP_OF. The patch's STATUS and link columns cannot travel in a sparse patch, so they arrive through the research; the citation withdrawals and the duplicate retirements are ACT-46 and ACT-47.",
       "needs_you": "",
       "closes": [
         "D1",
         "D10"
       ],
-      "acceptance": "Gate ACCEPTED in the sandbox, load QA clean, invariants hold, then the live load.",
+      "acceptance": "Identity decisions applied to the live input lists with backups and logged; every researched row has a permanent id; the rest of the patch routed to named actions.",
       "depends": [
         "ACT-45"
       ],
       "evidence": [
-        "10-05: identity map applied: experiments/purpose_audit/identity_map_20261005.py (9 input rows stamped; unresolved ids 11 -> 2); logged in OPERATOR-EDITS-LOG.md"
+        "10-05: identity map applied: experiments/purpose_audit/identity_map_20261005.py (9 input rows stamped; unresolved ids 11 -> 2); logged in OPERATOR-EDITS-LOG.md",
+        "10-05 later: dup_of_20261005.py (1 DUP_OF, 1 stamp; backup); unresolved ids 11 -> 1; 20 of 20 patch ids ours (checked)",
+        "Reviewed 10-05: 20 of 20 patch ids ours; identity decisions applied live (9 stamps, 1 stamp, 1 DUP_OF) with backups; unresolved ids 11 -> 1; remainder routed to ACT-46/47"
       ],
       "updated": "2026-10-05",
       "on_verify": {
@@ -789,6 +791,53 @@
       ],
       "updated": "2026-10-05",
       "on_verify": {}
+    },
+    {
+      "id": "ACT-46",
+      "wave": "W2",
+      "step": "B",
+      "owner": "builder",
+      "state": "todo",
+      "cost": "Code only",
+      "title": "Clear the dead citations on past editions that upstream withdrew (safe path for approved files and database)",
+      "detail": "Upstream withdrew the dead deadline citations for nine past editions plus OWASP USA, Argus and CES, and cleared unverified expo evidence to blanks. A sparse patch cannot carry it. Design the safe route (approved file and database, backups, re-gate, re-promote), prove it in the sandbox, and hand the live apply to the reviewer. Removes about 15 dead evidence links from the customer page.",
+      "needs_you": "",
+      "closes": [
+        "B3"
+      ],
+      "acceptance": "Sandbox: only the named evidence cells change, the gate accepts, load QA is clean; the weekly dead-link count falls by the cleared rows.",
+      "depends": [
+        "ACT-02"
+      ],
+      "evidence": [],
+      "updated": "2026-10-05",
+      "on_verify": {}
+    },
+    {
+      "id": "ACT-47",
+      "wave": "W2",
+      "step": "D",
+      "owner": "builder",
+      "state": "todo",
+      "cost": "A few cents",
+      "title": "Retire the duplicate database rows upstream ruled on (Hack In The Box, Indonesia CCS, German OWASP, India Energy Week 2026-key), after reading their evidence pages",
+      "detail": "Upstream names the survivor for each pair and cites official pages (hitb.org, iiccsforum.com). Read those pages ourselves first (a ruling without a page is a claim), then retire the duplicate by the existing held-rows route (kept, declared, never deleted) and keep the customer page free of the duplicate.",
+      "needs_you": "",
+      "closes": [
+        "D4"
+      ],
+      "acceptance": "Pages read and quoted for each pair; duplicates declared in held_rows with the reason; invariants hold; the customer page shows one row per event.",
+      "depends": [
+        "ACT-02"
+      ],
+      "evidence": [],
+      "updated": "2026-10-05",
+      "on_verify": {
+        "D4": {
+          "status": "MITIGATED",
+          "remains": "Retired by declaration; upstream must stop re-listing them."
+        }
+      }
     }
   ]
 }

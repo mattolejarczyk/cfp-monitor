@@ -377,8 +377,8 @@ Rank 4 of 12 in this step. **MITIGATED** (since 2026-10-03); score 6 (frequency 
 Rank 5 of 12 in this step. **MITIGATED**; score 4 (frequency 2 x impact 2) - closed only by upstream
 
 - **Seen as:** 8 awards held back on the 10-02 file.
-- **What overcame or reduces it:** The gate holds such rows and the row rule keeps last week's version.
-- **What remains:** Upstream must send the new date with its sentence or mark the row Closed (note 26).
+- **What overcame or reduces it:** The gate holds such rows and the row rule keeps last week's version. [ACT-02, verified 2026-10-05]
+- **What remains:** Closed once upstream's corrected patch is loaded; watch for the next passed-deadline-Open row.
 
 ### D4. The same event appears as two rows.
 
@@ -568,7 +568,7 @@ We can detect these and hold the row; the fix is in upstream's research or write
 - **A11** [MITIGATED] Statements about upstream's own files do not match what is on disk. - The check is run by hand on each delivery.
 - **A12** [MITIGATED] Status and lifecycle claims without evidence (discontinued, merged, out of scope). - Waiting on upstream's evidence for the open cases.
 - **B6** [PENDING] A third-party or aggregator page is cited in place of the organizer's. - No automatic aggregator-citation flag (priority 11).
-- **D10** [MITIGATED] A passed deadline shipped with STATUS Open. - Upstream must send the new date with its sentence or mark the row Closed (note 26).
+- **D10** [MITIGATED] A passed deadline shipped with STATUS Open. - Closed once upstream's corrected patch is loaded; watch for the next passed-deadline-Open row.
 - **D4** [PENDING] The same event appears as two rows. - Upstream must retire the duplicates with evidence.
 
 ## Limits of this view

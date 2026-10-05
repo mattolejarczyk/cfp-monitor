@@ -578,8 +578,8 @@
       "upstream": true,
       "cause": "A passed deadline shipped with STATUS Open.",
       "evidence": "8 awards held back on the 10-02 file.",
-      "controls": "The gate holds such rows and the row rule keeps last week's version.",
-      "remains": "Upstream must send the new date with its sentence or mark the row Closed (note 26)."
+      "controls": "The gate holds such rows and the row rule keeps last week's version. [ACT-02, verified 2026-10-05]",
+      "remains": "Closed once upstream's corrected patch is loaded; watch for the next passed-deadline-Open row."
     },
     {
       "id": "D11",

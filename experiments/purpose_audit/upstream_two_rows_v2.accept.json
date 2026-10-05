@@ -1,0 +1,142 @@
+{
+  "upstream_two_rows_v2_20261003.csv": [
+    {
+      "check": "1",
+      "name": "RFC 4180 - every row parses to the header's 45 fields",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "2",
+      "name": "Cited pages resolve (404/410 = fail, 403 allowed unless a browser gets 404)",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "3",
+      "name": "Cited page contains its quote verbatim (403 exempt)",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "4",
+      "name": "No active-call prose on an IS_PROJECTED=true row (defunct rows exempt)",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "5",
+      "name": "No Exhibiting/Registration row carrying a deadline",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "5b",
+      "name": "OPPORTUNITY_TYPE is one of the four enum values",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "6",
+      "name": "No past deadline presented as open (as of 2026-10-03; rolling forms exempt)",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R8a",
+      "name": "GATED_STATUS and ISSUES left blank upstream",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R8b",
+      "name": "CITY holds a city, not a venue",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R8c",
+      "name": "EVENT_ID unique per row within a market",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R11",
+      "name": "GROUNDING_CONFIDENCE bound to IS_PROJECTED",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R2",
+      "name": "Future date marked verified only with a citation",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "2.6",
+      "name": "No placeholder values where a real value belongs",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "5.4",
+      "name": "No row representing a SERIES rather than one event",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "6b",
+      "name": "Submission deadline precedes the event it feeds (Awards exempt)",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "2.1b",
+      "name": "No discontinued event claiming a verified edition",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R8d",
+      "name": "EDITION is a plain 4-digit year",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R12",
+      "name": "FORMAT is In-Person, Virtual, Hybrid or blank",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R16",
+      "name": "An ASSERTED discontinuation carries its own evidence",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R18a",
+      "name": "SPONSOR_REQUIRED is Yes, No, Unknown or blank",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R18b",
+      "name": "A sponsorship requirement carries its own evidence",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R22",
+      "name": "Citations come from an admissible source",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "check": "R22b",
+      "name": "URLs point at a page, not a form endpoint or an API",
+      "passed": true,
+      "failures": []
+    }
+  ]
+}
