@@ -113,3 +113,53 @@ def test_projected_or_incomplete_prior_is_never_carried():
     for bad in ({"IS_PROJECTED": "true"}, {"DEADLINE_QUOTE": ""}, {"DEADLINE_EVIDENCE_URL": ""}):
         out, rep = overlay_narrow([_ev_row()], ["new"], {"e1": _ev_prior(**bad)}, {}, CANON, today=_T)
         assert out[0]["DEADLINE_QUOTE"] == "" and not rep["evidence_carried"]
+
+
+# ---- ACT-10: a hand-loaded row (in the database, not in the approved file) keeps its verified evidence -----------------
+import sqlite3
+from datetime import date
+
+from scripts.narrow_overlay import add_db_priors, prior_from_db
+
+DBROW = {"event_id": "2027-nullcon-goa", "name": "Nullcon Goa 2027", "edition": "2027", "deadline": "2026-12-01", "is_projected": "false",
+         "deadline_evidence_url": "https://nullcon.net/cfp", "deadline_quote": "CFP closes 1 Dec 2026", "city": "Goa", "organizer": "Nullcon"}
+
+
+def test_hand_loaded_row_keeps_its_evidence_through_a_blank_answer():
+    prior_by_canon = {}                                  # the approved file does not hold it
+    added = add_db_priors(prior_by_canon, {"2027-nullcon-goa"}, {"2027-nullcon-goa": DBROW})
+    assert added == [{"conference": "Nullcon Goa 2027", "canonical": "2027-nullcon-goa"}]
+    row = _row(EVENT_ID="2027-nullcon-goa", **{"SUBMISSION DEADLINE": "2026-12-01", "DEADLINE_QUOTE": "", "DEADLINE_EVIDENCE_URL": "",
+                                               "IS_PROJECTED": "true", "GROUNDING_CONFIDENCE": "Projected (2027)"})
+    out, rep = overlay_narrow([row], ["new"], prior_by_canon, {}, CANON, today=date(2026, 10, 5))
+    r = out[0]
+    assert (r["DEADLINE_EVIDENCE_URL"], r["DEADLINE_QUOTE"], r["IS_PROJECTED"]) == ("https://nullcon.net/cfp", "CFP closes 1 Dec 2026", "false")
+    assert r["GROUNDING_CONFIDENCE"] == "Verified (2027)"             # R11: the label follows IS_PROJECTED
+    assert rep["evidence_carried"] and r["CITY"] == "Goa"
+
+
+def test_without_a_prior_the_blank_wins_as_before():
+    row = _row(EVENT_ID="2027-nullcon-goa", DEADLINE_QUOTE="", DEADLINE_EVIDENCE_URL="", IS_PROJECTED="true")
+    out, rep = overlay_narrow([row], ["new"], {}, {}, CANON)
+    assert out[0]["DEADLINE_QUOTE"] == "" and rep["skipped_no_prior"] == 1
+
+
+def test_existing_prior_and_unresearched_rows_are_not_touched():
+    pbc = {"a": {"EVENT_ID": "a"}}
+    assert add_db_priors(pbc, {"a", "b"}, {"a": DBROW, "b": DBROW, "c": DBROW}) == [{"conference": "Nullcon Goa 2027", "canonical": "b"}]
+    assert set(pbc) == {"a", "b"} and pbc["a"] == {"EVENT_ID": "a"}      # c was not researched: not added
+
+
+def test_projected_db_row_gets_projected_label_and_never_carries():
+    p = prior_from_db({**DBROW, "is_projected": "true"}, "x")
+    assert p["GROUNDING_CONFIDENCE"] == "Projected (2027)"
+
+
+def test_db_rows_by_id_reads_the_database(tmp_path):
+    from scripts.weekend_import import db_rows_by_id
+    f = tmp_path / "t.db"
+    con = sqlite3.connect(f)
+    con.execute("create table grounding_facts (event_id, name)")
+    con.execute("insert into grounding_facts values ('e1','Conf')")
+    con.commit(); con.close()
+    assert db_rows_by_id(f)["e1"]["name"] == "Conf"
