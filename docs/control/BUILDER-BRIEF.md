@@ -40,3 +40,21 @@ cfp-monitor takes upstream's weekly research (a Gemini chat that returns one CSV
 
 ## Final report (at most 40 lines)
 Per action: its id, state you set, files changed, tests added and the result, the evidence command and its result, residual risks, anything the reviewer must apply live, and any decision needed. Then: baseline test result vs final, total spend, and anything you found that is not in the list (as a suggestion, not as work you started).
+
+## Lessons from the Wave 1 review (2026-10-05) - read before you start
+- Wave 1 was merged with all ten actions verified. What the reviewer checked, so you can expect the same: the diff, the full suite on the merged tree, a sandbox rehearsal of the Friday awards load, and live checks of every claim you made about the real world. Claims you could only test with fixtures (for example the render fallback) get checked live, so say plainly which ones are fixture-only.
+- ONE COMMIT PER ACTION. In Wave 1 two hunks landed in the wrong action's commit. Stage by explicit path (`git add <files>`, never `git add -A` or a folder), and make each action's commit self-contained.
+- Do not hand-edit generated files: `docs/control/ACTION-LIST.html`, `docs/operations/FAILURE-POINTS.md`, `docs/operations/failure_points.json`.
+- When you find something outside your actions, report it with evidence; the reviewer checks it against the data before it goes on the list (the Wave 1 finding about a dead Black Hat link was stale research output, not live data).
+- A measure that changes a board figure needs a before and after number in your evidence.
+
+## Wave 2 hints (ACT-20 to ACT-26, ACT-46, ACT-47)
+Order: ACT-21 first (the answer-key tier; decision recorded as ACT-04), then ACT-20, ACT-26, ACT-23, ACT-24, ACT-25, ACT-22, ACT-46, ACT-47.
+- ACT-20: reuse `experiments/read_the_page_pass/` (pass_lib.accept, run.ask_with) and `scripts/shadow_finder.py` (a read-only weekly report with caps; its Saturday hook is in `Marketsun_monthly.ps1`, which is the reviewer's to change: give the exact patch and a `-ListPostSteps` test). Caps: 120 minutes, 0.60 USD per weekly run.
+- ACT-21: `docs/qa/answer-key.csv` (generated from pins by `scripts/answer_key_from_pins.py`), candidates in `docs/qa/answer-key-CANDIDATES.csv` (`experiments/read_the_page_pass/key_candidates.py`). Tiers: person-confirmed (pins) and page-proven-and-agrees. The reader is scored only on person-confirmed facts.
+- ACT-22: `experiments/finder_reader_test/` (find_and_read, main_call.py: the awards version treats a nomination or entry page as the main call, so its OTHER pattern must not contain award/nominat). Awards are in `award_grounding_facts`; there is no awards gold yet: build candidates, mark them as candidates, list disagreements for the operator.
+- ACT-23: `experiments/read_the_page_pass/pass_lib.py` accept rules; a country is accepted when a state or province named in the quote belongs to it (checked lookup); two ranges: ask for the conference's own days with the page's own label.
+- ACT-24: weekly digest at `%LOCALAPPDATA%\CFP-Monitoruns_out\weekly_verify_*.md` (read-only); propose replacements with a quote proven on the page; output a CSV for the reviewer, never to upstream.
+- ACT-25: results only (short result files with recommendations); `experiments/sitemap_discovery/` has the inventory and rules.
+- ACT-26: pins in `docs/operations/pinned_rows.json` and `experiments/purpose_audit/OPERATOR-EDITS-LOG.md`; the number goes on the board via `scripts/board_metrics.py` with its definition.
+- ACT-46 and ACT-47 touch live approved files and the live database: DESIGN AND PROVE IN THE SANDBOX ONLY, write the exact apply procedure, and stop; the reviewer applies it. ACT-47: read upstream's evidence pages (hitb.org, iiccsforum.com) yourself before proposing to retire a duplicate; the route for a kept-but-declared row is `market_sheets/held_rows.txt` (market-runbook sections around lines 232 and 308); nothing is ever deleted.
