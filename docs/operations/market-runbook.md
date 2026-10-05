@@ -841,7 +841,7 @@ runs after a load, so a flag in the rehearsal is a flag you would have shipped.
 
 Copy the research files (`<Market>_audited.csv`, `.identity.csv`, `.progress.txt`, `.health.json`, `.grounding.jsonl`, `<Market>_input.csv`) and the OLD approved file
 (`.final.csv`) into a scratch directory and run the sandbox with `--markets-dir <scratch>`. This is how the evidence-carry rule was proved against Saturday's real research.
-Remember the prior must contain the row: rows loaded by hand into the database but never added to the approved file have nothing to carry.
+Rows loaded by hand into the database but absent from the approved file get a prior built from the database row (ACT-10, QA-REGISTER A21), so they keep their evidence; the log says `hand-loaded rows: n row(s)`.
 
 ### 7.5 You hand-edited an approved file: re-sign it
 

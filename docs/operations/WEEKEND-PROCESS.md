@@ -129,10 +129,11 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    and if this week's research returned no quote for a deadline that is unchanged (or blank) while last week's was verified
    and has not passed, last week's page, quote and verified flag are kept together. A fresh answer is never overridden and
    the approval check in step 3 still reads the kept quote on its page. Every value kept is listed in the report.
+   Since 2026-10-05 the load also records, for each value it kept, the date it was last confirmed (see step 8). Since 2026-10-05 this also covers an event that was loaded into the database by hand and is not yet in the approved file: its "last week" is the database row, so it keeps its evidence the first time too; the approved file itself is not edited, and the log says how many rows used the database.
    *(narrow_overlay.py)*
    Then, since 2026-10-03, **pinned rows**: anything a person verified on an event's own page (`docs/operations/pinned_rows.json`: a deadline, a start date, dates text, a city, a link, or "the page states
    nothing") is applied over this week's research until the pin's date passes or it is deleted. A blank pin also clears the database, because the load never erases a date on a blank. A pin is
-   applied before the approval check, so a pinned quote is still read on its page, and every pin that changed something is listed in the report. *(pinned_rows.py)*
+   applied before the approval check, so a pinned quote is still read on its page, and every pin that changed something is listed in the report. Since 2026-10-05 the same applies to the Friday awards load (an award's pin is keyed on our award id; it may also pin the call-opens and winners-announced dates). *(pinned_rows.py)*
 3. **[Safety check]** **Runs the approval check with the row-by-row rule.** Rows that pass use this week's research.
    Each row's years are checked first (start date inside its edition, conference-dates year equals start year, no
    past start still Open or Upcoming, deadline not after the start or more than 18 months before it); a row that fails
@@ -151,7 +152,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 8. **[Safety check]** **Checks what the load changed and whether it lost anything we had proven.** For every event whose deadline is still ahead it
    flags evidence, quote, deadline or submission link lost, and verified turned projected; it counts blanks in the fields the short research question does
    not ask and venue words in CITY; it checks the shipped files' dates and years again; it lists any start date the load set on a projected row with no
-   evidence page; it confirms the approved files are signed and fresh so Monday's pages will publish; and it runs the named-row watch-list. It reports and never
+   evidence page; it lists carried values (verified-deadline evidence, sponsorship, organizer) that have been kept for more than six weeks without being re-confirmed, from a small ledger the load keeps (added 2026-10-05); it lists any row whose deadline evidence is a third-party listing (such as cfptime.org) instead of the organizer's own page (added 2026-10-05); it confirms the approved files are signed and fresh so Monday's pages will publish; and it runs the named-row watch-list. It reports and never
    blocks: a flag is for a person. It also counts, per market, the rows that did not ship this week's research by the step that failed (finding the page, proving the quote, reading the claim,
    identity), appends the counts to `runs_out\qa\step_failures.jsonl` and shows the last loads side by side, so it is visible over weeks which step to improve; a step that rises by five or
    more rows since the previous load is flagged. The result is filed as `runs_out\qa\<Monday>\load.md`. *(post_load_qa.py, failure_steps.py)*
