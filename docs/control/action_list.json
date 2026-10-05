@@ -412,7 +412,7 @@
       "wave": "W2",
       "step": "D",
       "owner": "builder",
-      "state": "review",
+      "state": "verified",
       "cost": "About 2 to 5 cents a week",
       "title": "Weekly shadow reader for city, venue, organizer and format",
       "detail": "Read each live row's own pages and propose the non-deadline facts with verbatim quotes, in shadow, next to what we ship. The one read so far found 3 of 7 upstream events with a wrong city, venue or date.",
@@ -426,7 +426,8 @@
         "ACT-10"
       ],
       "evidence": [
-        "builder/wave2 0ee736c; tests/test_shadow_reader.py, test_shadow_reader_hook.py; live read of 10 events 0.008 USD: 27 agree, 4 differ, 7 reader-only; NOT LIVE until reviewer applies docs/control/patches/ACT-20-run_monthly.ps1.patch"
+        "builder/wave2 0ee736c; tests/test_shadow_reader.py, test_shadow_reader_hook.py; live read of 10 events 0.008 USD: 27 agree, 4 differ, 7 reader-only; NOT LIVE until reviewer applies docs/control/patches/ACT-20-run_monthly.ps1.patch",
+        "Reviewed 2026-10-05: merged tree full suite 1637 passed 0 failed; diffs read; live claims checked; ACT-20 patch applied live with backup and -ListPostSteps rehearsal (five steps found)"
       ],
       "updated": "2026-10-05",
       "on_verify": {
@@ -441,7 +442,7 @@
       "wave": "W2",
       "step": "F",
       "owner": "builder",
-      "state": "review",
+      "state": "verified",
       "cost": "$0",
       "title": "Answer key gets a confidence tier (person-confirmed, page-proven and agrees) and takes the reader's candidates",
       "detail": "Implements your decision (ACT-04): the tier is shown, scoring of the reader uses only person-confirmed facts, scoring of the grounded call may use both.",
@@ -454,7 +455,8 @@
         "ACT-04"
       ],
       "evidence": [
-        "builder/wave2 942d526; tests/test_answer_key_tiers.py; key has tier column, reader score refuses non-person tier; 80 facts (51 person, 29 page-proven); no model calls"
+        "builder/wave2 942d526; tests/test_answer_key_tiers.py; key has tier column, reader score refuses non-person tier; 80 facts (51 person, 29 page-proven); no model calls",
+        "Reviewed 2026-10-05: merged tree full suite 1637 passed 0 failed; diffs read; live claims checked; ACT-20 patch applied live with backup and -ListPostSteps rehearsal (five steps found)"
       ],
       "updated": "2026-10-05",
       "on_verify": {
@@ -493,7 +495,7 @@
       "wave": "W2",
       "step": "C",
       "owner": "builder",
-      "state": "review",
+      "state": "verified",
       "cost": "About 10 cents",
       "title": "Country from a state, and pages with two date ranges",
       "detail": "Accept a country when the page names a state or province of it (a checked lookup); ask for the main conference's days and require the page's own label when training and conference ranges both appear.",
@@ -504,7 +506,8 @@
       "acceptance": "Reader recall on the verified facts rises with 0 wrong accepted; tests.",
       "depends": [],
       "evidence": [
-        "builder/wave2 63e8ffd; tests/test_regions_and_ranges.py; live reader on 23 pinned facts: found 20,18,19 -> 20,20,20 of 23, wrong 0 -> 0 (gain = CES country from NV); two-range rule fixture and one saved real page only"
+        "builder/wave2 63e8ffd; tests/test_regions_and_ranges.py; live reader on 23 pinned facts: found 20,18,19 -> 20,20,20 of 23, wrong 0 -> 0 (gain = CES country from NV); two-range rule fixture and one saved real page only",
+        "Reviewed 2026-10-05: merged tree full suite 1637 passed 0 failed; diffs read; live claims checked; ACT-20 patch applied live with backup and -ListPostSteps rehearsal (five steps found)"
       ],
       "updated": "2026-10-05",
       "on_verify": {
@@ -543,7 +546,7 @@
       "wave": "W2",
       "step": "B",
       "owner": "builder",
-      "state": "review",
+      "state": "verified",
       "cost": "$0",
       "title": "Platform census, the six sites with no usable links, and the countdown-timer signal",
       "detail": "Which events sit on a standard platform we can read directly; why six sites return no links; whether a countdown on a page reliably signals the next edition.",
@@ -556,7 +559,8 @@
       "acceptance": "A short result file for each, with a recommendation.",
       "depends": [],
       "evidence": [
-        "builder/wave2 0f70f71; three RESULT files in experiments/platform_census; recommendations only"
+        "builder/wave2 0f70f71; three RESULT files in experiments/platform_census; recommendations only",
+        "Reviewed 2026-10-05: merged tree full suite 1637 passed 0 failed; diffs read; live claims checked; ACT-20 patch applied live with backup and -ListPostSteps rehearsal (five steps found)"
       ],
       "updated": "2026-10-05",
       "on_verify": {}
@@ -566,7 +570,7 @@
       "wave": "W2",
       "step": "F",
       "owner": "builder",
-      "state": "review",
+      "state": "verified",
       "cost": "$0",
       "title": "Board measure: the share of events that needed a manual verification each month",
       "detail": "The learning loop says this share should fall. Compute it from the pins and the operator edits log and show it on the board.",
@@ -577,7 +581,8 @@
       "acceptance": "The number is on the board with its definition.",
       "depends": [],
       "evidence": [
-        "builder/wave2 90d0fc4; tests/test_manual_verification_share.py; board: 15 of 127 = 11.8% (2026-10 partial, estimate roster); other board figures unchanged"
+        "builder/wave2 90d0fc4; tests/test_manual_verification_share.py; board: 15 of 127 = 11.8% (2026-10 partial, estimate roster); other board figures unchanged",
+        "Reviewed 2026-10-05: merged tree full suite 1637 passed 0 failed; diffs read; live claims checked; ACT-20 patch applied live with backup and -ListPostSteps rehearsal (five steps found)"
       ],
       "updated": "2026-10-05",
       "on_verify": {

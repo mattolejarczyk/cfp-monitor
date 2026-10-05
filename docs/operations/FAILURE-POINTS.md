@@ -11,12 +11,12 @@ Every way the CFP process can produce missing, wrong or late data, described by 
 | **A** Ask Gemini (research and upstream delivery) | 15 | 8 | 5 | 0 | 2 |
 | **B** Find the right pages | 10 | 1 | 3 | 2 | 4 |
 | **C** Read and label the date | 9 | 6 | 3 | 0 | 0 |
-| **D** Check and clean stored data | 12 | 5 | 5 | 0 | 2 |
+| **D** Check and clean stored data | 12 | 5 | 5 | 1 | 1 |
 | **E** Spend less and run weekly | 9 | 3 | 4 | 2 | 0 |
 | **F** Project control | 5 | 2 | 2 | 0 | 1 |
-| **All** | 60 | 25 | 22 | 4 | 9 |
+| **All** | 60 | 25 | 22 | 5 | 8 |
 
-25 of 60 are overcome and 26 more are mitigated or being proven. Weighted by score, 127 of 293 points of risk are overcome.
+25 of 60 are overcome and 27 more are mitigated or being proven. Weighted by score, 127 of 293 points of risk are overcome.
 
 ## How far we have come
 
@@ -48,8 +48,8 @@ Not yet overcome, highest score first (the order to attack them in):
 7. **A13** [PENDING, score 6] Sponsorship 'Yes' is accepted with a link but no quote, and sponsorship questions dominate the weekend's cost. - *open:* A quote requirement is a contract question for upstream; option B and a reader pass are not built.
 8. **A2** [MITIGATED, score 6] Research cites pages it never opened, or composes URL paths that do not exist. - *open:* Composed URLs still arrive every week and the fix depends on upstream replacing them. The finder is not yet a fallback in the weekly path.
 9. **B3** [PENDING, score 6] Links die between runs (moved pages, expired call pages, stale evidence pages). - *open:* Replacement depends on upstream; nothing proposes a replacement automatically.
-10. **C3** [MITIGATED, score 6] Date formats and layouts the reader does not know (other languages, ordinals, ranges, dd.mm.yyyy). - *open:* No year beside the date; two date ranges on one page (training and conference); country from a state.
-11. **D3** [PENDING, score 6] Non-deadline facts (city, venue, format, organizer, categories) are wrong or unproven and nothing measures them. - *open:* A weekly reader pass on these fields (priority 6) is proposed, not built.
+10. **C3** [MITIGATED, score 6] Date formats and layouts the reader does not know (other languages, ordinals, ranges, dd.mm.yyyy). - *open:* No year beside the date still stays blank by design.
+11. **D3** [WATCH, score 6] Non-deadline facts (city, venue, format, organizer, categories) are wrong or unproven and nothing measures them. - *open:* Measured weekly in shadow; accuracy per field known after a few Saturdays.
 12. **D7** [MITIGATED, score 6] The customer's own view disagrees with ours (another edition, an earlier round, withdrawn rows, events they track that we lack). - *open:* The coverage gap needs a decision (A14).
 
 ## A. Ask Gemini (research and upstream delivery)
@@ -301,8 +301,8 @@ Rank 4 of 9 in this step. **OVERCOME** (since 2026-10-05); score 6 (frequency 2 
 Rank 5 of 9 in this step. **MITIGATED** (since 2026-10-03); score 6 (frequency 3 x impact 2)
 
 - **Seen as:** Recall on verified facts was 62%; after the limiters 75% to 81%, 0 wrong.
-- **What overcame or reduces it:** Other-language month names, numeric formats, ordinals, range expansion, browser render, heading-year rule.
-- **What remains:** No year beside the date; two date ranges on one page (training and conference); country from a state.
+- **What overcame or reduces it:** Other-language month names, numeric formats, ordinals, range expansion, browser render, heading-year rule. [ACT-23, verified 2026-10-05]
+- **What remains:** No year beside the date still stays blank by design.
 
 ### C4. Start date disagrees with the dates text or the input list.
 
@@ -338,7 +338,7 @@ Rank 9 of 9 in this step. **MITIGATED**; score 2 (frequency 2 x impact 1)
 
 ## D. Check and clean stored data
 
-12 failure points: 5 overcome, 5 mitigated, 0 to prove live, 2 pending.
+12 failure points: 5 overcome, 5 mitigated, 1 to prove live, 1 pending.
 
 ### D1. An event cannot be tied to one permanent id (no id returned, a rename, a second row for one event, ids we do not hold).
 
@@ -358,11 +358,11 @@ Rank 2 of 12 in this step. **OVERCOME** (since 2026-10-03); score 6 (frequency 2
 
 ### D3. Non-deadline facts (city, venue, format, organizer, categories) are wrong or unproven and nothing measures them.
 
-Rank 3 of 12 in this step. **PENDING**; score 6 (frequency 3 x impact 2)
+Rank 3 of 12 in this step. **WATCH**; score 6 (frequency 3 x impact 2)
 
 - **Seen as:** 3 of 7 upstream events carried a wrong city, venue or date; 47 of 85 candidate facts could not be proven from the pages.
-- **What overcame or reduces it:** Overlay, venue-in-city flag, answer-key candidates from the reader.
-- **What remains:** A weekly reader pass on these fields (priority 6) is proposed, not built.
+- **What overcame or reduces it:** Overlay, venue-in-city flag, answer-key candidates from the reader. [ACT-20, verified 2026-10-05]
+- **What remains:** Measured weekly in shadow; accuracy per field known after a few Saturdays.
 
 ### D7. The customer's own view disagrees with ours (another edition, an earlier round, withdrawn rows, events they track that we lack).
 
@@ -537,16 +537,16 @@ Rank 2 of 5 in this step. **OVERCOME** (since 2026-10-03); score 6 (frequency 3 
 Rank 3 of 5 in this step. **OVERCOME** (since 2026-10-03); score 6 (frequency 3 x impact 2)
 
 - **Seen as:** Several events were manually re-verified across days.
-- **What overcame or reduces it:** A fact you verify is pinned, applied the same day, added to the answer key and shown on the board; you are not asked again.
-- **What remains:** A pin holds one edition; the share of events needing a manual check per month is not yet measured.
+- **What overcame or reduces it:** A fact you verify is pinned, applied the same day, added to the answer key and shown on the board; you are not asked again. [ACT-26, verified 2026-10-05]
+- **What remains:** A pin holds one edition; the monthly share is now measured.
 
 ### F4. Ground truth is thin, so improvements cannot be scored with confidence.
 
 Rank 4 of 5 in this step. **PENDING**; score 6 (frequency 3 x impact 2)
 
 - **Seen as:** The answer key holds 51 facts for 15 of the 40 benchmark events; the finder comparison is 14 events and its gold favours the grounded call; awards have no answer key.
-- **What overcame or reduces it:** Answer-key candidates from the reader (85 facts, 0 disagreements); trap cases (14); the shadow run adds evidence each Saturday.
-- **What remains:** The answer-key decision and an awards key (priorities 7 and 8).
+- **What overcame or reduces it:** Answer-key candidates from the reader (85 facts, 0 disagreements); trap cases (14); the shadow run adds evidence each Saturday. [ACT-21, verified 2026-10-05]
+- **What remains:** Awards still have no key (ACT-22); samples remain small.
 
 ### F5. Knowledge is lost between sessions.
 

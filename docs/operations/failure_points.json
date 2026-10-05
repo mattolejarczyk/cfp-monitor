@@ -370,8 +370,8 @@
       "upstream": false,
       "cause": "Date formats and layouts the reader does not know (other languages, ordinals, ranges, dd.mm.yyyy).",
       "evidence": "Recall on verified facts was 62%; after the limiters 75% to 81%, 0 wrong.",
-      "controls": "Other-language month names, numeric formats, ordinals, range expansion, browser render, heading-year rule.",
-      "remains": "No year beside the date; two date ranges on one page (training and conference); country from a state."
+      "controls": "Other-language month names, numeric formats, ordinals, range expansion, browser render, heading-year rule. [ACT-23, verified 2026-10-05]",
+      "remains": "No year beside the date still stays blank by design."
     },
     {
       "id": "C4",
@@ -482,13 +482,13 @@
       "step": "D",
       "freq": 3,
       "impact": 2,
-      "status": "PENDING",
+      "status": "WATCH",
       "since": "",
       "upstream": false,
       "cause": "Non-deadline facts (city, venue, format, organizer, categories) are wrong or unproven and nothing measures them.",
       "evidence": "3 of 7 upstream events carried a wrong city, venue or date; 47 of 85 candidate facts could not be proven from the pages.",
-      "controls": "Overlay, venue-in-city flag, answer-key candidates from the reader.",
-      "remains": "A weekly reader pass on these fields (priority 6) is proposed, not built."
+      "controls": "Overlay, venue-in-city flag, answer-key candidates from the reader. [ACT-20, verified 2026-10-05]",
+      "remains": "Measured weekly in shadow; accuracy per field known after a few Saturdays."
     },
     {
       "id": "D4",
@@ -760,8 +760,8 @@
       "upstream": false,
       "cause": "The same fact is verified by a person more than once.",
       "evidence": "Several events were manually re-verified across days.",
-      "controls": "A fact you verify is pinned, applied the same day, added to the answer key and shown on the board; you are not asked again.",
-      "remains": "A pin holds one edition; the share of events needing a manual check per month is not yet measured."
+      "controls": "A fact you verify is pinned, applied the same day, added to the answer key and shown on the board; you are not asked again. [ACT-26, verified 2026-10-05]",
+      "remains": "A pin holds one edition; the monthly share is now measured."
     },
     {
       "id": "F4",
@@ -773,8 +773,8 @@
       "upstream": false,
       "cause": "Ground truth is thin, so improvements cannot be scored with confidence.",
       "evidence": "The answer key holds 51 facts for 15 of the 40 benchmark events; the finder comparison is 14 events and its gold favours the grounded call; awards have no answer key.",
-      "controls": "Answer-key candidates from the reader (85 facts, 0 disagreements); trap cases (14); the shadow run adds evidence each Saturday.",
-      "remains": "The answer-key decision and an awards key (priorities 7 and 8)."
+      "controls": "Answer-key candidates from the reader (85 facts, 0 disagreements); trap cases (14); the shadow run adds evidence each Saturday. [ACT-21, verified 2026-10-05]",
+      "remains": "Awards still have no key (ACT-22); samples remain small."
     },
     {
       "id": "F5",
