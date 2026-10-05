@@ -40,15 +40,23 @@ def main() -> int:
     up_to_canon, _ = seed_map(str(db_path))
     edited = []
     plans = []
-    for market in ("Cybersecurity", "Utility"):
-        path = MARKETS / f"{market}_audited.final.csv"
+    # ACT-11 (2026-10-05): awards too. The awards approved file is the one the page was built from (published_awards); the id crossing is the
+    # award table's own upstream_event_id column. A pin whose id is in award_grounding_facts is written there, not in grounding_facts.
+    from scripts.stamp_input_ids import published_awards
+    from scripts.weekend_import import award_lookup
+    targets = [("Cybersecurity", MARKETS / "Cybersecurity_audited.final.csv", up_to_canon),
+               ("Utility", MARKETS / "Utility_audited.final.csv", up_to_canon)]
+    pub = published_awards(MARKETS)
+    if pub:
+        targets.append(("Awards", pub, award_lookup(db_path)))
+    for market, path, lookup in targets:
         raw = path.read_bytes()
         bom, crlf = raw.startswith(b"\xef\xbb\xbf"), b"\r\n" in raw
         with open(path, encoding="utf-8-sig", newline="") as fh:
             rd = csv.DictReader(fh)
             cols, rows = list(rd.fieldnames), list(rd)
         before = [dict(r) for r in rows]
-        rows, rep = apply_pins(rows, up_to_canon, to_canonical, pins, date.today())
+        rows, rep = apply_pins(rows, lookup, to_canonical, pins, date.today())
         changed = {(i, c) for i, (a, b) in enumerate(zip(before, rows)) for c in a if a[c] != b[c]}
         print(f"{market} approved file: {len(changed)} cell(s) change on {len({i for i, _ in changed})} row(s)")
         for i, c in sorted(changed):
@@ -62,14 +70,19 @@ def main() -> int:
     for p in pins:
         if p.get("until") and date.fromisoformat(p["until"]) < date.today():
             continue
-        cur = con.execute("select event_id," + ",".join(DBCOL.values()) + " from grounding_facts where event_id=?", (p["canonical"],)).fetchone()
+        table = "grounding_facts"
+        cols_db = dict(DBCOL)
+        cur = con.execute("select event_id," + ",".join(cols_db.values()) + f" from {table} where event_id=?", (p["canonical"],)).fetchone()
+        if cur is None:                                   # an award: no start date column
+            table = "award_grounding_facts"
+            cols_db = {k: v for k, v in DBCOL.items() if k != "START DATE"}
+            cur = con.execute("select event_id," + ",".join(cols_db.values()) + f" from {table} where event_id=?", (p["canonical"],)).fetchone()
         if cur is None:
             print(f"DATABASE {p['event']}: no row with id {p['canonical']} (pin waits for the row)")
             continue
-        have = dict(zip(DBCOL.values(), cur[1:]))
-        diff = {DBCOL[k]: (have[DBCOL[k]], v) for k, v in p["set"].items() if k in DBCOL and k != "START DATE" or (k == "START DATE" and v)
-                if k in DBCOL and (have[DBCOL[k]] or "") != v}
-        dbplan.append((p["canonical"], diff))
+        have = dict(zip(cols_db.values(), cur[1:]))
+        diff = {cols_db[k]: (have[cols_db[k]], v) for k, v in p["set"].items() if k in cols_db and (have[cols_db[k]] or "") != v and not (k == "START DATE" and not v)}
+        dbplan.append((p["canonical"], diff, table))
         if diff:
             print(f"DATABASE {p['event']}: " + ", ".join(f"{k} {str(a or '-')[:24]!r}->{str(b)[:24]!r}" for k, (a, b) in diff.items()))
     blank_starts = [p["event"] for p in pins if p.get("set", {}).get("START DATE") == "" and not (p.get("until") and date.fromisoformat(p["until"]) < date.today())]
@@ -99,9 +112,9 @@ def main() -> int:
     shutil.copy(db_path, LIVE / f"cfp_monitor.pre-pins-{stamp}.db")
     con = sqlite3.connect(str(db_path))
     n = 0
-    for cid, diff in dbplan:
+    for cid, diff, table in dbplan:
         if diff:
-            con.execute(f"update grounding_facts set {','.join(k + '=?' for k in diff)} where event_id=?", (*[b for _, b in diff.values()], cid))
+            con.execute(f"update {table} set {','.join(k + '=?' for k in diff)} where event_id=?", (*[b for _, b in diff.values()], cid))
             n += 1
     con.commit()
     con.close()

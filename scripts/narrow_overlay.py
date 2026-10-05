@@ -68,6 +68,38 @@ def carry_evidence(r: dict, prior: dict, today: date) -> list[str]:
     return carried
 
 
+# DB column -> audited-file column, for the fields the carry rules read from a prior row (ACT-10).
+_DB_TO_AUDITED = {"name": "CONFERENCE", "edition": "EDITION", "deadline": "SUBMISSION DEADLINE", "deadline_evidence_url": "DEADLINE_EVIDENCE_URL",
+                  "deadline_quote": "DEADLINE_QUOTE", "is_projected": "IS_PROJECTED", "city": "CITY", "state_province": "STATE_PROVINCE",
+                  "country": "COUNTRY", "overview": "OVERVIEW", "categories": "CATEGORIES", "coordinator_email": "COORDINATOR EMAIL",
+                  "organizer": "ORGANIZER", "main_info_url": "MAIN_INFO_URL", "cfp_model": "CFP MODEL TYPE", "submission_url": "SUBMISSION URL"}
+
+
+def prior_from_db(db_row: dict, canonical_id: str) -> dict:
+    """ACT-10: a prior accepted row built from a DATABASE row that the approved file does not hold (a row loaded by hand, such as the
+    three verified deadlines that lost their evidence on 2026-10-03). Only the fields the carry rules read are filled; the label follows
+    IS_PROJECTED (R11). Pure. The approved file itself is NOT edited: it is signed (publish guard) and the promotion that follows this
+    load writes the row into it, so the gap exists only for the first load."""
+    r = {col: (db_row.get(k) or "") for k, col in _DB_TO_AUDITED.items()}
+    r["EVENT_ID"] = canonical_id
+    proj = str(r["IS_PROJECTED"]).strip().lower() == "true"
+    r["IS_PROJECTED"] = "true" if proj else "false"
+    r["GROUNDING_CONFIDENCE"] = f"{'Projected' if proj else 'Verified'} ({r['EDITION']})" if r["EDITION"] else ""
+    return r
+
+
+def add_db_priors(prior_by_canon: dict[str, dict], wanted: set[str], db_rows: dict[str, dict]) -> list[dict]:
+    """Add a database-built prior for every wanted canonical id that has none. Mutates prior_by_canon; returns what was added (for the
+    report). Rows not wanted (not researched this week) are left alone: nothing is added to the page by this."""
+    added = []
+    for cid in sorted(wanted):
+        if cid in prior_by_canon or cid not in db_rows:
+            continue
+        prior_by_canon[cid] = prior_from_db(db_rows[cid], cid)
+        added.append({"conference": prior_by_canon[cid]["CONFERENCE"], "canonical": cid})
+    return added
+
+
 def overlay_narrow(rows: list[dict], sources: list[str], prior_by_canon: dict[str, dict], lookup: dict,
                    to_canonical, fields: tuple[str, ...] = CARRY_FIELDS, today: date | None = None) -> tuple[list[dict], dict]:
     """Returns (rows, report). `rows` are modified in place (same objects) and returned."""

@@ -188,9 +188,8 @@ def apply_verdicts(db: str, out: list[dict]) -> None:
     for o in out:
         state = VERDICT_TO_STATE.get(o["CHECK"], "unverified")
         detail = f"{o['CHECK']} {date.today().isoformat()} {o['CHECK_URL']}"[:500]
-        n = con.execute(
-            "UPDATE award_grounding_facts SET verify_state=?, verify_detail=?"
-            " WHERE upstream_event_id=?", (state, detail, o["EVENT_ID"])).rowcount
+        from src.cfp_monitor.verify_basis import write_verify                       # ACT-18: the basis is written too when the column exists
+        n = write_verify(con, "award_grounding_facts", "upstream_event_id", o["EVENT_ID"], state, detail)
         if n:
             written[state] = written.get(state, 0) + 1
     con.commit()

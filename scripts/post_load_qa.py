@@ -127,6 +127,29 @@ def date_checks(market: str, rows: list[dict], today: date) -> tuple[list, list[
     return [market, len(rows), agree, dis, blank], flags
 
 
+def aggregator_citations(market: str, rows: list[dict]) -> list[str]:
+    """ACT-14: shipped rows whose deadline evidence is a third-party listing (cfptime.org and the like), not the organizer. Offline, host only. Pure."""
+    from src.cfp_monitor.rules import aggregator_citation_flag
+    out = []
+    for r in rows:
+        msg = aggregator_citation_flag(r.get("DEADLINE_EVIDENCE_URL", ""))
+        if msg:
+            out.append(f"{market}: {r.get('CONFERENCE', '')[:44]}: {msg}")
+    return out
+
+
+def carry_age_section(ledger: dict, today: date) -> tuple[list[list], list[str]]:
+    """ACT-17: carried values (evidence, sponsorship, organizer) last confirmed more than the limit ago. Rows for the table, flags (one per unit, with the count and the first names). Pure."""
+    from scripts.carry_age import LIMIT_WEEKS, stale
+    old = stale(ledger, today)
+    rows = [[x["name"][:44], x["unit"], x["confirmed"], x["weeks"]] for x in old]
+    flags = []
+    for u in sorted({x["unit"] for x in old}):
+        names = [x["name"][:30] for x in old if x["unit"] == u]
+        flags.append(f"{len(names)} carried {u} value(s) last confirmed more than {LIMIT_WEEKS} weeks ago (nobody has re-verified them): " + ", ".join(names[:6]) + (" ..." if len(names) > 6 else ""))
+    return rows, flags
+
+
 def guessed_dates(old: dict, new: dict, pinned: set | None = None) -> list[str]:
     """A start date INTRODUCED OR CHANGED by this load on a projected row with no evidence page (the ODSC East case: the load set 2027-05-10 and
     'Upcoming'; the date was in fact right, which is why this is a list for a person to confirm). Existing start dates on such rows
@@ -160,7 +183,7 @@ def read_csv_rows(path: Path) -> list[dict]:
 
 
 def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str, tuple[bool, str]], watch: str, today: date, steps: dict | None = None, pinned: set | None = None,
-          kind: str = "conference", skipped: list | None = None) -> dict:
+          kind: str = "conference", skipped: list | None = None, carry_ledger: dict | None = None) -> dict:
     awards = kind == "award"
     rep = qa_report.new_report("load_awards" if awards else "load", today)
     rows, flags, past = deadline_changes(old, new, today)
@@ -172,6 +195,16 @@ def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str,
     brows, bflags = blank_rates(old, new)
     rep["sections"].append({"title": "Fields the short research question does not ask", "columns": ["Field", "Blank before", "Blank after"], "rows": brows, "flags": bflags})
     rep["flags"] += bflags
+    if carry_ledger is not None:
+        crow, cflags = carry_age_section(carry_ledger, today)
+        from scripts.carry_age import LIMIT_WEEKS
+        rep["sections"].append({"title": f"Carried values not re-confirmed for more than {LIMIT_WEEKS} weeks", "note": "A carried organizer, evidence page or sponsorship answer is kept when research brings nothing; nobody re-verifies it automatically (ACT-17).",
+                                "columns": ["Event", "Value", "Last confirmed", "Weeks"], "rows": crow, "flags": cflags})
+        rep["flags"] += cflags
+    agg = [f for m, rs in finals.items() for f in aggregator_citations(m, rs)]
+    rep["sections"].append({"title": "Deadline evidence from a third-party listing instead of the organizer", "note": "A listing can be wrong or may not list the event at all (trap case T05). Not rejected by the gate; needs the organizer's own page from upstream.",
+                            "columns": ["Row"], "rows": [[x] for x in agg], "flags": agg})
+    rep["flags"] += agg
     if not awards:                                    # awards have no event start date: nothing here applies to them
         drows, dflags = [], []
         for m, rs in finals.items():
@@ -271,7 +304,9 @@ def main() -> int:
     if awards:
         from scripts.refresh_plan import skipped_reasons
         skipped = skipped_reasons(mdir / "Awards_input.csv")
-    rep = build(old, new, finals, signed, watch, today, steps, {p['canonical'] for p in load_pins()}, "award" if awards else "conference", skipped)
+    from scripts.carry_age import load_ledger
+    rep = build(old, new, finals, signed, watch, today, steps, {p['canonical'] for p in load_pins()}, "award" if awards else "conference", skipped,
+                load_ledger(Path(a.db).parent / "carry_ledger.json"))
     d = qa_report.write(rep, qa_report.to_markdown(rep, "Friday awards load - what changed and what was lost" if awards else "Saturday load - what changed and what was lost"), Path(a.out))
     print(f"{rep['status']}: {rep['summary']}  ->  {d / ('load_awards.md' if awards else 'load.md')}")
     for f in rep["flags"]:

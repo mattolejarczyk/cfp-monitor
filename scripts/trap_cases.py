@@ -72,19 +72,21 @@ def run_check(case: dict, chk: dict) -> tuple[str, str]:
         from experiments.read_the_page_pass.pass_lib import looks_dateless
         got = looks_dateless(case["fixture"])
         return ("PASS" if got == chk["expect"] else "FAIL"), f"looks_dateless: {got} (expected {chk['expect']})"
+    if t == "earliest_deadline":
+        from src.cfp_monitor.verify import earliest_deadline
+        got = earliest_deadline(case["fixture"], TODAY)
+        ok = got["date"] == chk["expect"] and sorted(got["others"]) == sorted(chk.get("others", []))
+        return ("PASS" if ok else "FAIL"), f"earliest open deadline {got['date']} others {got['others']} (expected {chk['expect']} {chk.get('others', [])})"
+    if t == "aggregator_citation_flag":
+        from src.cfp_monitor.rules import aggregator_citation_flag
+        got = bool(aggregator_citation_flag(chk["url"], case["fixture"], chk.get("event", "")))
+        return ("PASS" if got == chk.get("expect", True) else "FAIL"), f"aggregator citation flagged: {got} (expected {chk.get('expect', True)})"
     if t == "event_named_on_page":
         got = chk["event"].lower() in case["fixture"].lower()
         return ("PASS" if got == chk["expect"] else "FAIL"), f"event named on the page: {got} (expected {chk['expect']})"
     if chk.get("gap"):
         # A check for something our code cannot do yet. If someone builds it, this stops being a gap and must be turned into a real check.
-        probe = {"earliest_deadline": ("src.cfp_monitor.verify", "earliest_deadline"),
-                 "aggregator_citation_flag": ("scripts.accept_delivery", "is_aggregator_url")}.get(t)
-        if probe:
-            try:
-                getattr(importlib.import_module(probe[0]), probe[1])
-                return "FAIL", f"{t}: {probe[1]} now exists; replace this gap with a real check"
-            except (ImportError, AttributeError):
-                pass
+        # (ACT-13/14: the earliest_deadline and aggregator_citation_flag gaps are closed; they are real checks above. A new gap goes here.)
         return "GAP", f"{t}: our code does not do this yet"
     return "FAIL", f"unknown check type {t!r}"
 
@@ -95,7 +97,7 @@ ORDER = {"PASS": 0, "HUMAN": 1, "GAP": 2, "FAIL": 3}
 def run_check_flagged(case: dict, chk: dict) -> tuple[str, str]:
     """A check marked "gap": true records something our code does NOT do yet: a failing assertion is reported as GAP; if it starts to pass, the flag must be removed."""
     v, detail = run_check(case, chk)
-    if chk.get("gap") and chk["type"] not in ("earliest_deadline", "aggregator_citation_flag"):
+    if chk.get("gap"):
         if v == "PASS":
             return "FAIL", "gap closed: this now passes; remove the gap flag. " + detail
         if v == "FAIL":
