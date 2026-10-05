@@ -97,18 +97,22 @@ def load_decisions(path: Path = DECISIONS_FILE) -> dict[frozenset, tuple[str, st
     durable half. See the file's own header for the reasoning and the format.
     """
     out: dict[frozenset, tuple[str, str, str]] = {}
-    if not path.exists():
-        return out
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        head, _, rest = line.partition("|")
-        who, _, why = rest.partition("|")
-        bits = head.split()
-        if len(bits) < 3:                     # a date and at least two rows, or it decides nothing
-            continue
-        out[frozenset(bits[1:])] = (bits[0], who.strip(), why.strip())
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            head, _, rest = line.partition("|")
+            who, _, why = rest.partition("|")
+            bits = head.split()
+            if len(bits) < 3:                     # a date and at least two rows, or it decides nothing
+                continue
+            out[frozenset(bits[1:])] = (bits[0], who.strip(), why.strip())
+    if path == DECISIONS_FILE:
+        # ACT-47: a pair RETIRED by declaration (docs/operations/retired_duplicates.txt, scripts/retire_duplicates.py) is decided too: reported under DECIDED, never merged by a later run.
+        from scripts.retire_duplicates import load_retirements
+        for d in load_retirements():
+            out.setdefault(frozenset((d["survivor"], d["retired"])), (d["date"], d["who"], f"RETIRED (kept, declared in held_rows.txt): {d['why']}"))
     return out
 
 
@@ -353,7 +357,10 @@ def main() -> int:
         if kind4 != "conference":
             continue
         rs = [dict(r) for r in con.execute("SELECT event_id, name, url, city, start_date FROM grounding_facts WHERE COALESCE(start_date,'') <> ''")]
-        sp = same_site_pairs(rs)
+        sp = []
+        for left, right in same_site_pairs(rs):
+            settled = decisions.get(frozenset((left["event_id"], right["event_id"])))          # ACT-47: a decided or retired pair is not outstanding here either
+            (decided_hits.append((kind4, [left, right], settled)) if settled else sp.append((left, right)))
         if sp:
             bar = "=" * 78
             print()
@@ -372,7 +379,7 @@ def main() -> int:
     # Printed, never hidden - a decision stays reviewable, it just stops counting as work.
     if decided_hits:
         print(f"\n{'=' * 78}\nDECIDED - {len(decided_hits)} group(s) a person read and kept as "
-              f"two rows\n{'=' * 78}")
+              f"two rows, or retired by declaration (docs/operations/retired_duplicates.txt)\n{'=' * 78}")
         for kind3, rows, (when, who, why) in decided_hits:
             print(f"\n  [{kind3}]  decided {when} by {who}")
             for r in rows:
