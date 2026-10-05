@@ -93,6 +93,7 @@ moment (runbook section in brackets). **Report** = where the result lands.
 | Research can return a different, evidenced deadline for a row we corrected by hand (CODASPY abstract vs paper, Apres-Cyber) | 2026-10-03 | a per-row "operator-pinned" list the carry rule honours |
 | Rows loaded by hand into the database but missing from the approved file get no carry the first Saturday | RSA/Black Hat Asia on 2026-10-03 | add hand-loaded rows to the approved file at load time |
 | `run_monthly.ps1` has only static tests | the flattened-array bug | a PowerShell dry-run mode that exercises the post-research steps |
+| Which events sit on a platform we could read directly; why six sites return no links; whether a countdown signals the next edition (ACT-25, 2026-10-05, results only) | 10 of 127 customer-market events cite a submission platform and the generic reader already proves 5 of them by date; the six sites are 4 redirect aliases, 1 off-site menu (hceeweek.com to spglobal.com) and 1 bot wall (ushydrogenforum.com), not 'script-built menus'; a labelled 'Starts:' countdown matched our start date 2 of 2 but it appears on about 3% of pages and a rotating widget gave three targets on one site | no platform parser; resolve the landed origin once per event when next touching `find_and_read`; do not build a countdown reader; `experiments/platform_census/RESULT-*.md` |
 
 ## F. The learning loop: how manual verifications turn into rules (so they are needed less and less)
 
