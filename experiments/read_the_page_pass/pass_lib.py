@@ -108,11 +108,11 @@ def gold_facts(pins: list[dict]) -> list[dict]:
         mapping = {"START DATE": "start_date", "CITY": "city", "COUNTRY": "country"}
         for k, f in mapping.items():
             if k in s:
-                out.append({"event": p["event"], "canonical": p["canonical"], "field": f, "gold": s[k], "links": p.get("links", [])})
+                out.append({"event": p["event"], "canonical": p["canonical"], "field": f, "gold": s[k], "links": p.get("links", []), "tier": "person-confirmed"})
         if "CONFERENCE DATES" in s and s["CONFERENCE DATES"]:
             iso = _first_iso(s["CONFERENCE DATES"])
             if iso and not any(o["canonical"] == p["canonical"] and o["field"] == "start_date" for o in out):
-                out.append({"event": p["event"], "canonical": p["canonical"], "field": "start_date", "gold": iso, "links": p.get("links", [])})
+                out.append({"event": p["event"], "canonical": p["canonical"], "field": "start_date", "gold": iso, "links": p.get("links", []), "tier": "person-confirmed"})
     return out
 
 
@@ -123,7 +123,11 @@ def same(field: str, got: str, gold: str) -> bool:
 
 
 def score(items: list[dict]) -> dict:
-    """items: {event, field, gold, accepted ('' = blank)}. Precision, recall, blank-correct and false-accept counts."""
+    """items: {event, field, gold, accepted ('' = blank)}. Precision, recall, blank-correct and false-accept counts.
+    The READER is scored only on person-confirmed facts (ACT-04/ACT-21): an item whose `tier` is anything else raises. An item with no tier (a trap fixture, a page
+    a person read) is taken as person-confirmed, as before."""
+    from scripts.answer_key import assert_reader_tier
+    assert_reader_tier(items, "reader score")
     failed = sum(1 for i in items if i.get("call_failed"))
     items = [i for i in items if not i.get("call_failed")]            # a failed call says nothing about the model: it is reported, not scored
     acc = [i for i in items if i["accepted"]]

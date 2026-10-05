@@ -154,7 +154,7 @@ def main():
                     got, why = "", "CALL FAILED (rate limit or server error after 4 tries): not scored"
                 else:
                     got, why = L.accept(f["field"], (fields or {}).get(f["field"], {}), text, edition) if readable else ("", "page unreadable")
-                items.append({"event": event, "field": f["field"], "gold": f["gold"], "accepted": got, "why": why, "readable": readable, "call_failed": failed})
+                items.append({"event": event, "field": f["field"], "gold": f["gold"], "accepted": got, "why": why, "readable": readable, "call_failed": failed, "tier": f.get("tier", "person-confirmed")})
         key = f"{mk}#{rep + 1}"
         results[key] = {"model": sp.MODELS[mk], "score": L.score(items), "cost_usd": round(total, 5), "items": items}
         s = results[key]["score"]

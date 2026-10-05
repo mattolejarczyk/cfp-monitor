@@ -74,7 +74,9 @@ def main() -> int:
     for m in ("Cybersecurity", "Utility"):
         with open(P.MARKETS / f"{m}_audited.final.csv", encoding="utf-8-sig", newline="") as fh:
             rows += [dict(r, _market=m) for r in csv.DictReader(fh)]
-    have = {P.norm(r["event"]) for r in csv.DictReader(open(ROOT / "docs" / "qa" / "answer-key.csv", encoding="utf-8"))}
+    from scripts.answer_key import PERSON, _tier
+    # only a PERSON's ruling takes an event off the candidate list; a page-proven line (tier 2) is exactly what this run produced
+    have = {P.norm(r["event"]) for r in csv.DictReader(open(ROOT / "docs" / "qa" / "answer-key.csv", encoding="utf-8")) if _tier(r) == PERSON}
     bench = list(csv.DictReader(open(P.BENCH, encoding="utf-8-sig")))
     cache = {}
     out, skipped, spent_before = [], [], R.spent()[1]
