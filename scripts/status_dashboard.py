@@ -36,7 +36,8 @@ def freshness_warnings(data, max_age_days=2):
 
 
 _LABELS = {"START DATE": "start date", "CONFERENCE DATES": "dates", "SUBMISSION DEADLINE": "deadline", "CFP_SUBMISSION_URL": "submission link", "LOCATION": "location",
-           "CITY": "city", "COUNTRY": "country", "ORGANIZER": "organizer", "FORMAT": "format", "MAIN_INFO_URL": "main page", "STATUS DETAILS": "details"}
+           "CITY": "city", "COUNTRY": "country", "ORGANIZER": "organizer", "FORMAT": "format", "MAIN_INFO_URL": "main page", "STATUS DETAILS": "details",
+           "SUBMISSION_OPENS": "call opens", "ANNOUNCEMENT_DATE": "winners announced"}
 
 
 def verified_by_operator() -> list[dict]:

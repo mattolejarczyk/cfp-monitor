@@ -76,3 +76,36 @@ def test_every_pin_records_the_pages_it_was_verified_on():
     for p in load_pins():
         assert p.get("links") and all(u.startswith("https://") for u in p["links"]), p["canonical"]
         assert p["by"] == "operator" and p["ruled_on"]
+
+
+# ---- ACT-11: pins apply to awards (their own id crossing) and survive a blank/different research answer ----------------
+def test_award_pin_applies_through_the_awards_crossing():
+    pin = {"canonical": "2026-gl-energy-show-awards", "event": "Global Energy Show Awards", "ruled_on": "2026-10-05", "until": "2026-12-31",
+           "set": {"SUBMISSION DEADLINE": "2026-11-01", "SUBMISSION_OPENS": "2026-09-01", "ANNOUNCEMENT_DATE": "2027-01-15"}}
+    row = {"EVENT_ID": "up-award-9", "CONFERENCE": "Global Energy Show Awards", "EDITION": "2026", "SUBMISSION DEADLINE": "",
+           "SUBMISSION_OPENS": "", "ANNOUNCEMENT_DATE": "2027-03-01"}
+    rows, rep = apply_pins([row], {"up-award-9": "2026-gl-energy-show-awards"}, CANON, [pin], T)       # award_lookup: upstream id -> ours
+    assert (rows[0]["SUBMISSION DEADLINE"], rows[0]["SUBMISSION_OPENS"], rows[0]["ANNOUNCEMENT_DATE"]) == ("2026-11-01", "2026-09-01", "2027-01-15")
+    assert rep["applied"][0]["changed"]["ANNOUNCEMENT_DATE"] == {"research": "2027-03-01", "pinned": "2027-01-15"}
+
+
+def test_award_status_is_still_not_pinnable():
+    with pytest.raises(ValueError):
+        apply_pins([_row()], {}, CANON, [{"canonical": "x", "set": {"STATUS": "Closed"}}], T)
+
+
+def test_the_weekend_import_applies_pins_to_awards_too():
+    """The load used to skip awards (`if market != AWARDS`); a pin must reach every market's rows before the gate."""
+    import inspect
+    from scripts import weekend_import
+    src = inspect.getsource(weekend_import.resolve_market)
+    assert "apply_pins(rows, lookup, to_canonical, load_pins())" in src
+    assert "if market != AWARDS:\n        from scripts.pinned_rows" not in src
+
+
+def test_board_panel_lists_an_award_pin(monkeypatch):
+    from scripts import pinned_rows, status_dashboard
+    monkeypatch.setattr(pinned_rows, "load_pins", lambda: [{"canonical": "a-awards", "event": "Some Award", "ruled_on": "2026-10-05", "until": "2026-12-01",
+                                                          "links": ["https://x.example/award"], "set": {"ANNOUNCEMENT_DATE": "2027-01-15", "SUBMISSION DEADLINE": "2026-11-01"}}])
+    out = status_dashboard.verified_by_operator()
+    assert out[0]["event"] == "Some Award" and "winners announced: 2027-01-15" in out[0]["what"] and "deadline: 2026-11-01" in out[0]["what"]

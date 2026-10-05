@@ -21,7 +21,7 @@ PINS_FILE = Path(__file__).resolve().parents[1] / "docs" / "operations" / "pinne
 # own page: start date, dates text, location, city, country, organizer, format, main page. Identity (event id, name, edition) and customer columns are never pinned.
 # A pinned VALUE of "" means 'the page states nothing: leave it blank' (see clear_pinned_blank_starts).
 ALLOWED = ("SUBMISSION DEADLINE", "DEADLINE_EVIDENCE_URL", "DEADLINE_QUOTE", "IS_PROJECTED", "CFP_SUBMISSION_URL", "STATUS DETAILS",
-           "START DATE", "CONFERENCE DATES", "LOCATION", "CITY", "STATE_PROVINCE", "COUNTRY", "ORGANIZER", "FORMAT", "MAIN_INFO_URL", "SUBMISSION_OPENS")
+           "START DATE", "CONFERENCE DATES", "LOCATION", "CITY", "STATE_PROVINCE", "COUNTRY", "ORGANIZER", "FORMAT", "MAIN_INFO_URL", "SUBMISSION_OPENS", "ANNOUNCEMENT_DATE")
 
 
 def load_pins(path: Path = PINS_FILE) -> list[dict]:
