@@ -1,0 +1,11 @@
+{
+  "_doc": "One entry per model. route: openrouter | codex. effort: reasoning effort passed explicitly (openrouter: reasoning.effort; codex: model_reasoning_effort). price_in/price_out are USD per 1M tokens (null where not applicable); price_source says where the figure was SEEN and price_date when. To add a model: add an entry here, then run: python experiments/model_bakeoff/run_bakeoff.py --model <key>",
+  "models": {
+    "ds":     {"id": "deepseek/deepseek-v4.1-flash", "route": "openrouter", "effort": "low", "price_in": 0.036795, "price_out": 1.32, "price_source": "https://openrouter.ai/api/v1/models (read by builder)", "price_date": "2026-10-06", "note": "baseline of experiments/read_the_page_pass (sentence_pick.MODELS['B'])"},
+    "dschat": {"id": "deepseek/deepseek-chat", "route": "openrouter", "effort": "low", "price_in": 0.2574, "price_out": 1.0287, "price_source": "https://openrouter.ai/api/v1/models (read by builder)", "price_date": "2026-10-06", "note": "baseline of experiments/finder_reader_test (default --model C)"},
+    "nemo":   {"id": "nvidia/nemotron-3-ultra-550b-a55b", "route": "openrouter", "effort": "low", "price_in": 0.5, "price_out": 2.2, "price_source": "https://openrouter.ai/api/v1/models (read by builder)", "price_date": "2026-10-06"},
+    "bunny":  {"id": "stealth/space-bunny-alpha", "route": "openrouter", "effort": "low", "price_in": null, "price_out": null, "price_source": "https://openrouter.ai/stealth/space-bunny-alpha (page text shows no price; 'free' is from a search-result summary only, NOT confirmed by builder)", "price_date": "2026-10-06", "note": "stealth model; prompts and completions may be retained by the provider, not used for training (page text read 2026-10-06)"},
+    "luna":   {"id": "gpt-6-luna", "route": "codex", "effort": "max", "price_in": null, "price_out": null, "price_source": "ChatGPT Plus subscription via Codex CLI; no per-token cost. OpenRouter list price for reference: 0.10 in / 0.50 out per 1M (api/v1/models 2026-10-06)", "price_date": "2026-10-06"},
+    "sol":    {"id": "gpt-6-sol", "route": "codex", "effort": "max", "price_in": null, "price_out": null, "price_source": "ChatGPT Plus subscription via Codex CLI. OpenRouter list price for reference: 2 in / 10 out per 1M (api/v1/models 2026-10-06)", "price_date": "2026-10-06"}
+  }
+}
