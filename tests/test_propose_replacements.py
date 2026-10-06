@@ -79,7 +79,8 @@ def test_names_event_needs_the_events_distinctive_words_in_one_sentence():
 REC = {"pages": [{"rank": -1, "url": "https://x.example/", "chars": 4000, "accepted": "", "quote": ""},
                  {"rank": 1, "url": "https://x.example/call-for-speakers", "chars": 3000, "accepted": "2026-12-01", "quote": "Submissions close on December 1, 2026."}],
        "pick": {"pick": "2026-12-01", "why": "main-page: https://x.example/call-for-speakers"}}
-CACHE = {"https://x.example/": "Welcome to Example Security Summit 2027, the annual gathering of defenders in Oslo."}
+CACHE = {"https://x.example/": "Welcome to Example Security Summit 2027, the annual gathering of defenders in Oslo.",
+         "https://x.example/call-for-speakers": "Example Security Summit 2027 call for speakers. Submissions close on December 1, 2026. Tell us about your talk."}
 
 
 def test_a_call_link_gets_a_proposal_only_with_a_proven_deadline():
@@ -109,3 +110,34 @@ def test_the_script_is_read_only_and_capped():
     assert "mode=ro" in src and "default=0.30" in src and "default=150" in src
     for bad in ("UPDATE ", "INSERT ", "DELETE ", "smtplib", "maybe_send_email"):
         assert bad not in src
+
+
+# ----- ACT-42: a date on a shared page is a LEAD, not a proposal; wrong-kind pages are dropped -----
+SANS_PAGE = ("Speak at a SANS Summit. Call for Presentations. SANS Cyber Threat Intelligence Summit and OSINT Summit, Alexandria, VA, February 2027. "
+             "Submit your proposal for the CTI Summit and the OSINT Summit by October 19, 2026. SANS Security Leadership Summit and ICS Summit call for papers open in the new year.")
+SANS_REC = {"pages": [{"rank": -1, "url": "https://www.sans.org/", "chars": 4000, "accepted": "", "quote": ""},
+                      {"rank": 1, "url": "https://www.sans.org/cyber-security-summit/speak-at-a-summit", "chars": 3000, "accepted": "2026-10-19",
+                       "quote": "Submit your proposal for the CTI Summit and the OSINT Summit by October 19, 2026."}],
+            "pick": {"pick": "2026-10-19", "why": "main-page: speak-at-a-summit"}}
+
+
+def test_the_sans_cdi_false_proposal_is_now_a_lead_not_a_proposal():
+    """2026-10-05: SANS Cyber Defense Initiative 2026 was 'proposed' the 19 October deadline of the CTI and OSINT summits, from the shared speak-at-a-summit page."""
+    cache = {"https://www.sans.org/cyber-security-summit/speak-at-a-summit": SANS_PAGE}
+    r = P.propose_for_link({"url": "https://www.sans.org/call-for-presentations/"}, SANS_REC, cache, "SANS Cyber Defense Initiative 2026 (CDI 2026)", "2026-10-06")
+    assert r["status"] == "LEAD" and r["deadline"] == "" and "nothing next to it names this event" in r["note"]
+    # the same page IS a proposal for the event it is about
+    ok = P.propose_for_link({"url": "https://www.sans.org/call-for-presentations/"}, SANS_REC, cache, "SANS Cyber Threat Intelligence Summit and OSINT Summit 2027", "2026-10-06")
+    assert ok["status"] == "PROPOSED" and ok["deadline"] == "2026-10-19"
+
+
+def test_an_awards_or_degree_programme_page_is_not_a_call_or_event_page_for_a_conference():
+    awards = {"pages": [{"rank": -1, "url": "https://x.example/", "chars": 4000, "accepted": "", "quote": ""},
+                        {"rank": 1, "url": "https://x.example/awards/entries", "chars": 3000, "accepted": "2026-12-01", "quote": "Example Security Summit entries close December 1, 2026."}],
+              "pick": {"pick": "2026-12-01", "why": "x"}}
+    r = P.propose_for_link({"url": "https://x.example/cfp"}, awards, {"https://x.example/awards/entries": "Example Security Summit entries close December 1, 2026."}, "Example Security Summit 2027", "2026-10-06")
+    assert r["status"] == "NONE" and "awards" in r["note"]
+    assert P.wrong_kind("https://uni.example/study/phd-programme/", "Example Summit 2027") == "phd"
+    assert P.wrong_kind("https://x.example/awards/", "Example Awards 2027") == ""            # an event that IS an awards programme keeps its awards page
+    info = {"pages": [{"rank": 1, "url": "https://uni.example/phd/", "chars": 4000, "accepted": "", "quote": ""}], "pick": {}}
+    assert P.propose_for_link({"url": "https://x.example/about"}, info, {"https://uni.example/phd/": "Example Summit 2027 is held every year at the university in Oslo."}, "Example Summit 2027", "2026-10-06")["status"] == "NONE"
