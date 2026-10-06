@@ -931,7 +931,7 @@
       "wave": "W5",
       "step": "D",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Quote dash tolerance: does the gate treat an ASCII hyphen like the page en dash?",
       "detail": "Upstream quotes use an ASCII hyphen where the page has an en dash (note 29: World of Concrete, SAF Europe, ISCC listing). Find out how acceptance criterion 3 and our own quote proving (verify, pass_lib, extract_sponsor_quotes) compare quotes. If a dash difference rejects a true quote, or makes us re-cut it silently, say which; propose the smallest normalisation that is safe (dashes, non-breaking spaces and quote marks only, never words) with a test; prove the World of Concrete row from note 29 in the sandbox. Do not change the gate without a failing test first.",
@@ -939,7 +939,9 @@
       "closes": [],
       "acceptance": "A finding with the exact code path; a failing test then a fix if needed; the World of Concrete row passes criterion 3 in the sandbox.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "builder/wave3 commit c4c2028: criterion 3 (accept_delivery.norm) already folded en dash, em dash and minus: the World of Concrete row (note 29, quote with ASCII hyphen) PASSES check 3 on the live page, run in a scratch dir with network read-only, before and after the change. The gap was elsewhere: extract_citations.locate_verbatim (sponsor quotes, investigate_event) turned a page dash into a space and kept the quote hyphen (None before, found after) and pass_lib.norm folded nothing (False before). Fix: verify.fold_punctuation shared by all three; tests/test_quote_dash_tolerance.py (4 tests). ALSO FOUND: that World of Concrete page headline is '2028 Call for Proposals' / 'SUBMIT WOC 2028 PROPOSALS' with Submissions Period Nov 15 2026 - Feb 18 2027, while the show dates are Exhibits Jan 19-21 2027: so the call in note 29 belongs to the 2028 show, not 2027 (note 29 says 'World of Concrete 2027 ... call opens 15 November 2026'); reviewer to check."
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
