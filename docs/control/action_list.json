@@ -1096,7 +1096,8 @@
       ],
       "evidence": [
         "2026-10-06 part 1 reviewed: 24 rows classified (A12 B7 C4 D1); 4 of the 8 proposed adds checked by me against their pages; the 8 added to the live input lists (blank ids, backups, log). Found: a new row's name matched an old seed sheet and would have taken the 2026 edition's id: renamed. Part 2 (the 34 linked rows that disagree) in progress.",
-        "branch builder/wave5; commits 05bb5dd (24 not-in-queue rows) and eec53e3 (34 disagreeing rows, note 36, QA A41). Ran customer_coverage.py 2026-10-06 (24 / 34), add_customer_rows.py report-only on both proposals. Pages read for all but 4 rows; 17 adds proposed. No test added (data only)."
+        "branch builder/wave5; commits 05bb5dd (24 not-in-queue rows) and eec53e3 (34 disagreeing rows, note 36, QA A41). Ran customer_coverage.py 2026-10-06 (24 / 34), add_customer_rows.py report-only on both proposals. Pages read for all but 4 rows; 17 adds proposed. No test added (data only).",
+        "2026-10-06 reviewed and applied: 8 + 5 + 8 customer events on the research lists (blank ids, or existing ids for the 5 held elsewhere), three stale input dates corrected from the pages, two name collisions avoided; coverage 144 of 155 (was 78 not in the queue yesterday). Note 36 edited (16 events). PENDING: the 6 wrong customer links to re-point in client_conferences (database write: operator to approve), the 11 remaining rows to rule (ledger customer_not_researched.csv), upstream's ids for the new rows."
       ],
       "updated": "2026-10-06",
       "on_verify": {}
