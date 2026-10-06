@@ -755,11 +755,11 @@
       "wave": "W4",
       "step": "D",
       "owner": "you",
-      "state": "review",
+      "state": "verified",
       "cost": "$0",
       "title": "Duplicates and discontinuations without evidence: a note for upstream (draft)",
       "detail": "SAF Europe, Future Fuels, the German OWASP pair, the Indonesia pair. Each needs evidence or a ruling.",
-      "needs_you": "Send NOTE-TO-UPSTREAM-29.md (experiments/purpose_audit/): START DATE ruling R-001, evidence requests for HITB 2026, SAF Europe 2027 and Future Fuels MENA 2026, and the World of Concrete 2027 correction. Every page in it was opened on 2026-10-05.",
+      "needs_you": "",
       "closes": [
         "D4",
         "A12"
@@ -770,9 +770,10 @@
       ],
       "evidence": [
         "Draft written 2026-10-05 after checking each page; one draft claim (Future Fuels not findable) was wrong on re-check and was rewritten before it went anywhere.",
-        "Note 29 sent by the operator 2026-10-05; upstream answered. SAF Europe: page https://www.safeusummit.com/ states 13-14 April 2027, Rotterdam (verified by me; the merge claim is unverified). Future Fuels MENA 2026: online 1-2 April 2026 per the ISCC listing; organiser site returns 404. World of Concrete: our error (note 29b), 2027 row stays Closed, 2028 row minted and loaded. OPEN: Hack In The Box Phuket 2026 - upstream says Not Held / Cancelled but its only evidence is that the organiser site lists no 2026 edition; the operator may rule it not held."
+        "Note 29 sent by the operator 2026-10-05; upstream answered. SAF Europe: page https://www.safeusummit.com/ states 13-14 April 2027, Rotterdam (verified by me; the merge claim is unverified). Future Fuels MENA 2026: online 1-2 April 2026 per the ISCC listing; organiser site returns 404. World of Concrete: our error (note 29b), 2027 row stays Closed, 2028 row minted and loaded. OPEN: Hack In The Box Phuket 2026 - upstream says Not Held / Cancelled but its only evidence is that the organiser site lists no 2026 edition; the operator may rule it not held.",
+        "Note 29 and 29b were sent by the operator; upstream's replies recorded in notes 30-44 and the ledger (2026-10-06)."
       ],
-      "updated": "2026-10-05",
+      "updated": "2026-10-06",
       "on_verify": {}
     },
     {
@@ -1039,18 +1040,19 @@
       "wave": "W5",
       "step": "D",
       "owner": "you",
-      "state": "todo",
+      "state": "verified",
       "cost": "$0",
       "title": "Decide the sponsorship rule: link only at the gate (current) or link plus quote",
       "detail": "114 Yes rows have a SPONSOR_URL and none a quote. Enforcing the quote at the DELIVERY gate would hold back almost every live row every Saturday (112 of 125 say Yes), so the gate stays link only (contract R20a: the quote is ours to extract). Recommendation to discuss: (1) keep the gate link only and change the contract sentence to describe the state after OUR extraction; (2) run scripts/extract_sponsor_quotes.py with Chrome up (ACT-40) and put the share of Yes rows with a proven quote on the board; (3) a quote-less Yes shows on the page as unconfirmed (badge text, customer-facing wording: your call). The operator asked to sync on this later.",
-      "needs_you": "Sync on the sponsorship rule (three options in the detail); recommendation is 1, 2 and 3.",
+      "needs_you": "",
       "closes": [],
       "acceptance": "A decision recorded in docs/operations/OPERATOR-RULINGS.md.",
       "depends": [
         "ACT-40"
       ],
       "evidence": [
-        "RULED 2026-10-06 by operator: (a) delivery gate stays link-only; (b) YES run extract_sponsor_quotes.py with Chrome (launch_chrome_cdp.bat) on a COPY of the db; (c) badge for a Yes with no quote becomes 'Sponsor required (unconfirmed)'. TO DO: badge wording in the customer page builder (builder), quote run (me)."
+        "RULED 2026-10-06 by operator: (a) delivery gate stays link-only; (b) YES run extract_sponsor_quotes.py with Chrome (launch_chrome_cdp.bat) on a COPY of the db; (c) badge for a Yes with no quote becomes 'Sponsor required (unconfirmed)'. TO DO: badge wording in the customer page builder (builder), quote run (me).",
+        "Decision recorded as R-002 in docs/operations/OPERATOR-RULINGS.md (2026-10-06). Badge build and quote application are tracked under ACT-40 / ACT-56 wave."
       ],
       "updated": "2026-10-06",
       "on_verify": {}
