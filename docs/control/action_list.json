@@ -984,7 +984,7 @@
       "wave": "W5",
       "step": "A",
       "owner": "me",
-      "state": "todo",
+      "state": "review",
       "cost": "$0 to build; research cost only for the added rows",
       "title": "TOP PRIORITY: every event on a customer sheet must enter our research queue automatically (intake feeds the queue)",
       "detail": "FOUND 2026-10-05: the process reads the customer sheets only as a status signal (WEEKEND-PROCESS step 3, weekly_intake.py); WEEKLY-CYCLE.md line 137 says verification never adds anything and only research (the monthly run, disabled, and upstream) discovers events. So nothing turns a customer-added row into a research-queue row. The customer sheets grew from 53 to 125 rows (Arnica) and 58 to 84 (Utility) between 2026-08-30 and 2026-09-16; rows with no confident match to anything we hold: 59 Arnica and 25 Utility on 2026-10-03, 60 of them for events still ahead. Design and build: each week the intake lists every customer row with no match to an event we research (after ACT-44 classification: not a matcher miss), puts it on the research input list or, where only upstream can supply the id, into a dated request for the operator to send; the Saturday recap states how many customer rows are NOT in the queue (target 0) and fails loudly when a new one was added and not picked up. Update WEEKEND-PROCESS.md, the runbook and the contract section on who owns the list.",
@@ -997,9 +997,10 @@
         "ACT-44"
       ],
       "evidence": [
-        "2026-10-05 night, first steps done by hand: 56 customer events added to the research input lists (scripts/add_customer_rows.py), upstream's 59 ids stamped by URL (scripts/stamp_given_ids.py) with the ledger docs/operations/given_ids.csv so Saturday's stamping step keeps them (before this fix it wiped stamps on events not yet in the database); 3 more events added (Google Cloud Next 2027, CDAO Defense & Security 2027, World of Concrete 2028); World of Concrete 2028 loaded to the live DB and completed (key_year set with the operator's approval, seed row appended; live invariants all ok). STILL TO BUILD: the weekly route (new unmatched customer rows -> queue automatically) and the Saturday recap line 'customer rows not in the queue' (target 0)."
+        "2026-10-05 night, first steps done by hand: 56 customer events added to the research input lists (scripts/add_customer_rows.py), upstream's 59 ids stamped by URL (scripts/stamp_given_ids.py) with the ledger docs/operations/given_ids.csv so Saturday's stamping step keeps them (before this fix it wiped stamps on events not yet in the database); 3 more events added (Google Cloud Next 2027, CDAO Defense & Security 2027, World of Concrete 2028); World of Concrete 2028 loaded to the live DB and completed (key_year set with the operator's approval, seed row appended; live invariants all ok). STILL TO BUILD: the weekly route (new unmatched customer rows -> queue automatically) and the Saturday recap line 'customer rows not in the queue' (target 0).",
+        "Branch builder/wave4. Parts: 1 tool scripts/customer_coverage.py (commit 8ce93d3), 2 reproduction 57 of 57 ACT-44 class C found (5c9e164, docs/qa/ACT-51-coverage-reproduction-20261006.md), 3 recap COVERAGE line + FLAG subject (a54bff5), 4 run_monthly.ps1 patch docs/control/patches/ACT-51-run_monthly.ps1.patch with tests (6f376c4; reviewer applies live), 5 docs + phase-2 design docs/design/ACT-51-auto-add-design.md (d8c15c7), reviewer addition LINKED BUT DISAGREES + URL needs matching date (1593cfb). Live run 2026-10-06 (read-only): COVERAGE 131 of 155 ahead in queue, 24 NOT, 34 linked rows disagree (before the by-hand additions: 78 NOT). Tests: tests/test_customer_coverage.py (17), test_customer_coverage_hook.py (6), test_weekend_recap.py (+5); fixtures only for those, the live numbers are from the live DB opened read-only. Not applied: the run_monthly.ps1 patch."
       ],
-      "updated": "2026-10-05",
+      "updated": "2026-10-06",
       "on_verify": {}
     },
     {

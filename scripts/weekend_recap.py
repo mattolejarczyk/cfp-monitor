@@ -44,11 +44,37 @@ def first(pattern: str, text: str, group: int = 1, flags: int = 0) -> str | None
     return m.group(group) if m else None
 
 
+def coverage_facts(log: str) -> dict | None:
+    """ACT-51: the `COVERAGE:` line scripts/customer_coverage.py prints before the research. {'line', 'not_in', 'names'} or None when the log has no such line.
+    not_in is None when the check could not run (UNKNOWN); a number otherwise."""
+    line = first(r"^COVERAGE: (.+)$", log, flags=re.M)
+    if line is None:
+        return None
+    m = re.search(r"are in the research queue; (\d+) are NOT", line)
+    d = re.search(r"; (\d+) linked rows disagree", line)
+    return {"line": line, "not_in": int(m.group(1)) if m else None, "names": first(r"^COVERAGE NOT IN QUEUE: (.+)$", log, flags=re.M) or "",
+            "disagree": int(d.group(1)) if d else 0}
+
+
+def coverage_sentence(cov: dict | None) -> str:
+    if cov is None:
+        return "Customer rows in the research queue: the check did not run this week (no COVERAGE line in the log)."
+    if cov["not_in"] is None:
+        return f"Customer rows in the research queue: could not be checked ({cov['line']})."
+    note = (f" {cov['disagree']} customer row(s) are linked to an event that disagrees on date or place (report: runs_out/qa/<date>/coverage.md); nothing is changed."
+            if cov.get("disagree") else "")
+    if cov["not_in"] == 0:
+        return f"Customer rows in the research queue: {cov['line']}.{note}"
+    return (f"FLAG - customer rows NOT in the research queue: {cov['line']}. Not researched this week: {cov['names']}. "
+            f"Run scripts/customer_coverage.py --propose and add them (scripts/add_customer_rows.py).{note}")
+
+
 def parse_saturday(log: str) -> dict:
     """The facts a Saturday recap needs, read from run_monthly's log."""
     out: dict = {"markets": {}}
     out["exit"] = first(r"=== run_monthly exit code: (-?\d+) ===", log)
     out["intake"] = first(r"INTAKE HEALTH: (.+)", log)
+    out["coverage"] = coverage_facts(log)
     if re.search(r"CANARY PASSED", log):
         out["canary"] = "passed"
     elif re.search(r"Canary passed [\d.]+h ago - reusing it", log):
@@ -194,6 +220,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
 
     facts = [f"5-row test before the run: {s['canary']}.",
              f"Customer sheet check-in: {s['intake'] or 'no result in the log'}.",
+             *([coverage_sentence(s["coverage"])] if kind != "friday" else []),      # awards have no customer sheet
              f"AI requests in total: about {total_req}."]
     if s["timeouts"]:
         facts.append(f"Google was slow: {s['timeouts']} '504' timeouts (Google's server took too "
@@ -241,6 +268,9 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     if good and qa_flags:
         status = "WORKED - " + str(len(qa_flags)) + " to check"
     label = "Friday awards research" if kind == "friday" else "Saturday research"
+    cov_n = (s["coverage"] or {}).get("not_in")
+    if kind != "friday" and cov_n:
+        status += f" - FLAG: {cov_n} customer row(s) not in the research queue"
     subject = f"CFP {label} {status} - {datetime.now():%a %b %d}"
 
     html_parts = [f'<div style="{CSS}">',

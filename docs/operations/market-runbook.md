@@ -883,3 +883,11 @@ Then read the report before relying on the load, and use 7.6 for anything it fla
 
 `uv run --with pypdf --with pytest python -m pytest tests/ -q`. Plain `python -m pytest` fails here (no pytest in the venv). Many of the pure-function tests also run with a
 ten-line loop that calls each zero-argument `test_*` function; use that only for a quick check, never as the suite.
+
+### 7.9 Is every customer row in the research queue? (ACT-51, QA-REGISTER A39)
+
+The customers' sheets define the list of events we research (contract section 3). Saturday step 3a (and by hand, any time) runs `python scripts/customer_coverage.py` (read-only). A line
+`COVERAGE: n of m ... k are NOT` with k above zero means customer events are not on `Markets/<Market>_input.csv`. Fix: `python scripts/customer_coverage.py --propose <csv>`, read each proposed row
+(a same-named event in a different EDITION is not the same event: open the page), then `scripts/add_customer_rows.py --classified <csv>` (report first, then `--apply`), and when upstream gives the ids
+`scripts/stamp_given_ids.py`. An event the customer tracks that we must NOT research goes in `docs/operations/customer_not_researched.csv` (event_name, url, client, reason, ruled_by, ruled_on); only the
+operator adds to it.
