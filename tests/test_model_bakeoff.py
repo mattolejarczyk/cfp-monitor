@@ -32,7 +32,7 @@ def test_request_is_single_turn_and_blind():
     with pytest.raises(ValueError):
         B.assert_blind(msgs + [{"role": "assistant", "content": "earlier answer"}], "2027")
     with pytest.raises(ValueError):                                   # a date leaked into the header is refused
-        B.assert_blind([{"role": "system", "content": "s"}, {"role": "user", "content": "EVENT: X 2031\nEDITION YEAR TO REPORT: 2027\n\nPAGE TEXT:\nabc"}], "2027")
+        B.assert_blind([{"role": "system", "content": "s"}, {"role": "user", "content": "EVENT: X 2031-05-06\nEDITION YEAR TO REPORT: 2027\n\nPAGE TEXT:\nabc"}], "2027")
 
 
 def test_builder_signature_takes_no_key_value():
