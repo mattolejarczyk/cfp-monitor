@@ -1082,7 +1082,7 @@
       "wave": "W5",
       "step": "A",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Classify the 24 customer rows not in the queue and the 34 linked rows that disagree; propose adds and re-links; draft the note for ids",
       "detail": "customer_coverage.py (live, 2026-10-06) lists 24 customer rows ahead that are NOT in the research queue and 34 linked rows whose linked event disagrees on date (over 30 days) or place. Many are probably the NEXT or PREVIOUS EDITION of an event we research (Gartner Identity and Access Management 2027 vs our 2026, OWASP Global AppSec 2027/2028, Wild West Hackin Fest 2027, CES 2029, FIRST Con 2028); some are real gaps (ODSC West 2026-10-27, Nullcon Berlin 2026-11-05, SANS AI Cybersecurity Summit 2027-04-20, SXSW AI Track 2027-03-15, Google Cloud Next 2027 listed twice); World Summit AI Amsterdam starts 2026-10-07 (before research can help: belongs in docs/operations/customer_not_researched.csv with that reason, ruled by the operator). For EVERY one of the 24 and every one of the 34: class (A we hold it under another id, B we hold another edition, C not held: add, D over or not an event, E linked to the WRONG event: re-link), the page that shows it (edition dates read against the deadline: a quote on a page is not proof of the right edition), and for E the event it should link to. Output a classified CSV in the same columns as docs/qa/customer-unmatched-classified-20261003.csv plus a relink column, a draft note 36 asking upstream for the ids of the C rows, and a proposal CSV for add_customer_rows.py. No live file touched; the reviewer adds rows and applies re-links.",
@@ -1095,7 +1095,8 @@
         "ACT-51"
       ],
       "evidence": [
-        "2026-10-06 part 1 reviewed: 24 rows classified (A12 B7 C4 D1); 4 of the 8 proposed adds checked by me against their pages; the 8 added to the live input lists (blank ids, backups, log). Found: a new row's name matched an old seed sheet and would have taken the 2026 edition's id: renamed. Part 2 (the 34 linked rows that disagree) in progress."
+        "2026-10-06 part 1 reviewed: 24 rows classified (A12 B7 C4 D1); 4 of the 8 proposed adds checked by me against their pages; the 8 added to the live input lists (blank ids, backups, log). Found: a new row's name matched an old seed sheet and would have taken the 2026 edition's id: renamed. Part 2 (the 34 linked rows that disagree) in progress.",
+        "branch builder/wave5; commits 05bb5dd (24 not-in-queue rows) and eec53e3 (34 disagreeing rows, note 36, QA A41). Ran customer_coverage.py 2026-10-06 (24 / 34), add_customer_rows.py report-only on both proposals. Pages read for all but 4 rows; 17 adds proposed. No test added (data only)."
       ],
       "updated": "2026-10-06",
       "on_verify": {}
