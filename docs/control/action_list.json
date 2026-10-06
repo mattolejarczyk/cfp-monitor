@@ -32,6 +32,11 @@
       "id": "W5",
       "name": "Customer coverage and tool hardening",
       "goal": "Builder wave 3 (2026-10-05): every customer-tracked event gets classified and requested, our own sponsorship quotes get proven, the replacement-link tool becomes trustworthy, quote dashes and clean-checkout tests are fixed. No live change by the builder."
+    },
+    {
+      "id": "W6",
+      "name": "Cheaper and better models",
+      "goal": "Test low-cost and free models on OUR OWN measures (the person-confirmed answer key and the known-deadline finder test) before any of them is trusted with a job. Operator suggestion 2026-10-06."
     }
   ],
   "owners": {
@@ -709,7 +714,7 @@
       "state": "conditional",
       "cost": "$0.20 to $0.50",
       "title": "Two-model agreement for facts a person would otherwise check",
-      "detail": "Only if the shadow reports show disagreements worth catching.",
+      "detail": "Only if the shadow reports show disagreements worth catching. (2026-10-06: folded into the model bake-off ACT-56, role 2.)",
       "needs_you": "",
       "closes": [
         "C7"
@@ -1092,6 +1097,40 @@
       "evidence": [
         "2026-10-06 part 1 reviewed: 24 rows classified (A12 B7 C4 D1); 4 of the 8 proposed adds checked by me against their pages; the 8 added to the live input lists (blank ids, backups, log). Found: a new row's name matched an old seed sheet and would have taken the 2026 edition's id: renamed. Part 2 (the 34 linked rows that disagree) in progress."
       ],
+      "updated": "2026-10-06",
+      "on_verify": {}
+    },
+    {
+      "id": "ACT-56",
+      "wave": "W6",
+      "step": "D",
+      "owner": "builder",
+      "state": "todo",
+      "cost": "under 1 USD (free models cost nothing but have rate limits)",
+      "title": "Model bake-off on our own answer key: DeepSeek V4.1 Flash against Nemotron 3 Ultra, space-bunny-alpha and GPT-6 Luna (max)",
+      "detail": "Operator suggestion (2026-10-06): models he has had good results with or wants to try: DeepSeek V4.1 Flash (the current baseline is whichever model the existing runners are configured for: say which), Nemotron 3 Ultra, the free space-bunny-alpha, GPT-6 Luna (max). Price and intelligence-index figures are on https://artificialanalysis.ai/#price-and-cost (its tables load dynamically: read them in a real browser, record the figure and the date you read it, and check the exact model ids and prices on OpenRouter before you call anything; do not quote a price you did not see). ROLES to test: (1) the page READER inside the finder and the shadow reader (cheap, reads a page and returns a verbatim quote); (2) a SECOND OPINION on facts a person would otherwise check (ACT-34). Use the EXISTING harness: experiments/read_the_page_pass (pass_lib.accept, run.ask_with) and experiments/finder_reader_test (the 14 known live deadlines); the reader is scored ONLY on the person-confirmed tier of docs/qa/answer-key.csv (87 facts, 27 events at 2026-10-06; the pins), never on facts a model helped confirm (ACT-21). MEASURE, per model and role: precision first (wrong accepted must stay 0: the code-proven verbatim quote rule is unchanged), then found rate, run-to-run stability (3 runs as in ACT-23), cost per event and latency. Free models: record rate limits and any logging or training terms; our inputs are public web pages, never customer data or credentials: say so. Caps: about 0.30 USD per run and 1 USD in total through the existing runners; no new keys (an OpenAI key is operator-only: see ACT-57); nothing sent. Report a table and a recommendation per role (adopt, shadow for four Saturdays, drop). A model that raises the wrong-accepted count is dropped whatever it costs.",
+      "needs_you": "",
+      "closes": [],
+      "acceptance": "A table per model and role with precision, found rate, stability, cost and latency from runs you did; sources and dates for every price and index figure; a recommendation per role.",
+      "depends": [],
+      "evidence": [],
+      "updated": "2026-10-06",
+      "on_verify": {}
+    },
+    {
+      "id": "ACT-57",
+      "wave": "W6",
+      "step": "D",
+      "owner": "you",
+      "state": "needs-you",
+      "cost": "$0",
+      "title": "Decide how the ChatGPT subscription can be used for model tests",
+      "detail": "The operator has a ChatGPT subscription and wants to use its capacity for testing GPT-6 Luna (max). A subscription is normally for the ChatGPT app and its coding tools, not for API calls from our scheduled scripts, which need an API key and are billed separately. Options: (1) call the model through OpenRouter with the existing key if it is listed there (cheapest to set up, no new key); (2) a new OpenAI API key with a spend cap, created and stored by the operator (keys are operator-only); (3) use the ChatGPT subscription by hand for a small, one-off blind second read of the hardest rows (the operator pastes, no automation, no scheduled use). Needs the operator to say which of these his subscription actually allows and which he prefers.",
+      "needs_you": "Say which route to use for GPT-6 Luna (OpenRouter, a new capped OpenAI key, or by hand with the subscription), and whether a free model such as space-bunny-alpha is acceptable for public page text.",
+      "closes": [],
+      "acceptance": "A route recorded; the builder uses it in ACT-56.",
+      "depends": [],
+      "evidence": [],
       "updated": "2026-10-06",
       "on_verify": {}
     }
