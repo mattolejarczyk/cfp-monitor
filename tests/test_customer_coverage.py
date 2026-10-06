@@ -143,7 +143,9 @@ def test_missing_input_list_is_unknown_not_a_crash(tmp_path):
     assert res is None and "input list not found" in why
 
 
-def test_empty_seed_map_is_flagged_as_degraded(tmp_path):
+def test_empty_seed_map_is_flagged_as_degraded(tmp_path, monkeypatch):
+    # seed_roots also searches the WORKING DIRECTORY (the repo root holds real seed sheets on the live machine): look only in the fixture so the test is hermetic
+    monkeypatch.setattr(cc.identity, "seed_roots", lambda db: [Path(db).parent / "market_sheets"])
     res, degraded, _, _ = run(tmp_path, [{"name": "A", "start": "12/01/2026", "url": "https://a.example/"}], [], seed=())
     assert degraded and "seed map is empty" in degraded[0]
 

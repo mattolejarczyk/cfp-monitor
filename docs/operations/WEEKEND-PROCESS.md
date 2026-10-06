@@ -96,8 +96,8 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    copy, and records what each customer has done - submitted, declined, drafting. That way we do
    not spend research on events they have already acted on, and we never contradict their status.
    If this step fails, research still goes ahead. *(weekly_intake.py)*
-3a. **[Safety check]** **Checks that every customer row is in the research queue** *(added 2026-10-06; runs once the reviewer has applied the patch `docs/control/patches/ACT-51-run_monthly.ps1.patch` to
-   `run_monthly.ps1`)*. The customers' sheets define the job: every event on them is researched. This step compares each customer row that is still ahead with our research list
+3a. **[Safety check]** **Checks that every customer row is in the research queue** *(added 2026-10-06; APPLIED to `run_monthly.ps1` on 2026-10-06, so it runs from the first Saturday after; patch kept at
+   `docs/control/patches/ACT-51-run_monthly.ps1.patch`)*. The customers' sheets define the job: every event on them is researched. This step compares each customer row that is still ahead with our research list
    (`<Market>_input.csv`), by the event's permanent ID, or by its web address together with a start date within 30 days (the same website alone proves nothing: two events can share one), and prints a line `COVERAGE: <n> of <m> customer rows ahead of today are in the research queue; <k> are NOT`
    plus the first five names. Events that are over, rows the customer removed, rows marked as duplicates and rows the operator has ruled out (`docs/operations/customer_not_researched.csv`,
    only the operator adds to it) are left out and listed with the reason. A second list shows customer rows LINKED to an event whose date is more than 30 days off, or whose city differs, from what the customer wrote (a wrong link); it is reported, never changed. It runs before the research so a missing event can be added in time, but for now it only REPORTS and adds nothing.
