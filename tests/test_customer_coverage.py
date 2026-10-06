@@ -16,7 +16,7 @@ COLS = ["CONFERENCE", "CONFERENCE URL", "LOCATION", "START DATE", "EDITION", "Ma
 TODAY = "2026-10-06"
 
 
-def make_world(tmp_path, client_rows, cyb_inputs, util_inputs=(), seed=(("UP-1", "canon-1"),), ledger=()):
+def make_world(tmp_path, client_rows, cyb_inputs, util_inputs=(), seed=(("UP-1", "canon-1"),), ledger=(), facts=()):
     data = tmp_path / "data"
     (data / "market_sheets").mkdir(parents=True)
     with open(data / "market_sheets" / "cyber_seed.csv", "w", encoding="utf-8", newline="") as fh:
@@ -30,6 +30,9 @@ def make_world(tmp_path, client_rows, cyb_inputs, util_inputs=(), seed=(("UP-1",
     for r in client_rows:
         con.execute("insert into client_conferences values (?,?,?,?,?,?,?,?,?)", (r.get("client_key", "arnica"), r["name"], r.get("event_id"), r.get("url", ""), r.get("deadline", ""),
                                                                                 r.get("status", ""), r.get("loc", ""), r.get("start", ""), r.get("withdrawn", 0)))
+    con.execute("create table grounding_facts (event_id text, name text, url text, city text, start_date text)")
+    for f in facts:
+        con.execute("insert into grounding_facts values (?,?,?,?,?)", (f["event_id"], f.get("name", ""), f.get("url", ""), f.get("city", ""), f.get("start_date", "")))
     con.commit()
     con.close()
     md = tmp_path / "markets"
@@ -70,7 +73,7 @@ def test_a_row_with_no_input_row_is_reported_not_in_queue_with_summary_and_first
     rows = [{"name": f"Gone {i}", "url": f"https://g{i}.example/", "start": "12/01/2026"} for i in range(7)]
     res, _, _, _ = run(tmp_path, rows, [{"CONFERENCE": "Other", "CONFERENCE URL": "https://o.example/"}])
     lines = cc.summary_lines(res)
-    assert lines[0] == "COVERAGE: 0 of 7 customer rows ahead of 2026-10-06 are in the research queue; 7 are NOT"
+    assert lines[0] == "COVERAGE: 0 of 7 customer rows ahead of 2026-10-06 are in the research queue; 7 are NOT; 0 linked rows disagree on date or place"
     assert lines[1] == "COVERAGE NOT IN QUEUE: Gone 0; Gone 1; Gone 2; Gone 3; Gone 4; and 2 more"
 
 
@@ -152,7 +155,7 @@ def test_command_line_writes_reports_and_proposal_and_exits_zero(tmp_path):
     p = subprocess.run([sys.executable, str(ROOT / "scripts" / "customer_coverage.py"), "--db", str(db), "--markets-dir", str(md), "--ledger", str(led), "--today", TODAY,
                         "--out-dir", str(out), "--propose", str(prop)], capture_output=True, text=True)
     assert p.returncode == 0
-    assert "COVERAGE: 1 of 2 customer rows ahead of 2026-10-06 are in the research queue; 1 are NOT" in p.stdout
+    assert "COVERAGE: 1 of 2 customer rows ahead of 2026-10-06 are in the research queue; 1 are NOT; 0 linked rows disagree on date or place" in p.stdout
     j = json.loads((out / "coverage.json").read_text(encoding="utf-8"))
     assert [x["name"] for x in j["not_in_queue"]] == ["Out"] and (out / "coverage.md").read_text(encoding="utf-8").startswith("# Customer coverage")
     assert [r["conference"] for r in csv.DictReader(open(prop, encoding="utf-8"))] == ["Out"]
@@ -164,3 +167,36 @@ def test_a_past_date_with_a_later_year_in_their_url_is_not_called_over(tmp_path)
     res, _, _, _ = run(tmp_path, rows, [])
     assert [x["name"] for x in res["not_in_queue"]] == ["ECML"]
     assert [x["name"] for x in res["excluded"]] == ["Old"]
+
+
+HITB_ROW = {"name": "Hack In The Box", "event_id": "2026-hack-in-the-box-phuket", "url": "https://conference.hitb.org", "start": "04/29/2026", "loc": "Alila SCBD, Jakarta, Indonesia"}
+HITB_FACT = {"event_id": "2026-hack-in-the-box-phuket", "name": "Hack In The Box (HITB Security Conference 2026)", "url": "https://conference.hitb.org/", "city": "Phuket", "start_date": "2026-08-24"}
+
+
+def test_linked_but_disagrees_the_hack_in_the_box_case(tmp_path):
+    res, _, _, _ = run(tmp_path, [HITB_ROW], [{"CONFERENCE": "HITB Phuket", "CONFERENCE URL": "https://conference.hitb.org/", "START DATE": "8/24/2026", "EVENT_ID_CANON": "2026-hack-in-the-box-phuket"}],
+                       facts=[HITB_FACT])
+    assert len(res["disagree"]) == 1
+    d = res["disagree"][0]
+    assert d["customer_start"] == "2026-04-29" and d["event_start"] == "2026-08-24" and d["event_city"] == "Phuket" and "Jakarta" in d["customer_location"]
+    assert "date:" in d["why"] and "117 days" in d["why"] and "place:" in d["why"]
+    lines = cc.summary_lines(res)
+    assert lines[0].endswith("; 1 linked rows disagree on date or place") and lines[1] == "COVERAGE LINKED BUT DISAGREES: Hack In The Box"
+    assert "LINKED BUT DISAGREES (1)" in cc.markdown(res, []) and "Jakarta" in cc.markdown(res, [])
+
+
+def test_a_linked_row_that_agrees_is_not_listed(tmp_path):
+    row = dict(HITB_ROW, start="08/25/2026", loc="Movenpick Resort Bangtao, Phuket, Thailand")
+    res, _, _, _ = run(tmp_path, [row], [], facts=[HITB_FACT])
+    assert res["disagree"] == []
+
+
+def test_same_website_alone_is_not_in_the_queue_the_url_must_come_with_a_matching_date(tmp_path):
+    inputs = [{"CONFERENCE": "HITB Phuket", "CONFERENCE URL": "https://conference.hitb.org/", "START DATE": "11/20/2026"}]
+    unlinked = {"name": "Hack In The Box Jakarta", "url": "https://conference.hitb.org", "start": "03/05/2027", "loc": "Jakarta, Indonesia"}
+    res, _, _, _ = run(tmp_path, [unlinked], inputs)
+    assert [x["name"] for x in res["not_in_queue"]] == ["Hack In The Box Jakarta"]
+    res, _, _, _ = run(tmp_path / "b", [dict(unlinked, start="11/25/2026")], inputs)                 # within 30 days of the input row's date: the same event
+    assert len(res["in_queue"]) == 1 and "URL and date" in res["in_queue"][0]["why"]
+    res, _, _, _ = run(tmp_path / "c", [dict(unlinked, start="")], inputs)                           # no customer date: the date cannot disprove it
+    assert len(res["in_queue"]) == 1

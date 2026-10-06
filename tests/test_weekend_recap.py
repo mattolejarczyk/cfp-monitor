@@ -49,3 +49,9 @@ def test_no_flag_when_every_row_is_in_the_queue_and_plain_note_when_unknown_or_a
 def test_friday_awards_recap_has_no_customer_coverage_line():
     subject, text, _ = _recap(LOG_BAD, "friday")
     assert "FLAG" not in subject and "customer rows" not in text.lower()
+
+
+def test_recap_mentions_linked_rows_that_disagree_without_flagging_the_subject():
+    log = "COVERAGE: 20 of 20 customer rows ahead of 2026-10-10 are in the research queue; 0 are NOT; 4 linked rows disagree on date or place" + chr(10)
+    subject, text, _ = _recap(log)
+    assert "FLAG" not in subject and "4 customer row(s) are linked to an event that disagrees" in text

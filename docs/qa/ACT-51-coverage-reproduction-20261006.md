@@ -8,24 +8,25 @@ touched (the 2026-10-05 pre-change input lists were COPIED to a scratch folder).
 ```
 # TODAY: live database, live input lists
 python scripts/customer_coverage.py --out-dir <scratch>/today
-COVERAGE: 135 of 155 customer rows ahead of 2026-10-06 are in the research queue; 20 are NOT
+COVERAGE: 131 of 155 customer rows ahead of 2026-10-06 are in the research queue; 24 are NOT; 34 linked rows disagree on date or place
 
 # BEFORE: the same live database, the input lists as they were BEFORE the 2026-10-05 additions
 #   (Markets/Cybersecurity_input.pre-customerrows-20261005-193133.bak.csv = 73 rows,
 #    Markets/Utility_input.pre-customerrows-20261005-193133.bak.csv = 59 rows, copied to scratch)
 python scripts/customer_coverage.py --today 2026-10-05 --markets-dir <scratch copy> --propose <scratch>/repro.csv
-COVERAGE: 79 of 155 customer rows ahead of 2026-10-05 are in the research queue; 76 are NOT
+COVERAGE: 77 of 155 customer rows ahead of 2026-10-05 are in the research queue; 78 are NOT; 34 linked rows disagree on date or place
 ```
 
-So the number of customer rows ahead and not in the queue went from 76 (before the by-hand additions) to 20 (today).
+So the number of customer rows ahead and not in the queue went from 78 (before the by-hand additions) to 24 (today). (A first version, pairing by URL alone, said 76 and 20; the reviewer's rule that the same website is not a pairing without a matching date
+added 2 and 4: ECML PKDD, whose customer date 2026-09-07 is stale for the 2027 edition on our list, and a few same-site rows of other editions.)
 
 ## Reproduction against docs/qa/customer-unmatched-classified-20261003.csv (84 rows: 57 C, 23 D, 2 B, 2 A)
 
-Compared by name or normalised URL, the 76 rows of the BEFORE run against the ACT-44 classes:
+Compared by name or normalised URL, the 78 rows of the BEFORE run against the ACT-44 classes:
 
 | ACT-44 class | rows | found by the tool |
 |---|---|---|
-| C (not held, still ahead) | 57 | 57 (all) |
+| C (not held, still ahead) | 57 | 57 (all, re-run after the date rule) |
 | B | 2 | 1 (Google Cloud Next Las Vegas) |
 | A (matcher miss: held under another name) | 2 | 0 (correct: it-sa Expo & Congress, ACS Green Chemistry Institute are held, so not missing) |
 | D (event already over) | 23 | 0 (correct: excluded as over) |
@@ -34,7 +35,7 @@ One finding came out of the reproduction and was fixed with a test (`test_a_past
 URL is the 2027 edition (https://ecmlpkdd.org/2027/). The first version treated it as over and missed it; a past date whose own URL names a later year is now treated as ahead (a date is not proof
 of the right edition).
 
-## What the tool finds that the 2026-10-03 matcher did not (17 rows in the BEFORE run; 20 today)
+## What the tool finds that the 2026-10-03 matcher did not (about 19 rows in the BEFORE run; 24 not in the queue today)
 
 These customer rows were matched on 2026-10-03 (to a held event, rightly or not), so the ACT-44 unmatched list never showed them, but NO row of the research input lists has their id or URL.
 Six are linked to an event we hold in the database (Sustainable Aviation Futures (NAM), Clean Tech Forum, CO2-based Fuels and Chemicals Conference, ARPA-E Summit, European Biomass Conference &
@@ -51,3 +52,10 @@ reason in `coverage.md`.
   match); the tool cannot tell an edition from its page.
 * A row with no start date is treated as ahead.
 * The ledger `docs/operations/customer_not_researched.csv` is empty; only the operator adds to it.
+
+## LINKED BUT DISAGREES (added at the reviewer's request, 2026-10-06)
+
+34 customer rows today are linked to an event whose start date is more than 30 days from the customer's date, or whose city is not named in the customer's location. Hack In The Box is
+among them (customer: Alila SCBD, Jakarta, 2026-04-29; linked event 2026-hack-in-the-box-phuket, Phuket, 2026-08-24, 117 days and a different city). Most of the others are a customer row for
+one edition linked to the neighbouring year's event (for example Black Hat USA: customer 2027-07-31, linked event 2026-08-01). A few city hits are noise (the customer's text names a venue, the
+event's city is its suburb: Goyang vs KINTEX, Kissimmee vs Orlando). The list is report-only; a person decides which side is right.

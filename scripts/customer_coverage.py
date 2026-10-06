@@ -7,13 +7,16 @@ WHY. The customer's sheets (Arnica = Cybersecurity, Utility Global = Utility) de
 
 THE QUESTION, per customer row (table `client_conferences`, opened `file:...?mode=ro`): is it IN THE QUEUE?
   * linked row (event_id set): `identity.to_canonical(event_id)` equals `to_canonical(EVENT_ID_CANON)` of an input row of the client's market;
-  * any row, linked or not, whose normalised URL (stamp_given_ids.norm_url) equals the URL of an input row (the way a freshly added row with a blank id is found).
+  * any row, linked or not, whose normalised URL (stamp_given_ids.norm_url) equals the URL of an input row AND whose start date is within 30 days of that row's (the same website alone is
+    not a pairing; a missing date on either side cannot disprove it). This is the way a freshly added row with a blank id is found.
+LINKED BUT DISAGREES (a second section): a customer row linked to an event whose start date is more than 30 days from the customer's, or whose city is not named in the customer's location
+(Hack In The Box: customer Jakarta 2026-04-29, linked to the Phuket event of 2026-08-24). Counted in the summary line, listed with both sides. Report only.
 EXCLUSIONS, each counted and listed with its reason, never silent: the customer removed the row from their sheet (withdrawn_by_customer); the event is over (start date before today);
 the row is in the operator's ledger docs/operations/customer_not_researched.csv (only the operator adds to it); the only input row it matches is marked DUP_OF.
 A row with NO start date is treated as ahead (finding the date is what research is for).
 
 OUTPUT. Two lines on stdout, read by scripts/weekend_recap.py:
-    COVERAGE: <n> of <m> customer rows ahead of today are in the research queue; <k> are NOT
+    COVERAGE: <n> of <m> customer rows ahead of today are in the research queue; <k> are NOT; <j> linked rows disagree on date or place
     COVERAGE NOT IN QUEUE: <first five names>            (only when k > 0)
 or `COVERAGE: UNKNOWN - <why>` when the inputs cannot be read (degraded input is reported, never fatal). Plus coverage.json and coverage.md in
 runs_out/qa/<today>/. `--propose rows.csv` writes the rows NOT in the queue in the class-C layout of docs/qa/customer-unmatched-classified-20261003.csv, ready for
@@ -42,6 +45,7 @@ CLIENT_MARKET = {"arnica": "Cybersecurity", "utility-global": "Utility"}
 CLIENT_SHEET = {"arnica": "arnica", "utility-global": "utility"}           # the `sheet` column of the classified CSV
 PROPOSE_COLS = ["class", "sheet", "sheet_row", "conference", "customer_url", "customer_location", "customer_start", "customer_deadline", "our_event_id",
                 "page_confirmed", "page_start_date", "evidence_url", "evidence_sentence", "note"]
+DATE_TOLERANCE_DAYS = 30                                                    # a customer date and an event date further apart than this are different editions or places
 LEDGER_COLS = ["event_name", "url", "client", "reason", "ruled_by", "ruled_on"]
 
 
@@ -68,9 +72,26 @@ def build_queue(inputs: dict[str, list[dict]], up_to_canon: dict[str, str]) -> d
             if ident:
                 d[ids].setdefault(ident, name)
             if url:
-                d[urls].setdefault(url, name)
+                d[urls].setdefault(url, []).append((name, iso_of(r.get("START DATE") or "")))
         q[market] = d
     return q
+
+
+def days_apart(a: str, b: str) -> int | None:
+    try:
+        return abs((datetime.strptime(a, "%Y-%m-%d") - datetime.strptime(b, "%Y-%m-%d")).days)
+    except ValueError:
+        return None
+
+
+def url_match(url: str, start: str, table: dict) -> str:
+    """Name of an input row with this URL AND a matching date, else ''. The same website alone is NOT a pairing (Hack In The Box: the customer's Jakarta event hid behind our Phuket row on
+    conference.hitb.org). When either side has no date the date cannot disprove the pairing, so the URL stands."""
+    for name, their in table.get(url, []):
+        gap = days_apart(start, their) if start and their else None
+        if gap is None or gap <= DATE_TOLERANCE_DAYS:
+            return name
+    return ""
 
 
 def stale_date(start: str, url: str) -> bool:
@@ -99,20 +120,44 @@ def classify(row: dict, market: str, queue: dict, ledger: list[dict], today: str
     eid = identity.to_canonical((row.get("event_id") or "").strip(), up_to_canon)
     if eid and eid in q["ids"]:
         return "IN_QUEUE", "by event id", q["ids"][eid]
-    if url and url in q["urls"]:
-        return "IN_QUEUE", "by URL" + (" (its id is not on that input row)" if eid else " (unlinked row)"), q["urls"][url]
-    if (eid and eid in q["dup_ids"]) or (url and url in q["dup_urls"]):
-        return "EXCLUDED", "the only input row it matches is marked DUP_OF", q["dup_ids"].get(eid) or q["dup_urls"].get(url, "")
+    hit = url_match(url, start, q["urls"]) if url else ""
+    if hit:
+        return "IN_QUEUE", "by URL and date" + (" (its id is not on that input row)" if eid else " (unlinked row)"), hit
+    dup = q["dup_ids"].get(eid, "") or (url_match(url, start, q["dup_urls"]) if url else "")
+    if dup:
+        return "EXCLUDED", "the only input row it matches is marked DUP_OF", dup
     return "NOT_IN_QUEUE", "no input row has its event id or its URL", ""
 
 
-def check(rows: list[dict], inputs: dict[str, list[dict]], up_to_canon: dict[str, str], ledger: list[dict], today: str) -> dict:
+def disagreement(row: dict, fact: dict | None, today: str) -> str:
+    """Why the event a customer row is LINKED to is not the event the customer means ('' when it agrees or cannot be judged): its start date more than DATE_TOLERANCE_DAYS from the
+    customer's date, or its city not named in the customer's location. Past events are included: a wrong link is wrong whatever the date."""
+    if not fact or int(row.get("withdrawn_by_customer") or 0):
+        return ""
+    theirs, ours = iso_of(row.get("event_start_date") or ""), iso_of(fact.get("start_date") or "")
+    why = []
+    gap = days_apart(theirs, ours) if theirs and ours else None
+    if gap is not None and gap > DATE_TOLERANCE_DAYS:
+        why.append(f"date: customer {theirs}, linked event {ours} ({gap} days apart)")
+    city, loc = (fact.get("city") or "").strip().lower(), (row.get("location") or "").strip().lower()
+    if city and loc and city not in loc:
+        why.append(f"place: customer '{row.get('location')}', linked event city '{fact.get('city')}'")
+    return "; ".join(why)
+
+
+def check(rows: list[dict], inputs: dict[str, list[dict]], up_to_canon: dict[str, str], ledger: list[dict], today: str, facts: dict | None = None) -> dict:
     queue = build_queue(inputs, up_to_canon)
-    out = {"today": today, "in_queue": [], "not_in_queue": [], "excluded": []}
+    out = {"today": today, "in_queue": [], "not_in_queue": [], "excluded": [], "disagree": []}
     for r in rows:
         market = CLIENT_MARKET.get(r["client_key"])
         if market is None or market not in queue:
             continue
+        fact = (facts or {}).get(identity.to_canonical((r.get("event_id") or "").strip(), up_to_canon))
+        bad = disagreement(r, fact, today)
+        if bad:
+            out["disagree"].append({"client": r["client_key"], "market": market, "name": r["their_name"], "customer_url": r.get("their_url") or "", "customer_start": iso_of(r.get("event_start_date") or ""),
+                                    "customer_location": r.get("location") or "", "event_id": r.get("event_id") or "", "event_name": fact.get("name") or "", "event_start": iso_of(fact.get("start_date") or ""),
+                                    "event_city": fact.get("city") or "", "event_url": fact.get("url") or "", "why": bad})
         verdict, why, matched = classify(r, market, queue, ledger, today, up_to_canon)
         item = {"client": r["client_key"], "market": market, "name": r["their_name"], "url": r.get("their_url") or "", "start": iso_of(r.get("event_start_date") or ""),
                 "event_id": r.get("event_id") or "", "status": r.get("status") or "", "why": why, "input_row": matched, "_row": r}
@@ -122,7 +167,10 @@ def check(rows: list[dict], inputs: dict[str, list[dict]], up_to_canon: dict[str
 
 def summary_lines(res: dict) -> list[str]:
     n, k = len(res["in_queue"]), len(res["not_in_queue"])
-    lines = [f"COVERAGE: {n} of {n + k} customer rows ahead of {res['today']} are in the research queue; {k} are NOT"]
+    j = len(res.get("disagree", []))
+    lines = [f"COVERAGE: {n} of {n + k} customer rows ahead of {res['today']} are in the research queue; {k} are NOT; {j} linked rows disagree on date or place"]
+    if j:
+        lines.append("COVERAGE LINKED BUT DISAGREES: " + "; ".join(x["name"] for x in res["disagree"][:5]) + (f"; and {j - 5} more" if j > 5 else ""))
     if k:
         names = [x["name"] for x in res["not_in_queue"][:5]]
         lines.append("COVERAGE NOT IN QUEUE: " + "; ".join(names) + (f"; and {k - 5} more" if k > 5 else ""))
@@ -151,6 +199,15 @@ def markdown(res: dict, degraded: list[str]) -> str:
         else:
             L += ["None."]
         L += [""]
+    L += [f"## LINKED BUT DISAGREES ({len(res.get('disagree', []))})", "",
+          "Customer rows whose linked event starts more than 30 days from the customer's date, or in another city. Report only: a person decides which side is right.", ""]
+    if res.get("disagree"):
+        L += ["| client | customer row | customer date | customer place | linked event | event date | event city | why |", "|---|---|---|---|---|---|---|---|"]
+        L += [f"| {x['client']} | {x['name']} | {x['customer_start'] or '-'} | {x['customer_location'] or '-'} | {x['event_id']} | {x['event_start'] or '-'} | {x['event_city'] or '-'} | {x['why']} |"
+              for x in res["disagree"]]
+    else:
+        L += ["None."]
+    L += [""]
     by_how: dict[str, int] = {}
     for x in res["in_queue"]:
         by_how[x["why"]] = by_how.get(x["why"], 0) + 1
@@ -179,7 +236,15 @@ def run(db: Path, markets_dir: Path, ledger_path: Path, today: str) -> tuple[dic
     if not rows:
         return None, degraded, "client_conferences is empty"
     ledger = load_ledger(ledger_path)
-    return check(rows, inputs, up_to_canon, ledger, today), degraded, ""
+    facts = {}
+    try:
+        fc = sqlite3.connect(f"file:{str(db).replace(chr(92), '/')}?mode=ro", uri=True)
+        fc.row_factory = sqlite3.Row
+        facts = {r["event_id"]: dict(r) for r in fc.execute("select event_id, name, url, city, start_date from grounding_facts")}
+        fc.close()
+    except sqlite3.Error as e:
+        degraded.append(f"grounding_facts could not be read ({e}): 'linked but disagrees' not checked")
+    return check(rows, inputs, up_to_canon, ledger, today, facts), degraded, ""
 
 
 def write_reports(res: dict, degraded: list[str], out_dir: Path) -> None:

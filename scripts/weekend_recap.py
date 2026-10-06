@@ -51,7 +51,9 @@ def coverage_facts(log: str) -> dict | None:
     if line is None:
         return None
     m = re.search(r"are in the research queue; (\d+) are NOT", line)
-    return {"line": line, "not_in": int(m.group(1)) if m else None, "names": first(r"^COVERAGE NOT IN QUEUE: (.+)$", log, flags=re.M) or ""}
+    d = re.search(r"; (\d+) linked rows disagree", line)
+    return {"line": line, "not_in": int(m.group(1)) if m else None, "names": first(r"^COVERAGE NOT IN QUEUE: (.+)$", log, flags=re.M) or "",
+            "disagree": int(d.group(1)) if d else 0}
 
 
 def coverage_sentence(cov: dict | None) -> str:
@@ -59,10 +61,12 @@ def coverage_sentence(cov: dict | None) -> str:
         return "Customer rows in the research queue: the check did not run this week (no COVERAGE line in the log)."
     if cov["not_in"] is None:
         return f"Customer rows in the research queue: could not be checked ({cov['line']})."
+    note = (f" {cov['disagree']} customer row(s) are linked to an event that disagrees on date or place (report: runs_out/qa/<date>/coverage.md); nothing is changed."
+            if cov.get("disagree") else "")
     if cov["not_in"] == 0:
-        return f"Customer rows in the research queue: {cov['line']}."
+        return f"Customer rows in the research queue: {cov['line']}.{note}"
     return (f"FLAG - customer rows NOT in the research queue: {cov['line']}. Not researched this week: {cov['names']}. "
-            f"Run scripts/customer_coverage.py --propose and add them (scripts/add_customer_rows.py).")
+            f"Run scripts/customer_coverage.py --propose and add them (scripts/add_customer_rows.py).{note}")
 
 
 def parse_saturday(log: str) -> dict:

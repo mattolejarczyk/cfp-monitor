@@ -98,9 +98,9 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    If this step fails, research still goes ahead. *(weekly_intake.py)*
 3a. **[Safety check]** **Checks that every customer row is in the research queue** *(added 2026-10-06; runs once the reviewer has applied the patch `docs/control/patches/ACT-51-run_monthly.ps1.patch` to
    `run_monthly.ps1`)*. The customers' sheets define the job: every event on them is researched. This step compares each customer row that is still ahead with our research list
-   (`<Market>_input.csv`), by the event's permanent ID and by its web address, and prints a line `COVERAGE: <n> of <m> customer rows ahead of today are in the research queue; <k> are NOT`
+   (`<Market>_input.csv`), by the event's permanent ID, or by its web address together with a start date within 30 days (the same website alone proves nothing: two events can share one), and prints a line `COVERAGE: <n> of <m> customer rows ahead of today are in the research queue; <k> are NOT`
    plus the first five names. Events that are over, rows the customer removed, rows marked as duplicates and rows the operator has ruled out (`docs/operations/customer_not_researched.csv`,
-   only the operator adds to it) are left out and listed with the reason. It runs before the research so a missing event can be added in time, but for now it only REPORTS and adds nothing.
+   only the operator adds to it) are left out and listed with the reason. A second list shows customer rows LINKED to an event whose date is more than 30 days off, or whose city differs, from what the customer wrote (a wrong link); it is reported, never changed. It runs before the research so a missing event can be added in time, but for now it only REPORTS and adds nothing.
    It can never stop the research. The Saturday recap repeats the line and puts FLAG in its subject when any row is missing (target: none). *(customer_coverage.py)*
 4. **[Update]** **Adds permanent IDs to the research list.** Each event on the list is tagged with its
    permanent ID, so a renamed event cannot turn into a duplicate. An event that cannot be matched
