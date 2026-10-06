@@ -1,0 +1,38 @@
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna#1:read::European Carbon Capture, Utilization & S::20", "seconds": 48.0, "tokens_used": 16642, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-proof-1:read::European Carbon Capture, Utilization & S::20", "seconds": 16.0, "tokens_used": 17285, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::European Carbon Capture, Utilization & S::20", "seconds": 28.9, "tokens_used": 16200, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::Carbon Capture USA 2026::2026-carbon-capture", "seconds": 12.6, "tokens_used": 17685, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::Sustainable Fuels Global Summit 2027 (SA::20", "seconds": 13.2, "tokens_used": 17302, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::Carbon Capture Technology Expo MENA 2026::20", "seconds": 15.4, "tokens_used": 17125, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::Future Fuels MENA Summit 2026::2026-future-f", "seconds": 8.4, "tokens_used": 15509, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::Global Energy Show Canada 2027::2027-global-", "seconds": 16.5, "tokens_used": 11398, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:deadline::2027-global-energy-show-canada-calgary", "seconds": 13.0, "tokens_used": 17697, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::CarbonZero Global Conference & Exhibitio::20", "seconds": 27.3, "tokens_used": 6806, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::CES 2027::2027-ces-las-vegas", "seconds": 12.3, "tokens_used": 10912, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::Nullcon Goa 2027::2026-nullcon-goa-bambolim", "seconds": 24.1, "tokens_used": 4749, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:deadline::2026-nullcon-goa-bambolim", "seconds": 9.3, "tokens_used": 5661, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::German OWASP Day 2026::2026-german-owasp-day", "seconds": 19.8, "tokens_used": 17270, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::Carbon Capture Technology Expo MENA 2027::20", "seconds": 19.2, "tokens_used": 9990, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:read::ODSC East 2027 (Open Data Science Confer::20", "seconds": 23.6, "tokens_used": 7277, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:trap::T01::2026", "seconds": 7.9, "tokens_used": 4700, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:trap::T02::2027", "seconds": 13.3, "tokens_used": 5368, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:trap::T02::2026", "seconds": 14.7, "tokens_used": 2875, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-1:trap::T09::2027", "seconds": 9.9, "tokens_used": 2541, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::European Carbon Capture, Utilization & S::20", "seconds": 23.3, "tokens_used": 18408, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::Carbon Capture USA 2026::2026-carbon-capture", "seconds": 10.8, "tokens_used": 18286, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::Sustainable Fuels Global Summit 2027 (SA::20", "seconds": 16.2, "tokens_used": 17646, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::Carbon Capture Technology Expo MENA 2026::20", "seconds": 13.2, "tokens_used": 17021, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::Future Fuels MENA Summit 2026::2026-future-f", "seconds": 9.3, "tokens_used": 15658, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::Global Energy Show Canada 2027::2027-global-", "seconds": 20.2, "tokens_used": 18650, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:deadline::2027-global-energy-show-canada-calgary", "seconds": 11.0, "tokens_used": 18350, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::CarbonZero Global Conference & Exhibitio::20", "seconds": 22.9, "tokens_used": 17766, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::CES 2027::2027-ces-las-vegas", "seconds": 27.5, "tokens_used": 5983, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::Nullcon Goa 2027::2026-nullcon-goa-bambolim", "seconds": 10.4, "tokens_used": 17237, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:deadline::2026-nullcon-goa-bambolim", "seconds": 12.2, "tokens_used": 5386, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::German OWASP Day 2026::2026-german-owasp-day", "seconds": 24.6, "tokens_used": 19928, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::Carbon Capture Technology Expo MENA 2027::20", "seconds": 29.1, "tokens_used": 1257, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:read::ODSC East 2027 (Open Data Science Confer::20", "seconds": 18.5, "tokens_used": 5620, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:trap::T01::2026", "seconds": 11.9, "tokens_used": 2023, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:trap::T02::2027", "seconds": 21.7, "tokens_used": 2540, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:trap::T02::2026", "seconds": 16.3, "tokens_used": 2309, "returncode": 0}
+{"ts": "2026-10-06", "model": "gpt-6-sol", "effort": "max", "tag": "sol-20261006-1:trap::T09::2027", "seconds": 13.1, "tokens_used": 4314, "returncode": 0}

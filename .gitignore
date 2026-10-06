@@ -71,3 +71,4 @@ experiments/purpose_audit/narrow_test/
 experiments/purpose_audit/sandbox_2026*/
 experiments/purpose_audit/answer_key_pages.json
 experiments/read_the_page_pass/pages.json
+experiments/model_bakeoff/pages/
