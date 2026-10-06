@@ -615,7 +615,9 @@
       ],
       "acceptance": "Grounded rate and stub count read; load_awards.md clean or fixed; refresh plan result matches the rehearsal.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "Watch on Friday 10-09: the first awards import runs check_invariants over the WHOLE database; it was clean on 2026-10-05 night after the World of Concrete 2028 row was completed. If check 7 or 2 fails, a hand-loaded row is the cause."
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "E3": {
@@ -642,7 +644,9 @@
       ],
       "acceptance": "The load ran unattended; trend read; shadow report read.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "Watch on Saturday 10-10: (1) the 58 stamped customer events (docs/operations/given_ids.csv) must be created as NEW events by the import (never proved end to end: ids not yet in the database); (2) stamp_input_ids must report kept 115 + 2 DUP_OF (Cybersecurity) and kept 74 (Utility); (3) World of Concrete 2028 is researched and loads onto its id; (4) about 56 extra grounded calls (estimate 4 to 5 USD); (5) rows the gate rejects are held back one by one by the row rule."
+      ],
       "updated": "2026-10-05",
       "on_verify": {
         "E4": {
@@ -744,7 +748,7 @@
       "wave": "W4",
       "step": "D",
       "owner": "you",
-      "state": "needs-you",
+      "state": "review",
       "cost": "$0",
       "title": "Duplicates and discontinuations without evidence: a note for upstream (draft)",
       "detail": "SAF Europe, Future Fuels, the German OWASP pair, the Indonesia pair. Each needs evidence or a ruling.",
@@ -758,7 +762,8 @@
         "ACT-02"
       ],
       "evidence": [
-        "Draft written 2026-10-05 after checking each page; one draft claim (Future Fuels not findable) was wrong on re-check and was rewritten before it went anywhere."
+        "Draft written 2026-10-05 after checking each page; one draft claim (Future Fuels not findable) was wrong on re-check and was rewritten before it went anywhere.",
+        "Note 29 sent by the operator 2026-10-05; upstream answered. SAF Europe: page https://www.safeusummit.com/ states 13-14 April 2027, Rotterdam (verified by me; the merge claim is unverified). Future Fuels MENA 2026: online 1-2 April 2026 per the ISCC listing; organiser site returns 404. World of Concrete: our error (note 29b), 2027 row stays Closed, 2028 row minted and loaded. OPEN: Hack In The Box Phuket 2026 - upstream says Not Held / Cancelled but its only evidence is that the organiser site lists no 2026 edition; the operator may rule it not held."
       ],
       "updated": "2026-10-05",
       "on_verify": {}
@@ -989,6 +994,48 @@
       "acceptance": "Every customer row either matches an event in the queue or is listed with a reason; a row the customer adds appears in the next Saturday recap and in the queue within one weekly cycle; the process document says the cycle starts with the customer sheets.",
       "depends": [
         "ACT-44"
+      ],
+      "evidence": [
+        "2026-10-05 night, first steps done by hand: 56 customer events added to the research input lists (scripts/add_customer_rows.py), upstream's 59 ids stamped by URL (scripts/stamp_given_ids.py) with the ledger docs/operations/given_ids.csv so Saturday's stamping step keeps them (before this fix it wiped stamps on events not yet in the database); 3 more events added (Google Cloud Next 2027, CDAO Defense & Security 2027, World of Concrete 2028); World of Concrete 2028 loaded to the live DB and completed (key_year set with the operator's approval, seed row appended; live invariants all ok). STILL TO BUILD: the weekly route (new unmatched customer rows -> queue automatically) and the Saturday recap line 'customer rows not in the queue' (target 0)."
+      ],
+      "updated": "2026-10-05",
+      "on_verify": {}
+    },
+    {
+      "id": "ACT-52",
+      "wave": "W5",
+      "step": "A",
+      "owner": "me",
+      "state": "todo",
+      "cost": "$0",
+      "title": "Apply upstream's note 32 rulings: Industrial Net Zero duplicate pair and the new 2026 row, AFPM blank row",
+      "detail": "Upstream ruled (2026-10-05): 2026-industrial-net-zero-conference-sydney (holds the 2027 edition, start 2027-10-12) SURVIVES; 2027-industrial-net-zero-conference-tbd is DUP_OF it; the 2026 edition (13-14 Oct 2026) is a new row 2026-industrial-net-zero-conference-sydney-speaking (full 45-field row delivered); AFPM 2027 city and location cleared to blank. TO DO, verifying each claim first (check_delivery_ids, accept_delivery with the network, read the pages): (1) our Utility input row for the 2027 edition is stamped -tbd and is the one researched: restamp it to the survivor id and mark the old row DUP_OF (scripts/stamp_given_ids.py and the DUP_OF route; the DB has both rows, retire the duplicate by held_rows as for the 10-05 pairs, never delete); (2) gate and load the 2026 INZ row (it starts 2026-10-13: low value, add only if it passes) and add it to the input list with the ledger; (3) take upstream's AFPM row (blank dates and city) and blank the venue on our input row; (4) record the ids in docs/operations/given_ids.csv. Their STATUS Open on an event 8 days away needs a page that shows a call.",
+      "needs_you": "",
+      "closes": [
+        "A14"
+      ],
+      "acceptance": "Both Industrial Net Zero 2027 rows reconcile to one survivor with the duplicate declared; the 2026 row loads or is declined with a reason; invariants all ok; edits logged.",
+      "depends": [
+        "ACT-51"
+      ],
+      "evidence": [],
+      "updated": "2026-10-05",
+      "on_verify": {}
+    },
+    {
+      "id": "ACT-53",
+      "wave": "W5",
+      "step": "D",
+      "owner": "you",
+      "state": "needs-you",
+      "cost": "$0",
+      "title": "Decide the sponsorship rule: link only at the gate (current) or link plus quote",
+      "detail": "114 Yes rows have a SPONSOR_URL and none a quote. Enforcing the quote at the DELIVERY gate would hold back almost every live row every Saturday (112 of 125 say Yes), so the gate stays link only (contract R20a: the quote is ours to extract). Recommendation to discuss: (1) keep the gate link only and change the contract sentence to describe the state after OUR extraction; (2) run scripts/extract_sponsor_quotes.py with Chrome up (ACT-40) and put the share of Yes rows with a proven quote on the board; (3) a quote-less Yes shows on the page as unconfirmed (badge text, customer-facing wording: your call). The operator asked to sync on this later.",
+      "needs_you": "Sync on the sponsorship rule (three options in the detail); recommendation is 1, 2 and 3.",
+      "closes": [],
+      "acceptance": "A decision recorded in docs/operations/OPERATOR-RULINGS.md.",
+      "depends": [
+        "ACT-40"
       ],
       "evidence": [],
       "updated": "2026-10-05",
