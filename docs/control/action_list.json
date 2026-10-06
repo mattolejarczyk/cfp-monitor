@@ -1139,7 +1139,8 @@
       "acceptance": "A route recorded; the builder uses it in ACT-56.",
       "depends": [],
       "evidence": [
-        "RULED 2026-10-06 by operator: GPT-6 Luna (max) via his ChatGPT subscription FIRST (must be set to max). If that fails or usage is exhausted, REPORT THE EXACT REASON to him; only then the existing OpenRouter key (no new keys). Free models (space-bunny-alpha) OK for public page text only."
+        "RULED 2026-10-06 by operator: GPT-6 Luna (max) via his ChatGPT subscription FIRST (must be set to max). If that fails or usage is exhausted, REPORT THE EXACT REASON to him; only then the existing OpenRouter key (no new keys). Free models (space-bunny-alpha) OK for public page text only.",
+        "2026-10-06 operator: ChatGPT Plus via Codex CLI verified (login ok, call returned READY, 5h limit 100%, weekly 99% resets 2026-10-09 18:30). Models on his /model list: gpt-6-astra (default, expensive), gpt-6-sol, gpt-6-luna. GPT-6.1 Sol NOT listed. Test order: gpt-6-sol then gpt-6-luna at highest accepted effort (max if accepted; else next highest); gpt-6-astra ONLY if both inadequate. Pass -m and effort explicitly; do not change his default (gpt-6-sol medium). On any failure report exact error before OpenRouter fallback."
       ],
       "updated": "2026-10-06",
       "on_verify": {}
