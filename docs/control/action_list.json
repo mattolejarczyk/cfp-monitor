@@ -1116,7 +1116,7 @@
       "wave": "W6",
       "step": "D",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "under 1 USD (free models cost nothing but have rate limits)",
       "title": "Model bake-off on our own answer key: DeepSeek V4.1 Flash against Nemotron 3 Ultra, space-bunny-alpha and GPT-6 Luna (max)",
       "detail": "Operator suggestion (2026-10-06): models he has had good results with or wants to try: DeepSeek V4.1 Flash (the current baseline is whichever model the existing runners are configured for: say which), Nemotron 3 Ultra, the free space-bunny-alpha, GPT-6 Luna (max). Price and intelligence-index figures are on https://artificialanalysis.ai/#price-and-cost (its tables load dynamically: read them in a real browser, record the figure and the date you read it, and check the exact model ids and prices on OpenRouter before you call anything; do not quote a price you did not see). ROLES to test: (1) the page READER inside the finder and the shadow reader (cheap, reads a page and returns a verbatim quote); (2) a SECOND OPINION on facts a person would otherwise check (ACT-34). Use the EXISTING harness: experiments/read_the_page_pass (pass_lib.accept, run.ask_with) and experiments/finder_reader_test (the 14 known live deadlines); the reader is scored ONLY on the person-confirmed tier of docs/qa/answer-key.csv (87 facts, 27 events at 2026-10-06; the pins), never on facts a model helped confirm (ACT-21). MEASURE, per model and role: precision first (wrong accepted must stay 0: the code-proven verbatim quote rule is unchanged), then found rate, run-to-run stability (3 runs as in ACT-23), cost per event and latency. Free models: record rate limits and any logging or training terms; our inputs are public web pages, never customer data or credentials: say so. Caps: about 0.30 USD per run and 1 USD in total through the existing runners; no new keys (an OpenAI key is operator-only: see ACT-57); nothing sent. Report a table and a recommendation per role (adopt, shadow for four Saturdays, drop). A model that raises the wrong-accepted count is dropped whatever it costs.",
@@ -1124,7 +1124,9 @@
       "closes": [],
       "acceptance": "A table per model and role with precision, found rate, stability, cost and latency from runs you did; sources and dates for every price and index figure; a recommendation per role.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "2026-10-06 builder wave6 merged. Reader role, 21 person-confirmed facts: DeepSeek V4.1 Flash, deepseek-chat, Nemotron 3 Ultra: 3 runs each, 1 wrong-accepted per run (same item: German OWASP Day start, rule gap not model gap), found ~16/21. Luna max 1 run found 17; Sol max 1 run found 15. space-bunny-alpha: HTTP 404 no endpoint (untestable). Second opinion: 0 conflicts. Registry + compare tool + models.json for adding models. Recommendations: keep DeepSeek V4.1 Flash; shadow Luna (decision for operator); drop Nemotron, Sol; second opinion drop. Caveats: 6 of 20 pinned events unreadable by plain fetch; small sample."
+      ],
       "updated": "2026-10-06",
       "on_verify": {}
     },
@@ -1133,17 +1135,18 @@
       "wave": "W6",
       "step": "D",
       "owner": "you",
-      "state": "todo",
+      "state": "verified",
       "cost": "$0",
       "title": "Decide how the ChatGPT subscription can be used for model tests",
       "detail": "The operator has a ChatGPT subscription and wants to use its capacity for testing GPT-6 Luna (max). A subscription is normally for the ChatGPT app and its coding tools, not for API calls from our scheduled scripts, which need an API key and are billed separately. Options: (1) call the model through OpenRouter with the existing key if it is listed there (cheapest to set up, no new key); (2) a new OpenAI API key with a spend cap, created and stored by the operator (keys are operator-only); (3) use the ChatGPT subscription by hand for a small, one-off blind second read of the hardest rows (the operator pastes, no automation, no scheduled use). Needs the operator to say which of these his subscription actually allows and which he prefers.",
-      "needs_you": "Say which route to use for GPT-6 Luna (OpenRouter, a new capped OpenAI key, or by hand with the subscription), and whether a free model such as space-bunny-alpha is acceptable for public page text.",
+      "needs_you": "",
       "closes": [],
       "acceptance": "A route recorded; the builder uses it in ACT-56.",
       "depends": [],
       "evidence": [
         "RULED 2026-10-06 by operator: GPT-6 Luna (max) via his ChatGPT subscription FIRST (must be set to max). If that fails or usage is exhausted, REPORT THE EXACT REASON to him; only then the existing OpenRouter key (no new keys). Free models (space-bunny-alpha) OK for public page text only.",
-        "2026-10-06 operator: ChatGPT Plus via Codex CLI verified (login ok, call returned READY, 5h limit 100%, weekly 99% resets 2026-10-09 18:30). Models on his /model list: gpt-6-astra (default, expensive), gpt-6-sol, gpt-6-luna. GPT-6.1 Sol NOT listed. Test order: gpt-6-sol then gpt-6-luna at highest accepted effort (max if accepted; else next highest); gpt-6-astra ONLY if both inadequate. Pass -m and effort explicitly; do not change his default (gpt-6-sol medium). On any failure report exact error before OpenRouter fallback."
+        "2026-10-06 operator: ChatGPT Plus via Codex CLI verified (login ok, call returned READY, 5h limit 100%, weekly 99% resets 2026-10-09 18:30). Models on his /model list: gpt-6-astra (default, expensive), gpt-6-sol, gpt-6-luna. GPT-6.1 Sol NOT listed. Test order: gpt-6-sol then gpt-6-luna at highest accepted effort (max if accepted; else next highest); gpt-6-astra ONLY if both inadequate. Pass -m and effort explicitly; do not change his default (gpt-6-sol medium). On any failure report exact error before OpenRouter fallback.",
+        "Route used and proven in ACT-56: Codex CLI on the ChatGPT Plus subscription, gpt-6-sol and gpt-6-luna at effort max, 433,374 subscription tokens, no Codex errors."
       ],
       "updated": "2026-10-06",
       "on_verify": {}
