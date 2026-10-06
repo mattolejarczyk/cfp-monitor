@@ -1,0 +1,29 @@
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -212,6 +212,26 @@
+         Write-Host "  Research continues. Treat customer STATUS as possibly out of date." -ForegroundColor Yellow
+     }
+     Write-Host ""
+ }
+ 
++# ------------------------------------------------- STEP 0a0: CUSTOMER COVERAGE (2026-10-06, ACT-51) ----
++# The customer's sheets define the job: EVERY event on them is researched. Right after the intake and BEFORE the research (so a missing event can be added before research runs), ask
++# scripts/customer_coverage.py whether every customer row ahead of today is on the research input list. READ-ONLY: this week it only REPORTS (the COVERAGE: lines land in the log,
++# weekend_recap.py puts them in the recap and FLAGS the subject when any row is missing); it adds nothing. Like the intake it can never stop the research: wrapped, exit code ignored.
++# Not run for an Awards-only run (no customer sheet) or -WhatIf.
++if ($liveMarkets.Count -gt 0 -and -not $WhatIf) {
++    $covPy  = "C:\Users\matts\cfp-monitor\.venv\Scripts\python.exe"
++    $covPy_ = "C:\Users\matts\cfp-monitor\scripts\customer_coverage.py"
++    try {
++        if ((Test-Path $covPy) -and (Test-Path $covPy_)) {
++            & $covPy $covPy_
++        } else {
++            Write-Host "COVERAGE: UNKNOWN - interpreter or script not found ($covPy / $covPy_)."
++        }
++    } catch {
++        Write-Host "COVERAGE: UNKNOWN - $($_.Exception.Message)"
++    }
++    Write-Host ""
++}
++
+ # ------------------------------------------------------- STEP 0a: PERMANENT IDS (2026-09-27) ----
