@@ -767,7 +767,7 @@
       "wave": "W5",
       "step": "B",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Make the replacement-link tool safe to trust, then hand back only person-readable results",
       "detail": "ACT-24 ran on 77 links and was not fit to send: 25 are past editions, only 3 of 22 proposals were call pages, and the SANS CDI proposal was another event deadline (the page Oct 19 belongs to the CTI and OSINT summits). Fix the tool so a proposal is only made when the page names THIS event next to the date (a generic speak-at-a-summit page covering several events is a LEAD, not a proposal), drop proposals of the wrong kind (an awards page, a PhD programme page for an event), and re-run on the same 77 links. Report precision by reading each PROPOSED page yourself.",
@@ -779,7 +779,9 @@
       "depends": [
         "ACT-24"
       ],
-      "evidence": [],
+      "evidence": [
+        "builder/wave3: PARTIAL. propose_replacements: names_this_event + wrong_kind, SANS CDI false proposal reproduced by test (now LEAD), 13 tests pass. Re-run on the 77 links NOT completed: 1 of 42 events read, its PROPOSED row (ShowStoppers contact-sales page, disclaimer only) is a weak proposal; precision not measured, no PROPOSED page read against its page by me beyond that one. Reviewer: re-run with Chrome CDP up and read every PROPOSED row; consider requiring the event name in a heading/sentence about the event, not a disclaimer."
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
