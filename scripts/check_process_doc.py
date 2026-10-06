@@ -53,6 +53,7 @@ DESCRIBED = {
     "scripts/narrow_overlay.py": ROOT / "scripts" / "narrow_overlay.py",
     "scripts/start_date_arbiter.py": ROOT / "scripts" / "start_date_arbiter.py",
     "scripts/pinned_rows.py": ROOT / "scripts" / "pinned_rows.py",
+    "scripts/customer_coverage.py": ROOT / "scripts" / "customer_coverage.py",
 }
 
 

@@ -96,6 +96,12 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    copy, and records what each customer has done - submitted, declined, drafting. That way we do
    not spend research on events they have already acted on, and we never contradict their status.
    If this step fails, research still goes ahead. *(weekly_intake.py)*
+3a. **[Safety check]** **Checks that every customer row is in the research queue** *(added 2026-10-06; runs once the reviewer has applied the patch `docs/control/patches/ACT-51-run_monthly.ps1.patch` to
+   `run_monthly.ps1`)*. The customers' sheets define the job: every event on them is researched. This step compares each customer row that is still ahead with our research list
+   (`<Market>_input.csv`), by the event's permanent ID and by its web address, and prints a line `COVERAGE: <n> of <m> customer rows ahead of today are in the research queue; <k> are NOT`
+   plus the first five names. Events that are over, rows the customer removed, rows marked as duplicates and rows the operator has ruled out (`docs/operations/customer_not_researched.csv`,
+   only the operator adds to it) are left out and listed with the reason. It runs before the research so a missing event can be added in time, but for now it only REPORTS and adds nothing.
+   It can never stop the research. The Saturday recap repeats the line and puts FLAG in its subject when any row is missing (target: none). *(customer_coverage.py)*
 4. **[Update]** **Adds permanent IDs to the research list.** Each event on the list is tagged with its
    permanent ID, so a renamed event cannot turn into a duplicate. An event that cannot be matched
    with certainty is left untagged and held back later - never guessed. An id that UPSTREAM GAVE US for a brand-new event (recorded in `docs/operations/given_ids.csv` when we stamped it,
@@ -159,7 +165,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    more rows since the previous load is flagged. The result is filed as `runs_out\qa\<Monday>\load.md`. *(post_load_qa.py, failure_steps.py)*
 9. **[Publish]** **Approves the files for Monday** and records the approval. *(promote_delivery.py)*
 10. **[Report]** **Emails the Saturday recap** - worked or failed, the results table, "Did the load lose anything?" with every flag, and what it means for
-   Sunday and Monday. Sent on failure too; the subject reads "WORKED - n to check" when there are flags. *(weekend_recap.py saturday)*
+   Sunday and Monday. Sent on failure too; the subject reads "WORKED - n to check" when there are flags, and carries "FLAG: n customer row(s) not in the research queue" when step 3a found any. *(weekend_recap.py saturday)*
 10b. **[Experiment, changes nothing]** **Shadow reader of the other facts (added 2026-10-05).** Just before the finder, after the load and the recap. For every live row it reads the event's own pages (at most 3) with a cheap model and accepts a start date, city, country, venue, organizer or format only when a verbatim sentence on the page states it, then counts, per field, where that agrees with what we ship, differs, or is something we do not have. It writes nothing to the database or the approved files, stops at 45 minutes or 0.60 USD, skips itself if the job has already run 4.6 hours, and never fails the run. A difference is a list for a person, not yet an accuracy figure. Files: `runs_out\shadow\shadow_reader_<stamp>.md/.csv/.json`, one short email. *(shadow_reader.py --markets ...)*
 11. **[Experiment, changes nothing]** **Shadow run of the real-URL deadline finder (added 2026-10-04).** Last, after the load and the recap, so it can delay neither. For every live row (Open or Upcoming, about 40) it reads the event's own home page, sitemap and menu, picks the pages that look like the call, reads each with a cheap model and accepts a deadline only if a verbatim sentence on the page states it. It sets that next to what we ship and emails a short note: how many agree, and every place the pages state a different date (look at these) or a date where we ship none. It writes nothing to the database or the approved files, takes about 2 to 3 minutes per event (about 40 events, so roughly 100 minutes), stops at 120 minutes or 0.60 USD, skips itself if the job has already run 4.25 hours, and never fails the run. Files: `runs_out\shadow\shadow_<stamp>.md/.csv/.json`. Purpose: collect Saturday-by-Saturday evidence on whether it should become a second opinion or a fallback. *(shadow_finder.py)*
 
@@ -239,6 +245,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-06** - new Saturday step 3a: a check that every event on the two customer sheets is on the research list (`customer_coverage.py`), reported in the recap; report only for now (ACT-51).
 - **2026-09-28** - Monday registers this week's links before re-reading them, and results are filed under every research ID (renamed events had lost their results).
 - **2026-09-28** - Friday weekly awards research added, same machinery as Saturday. Monday uses the approved awards file. Customer pages hide Closed rows by default in the four work-queue views.
 - **2026-09-28** - Monday's review list separates changes to already-past dates from what needs a look, and a copy is saved beside the published pages.
