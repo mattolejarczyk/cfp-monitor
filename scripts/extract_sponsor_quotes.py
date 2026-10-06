@@ -45,7 +45,7 @@ locate_verbatim = _ec.locate_verbatim
 sentence_with = _ec.sentence_with
 
 from src.cfp_monitor.config import Settings          # noqa: E402
-from src.cfp_monitor.verify import fetch_text        # noqa: E402
+from src.cfp_monitor.verify import fetch_page_text   # noqa: E402  (ACT-40: plain fetch, then the real-browser render for a wall, like the weekly verifier)
 
 SELECT_INSTRUCTION = """You are shown the text of a conference's sponsorship or prospectus page.
 
@@ -67,6 +67,13 @@ NOT_SPEAKING = re.compile(
     r"\b(booth|stand|exhibit\w*|floor space|delegate pass|attendee pass|table top|tabletop)\b",
     re.I)
 SPEAKING = re.compile(r"\b(speak\w*|present\w*|session|keynote|panel|thought leader\w*)\b", re.I)
+# ACT-40 (2026-10-06): a verbatim sentence can still say the OPPOSITE of the claim. Apres-Cyber Slopes Summit 2027 (SPONSOR_REQUIRED=Yes) came back with
+# "Does sponsorship include a speaking session? No. All technical presentations are selected through the independent Call for Papers". Such a sentence is not stored.
+DENIES_SPEAKING = re.compile(
+    r"(speaking|session|slot|presentation)s?\??\s*(no\b|not included)"
+    r"|sponsorship\s+(does\s+not|doesn't|will\s+not|cannot|can't)\s+(include|guarantee|buy|secure|provide)"
+    r"|(not|never)\s+(guarantee|include|buy|secure)\w*\s+(a\s+)?(speaking|session|slot|presentation)"
+    r"|selected\s+(solely\s+)?through\s+the\s+(independent\s+)?call\s+for\s+(papers|speakers|proposals)", re.I)
 
 
 async def choose(text: str, conference: str, cost_hint: str, settings) -> tuple[str, str, str]:
@@ -128,6 +135,8 @@ async def choose(text: str, conference: str, cost_hint: str, settings) -> tuple[
     # ...and a verbatim sentence about a BOOTH is still the wrong answer.
     if NOT_SPEAKING.search(found) and not SPEAKING.search(found):
         return "", "", "not-about-speaking"
+    if DENIES_SPEAKING.search(found):
+        return "", "", "denies-speaking"
     return found, kind, "ok"
 
 
@@ -150,13 +159,13 @@ def candidates(db: str, limit: int | None) -> list[sqlite3.Row]:
 
 
 async def run(rows, settings, db: str, apply: bool) -> dict:
-    tally = {"ok": 0, "blank": 0, "not-on-page": 0, "not-about-speaking": 0,
+    tally = {"ok": 0, "blank": 0, "not-on-page": 0, "not-about-speaking": 0, "denies-speaking": 0,
              "unreadable": 0, "unavailable": 0}
     writes = []
     for i, r in enumerate(rows, 1):
         print(f"  [{i}/{len(rows)}] {r['name'][:46]}")
         try:
-            res = fetch_text(r["sponsor_url"])
+            res = fetch_page_text(r["sponsor_url"])
         except Exception as e:                                   # noqa: BLE001
             print(f"        fetch failed: {type(e).__name__}")
             tally["unreadable"] += 1

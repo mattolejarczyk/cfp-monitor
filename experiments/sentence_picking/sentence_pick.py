@@ -22,7 +22,9 @@ from dates_v2 import MONTHS, month_names
 _spec = importlib.util.spec_from_file_location("extract_citations", ROOT / "scripts" / "extract_citations.py")
 ec = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(ec)       # existing gates, unchanged
 
-PAGES = json.loads((ROOT / "experiments/sitemap_discovery/crawl_pages.json").read_text(encoding="utf-8"))
+_PAGES_FILE = ROOT / "experiments/sitemap_discovery/crawl_pages.json"           # gitignored local data (third-party page text)
+PAGES_MISSING = not _PAGES_FILE.exists()                                          # a clean checkout has no page store: import still works (ACT-50)
+PAGES = {} if PAGES_MISSING else json.loads(_PAGES_FILE.read_text(encoding="utf-8"))
 LABELS = HERE / "labels.json"
 LOG = HERE / "llm_log.jsonl"
 MODELS = {"B": "deepseek/deepseek-v4.1-flash", "C": "deepseek/deepseek-chat"}

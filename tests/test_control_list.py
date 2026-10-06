@@ -18,7 +18,10 @@ def test_the_committed_data_is_valid_and_every_closed_failure_point_exists():
 
 def test_verifying_an_action_applies_its_rules_to_the_register_and_needs_evidence():
     d, fp = copy.deepcopy(D), copy.deepcopy(FP)
-    before = next(i for i in fp["items"] if i["id"] == "D3")["status"]
+    d3 = next(i for i in fp["items"] if i["id"] == "D3")
+    d3["status"] = "PENDING"                          # the live register already moved D3 to WATCH once ACT-20 was verified: start from a known state
+    d3["controls"] = "Overlay, venue-in-city flag."
+    before = d3["status"]
     try:
         cl.apply_verify(d, fp, "ACT-20", "   ", "2026-10-06")
         raise AssertionError("verify without evidence must be refused")

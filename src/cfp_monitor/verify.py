@@ -105,6 +105,20 @@ def date_variants(d: date) -> list[str]:
     return [normalize_text(v) for v in out]
 
 
+# ACT-49 (2026-10-06): ONE definition of "typographic noise" for comparing a quote with page text. Dashes, spaces and quote marks only - never words or digits.
+# Upstream writes an ASCII hyphen where the page has an en dash (note 29); every quote comparison folds both sides through this, one character to one character,
+# so a position map (extract_citations._norm_map) stays valid.
+_PUNCT_FOLD = {**{ord(c): "-" for c in "‐‑‒–—―−﹘﹣－"},
+               **{ord(c): "'" for c in "‘’‚‛′"},
+               **{ord(c): '"' for c in "“”„‟″"},
+               **{ord(c): " " for c in "     "}}
+
+
+def fold_punctuation(text: str) -> str:
+    """Dashes, quote marks and non-breaking spaces folded to their ASCII forms. Same length in, same length out."""
+    return (text or "").translate(_PUNCT_FOLD)
+
+
 def normalize_text(text: str) -> str:
     """Collapse case, whitespace and punctuation noise so date tokens compare reliably."""
     t = (text or "").lower()

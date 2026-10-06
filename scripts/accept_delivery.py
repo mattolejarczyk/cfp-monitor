@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.cfp_monitor.verify import fetch_text, is_block_page, is_script_shell, link_status      # noqa: E402
+from src.cfp_monitor.verify import fetch_text, fold_punctuation, is_block_page, is_script_shell, link_status      # noqa: E402
 from src.cfp_monitor.rules import is_aggregator_url                                           # noqa: E402,F401  (ACT-14; trap_cases probes it here)
 
 # 36 since the v1.2 amendment added FORMAT as the last column (2026-08-05).
@@ -204,8 +204,9 @@ def norm(text: str) -> str:
     t = (text or "")
     for a, b in (("&nbsp;", " "), ("&amp;", "&"), ("&#8217;", "'"), ("&rsquo;", "'"),
                  ("‘", "'"), ("’", "'"), ("“", '"'), ("”", '"'),
-                 ("–", "-"), ("—", "-"), ("−", "-")):
+                 ("–", "-"), ("—", "-"), ("−", "-"), ("&ndash;", "-"), ("&#8211;", "-"), ("&mdash;", "-")):
         t = t.replace(a, b)
+    t = fold_punctuation(t)                  # ACT-49: the other dash forms (U+2010-2012, 2015) and nbsp, one shared definition
     return re.sub(r"\s+", " ", t).strip().lower()
 
 

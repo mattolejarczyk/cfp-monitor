@@ -110,6 +110,36 @@ def names_event(text: str, event: str) -> str:
     return ""
 
 
+WRONG_KIND = re.compile(r"(?:^|[/_.-])(awards?|prizes?|phd|doctoral|doctorate|degrees?|masters?|msc|bsc|scholarships?|admissions?|undergraduate|postgraduate|graduate-programmes?|tuition)(?:$|[/_.-])", re.I)
+
+
+def wrong_kind(url: str, event: str) -> str:
+    """ACT-42: the proposed address is a page of another KIND (an awards page or a degree-programme page) for an event that is neither. '' when fine, else the word that gave it away.
+    The first run proposed a PhD programme page for a conference and an awards page as a call page."""
+    m = WRONG_KIND.search(urlparse(url or "").path)
+    if m and not re.search(m.group(1)[:5], event or "", re.I):
+        return m.group(1).lower()
+    return ""
+
+
+def names_this_event(text: str, quote: str, event: str, url: str, width: int = 350) -> str:
+    """ACT-42: the evidence that THIS event, not a sibling, owns the date on this page. A page that lists several events proves nothing for one of them unless the text next to the date names it
+    (SANS CDI 2026 got the 19 October deadline of the CTI and OSINT summits from the shared speak-at-a-summit page). Returns the words found (the event's distinctive words within `width`
+    characters of the quote, plus the page address), or '' when fewer than 60 percent of them (at least two, or the only one) are there. Pure."""
+    words = [w for w in re.findall(r"[a-z0-9]+", (event or "").lower()) if w not in STOP and len(w) > 2 and not w.isdigit()]
+    words = list(dict.fromkeys(words))
+    if not words:
+        return ""
+    need = 1 if len(words) == 1 else max(2, -(-len(words) * 6 // 10))
+    flat = re.sub(r"\s+", " ", text or "")
+    q = re.sub(r"\s+", " ", quote or "").strip()
+    at = flat.lower().find(q.lower()[:60]) if q else -1
+    window = (flat[max(0, at - width): at + len(q) + width] if at >= 0 else flat[:2 * width]) + " " + urlparse(url or "").path.replace("/", " ").replace("-", " ").replace("_", " ")
+    low = window.lower()
+    hit = [w for w in words if re.search(rf"(?<![a-z0-9]){re.escape(w)}", low)]
+    return ", ".join(hit) if len(hit) >= need else ""
+
+
 def propose_for_link(link: dict, rec: dict, cache: dict[str, str], event: str, today: str) -> dict:
     """The proposal for ONE dead link from the event's find_and_read record (`rec`) and the page texts it read (`cache`)."""
     kind = link_kind(link["url"])
@@ -123,15 +153,23 @@ def propose_for_link(link: dict, rec: dict, cache: dict[str, str], event: str, t
     if kind == "call":
         if pick.get("pick"):
             pu = next((p for p in pages if p.get("accepted") == pick["pick"] and p.get("rank") != 0), {})
-            return {**base, "status": "PROPOSED", "proposed_url": pu.get("url", ""), "deadline": pick["pick"], "quote": pu.get("quote", ""), "note": pick.get("why", "")}
+            wk = wrong_kind(pu.get("url", ""), event)
+            if wk:
+                return {**base, "status": "NONE", "note": f"the page with the date is a '{wk}' page, not this event's call: {pu.get('url', '')}"}
+            who = names_this_event(cache.get(pu.get("url", ""), ""), pu.get("quote", ""), event, pu.get("url", ""))
+            if not who:                                                   # ACT-42: a date on a page that does not name THIS event next to it is a lead for a person, never a proposal
+                return {**base, "status": "LEAD", "proposed_url": pu.get("url", ""), "note": f"a page states {pick['pick']} but nothing next to it names this event (a shared page for several events?): {pu.get('quote', '')[:120]}"}
+            return {**base, "status": "PROPOSED", "proposed_url": pu.get("url", ""), "deadline": pick["pick"], "quote": pu.get("quote", ""), "note": (pick.get("why", "") + f"; names the event: {who}").strip("; ")}
         lead = next((p for p in pages if p.get("rank") not in (0, -1) and p.get("chars", 0) > 500 and CALL_PATH.search(urlparse(p.get("url", "")).path)), None)
+        if lead and wrong_kind(lead["url"], event):
+            lead = None
         if lead:
             return {**base, "status": "LEAD", "proposed_url": lead["url"], "note": "a live page named for the call exists; it states no deadline with its year"}
         return {**base, "note": "the site was read; no live page named for the call and no proven deadline"}
     for p in pages:                                                       # an EVENT page: the home page (or any read page) that names the event
         if p.get("chars", 0) > 300:
             s = names_event(cache.get(p["url"], ""), event)
-            if s:
+            if s and not wrong_kind(p["url"], event):
                 return {**base, "status": "PROPOSED", "proposed_url": p["url"], "quote": s[:300], "note": "the live page names the event"}
     return {**base, "note": "the site was read; no page names the event"}
 
