@@ -1,0 +1,23 @@
+id,promised_on,note,market,event_id,column,op,expected,due,what
+C01,2026-10-06,33,Utility,2027-afpm-summit-san-antonio-speaking,GROUNDING_CONFIDENCE,equals,Projected (2027),2026-10-10,AFPM row: IS_PROJECTED true must read Projected (2027) (rule R11)
+C02,2026-10-06,32,Utility,2027-afpm-summit-san-antonio-speaking,START DATE,blank,,2026-10-10,AFPM: no 2027 date is published so START DATE stays blank
+C03,2026-10-06,33,Utility,2026-industrial-net-zero-conference-sydney-speaking,CONFERENCE URL,contains,industrialnetzeroconference.com.au,2026-10-10,Industrial Net Zero 2026 uses the live site address
+C04,2026-10-06,33,Utility,2026-industrial-net-zero-conference-sydney,STATUS,equals,Needs Verification,2026-10-10,Industrial Net Zero 2027 survivor: no dates published so Needs Verification
+C05,2026-10-06,33,Utility,2026-industrial-net-zero-conference-sydney,START DATE,blank,,2026-10-10,Industrial Net Zero 2027 survivor: START DATE blank
+C06,2026-10-06,35,Cybersecurity,2026-hitb-ootb-jakarta-speaking,STATUS,equals,Upcoming,2026-10-10,Jakarta (OOTB) is postponed to Q4 2026: STATUS Upcoming not Closed
+C07,2026-10-06,35,Cybersecurity,2026-hitb-ootb-jakarta-speaking,START DATE,blank,,2026-10-10,Jakarta (OOTB): no new date announced so START DATE blank
+C08,2026-10-06,35,Cybersecurity,2026-hitb-ootb-jakarta-speaking,LOCATION,contains,Grand Hyatt,2026-10-10,Jakarta (OOTB): venue is Grand Hyatt not Alila SCBD
+C09,2026-10-06,35,Cybersecurity,2026-hack-in-the-box-phuket,EVENT_ID,absent,,2026-10-10,Phuket row dropped from research and the published file
+C10,2026-10-06,35,Cybersecurity,2026-hack-in-the-box-security-conference-phuket,EVENT_ID,absent,,2026-10-10,Second Phuket row dropped from the published file
+C11,2026-10-06,36,Cybersecurity,2027-sans-ai-cybersecurity-summit-tbd-speaking,STATUS,equals,Needs Verification,2026-10-10,SANS AI Cybersecurity Summit 2027: no dates published
+C12,2026-10-06,36,Cybersecurity,2027-sans-ai-cybersecurity-summit-tbd-speaking,START DATE,blank,,2026-10-10,SANS AI Cybersecurity Summit 2027: START DATE blank
+C13,2026-10-06,36,Cybersecurity,2027-google-cloud-next-las-vegas-speaking,START DATE,equals,2027-04-13,2026-10-10,Google Cloud Next Las Vegas 2027 locked to April 13-15 2027
+C14,2026-10-06,36,Cybersecurity,2026-cyberdefensecon-orlando,START DATE,equals,2026-10-20,2026-10-10,CyberDefenseCon 2026 locked to October 20-21
+C15,2026-10-06,36,Cybersecurity,2026-nullcon-goa-bambolim,START DATE,equals,2027-02-27,2026-10-10,Nullcon Goa 2027 main conference locked to February 27-28
+C16,2026-10-06,36,Utility,2027-decarb-connect-europe-vienna,START DATE,equals,2027-04-14,2026-10-10,Decarb Connect Europe 2027 main conference locked to April 14-15
+C17,2026-10-06,37,Utility,2027-gastech-milan-speaking,CITY,equals,Houston,2026-10-10,Gastech 2027 city corrected to Houston
+C18,2026-10-06,37,Cybersecurity,2026-odsc-west-burlingame-speaking,CITY,equals,San Francisco,2026-10-10,ODSC West 2026 city corrected to San Francisco
+C19,2026-10-06,38,Cybersecurity,2027-world-summit-ai-amsterdam-speaking,CFP MODEL TYPE,equals,Rolling Form,2026-10-10,World Summit AI Amsterdam 2027: open enquiry form with no deadline is Rolling Form
+C20,2026-10-06,38,Cybersecurity,2027-world-summit-ai-americas-montreal-speaking,EVENT_ID,absent,,2026-10-10,World Summit AI Americas is not on the customer sheet: kept out of the downstream load
+C21,2026-10-06,34,Cybersecurity,*,STATUS DETAILS,not_contains,typically,2026-10-10,No status from a typical schedule (inference policy)
+C22,2026-10-06,34,Utility,*,STATUS DETAILS,not_contains,typically,2026-10-10,No status from a typical schedule (inference policy)

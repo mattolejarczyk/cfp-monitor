@@ -1138,6 +1138,23 @@
       "evidence": [],
       "updated": "2026-10-06",
       "on_verify": {}
+    },
+    {
+      "id": "ACT-58",
+      "wave": "W5",
+      "step": "A",
+      "owner": "me",
+      "state": "todo",
+      "cost": "$0",
+      "title": "Hold upstream to its promises: a ledger, a checker run on every delivery and after every load, and a line in the Saturday recap",
+      "detail": "DONE 2026-10-06 (by hand): docs/operations/upstream_commitments.csv (22 promises from notes 32 to 38, due 2026-10-10) and scripts/check_commitments.py (read-only; KEPT / NOT KEPT / NOT YET; --file checks any delivery CSV the day it arrives); tests; runbook 7.1 step 5 (every promise gets a ledger line); draft note 39 asks upstream to send the corrected rows NOW so they are checked today. TO BUILD: run the check after Saturday's load and put one line in the recap (COMMITMENTS: n kept, m NOT kept) with a FLAG in the subject when m > 0; the Monday build QA lists NOT KEPT items; a note to upstream names each unmet promise automatically (draft for the operator to send). Evidence of the pattern: ids said to be added to their input list were not (notes 28, 30, 34), a patch carried withdrawn evidence, a status rested on a typical schedule, the World Summit AI rows contradict the promise made one message earlier.",
+      "needs_you": "",
+      "closes": [],
+      "acceptance": "After Saturday's load the recap says how many promises were kept; every NOT KEPT item names the event, the field, what was found and what was promised.",
+      "depends": [],
+      "evidence": [],
+      "updated": "2026-10-06",
+      "on_verify": {}
     }
   ]
 }
