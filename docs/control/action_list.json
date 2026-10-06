@@ -1153,7 +1153,9 @@
       "closes": [],
       "acceptance": "After Saturday's load the recap says how many promises were kept; every NOT KEPT item names the event, the field, what was found and what was promised.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "2026-10-06 night: first real use. Upstream confirmed the 'full 45-field row in the same message' protocol and in the same message sent eight corrections as a table in another format, three of them under ids that are not ours and five with dates or a city the pages do not support (Decarb Connect Europe: Amsterdam, page says Vienna). The checker (run on a converted copy) found 11 kept, 0 broken, 11 not yet, and the id mismatch explained why. Ledger now 28 promises. Draft note 41 asks for full rows under our ids."
+      ],
       "updated": "2026-10-06",
       "on_verify": {}
     }

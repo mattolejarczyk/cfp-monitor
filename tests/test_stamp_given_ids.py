@@ -92,3 +92,11 @@ def test_the_ledger_records_given_ids_once_and_stamp_input_ids_keeps_them(tmp_pa
     known = sii.load_given("Cybersecurity", led)
     assert sii.resolve("Brand New Event 2027", "2027-new-x-speaking", known, [{}, {}, {}]) == ("2027-new-x-speaking", "kept")
     assert sii.resolve("Brand New Event 2027", "2027-new-x-speaking", set(), [{}, {}, {}])[0] == ""             # without the ledger the stamp was cleared
+
+
+def test_an_optional_conference_column_tells_apart_rows_that_share_an_address():
+    inputs = {"Cybersecurity": [_row("OWASP EU 2027", "https://shared.example/"), _row("OWASP USA 2027", "https://shared.example/")], "Utility": []}
+    ids = [{**_u("2027-owasp-usa-x-speaking", "https://shared.example/"), "conference": "OWASP USA 2027"}]
+    pl = sgi.plan(ids, inputs, set(), {})
+    assert pl["stamp"] == [("Cybersecurity", 1, "2027-owasp-usa-x-speaking")] and pl["dup"] == []          # the other row is NOT marked a duplicate
+    assert "name the survivor" in sgi.plan([_u("2027-owasp-usa-x-speaking", "https://shared.example/")], inputs, set(), {})["notes"][0][1]

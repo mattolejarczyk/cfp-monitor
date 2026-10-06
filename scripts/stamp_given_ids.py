@@ -2,7 +2,7 @@
 
     python scripts/stamp_given_ids.py --ids-csv ids.csv [--markets-dir <dir>] [--db <db>] [--pick "<id>=<CONFERENCE of the surviving row>"] [--apply]
 
-INPUT. A CSV with columns `sheet` (Cybersecurity or Utility), `id` (upstream's EVENT_ID), `start` (their stated start, ISO, may be blank) and `url` (their main site). Identity is upstream's (contract 5.4): we never mint
+INPUT. A CSV with columns `sheet` (Cybersecurity or Utility), `id` (upstream's EVENT_ID), `start` (their stated start, ISO, may be blank) and `url` (their main site); an optional `conference` column holds the exact name of OUR row when several of our rows share one address. Identity is upstream's (contract 5.4): we never mint
 an id, and we never join on one: a row of ours is paired with their id by the event's own URL, nothing else.
 
 WHAT IT DOES. For each id, finds OUR input rows of that market that have a BLANK EVENT_ID_CANON and the same URL (scheme, 'www.', a trailing slash and a '?...' tracking suffix ignored) and stamps the id on the row.
@@ -77,8 +77,11 @@ def plan(ids: list[dict], inputs: dict[str, list[dict]], have: set[str], picks: 
             hw, uw = words(h), words(i)
             if h[:4] == i[:4] and len(uw) >= 3 and len(uw & hw) / len(uw) >= 0.85:
                 out["resemble"].append((i, h))
+        want_name = (u.get("conference") or "").strip().lower()      # optional column: the exact name of OUR row, to tell apart rows that share one address
+        if want_name:
+            cand = [k for k in cand if rows[k]["CONFERENCE"].strip().lower() == want_name]
         if not cand:
-            out["notes"].append((i, "no blank-id row of ours has this URL"))
+            out["notes"].append((i, "no blank-id row of ours has this URL" + (" and this name" if want_name else "")))
             continue
         if len(cand) > 1:
             want = picks.get(i)

@@ -21,3 +21,9 @@ C19,2026-10-06,38,Cybersecurity,2027-world-summit-ai-amsterdam-speaking,CFP MODE
 C20,2026-10-06,38,Cybersecurity,2027-world-summit-ai-americas-montreal-speaking,EVENT_ID,absent,,2026-10-10,World Summit AI Americas is not on the customer sheet: kept out of the downstream load
 C21,2026-10-06,34,Cybersecurity,*,STATUS DETAILS,not_contains,typically,2026-10-10,No status from a typical schedule (inference policy)
 C22,2026-10-06,34,Utility,*,STATUS DETAILS,not_contains,typically,2026-10-10,No status from a typical schedule (inference policy)
+C23,2026-10-06,40,Cybersecurity,2027-ecml-pkdd-wuerzburg-speaking,CITY,equals,Eindhoven,2026-10-10,ECML PKDD 2027: city Eindhoven (pinned by the operator; upstream confirmed in the note 40 reply)
+C24,2026-10-06,40,Cybersecurity,2026-ai-summit-new-york-new-york-speaking,START DATE,equals,2026-12-09,2026-10-10,The AI Summit New York 2026 dates Dec 9-10 2026 (upstream confirmed)
+C25,2026-10-06,40,Utility,2027-ces-las-vegas,STATUS,equals,Closed,2026-10-10,CES 2027 call for speakers closed (upstream confirmed Closed)
+C26,2026-10-06,41,Cybersecurity,2027-world-summit-ai-amsterdam-speaking,START DATE,equals,2027-10-06,2026-10-10,World Summit AI Amsterdam 2027 is 6-7 October 2027 (the speaker form; upstream own earlier row said 2027-10-06)
+C27,2026-10-06,41,Utility,2027-gastech-milan-speaking,START DATE,equals,2027-09-14,2026-10-10,Gastech 2027 is 14-17 September 2027 Houston (page; upstream note 37 said Sept 14-17)
+C28,2026-10-06,41,Utility,2027-decarb-connect-europe-vienna,CITY,equals,Vienna,2026-10-10,Decarb Connect Europe 2027 is 14-15 April 2027 in VIENNA (page); upstream said Amsterdam
