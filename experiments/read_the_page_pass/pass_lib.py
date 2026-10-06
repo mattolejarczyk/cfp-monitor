@@ -105,6 +105,68 @@ def own_label(window: str, start: int, end: int) -> str:
     return f"{before} {after}".strip()
 
 
+# ACT-62: German main-conference labels (R-001). 'vom 23.-24. September 2026' has no English month, so _RANGE never sees it and the labelled-range rule above never engaged; the German page
+# states its main day in labels (Konferenz - Donnerstag 24.09.; Am 24. September ... Conference Day; Hauptveranstaltungstag (24.09.2026)). Read BY CODE, from the page text.
+_DE_MONTHS = {"januar": 1, "februar": 2, "marz": 3, "maerz": 3, "märz": 3, "april": 4, "mai": 5, "juni": 6, "juli": 7, "august": 8, "september": 9, "oktober": 10, "november": 11, "dezember": 12}
+_DE_MON = "(" + "|".join(sorted(_DE_MONTHS, key=len, reverse=True)) + ")"
+_DE_WD = r"(?:(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)\s*,?\s*)?"
+_DE_LAB = r"(?:hauptkonferenz|konferenztag|konferenz|hauptveranstaltungstag|hauptveranstaltung|kongresstag|kongress|conference day|main conference)"
+_DE_RANGE = [re.compile(rf"(?<!\d)(\d{{1,2}})\.?\s*(?:-|bis)\s*(\d{{1,2}})\.\s*{_DE_MON}(?:\s+(20[12]\d))?"),                # 23.-24. September 2026
+             re.compile(rf"(?<!\d)(\d{{1,2}})\.\s*{_DE_MON}\s*(?:-|bis)\s*(\d{{1,2}})\.\s*{_DE_MON}(?:\s+(20[12]\d))?")]        # 30. September - 2. Oktober 2026
+_DE_NUM_RANGE = re.compile(r"(?<!\d)(\d{1,2})\.(\d{1,2})\.?\s*(?:-|bis)\s*(\d{1,2})\.(\d{1,2})\.(20[12]\d)?")                          # 23.09.-24.09.2026
+_DE_MAIN_DAY = [re.compile(rf"{_DE_LAB}[\s:\-(]{{0,6}}{_DE_WD}\(?(\d{{1,2}})\.(\d{{1,2}})\.(20[12]\d)?"),                              # Konferenz - Donnerstag 24.09.
+                re.compile(rf"{_DE_LAB}\s+(?:am|ist am|findet am)\s+{_DE_WD}(\d{{1,2}})\.\s*{_DE_MON}(?:\s+(20[12]\d))?"),            # Konferenztag am 24. September
+                re.compile(rf"(?:^|[.!?]\s+)am\s+(\d{{1,2}})\.\s*{_DE_MON}(?:\s+(20[12]\d))?[^.!?]{{0,40}}?{_DE_LAB}")]               # Am 24. September erwartet euch der Conference Day
+
+
+def _de_ranges(quote: str, year: int) -> list[tuple[date, date]]:
+    out = []
+    try:
+        for m in _DE_RANGE[0].finditer(quote):
+            y = int(m.group(4) or year); mo = _DE_MONTHS[m.group(3)]
+            out.append((date(y, mo, int(m.group(1))), date(y, mo, int(m.group(2)))))
+        for m in _DE_RANGE[1].finditer(quote):
+            y = int(m.group(5) or year)
+            out.append((date(y, _DE_MONTHS[m.group(2)], int(m.group(1))), date(y, _DE_MONTHS[m.group(4)], int(m.group(3)))))
+        for m in _DE_NUM_RANGE.finditer(quote):
+            y = int(m.group(5) or year)
+            out.append((date(y, int(m.group(2)), int(m.group(1))), date(y, int(m.group(4)), int(m.group(3)))))
+    except ValueError:
+        return []
+    return out
+
+
+def _de_main_days(page: str, year: int) -> set[date]:
+    out = set()
+    for k, rx in enumerate(_DE_MAIN_DAY):
+        for m in rx.finditer(page):
+            try:
+                if k == 0:
+                    out.add(date(int(m.group(3) or year), int(m.group(2)), int(m.group(1))))
+                else:
+                    out.add(date(int(m.group(3) or year), _DE_MONTHS[m.group(2)], int(m.group(1))))
+            except ValueError:
+                pass
+    return out
+
+
+def german_label_verdict(page: str, quote: str, value: date | None) -> tuple[bool, str]:
+    """ACT-62. If the quote is a GERMAN-written range that contains `value` and the page, in German labels, names a main-conference day inside that range, `value` must not be EARLIER than the
+    first such day (R-001: the start is the first main-conference day; an earlier day is a training / pre-day). Anything else, including a German range with no recognised label, returns
+    (True, 'ok'): exactly as before, nothing is rejected on a guess. English text never matches these patterns."""
+    if value is None:
+        return True, "ok"
+    mains = _de_main_days(page, value.year)
+    if not mains:
+        return True, "ok"
+    for lo, hi in _de_ranges(quote, value.year):
+        inside = sorted(d for d in mains if lo <= d <= hi)
+        if lo <= value <= hi and inside and value < inside[0]:
+            return False, (f"the page labels {inside[0].isoformat()} as its main-conference day inside the range {lo.isoformat()} to {hi.isoformat()}; "
+                           f"{value.isoformat()} is before it (a training or pre-day)")
+    return True, "ok"
+
+
 def label_verdict(page: str, quote: str, value: date | None, year: int | None = None) -> tuple[bool, str]:
     """ACT-23: when the page shows TWO OR MORE separate date ranges and at least one OTHER range carries a label of its own (training, workshop... or conference, summit...), the range the
     reader used must carry the page's own conference label, read BY CODE from the page text beside that range (not from the model). A page with one range, or whose other ranges carry no
@@ -113,6 +175,9 @@ def label_verdict(page: str, quote: str, value: date | None, year: int | None = 
     i = page.find(quote)
     if i < 0 or value is None:
         return True, "ok"
+    ok_de, why_de = german_label_verdict(page, quote, value)                 # ACT-62: German main-day labels; only ever rejects, never loosens
+    if not ok_de:
+        return False, why_de
     quote_has_year = bool(year) and bool(re.search(rf"(?<!\d){year}(?!\d)", quote))
     spans = _range_spans(page, year, require_year=quote_has_year)
     if len(spans) < 2:
