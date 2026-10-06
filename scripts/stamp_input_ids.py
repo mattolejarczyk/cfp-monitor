@@ -44,6 +44,16 @@ import os                                                                    # n
 MARKETS_DIR = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
 LIVE_DB = Path(os.environ.get("LOCALAPPDATA", "")) / "CFP-Monitor" / "cfp_monitor.db"
 COL = "EVENT_ID_CANON"
+GIVEN_IDS = ROOT / "docs" / "operations" / "given_ids.csv"     # ids upstream gave us for NEW events (scripts/stamp_given_ids.py writes it)
+
+
+def load_given(market: str, path: Path = GIVEN_IDS) -> set[str]:
+    """Ids upstream explicitly gave us for this market, recorded when we stamped them. An id here is KNOWN even before the event is in the database, so a stamp on a
+    brand-new event is kept (without this, resolve() cleared it: a stamp not found in the database, last week's file or the seed sheets came back blank)."""
+    if not Path(path).exists():
+        return set()
+    with open(path, encoding="utf-8-sig", newline="") as fh:
+        return {r["event_id"].strip() for r in csv.DictReader(fh) if (r.get("market") or "").strip() == market and (r.get("event_id") or "").strip()}
 
 
 def norm(name: str) -> str:
@@ -164,6 +174,7 @@ def main() -> int:
             rd = csv.DictReader(fh)
             cols, rows = list(rd.fieldnames or []), list(rd)
         known, sources = build_sources(m, md, db)
+        known = known | load_given(m)
         published = set().union(*sources[0].values()) if sources[0] else None
         counts: dict[str, int] = {}
         unresolved = []

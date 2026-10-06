@@ -98,7 +98,8 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    If this step fails, research still goes ahead. *(weekly_intake.py)*
 4. **[Update]** **Adds permanent IDs to the research list.** Each event on the list is tagged with its
    permanent ID, so a renamed event cannot turn into a duplicate. An event that cannot be matched
-   with certainty is left untagged and held back later - never guessed. *(stamp_input_ids.py)*
+   with certainty is left untagged and held back later - never guessed. An id that UPSTREAM GAVE US for a brand-new event (recorded in `docs/operations/given_ids.csv` when we stamped it,
+   `stamp_given_ids.py`) is kept even though the event is not in the database yet; without that record the stamp on a new event was cleared here. *(stamp_input_ids.py)*
 5. **[Safety check]** **Runs the 5-row test.** Researches 5 rows, checks that real Google searches happened, runs
    the approval check, and loads them into a **copy** of the database. If the test fails, the job
    stops before spending the full budget, and nothing is changed. *(run_canary.ps1)*
