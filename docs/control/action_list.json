@@ -1042,6 +1042,27 @@
       "evidence": [],
       "updated": "2026-10-05",
       "on_verify": {}
+    },
+    {
+      "id": "ACT-54",
+      "wave": "W5",
+      "step": "A",
+      "owner": "me",
+      "state": "todo",
+      "cost": "$0 to build; research cost only for added rows",
+      "title": "Customer data is research context, a customer match is checked, and every customer row gets an answer and a reason (found via Hack In The Box)",
+      "detail": "FOUND 2026-10-06 (operator question): the customer (Arnica) tracks Hack In The Box at conference.hitb.org, location Alila SCBD Jakarta, date 29 Apr 2026, status Info Needed; the organiser site lists exactly that (OOTB2026 Jakarta Apr 29-30, Alila SCBD) and NO 2026 HITBSecConf anywhere. We researched two Phuket rows (24 Aug 2026) that upstream guessed from what the event typically does, linked the customer row to the Phuket row (same website, two different events), and the customer page shows the Phuket row as Closed with a reason that rests on the typical schedule. ROOT CAUSES: (1) the customer row feeds only STATUS into the process; its name, place and date never reach research, so research relied on upstream assumptions; (2) match_customer_sheet certifies a link on an exact URL alone (100 percent) and ignores a different city or date, so an organiser site that hosts several events links to the wrong one; (3) once a link is made, the weekly intake leaves it as it is (\"already linked, left as they were\"), so a wrong link is never revisited; (4) no rule requires an answer and a reason per customer row, so a customer row that is unmatched or matched wrongly silently drops out of what the customer sees; (5) a status inferred from the typical schedule can ship as fact (needs a rule: no page, no status). FIXES TO BUILD AND TEST: (a) coverage check (ACT-51); (b) a linked-but-disagrees list: customer city or start date differs from the linked event (more than 30 days or a different city) goes to a person and lowers the link; match_customer_sheet must not certify on URL alone when the customer row carries a date and place that disagree; (c) put the customer row (name, URL, place, date) into the research input as context for every event on a customer sheet, and show a disagreement on the customer page as: your sheet says X, we found Y; (d) one line per customer row on the customer page or its internal QA: answer plus reason (researched, over with the next edition not announced, excluded with a ruling); (e) gate or recap check: a status whose only support is the typical schedule is Needs Verification. DONE TONIGHT: the customer's Jakarta event added to the Cybersecurity input list (blank id; note 34 asks upstream for its id and for the Phuket pair to be retired).",
+      "needs_you": "",
+      "closes": [
+        "A14"
+      ],
+      "acceptance": "A customer row whose city or date disagrees with its linked event is listed for review and not certified; every customer row appears with an answer and a reason; research input carries the customer row.",
+      "depends": [
+        "ACT-51"
+      ],
+      "evidence": [],
+      "updated": "2026-10-06",
+      "on_verify": {}
     }
   ]
 }
