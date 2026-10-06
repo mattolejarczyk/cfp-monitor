@@ -744,9 +744,10 @@
       "depends": [],
       "evidence": [
         "builder/wave3: sandbox copy of live DB (live untouched), 114 Yes rows: 6 proved verbatim and stored, 51 blank, 3 not-on-page, 1 denies-speaking (new refusal), 52 unreadable (no Chrome CDP running: render fallback untested live), 1 outage; 0.032 USD. Code: fetch_page_text (render fallback) + DENIES_SPEAKING with 3 tests. PARTIAL: 52 pages unread; live apply procedure in QA-REGISTER A36. Gate accepts with or without quotes (R18b needs only SPONSOR_URL): decision for reviewer.",
-        "PARTIAL (builder): 6 of 114 quotes proved in a sandbox copy, 52 pages unreadable because Chrome was not running; decision needed: gate R18b requires only SPONSOR_URL for a Yes while the contract says URL and quote. Live apply procedure in QA-REGISTER A36."
+        "PARTIAL (builder): 6 of 114 quotes proved in a sandbox copy, 52 pages unreadable because Chrome was not running; decision needed: gate R18b requires only SPONSOR_URL for a Yes while the contract says URL and quote. Live apply procedure in QA-REGISTER A36.",
+        "2026-10-06 rerun WITH Chrome CDP (port 9222) and the .venv python (system python lacks litellm: first try showed 'unavailable' for that reason) on a COPY of the live db, report-only, 114 Yes rows: 3 quotes would be written, 36 considered blank (page read, no sponsor sentence), 1 not-on-page, 1 denies-speaking, 53 unreadable even in Chrome, 20 unavailable (model call errors, retryable). Nothing applied; live untouched. Conclusion: quote extraction proves few rows; most pages give no sponsor sentence or will not load. Hence the 'Sponsor required (unconfirmed)' badge (R-002)."
       ],
-      "updated": "2026-10-05",
+      "updated": "2026-10-06",
       "on_verify": {}
     },
     {
