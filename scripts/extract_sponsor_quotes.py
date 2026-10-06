@@ -67,7 +67,7 @@ NOT_SPEAKING = re.compile(
     r"\b(booth|stand|exhibit\w*|floor space|delegate pass|attendee pass|table top|tabletop)\b",
     re.I)
 SPEAKING = re.compile(r"\b(speak\w*|present\w*|session|keynote|panel|thought leader\w*)\b", re.I)
-# ACT-40 (2026-10-06): a verbatim sentence can still say the OPPOSITE of the claim. Apres-Cyber Slopes Summit 2027 (SPONSOR_REQUIRED=Yes) came back with
+# ACT-40 (2026-10-05): a verbatim sentence can still say the OPPOSITE of the claim. Apres-Cyber Slopes Summit 2027 (SPONSOR_REQUIRED=Yes) came back with
 # "Does sponsorship include a speaking session? No. All technical presentations are selected through the independent Call for Papers". Such a sentence is not stored.
 DENIES_SPEAKING = re.compile(
     r"(speaking|session|slot|presentation)s?\??\s*(no\b|not included)"

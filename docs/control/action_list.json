@@ -733,7 +733,8 @@
       "acceptance": "Sandbox result with counts; the apply procedure; a test for any change; no live file touched.",
       "depends": [],
       "evidence": [
-        "builder/wave3: sandbox copy of live DB (live untouched), 114 Yes rows: 6 proved verbatim and stored, 51 blank, 3 not-on-page, 1 denies-speaking (new refusal), 52 unreadable (no Chrome CDP running: render fallback untested live), 1 outage; 0.032 USD. Code: fetch_page_text (render fallback) + DENIES_SPEAKING with 3 tests. PARTIAL: 52 pages unread; live apply procedure in QA-REGISTER A36. Gate accepts with or without quotes (R18b needs only SPONSOR_URL): decision for reviewer."
+        "builder/wave3: sandbox copy of live DB (live untouched), 114 Yes rows: 6 proved verbatim and stored, 51 blank, 3 not-on-page, 1 denies-speaking (new refusal), 52 unreadable (no Chrome CDP running: render fallback untested live), 1 outage; 0.032 USD. Code: fetch_page_text (render fallback) + DENIES_SPEAKING with 3 tests. PARTIAL: 52 pages unread; live apply procedure in QA-REGISTER A36. Gate accepts with or without quotes (R18b needs only SPONSOR_URL): decision for reviewer.",
+        "PARTIAL (builder): 6 of 114 quotes proved in a sandbox copy, 52 pages unreadable because Chrome was not running; decision needed: gate R18b requires only SPONSOR_URL for a Yes while the contract says URL and quote. Live apply procedure in QA-REGISTER A36."
       ],
       "updated": "2026-10-05",
       "on_verify": {}
@@ -780,7 +781,8 @@
         "ACT-24"
       ],
       "evidence": [
-        "builder/wave3: PARTIAL. propose_replacements: names_this_event + wrong_kind, SANS CDI false proposal reproduced by test (now LEAD), 13 tests pass. Re-run on the 77 links NOT completed: 1 of 42 events read, its PROPOSED row (ShowStoppers contact-sales page, disclaimer only) is a weak proposal; precision not measured, no PROPOSED page read against its page by me beyond that one. Reviewer: re-run with Chrome CDP up and read every PROPOSED row; consider requiring the event name in a heading/sentence about the event, not a disclaimer."
+        "builder/wave3: PARTIAL. propose_replacements: names_this_event + wrong_kind, SANS CDI false proposal reproduced by test (now LEAD), 13 tests pass. Re-run on the 77 links NOT completed: 1 of 42 events read, its PROPOSED row (ShowStoppers contact-sales page, disclaimer only) is a weak proposal; precision not measured, no PROPOSED page read against its page by me beyond that one. Reviewer: re-run with Chrome CDP up and read every PROPOSED row; consider requiring the event name in a heading/sentence about the event, not a disclaimer.",
+        "PARTIAL (builder): SANS CDI false proposal reproduced and fixed by test; the 77-link re-run did not finish and no PROPOSED row has been read against its page; run again with Chrome up and read every PROPOSED row."
       ],
       "updated": "2026-10-05",
       "on_verify": {}
@@ -816,7 +818,7 @@
       "wave": "W5",
       "step": "A",
       "owner": "builder",
-      "state": "review",
+      "state": "verified",
       "cost": "$0",
       "title": "Every event on the two customer sheets must be in our research queue: classify the unmatched rows and prepare the request to upstream",
       "detail": "Operator rule (2026-10-05): any event the customer tracks on the Arnica (Cybersecurity) or Utility Global sheet that we do not research should be. The 2026-10-03 match files show 59 Arnica and 25 Utility rows with no confident match; some are ours already under another name or edition (it-sa Expo 2026, Industrial Net Zero 2027), others are genuinely missing (World Summit AI, CDAO Fall, European Hydrogen Week, LNG Americas). Classify EVERY unmatched row: (A) we hold it (matcher miss: say which id), (B) we hold another edition, (C) not held and still ahead: the request list, (D) over or not an event. For C read the event page to confirm it is live and find the right URL; for the matcher misses say what the matcher missed. Output: a CSV, a short report and a DRAFT note 30 for the operator to send asking upstream to add the C rows to their research (we never mint ids; upstream supplies them).",
@@ -828,7 +830,8 @@
       "depends": [],
       "evidence": [
         "builder/wave3: docs/qa/customer-unmatched-classified-20261003.csv: all 84 unmatched rows (59 Arnica + 25 Utility, Index_Confidence 0%) classified. A=2 (it-sa Expo 2026; ACS GC&E 2027 - ids named), B=2 (Google Cloud Next, Industrial Net Zero), C=57 (still ahead, not held), D=23 (over or not an event). Of the 57 C rows 51 are page-confirmed on 2026-10-06 (URL + sentence stating the date, plain fetch or headless render); 6 are partial or unconfirmed (month only: Enterprise AI Singapore, Planet Cyber Sec; date not on page: TMLS, Upfront Summit, AFPM; page 404: Chief AI Officer Summit UK). Customer-sheet data conflicts flagged in the note column (AI Summit New York year, Carbon Capture Global Summit, ECML PKDD). Draft note 30 not yet written (second commit). No live file touched.",
-        "builder/wave3: (1) docs/qa/customer-unmatched-classified-20261003.csv, 84 rows: A=2 B=2 C=57 D=23; 51 of 57 C rows page-confirmed 2026-10-06 (URL plus sentence), 6 partial/unconfirmed (month only: Enterprise AI Singapore, Planet Cyber Sec; date not on page: TMLS, Upfront Summit, AFPM; page 404: Chief AI Officer Summit UK). (2) DRAFT experiments/purpose_audit/NOTE-TO-UPSTREAM-30.md (not sent). Flags: AI Summit New York sheet year wrong, Carbon Capture Global Summit sheet conflicts with its page, ECML PKDD sheet dates are the 2026 edition. No live file touched. Matcher-miss causes for the 2 A rows are inferred, not tested."
+        "builder/wave3: (1) docs/qa/customer-unmatched-classified-20261003.csv, 84 rows: A=2 B=2 C=57 D=23; 51 of 57 C rows page-confirmed 2026-10-05 (URL plus sentence), 6 partial/unconfirmed (month only: Enterprise AI Singapore, Planet Cyber Sec; date not on page: TMLS, Upfront Summit, AFPM; page 404: Chief AI Officer Summit UK). (2) DRAFT experiments/purpose_audit/NOTE-TO-UPSTREAM-30.md (not sent). Flags: AI Summit New York sheet year wrong, Carbon Capture Global Summit sheet conflicts with its page, ECML PKDD sheet dates are the 2026 edition. No live file touched. Matcher-miss causes for the 2 A rows are inferred, not tested.",
+        "Reviewed 2026-10-05: all 84 unmatched rows classified (A2 B2 C57 D23); I re-fetched all 57 class C pages: cited sentence on page for 32 by plain fetch, 2 more checked in a real browser (Black Hat Europe, CDAO Fall) and exact; the rest not individually proven. 56 class C rows added to the live input lists by scripts/add_customer_rows.py (backups, log entry). The permanent route is ACT-51."
       ],
       "updated": "2026-10-05",
       "on_verify": {}
@@ -935,7 +938,7 @@
       "wave": "W5",
       "step": "D",
       "owner": "builder",
-      "state": "review",
+      "state": "verified",
       "cost": "$0",
       "title": "Quote dash tolerance: does the gate treat an ASCII hyphen like the page en dash?",
       "detail": "Upstream quotes use an ASCII hyphen where the page has an en dash (note 29: World of Concrete, SAF Europe, ISCC listing). Find out how acceptance criterion 3 and our own quote proving (verify, pass_lib, extract_sponsor_quotes) compare quotes. If a dash difference rejects a true quote, or makes us re-cut it silently, say which; propose the smallest normalisation that is safe (dashes, non-breaking spaces and quote marks only, never words) with a test; prove the World of Concrete row from note 29 in the sandbox. Do not change the gate without a failing test first.",
@@ -944,7 +947,8 @@
       "acceptance": "A finding with the exact code path; a failing test then a fix if needed; the World of Concrete row passes criterion 3 in the sandbox.",
       "depends": [],
       "evidence": [
-        "builder/wave3 commit c4c2028: criterion 3 (accept_delivery.norm) already folded en dash, em dash and minus: the World of Concrete row (note 29, quote with ASCII hyphen) PASSES check 3 on the live page, run in a scratch dir with network read-only, before and after the change. The gap was elsewhere: extract_citations.locate_verbatim (sponsor quotes, investigate_event) turned a page dash into a space and kept the quote hyphen (None before, found after) and pass_lib.norm folded nothing (False before). Fix: verify.fold_punctuation shared by all three; tests/test_quote_dash_tolerance.py (4 tests). ALSO FOUND: that World of Concrete page headline is '2028 Call for Proposals' / 'SUBMIT WOC 2028 PROPOSALS' with Submissions Period Nov 15 2026 - Feb 18 2027, while the show dates are Exhibits Jan 19-21 2027: so the call in note 29 belongs to the 2028 show, not 2027 (note 29 says 'World of Concrete 2027 ... call opens 15 November 2026'); reviewer to check."
+        "builder/wave3 commit c4c2028: criterion 3 (accept_delivery.norm) already folded en dash, em dash and minus: the World of Concrete row (note 29, quote with ASCII hyphen) PASSES check 3 on the live page, run in a scratch dir with network read-only, before and after the change. The gap was elsewhere: extract_citations.locate_verbatim (sponsor quotes, investigate_event) turned a page dash into a space and kept the quote hyphen (None before, found after) and pass_lib.norm folded nothing (False before). Fix: verify.fold_punctuation shared by all three; tests/test_quote_dash_tolerance.py (4 tests). ALSO FOUND: that World of Concrete page headline is '2028 Call for Proposals' / 'SUBMIT WOC 2028 PROPOSALS' with Submissions Period Nov 15 2026 - Feb 18 2027, while the show dates are Exhibits Jan 19-21 2027: so the call in note 29 belongs to the 2028 show, not 2027 (note 29 says 'World of Concrete 2027 ... call opens 15 November 2026'); reviewer to check.",
+        "Reviewed 2026-10-05: diffs read (character-for-character fold, no words or digits touched); 4 tests; full suite 1673 passed. Finding: the gate already folded en/em dashes, the real gaps were locate_verbatim and pass_lib. Its World of Concrete discrepancy confirmed by me in a browser: the call is the 2028 show, note 29 item 3 was wrong (note 29b corrects it)"
       ],
       "updated": "2026-10-05",
       "on_verify": {}
@@ -954,7 +958,7 @@
       "wave": "W5",
       "step": "F",
       "owner": "builder",
-      "state": "review",
+      "state": "verified",
       "cost": "$0",
       "title": "Tests must pass in a clean checkout",
       "detail": "tests/test_reader_call_resilience.py fails at collection in a fresh worktree because experiments/sitemap_discovery/crawl_pages.json is gitignored (the review of Wave 2 had to copy it in). Make tests that need such files skip with a clear reason (or build the fixture), then run the full suite on a clean `git archive` of your branch and report the count. Look for any other test that depends on an untracked or ignored file.",
@@ -963,7 +967,8 @@
       "acceptance": "Full suite on a clean archive: 0 failures, skips named.",
       "depends": [],
       "evidence": [
-        "builder/wave3: sentence_pick.py tolerates a missing crawl_pages.json (PAGES_MISSING), test_control_list no longer depends on live register state; full suite on a clean git archive of the ACT-50 commit: 1658 passed, 0 failed, 0 skipped (baseline in worktree: 1 failed [test_control_list D3], 1657 passed; collection of test_reader_call_resilience failed in the clean archive before the fix)"
+        "builder/wave3: sentence_pick.py tolerates a missing crawl_pages.json (PAGES_MISSING), test_control_list no longer depends on live register state; full suite on a clean git archive of the ACT-50 commit: 1658 passed, 0 failed, 0 skipped (baseline in worktree: 1 failed [test_control_list D3], 1657 passed; collection of test_reader_call_resilience failed in the clean archive before the fix)",
+        "Reviewed 2026-10-05: merged main full suite 1673 passed 0 failed; builder's clean git archive at its commit 1658 passed"
       ],
       "updated": "2026-10-05",
       "on_verify": {}
