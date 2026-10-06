@@ -18,6 +18,10 @@ While checking your Cybersecurity (Arnica) sheet against the organisers' own sit
 
 The same organiser's annual conference is already on your sheet (as 'FIRST Con'; also listed a second time as 'FIRST Annual Conference'): the 39th is Bangkok, June 13-18, 2027, and the 40th is Prague, June 11-16, 2028 (save the date), https://www.first.org/conference/ . Your row carries the 2028 date.
 
+Two time-sensitive items:
+- Nullcon Goa 2027: the call for papers is OPEN and CLOSES 30 OCTOBER 2026 (opened 11 September; speaker announcements begin 30 November): https://nullcon.net/event/nullcon-goa-2027/call-for-papers/
+- CyberDefenseCon 2026 (October 20-21, Ritz-Carlton Orlando): there is a live call for speakers, for enterprise CISOs only, with no deadline listed: https://cyberdefenseconferences.com/call-for-speakers-for-2026/ (the home page says the event itself is by invitation only; that is about attendance).
+
 Corrections to your sheet, each checked by hand on the event's own page:
 - Hack In The Box: the Jakarta event (Out Of The Box, Grand Hyatt, Jakarta) has been POSTPONED to Q4 2026, new dates not yet announced (https://ootb.net/jkt2026). Your row says 29 April 2026, Alila SCBD.
 - ECML PKDD: 30 August - 3 September 2027, Eindhoven (https://ecmlpkdd.org/2027/). Your row says 7 September 2026, which is the over 2026 edition.

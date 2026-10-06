@@ -1156,7 +1156,8 @@
       "evidence": [
         "2026-10-06 night: first real use. Upstream confirmed the 'full 45-field row in the same message' protocol and in the same message sent eight corrections as a table in another format, three of them under ids that are not ours and five with dates or a city the pages do not support (Decarb Connect Europe: Amsterdam, page says Vienna). The checker (run on a converted copy) found 11 kept, 0 broken, 11 not yet, and the id mismatch explained why. Ledger now 28 promises. Draft note 41 asks for full rows under our ids.",
         "2026-10-06 night 2: upstream re-keyed three events to our ids, sent a real 45-field CSV: 17 promises kept, 0 broken on it; the gate rejected the World Summit AI row (check 4) and CyberDefenseCon status is unsupported; draft note 42; ledger 30 promises. Progress: the protocol worked once the checker named each problem.",
-        "2026-10-06 night 3: upstream fixed World Summit AI (accepted) but set CyberDefenseCon to Closed / invitation-only without reading the Call for Speakers page we named; the live call (enterprise CISOs, no deadline) contradicts it. Ledger 32; draft note 43. Pattern: a fix that satisfies the letter of our message and misses the fact."
+        "2026-10-06 night 3: upstream fixed World Summit AI (accepted) but set CyberDefenseCon to Closed / invitation-only without reading the Call for Speakers page we named; the live call (enterprise CISOs, no deadline) contradicts it. Ledger 32; draft note 43. Pattern: a fix that satisfies the letter of our message and misses the fact.",
+        "2026-10-06 night 4: CyberDefenseCon accepted after the call page was read (8 kept, 0 broken); upstream wrongly reported a row as 'loaded downstream' (corrected in note 44). Japan CCUS Summit added (organiser site found). Ledger 32."
       ],
       "updated": "2026-10-06",
       "on_verify": {}
@@ -1173,6 +1174,23 @@
       "needs_you": "",
       "closes": [],
       "acceptance": "Every input row has a per-field verdict with a quote or the reason nothing could be read; a proposed-corrections CSV; count of DIFFERS and UNSUPPORTED reported.",
+      "depends": [],
+      "evidence": [],
+      "updated": "2026-10-06",
+      "on_verify": {}
+    },
+    {
+      "id": "ACT-60",
+      "wave": "W3",
+      "step": "F",
+      "owner": "you",
+      "state": "needs-you",
+      "cost": "$0",
+      "title": "Friday 02:00 and Saturday 02:00: the computer must be on, plugged in, signed in and awake",
+      "detail": "The two research tasks run only while the user is signed in (locked is fine), do not start on battery power and stop if the PC goes on battery, and do NOT wake the computer from sleep; if it is asleep at 02:00 they run late when it is next available (StartWhenAvailable). Read-only check of the registered tasks, 2026-10-06. Nothing can run the first awards job (Fri 2026-10-09 02:00) or the first automatic load with 140+ new events (Sat 2026-10-10 02:00) if the PC is asleep, off, on battery or signed out. Windows: Settings > System > Power & battery > Screen and sleep > \"When plugged in, put my device to sleep after\" = Never, until Sunday; keep it plugged in; stay signed in (Win+L to lock is fine, do not sign out or shut down).",
+      "needs_you": "Thursday and Friday nights: leave the PC on, plugged in, signed in, sleep set to Never (see detail).",
+      "closes": [],
+      "acceptance": "Friday and Saturday recaps arrive and say the job ran at about 02:00.",
       "depends": [],
       "evidence": [],
       "updated": "2026-10-06",
