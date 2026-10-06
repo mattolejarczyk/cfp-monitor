@@ -998,7 +998,8 @@
       ],
       "evidence": [
         "2026-10-05 night, first steps done by hand: 56 customer events added to the research input lists (scripts/add_customer_rows.py), upstream's 59 ids stamped by URL (scripts/stamp_given_ids.py) with the ledger docs/operations/given_ids.csv so Saturday's stamping step keeps them (before this fix it wiped stamps on events not yet in the database); 3 more events added (Google Cloud Next 2027, CDAO Defense & Security 2027, World of Concrete 2028); World of Concrete 2028 loaded to the live DB and completed (key_year set with the operator's approval, seed row appended; live invariants all ok). STILL TO BUILD: the weekly route (new unmatched customer rows -> queue automatically) and the Saturday recap line 'customer rows not in the queue' (target 0).",
-        "Branch builder/wave4. Parts: 1 tool scripts/customer_coverage.py (commit 8ce93d3), 2 reproduction 57 of 57 ACT-44 class C found (5c9e164, docs/qa/ACT-51-coverage-reproduction-20261006.md), 3 recap COVERAGE line + FLAG subject (a54bff5), 4 run_monthly.ps1 patch docs/control/patches/ACT-51-run_monthly.ps1.patch with tests (6f376c4; reviewer applies live), 5 docs + phase-2 design docs/design/ACT-51-auto-add-design.md (d8c15c7), reviewer addition LINKED BUT DISAGREES + URL needs matching date (1593cfb). Live run 2026-10-06 (read-only): COVERAGE 131 of 155 ahead in queue, 24 NOT, 34 linked rows disagree (before the by-hand additions: 78 NOT). Tests: tests/test_customer_coverage.py (17), test_customer_coverage_hook.py (6), test_weekend_recap.py (+5); fixtures only for those, the live numbers are from the live DB opened read-only. Not applied: the run_monthly.ps1 patch."
+        "Branch builder/wave4. Parts: 1 tool scripts/customer_coverage.py (commit 8ce93d3), 2 reproduction 57 of 57 ACT-44 class C found (5c9e164, docs/qa/ACT-51-coverage-reproduction-20261006.md), 3 recap COVERAGE line + FLAG subject (a54bff5), 4 run_monthly.ps1 patch docs/control/patches/ACT-51-run_monthly.ps1.patch with tests (6f376c4; reviewer applies live), 5 docs + phase-2 design docs/design/ACT-51-auto-add-design.md (d8c15c7), reviewer addition LINKED BUT DISAGREES + URL needs matching date (1593cfb). Live run 2026-10-06 (read-only): COVERAGE 131 of 155 ahead in queue, 24 NOT, 34 linked rows disagree (before the by-hand additions: 78 NOT). Tests: tests/test_customer_coverage.py (17), test_customer_coverage_hook.py (6), test_weekend_recap.py (+5); fixtures only for those, the live numbers are from the live DB opened read-only. Not applied: the run_monthly.ps1 patch.",
+        "2026-10-06 phase 1 reviewed: builder branch wave4 merged (17 files, 1711 tests passed on the builder's clean archive; my full run on the merged tree in progress); customer_coverage.py (read-only, exit 0), recap line and subject FLAG, run_monthly.ps1 block APPLIED LIVE (parse ok, standalone run prints live COVERAGE lines). Live: 131 of 155 customer rows ahead in the queue, 24 not, 34 linked rows disagree. NOT YET: phase 2, adding missing rows automatically (design written, not built, awaits approval). Verify after Saturday 10-10: the recap shows the COVERAGE line."
       ],
       "updated": "2026-10-06",
       "on_verify": {}
@@ -1067,6 +1068,27 @@
         "2026-10-06: upstream minted 2026-hitb-ootb-jakarta-speaking (stamped, ledger updated) and promised customer-first research and no schedule-based statuses; its Jakarta row says Closed (wrong: the organiser says postponed to Q4 2026) and its Phuket 'Discontinued' patch does not meet R16.1. Operator-verified pin added for the Jakarta event (dates blank, Grand Hyatt, postponed). Draft note 35. STILL OPEN: the two Phuket rows are still on the customer page (Conference Review 2026-10-05 shows 'Hack In The Box Security Conference 2026 - Phuket - Closed - typically runs in late August'); retire by held_rows after Saturday's load, operator to confirm.",
         "2026-10-06: operator approved taking the Phuket rows off the customer page. Phuket input row skipped (DUP_OF Jakarta id); upstream's corrected Jakarta row gate-ACCEPTED (quote verified) and the Phuket pair dropped from their queue. TO CHECK: after Saturday's load the Phuket rows must be absent from the promoted approved file and from Monday's Conference Review; then move the customer link (client_conferences) from the Phuket id to the Jakarta id (a person decides)."
       ],
+      "updated": "2026-10-06",
+      "on_verify": {}
+    },
+    {
+      "id": "ACT-55",
+      "wave": "W5",
+      "step": "A",
+      "owner": "builder",
+      "state": "todo",
+      "cost": "$0",
+      "title": "Classify the 24 customer rows not in the queue and the 34 linked rows that disagree; propose adds and re-links; draft the note for ids",
+      "detail": "customer_coverage.py (live, 2026-10-06) lists 24 customer rows ahead that are NOT in the research queue and 34 linked rows whose linked event disagrees on date (over 30 days) or place. Many are probably the NEXT or PREVIOUS EDITION of an event we research (Gartner Identity and Access Management 2027 vs our 2026, OWASP Global AppSec 2027/2028, Wild West Hackin Fest 2027, CES 2029, FIRST Con 2028); some are real gaps (ODSC West 2026-10-27, Nullcon Berlin 2026-11-05, SANS AI Cybersecurity Summit 2027-04-20, SXSW AI Track 2027-03-15, Google Cloud Next 2027 listed twice); World Summit AI Amsterdam starts 2026-10-07 (before research can help: belongs in docs/operations/customer_not_researched.csv with that reason, ruled by the operator). For EVERY one of the 24 and every one of the 34: class (A we hold it under another id, B we hold another edition, C not held: add, D over or not an event, E linked to the WRONG event: re-link), the page that shows it (edition dates read against the deadline: a quote on a page is not proof of the right edition), and for E the event it should link to. Output a classified CSV in the same columns as docs/qa/customer-unmatched-classified-20261003.csv plus a relink column, a draft note 36 asking upstream for the ids of the C rows, and a proposal CSV for add_customer_rows.py. No live file touched; the reviewer adds rows and applies re-links.",
+      "needs_you": "",
+      "closes": [
+        "A14"
+      ],
+      "acceptance": "Every one of the 58 rows has a class, a page and for class E the correct event; C rows are page-confirmed; a draft note is written.",
+      "depends": [
+        "ACT-51"
+      ],
+      "evidence": [],
       "updated": "2026-10-06",
       "on_verify": {}
     }
