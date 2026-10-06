@@ -1151,7 +1151,7 @@
       "wave": "W5",
       "step": "A",
       "owner": "me",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Hold upstream to its promises: a ledger, a checker run on every delivery and after every load, and a line in the Saturday recap",
       "detail": "DONE 2026-10-06 (by hand): docs/operations/upstream_commitments.csv (22 promises from notes 32 to 38, due 2026-10-10) and scripts/check_commitments.py (read-only; KEPT / NOT KEPT / NOT YET; --file checks any delivery CSV the day it arrives); tests; runbook 7.1 step 5 (every promise gets a ledger line); draft note 39 asks upstream to send the corrected rows NOW so they are checked today. TO BUILD: run the check after Saturday's load and put one line in the recap (COMMITMENTS: n kept, m NOT kept) with a FLAG in the subject when m > 0; the Monday build QA lists NOT KEPT items; a note to upstream names each unmet promise automatically (draft for the operator to send). Evidence of the pattern: ids said to be added to their input list were not (notes 28, 30, 34), a patch carried withdrawn evidence, a status rested on a typical schedule, the World Summit AI rows contradict the promise made one message earlier.",
@@ -1163,7 +1163,8 @@
         "2026-10-06 night: first real use. Upstream confirmed the 'full 45-field row in the same message' protocol and in the same message sent eight corrections as a table in another format, three of them under ids that are not ours and five with dates or a city the pages do not support (Decarb Connect Europe: Amsterdam, page says Vienna). The checker (run on a converted copy) found 11 kept, 0 broken, 11 not yet, and the id mismatch explained why. Ledger now 28 promises. Draft note 41 asks for full rows under our ids.",
         "2026-10-06 night 2: upstream re-keyed three events to our ids, sent a real 45-field CSV: 17 promises kept, 0 broken on it; the gate rejected the World Summit AI row (check 4) and CyberDefenseCon status is unsupported; draft note 42; ledger 30 promises. Progress: the protocol worked once the checker named each problem.",
         "2026-10-06 night 3: upstream fixed World Summit AI (accepted) but set CyberDefenseCon to Closed / invitation-only without reading the Call for Speakers page we named; the live call (enterprise CISOs, no deadline) contradicts it. Ledger 32; draft note 43. Pattern: a fix that satisfies the letter of our message and misses the fact.",
-        "2026-10-06 night 4: CyberDefenseCon accepted after the call page was read (8 kept, 0 broken); upstream wrongly reported a row as 'loaded downstream' (corrected in note 44). Japan CCUS Summit added (organiser site found). Ledger 32."
+        "2026-10-06 night 4: CyberDefenseCon accepted after the call page was read (8 kept, 0 broken); upstream wrongly reported a row as 'loaded downstream' (corrected in note 44). Japan CCUS Summit added (organiser site found). Ledger 32.",
+        "2026-10-06: BUILT. weekend_recap.py commitment_facts/commitment_sentence: Saturday recap states promises kept / NOT kept / not yet, names each broken one, subject gets 'FLAG: n upstream promise(s) NOT kept'. 1 new test (13 pass with existing). Live check today: 7 kept, 0 NOT kept, 25 not yet (of 32). WEEKEND-PROCESS step 10 updated and confirmed. Still to build: Monday build QA list and auto-drafted note to upstream."
       ],
       "updated": "2026-10-06",
       "on_verify": {}

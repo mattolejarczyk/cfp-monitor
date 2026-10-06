@@ -69,6 +69,30 @@ def coverage_sentence(cov: dict | None) -> str:
             f"Run scripts/customer_coverage.py --propose and add them (scripts/add_customer_rows.py).{note}")
 
 
+def commitment_facts(markets_dir: Path, ledger: Path | None = None, db: Path | None = None) -> dict | None:
+    """ACT-58: did upstream keep what it promised? Runs scripts/check_commitments.py's own `run` on the published
+    files, after the load. {'kept', 'broken', 'pending', 'total', 'broken_lines'} or None if the checker could not run."""
+    try:
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import check_commitments as cc
+        files = {m: Path(markets_dir) / f"{m}_audited.final.csv" for m in ("Cybersecurity", "Utility")}
+        res = cc.run(ledger or cc.LEDGER, files, db or cc.LIVE_DB, datetime.now().date().isoformat())
+    except Exception:
+        return None
+    bad = [r for r in res if r["state"] in ("NOT KEPT", "BAD LEDGER LINE")]
+    return {"kept": sum(r["state"] == "KEPT" for r in res), "broken": len(bad), "pending": sum(r["state"] == "NOT YET" for r in res),
+            "total": len(res), "broken_lines": [f"{r['id']} (note {r['note']}): {r['what']} - {r['detail']}" for r in bad]}
+
+
+def commitment_sentence(c: dict | None) -> str:
+    if c is None:
+        return "Upstream's promises: the check did not run this week."
+    head = f"Upstream's promises: {c['kept']} kept, {c['broken']} NOT kept, {c['pending']} not yet due (of {c['total']})."
+    if not c["broken"]:
+        return head
+    return f"FLAG - {head} Not kept: " + "; ".join(c["broken_lines"][:5]) + ". The note to upstream should name each one."
+
+
 def parse_saturday(log: str) -> dict:
     """The facts a Saturday recap needs, read from run_monthly's log."""
     out: dict = {"markets": {}}
@@ -168,6 +192,7 @@ def monthly_recap(log: str) -> tuple[str, str, str]:
              m["stubs"], m["requests"]] for n, m in s["markets"].items()]
     total_req = sum(int(m["requests"] or 0) for m in s["markets"].values())
     facts = [f"5-row test before the run: {s['canary']}.",
+             *([commitment_sentence(commitments)] if kind != "friday" else []),      # promises concern the Cybersecurity and Utility files
              f"AI requests in total: about {total_req}."]
     if s["timeouts"]:
         facts.append(f"Google was slow: {s['timeouts']} '504' timeouts (Google's server took "
@@ -203,7 +228,7 @@ def load_qa_lines(qa: dict | None) -> tuple[str, list[str]]:
 
 
 def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
-                   kind: str = "saturday", qa: dict | None = None) -> tuple[str, str, str]:
+                   kind: str = "saturday", qa: dict | None = None, commitments: dict | None = None) -> tuple[str, str, str]:
     """`kind='friday'` is the awards run (2026-09-28): same research, load and table, but the
     next steps are Monday's AWARDS page - Sunday's check covers conferences only."""
     s = parse_saturday(log)
@@ -271,6 +296,8 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     cov_n = (s["coverage"] or {}).get("not_in")
     if kind != "friday" and cov_n:
         status += f" - FLAG: {cov_n} customer row(s) not in the research queue"
+    if kind != "friday" and commitments and commitments["broken"]:
+        status += f" - FLAG: {commitments['broken']} upstream promise(s) NOT kept"
     subject = f"CFP {label} {status} - {datetime.now():%a %b %d}"
 
     html_parts = [f'<div style="{CSS}">',
@@ -386,7 +413,7 @@ def main() -> int:
                     qa = json.loads(qp.read_text(encoding="utf-8"))
             except Exception:                                                  # noqa: BLE001
                 qa = None
-            subject, text, html_ = saturday_recap(log, imp, md, a.kind, qa)
+            subject, text, html_ = saturday_recap(log, imp, md, a.kind, qa, commitment_facts(md) if a.kind != "friday" else None)
         elif a.kind == "monthly":
             subject, text, html_ = monthly_recap(log)
         else:
