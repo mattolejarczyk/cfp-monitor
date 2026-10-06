@@ -24,6 +24,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import sqlite3
 import sys
 from datetime import date, datetime
@@ -72,13 +73,20 @@ def build_queue(inputs: dict[str, list[dict]], up_to_canon: dict[str, str]) -> d
     return q
 
 
+def stale_date(start: str, url: str) -> bool:
+    """The customer's date has passed but their own URL names a LATER year (https://ecmlpkdd.org/2027/ with a 2026 date): the date was not updated for the next
+    edition, so the event is not over and must not be silently excluded (a date is not proof of the right edition)."""
+    years = [int(y) for y in re.findall(r"(?<!\d)(20\d\d)(?!\d)", url or "")]
+    return bool(years) and max(years) > int(start[:4])
+
+
 def classify(row: dict, market: str, queue: dict, ledger: list[dict], today: str, up_to_canon: dict[str, str]) -> tuple[str, str, str]:
     """-> (verdict, how/why, input row name). verdict: IN_QUEUE | NOT_IN_QUEUE | EXCLUDED."""
     name = (row.get("their_name") or "").strip()
     if int(row.get("withdrawn_by_customer") or 0):
         return "EXCLUDED", "the customer removed this row from their sheet (withdrawn_by_customer)", ""
     start = iso_of(row.get("event_start_date") or "")
-    if start and start < today:
+    if start and start < today and not stale_date(start, row.get("their_url") or ""):
         return "EXCLUDED", f"event is over: starts {start}, before {today}", ""
     url = norm_url(row.get("their_url") or "")
     for L in ledger:

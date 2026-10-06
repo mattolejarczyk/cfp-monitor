@@ -156,3 +156,11 @@ def test_command_line_writes_reports_and_proposal_and_exits_zero(tmp_path):
     j = json.loads((out / "coverage.json").read_text(encoding="utf-8"))
     assert [x["name"] for x in j["not_in_queue"]] == ["Out"] and (out / "coverage.md").read_text(encoding="utf-8").startswith("# Customer coverage")
     assert [r["conference"] for r in csv.DictReader(open(prop, encoding="utf-8"))] == ["Out"]
+
+
+def test_a_past_date_with_a_later_year_in_their_url_is_not_called_over(tmp_path):
+    rows = [{"name": "ECML", "url": "https://ecmlpkdd.org/2027/", "start": "09/07/2026"},
+            {"name": "Old", "url": "https://old.example/2026/", "start": "09/07/2026"}]
+    res, _, _, _ = run(tmp_path, rows, [])
+    assert [x["name"] for x in res["not_in_queue"]] == ["ECML"]
+    assert [x["name"] for x in res["excluded"]] == ["Old"]
