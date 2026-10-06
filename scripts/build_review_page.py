@@ -196,6 +196,18 @@ def load_checks(path):
     return out
 
 
+SPONSOR_CONFIRMED = 'Sponsor required'
+SPONSOR_UNCONFIRMED = 'Sponsor required (unconfirmed)'
+
+
+def sponsor_badge_label(sponsor_required, sponsor_quote):
+    """R-002 (2026-10-06): the list badge for a sponsorship gate. A 'Yes' that carries a SPONSOR_QUOTE keeps 'Sponsor required'; a 'Yes' with no quote (the delivery gate is link-only, R18b/R20a)
+    reads 'Sponsor required (unconfirmed)'. Anything that is not a Yes has no badge (''). The detail text is built separately and is unchanged."""
+    if (sponsor_required or '').strip().lower() != 'yes':
+        return ''
+    return SPONSOR_CONFIRMED if (sponsor_quote or '').strip() else SPONSOR_UNCONFIRMED
+
+
 def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=None):
     st = edition_states(rows, today)
     _today = date.fromisoformat(today) if isinstance(today, str) else today
@@ -257,6 +269,7 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
             'spon': d['SPONSOR_REQUIRED'].strip().lower() == 'yes',
             'sponcost': d['SPONSOR_COST'], 'sponurl': d['SPONSOR_URL'],
             'sponq': d['SPONSOR_QUOTE'],
+            'sponlabel': sponsor_badge_label(d['SPONSOR_REQUIRED'], d['SPONSOR_QUOTE']),
             'st': st.get((r.get('EVENT_ID') or '').strip(), 'Active'),
             # When WE last inspected this row at source. Drives the 'Updated since' view -
             # the answer to 'what has moved since I last looked', which is the question a
@@ -758,7 +771,7 @@ function render(){
       // pitch happens at all, so it belongs in the list where a deadline is - not three
       // clicks down. The cost rides with it when we have one, because "sponsor required" and
       // "sponsor required, $25,000" are different decisions.
-      r.spon?` <span class="b b-nv" title="Speaking at this event requires sponsorship. Open the row for the source.">Sponsor required${r.sponcost?' &middot; '+esc(r.sponcost):''}</span>`:''}${
+      r.spon?` <span class="b b-nv" title="Speaking at this event requires sponsorship. Open the row for the source.">${esc(r.sponlabel)}${r.sponcost?' &middot; '+esc(r.sponcost):''}</span>`:''}${
       r.dead?' <span class="b b-dead" title="The submission page returns not-found - confirmed in a real browser">Submit Link Missing</span>':''}</td>
     <td class="mk">${esc(r.m)}</td><td class="mk">${esc(r.loc)||'&mdash;'}</td>
     <td class="mk">${esc(r.f)||'&mdash;'}</td><td class="mk">${esc(r.dates)||'&mdash;'}</td>

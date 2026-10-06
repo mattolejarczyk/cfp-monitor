@@ -1,0 +1,167 @@
+ German OWASP Day 2026 German OWASP Day 2026 Tickets Programm Sponsoren Sponsormöglichkeiten --> CfT& CfP Location Über Uns Kontakt Archiv 2025 2024 2023 2019 2018 2017 [EN] German OWASP Day 2026 Das German Chapter des Open Worldwide Application Security Project (OWASP) richtet jährlich ihre nationale OWASP-Konferenz aus. Wir freuen uns ankündigen zu dürfen, dass die diesjährige Veranstaltung in Karlsruhe vom 23.-24. September 2026 stattfinden wird! Am 24. September erwartet euch der Conference Day mit Vorträgen zu unterschiedlichen Themen der Anwendungssicherheit. Am Vortag bieten wir in diesem Jahr zwei Formate an: Neu dabei ist die OWASP Diversity PreCon - eine kostenfreie Gelegenheit zum Entdecken und Vernetzen. Besonders Frauen und queere Personen kommen hier mit der Application-Security-Community in Kontakt — direkt, unkompliziert, auf Augenhöhe. Außerdem gibt es wie gewohnt vertiefende Trainings zu ausgewählten Security-Themen, die für alle Interessierten buchbar sind. Der 23. September endet mit einer Vorabendveranstaltung für alle Teilnehmenden. Die Konferenz- und Trainingstickets sind auf GlueUp verfügbar! Zum Ticketkauf Program Am Hauptveranstaltungstag (24.09.2026) finden eine Reihe von von spannenden technischen und nicht-technischen Vorträgen im Bereich der Anwendungssicherheit statt. Am Vortag (23.09.2026) werden verschiedene Seminare und eine Abendveranstaltung zum gemeinsamen Erfahrungsaustausch und der neue OWASP Diversity PreCon angeboten. Für die Teilnahme an der Veranstaltung erhaltet ihr bis zu 14 CPE-Fortbildungspunkte. OWASP Diversity PreCon - Mittwoch 23.09. Trainings - Mittwoch 23.09. Konferenz - Donnerstag 24.09. Uhrzeit Topics 1 Topics 2 09:00 Introduction 10:00 - 12:30 Einführung ins Reverse Engineering von IoT-Firmware (Teil 1) 🇩🇪 | Jiska Classen Details Saftladen unter Beschuss 🇩🇪 | Jana Prechelt Details KI-Security Hands-On: Prompt Injection & Co. selbst ausprobieren 🇩🇪 | Martina Kraus Details Cyber Resilience Act & DSGVO: TOMS als Schlüssel für Security-Compliance-Synergien 🇩🇪 | Friederike Schellhas-Mende Details 12:30 - 13:30 Lunch Break 13:30 - 14:30 Vielfalt von AppSec 🇩🇪 | Larissa Prestel Details 14:30 - 16:30 Einführung ins Reverse Engineering von IoT-Firmware (Teil 2) 🇩🇪 | Jiska Classen Details Saftladen unter Beschuss 🇩🇪 | Jana Prechelt Details KI-Security Hands-On: Prompt Injection & Co. selbst ausprobieren 🇩🇪 | Martina Kraus Details Was kann schief gehen? Threat Modelling - Bedrohungsmodellierung für Einsteigerinnen. 🇩🇪 | Lilith Pendzich Details 16:30 Closing Session Uhrzeit Track 1 Track 2 09:00 - 13:00 Understanding Modern Application Security - Foundations 🇬🇧 | Michael Helwig Details Scaling Threat Modeling with OWASP Precogly: Building AI-Agent-Ready Programs 🇬🇧 | Vikramaditya Narayan | Jeroen Verwoest Details 14:00 - 18:00 Hacking a smart Pizza Place with the OWASP AI Exchange - PwnzzAI! 🇬🇧 | Behnaz Karimi | Maryam Mouzarani Details CANCELLED - Silent Sabotage: When AppSec Hits the Water — Exploiting the OWASP OT 🇬🇧 | Blessen Thomas | Wojciech Poparda | Ranjith Menon | Javier Villalba Details 15:00 - 17:00 German Chapter Meeting Room Rheinauen Details ab 18:30 Abendveranstaltung im Zieglersaal im Restaurant Akropolis Uhrzeit Saal Baden Saal Fidelitas 08:15 - 08:55 Anmeldung 08:55 - 09:05 Einführung 🇬🇧 09:05 - 09:50 Keynote: Rob van der Veer 🇬🇧 | Rob van der Veer Details Aufnahme 09:50 - 09:55 Aufteilung in Track #1 und Track #2 09:55 - 10:20 Agentic AI Gateway Enforcement of the OWASP Top 10 🇬🇧 | Davi Ottenheimer Details Aufnahme Understanding the Map of Threat Modeling Through the Lens of the TM-BOM 🇬🇧 | Vikramaditya Narayan Details Aufnahme 10:20 - 10:45 Hackbots under control: Methodology for Autonomous Pentesters 🇬🇧 | Hussein Bahmad | Tanguy Snoeck Details Aufnahme OWASP Cornucopia - Gamifying AI Threat Modeling and Security Requirement Analysis 🇬🇧 | Johan Sydseter Details Aufnahme 10:45 - 11:20 Pause 11:20 - 12:05 Indirect Prompt Injection in the Wild: An Empirical Study of Prevalence, Techniques, and Objectives 🇬🇧 | Soheil Khodayari | Giancarlo Pellegrino Details Aufnahme Vier grüne Häkchen, trotzdem gehackt: Threat Modeling für KI-Agenten 🇩🇪 | Christian Schneider Details Aufnahme 12:05 - 12:55 What LLMs Can Do in Pentesting and Code Security 🇬🇧 | Julius Henke Details Aufnahme CRA effizient und nachhaltig umsetzen 🇩🇪 | Dagmar Moser | Max Moser Details Aufnahme 12:55 - 13:55 Mittagspause 13:55 - 14:40 How To Become a Certified AI Security Professional 🇬🇧 | Rob van der Veer Details Zeit für OAuth 2.1 - Security Best Practices als neuer Standard 🇩🇪 | Martina Kraus Details Aufnahme 14:40 - 15:10 OWASP AISVS: Bringing Order to AI Security Chaos 🇬🇧 | Rico Komenda Details Aufnahme How To Fuzz for Logic Bugs? Building Effective Oracles - A Case Study on Site Isolation Bypass Bugs 🇬🇧 | Jan Niklas Drescher | David Klein | Martin Johns Details Aufnahme 15:10 - 15:40 How to Hack "Read-Only" SQL MCP Servers Online (Fast) 🇩🇪 | Maximilian Hildebrand Details Aufnahme New OWASP Kubernetes Top 10 in Action and Explained 🇬🇧 | Benjamin Koltermann Details Aufnahme 15:40 - 16:10 Pause 16:10 - 16:55 Public Money, Public Containers 🇩🇪 | Sebastian Kawelke | Janou Feikens Details Aufnahme 16:10 - 16:45 Race Against The Workflows: Stealing GitHub Tokens from Docker Images 🇬🇧 | Gaetan Ferry | Guillaume Valadon Details Aufnahme 16:55 - 17:20 Sicher in einen neuen Hafen -- Die Geschichte einer Migration in eine europäische Cloud 🇩🇪 | Adrian Metzner Details Aufnahme 16:45 - 17:20 Silent but Deadly: Reconstructing Undisclosed Security Vulnerabilities in Public Package Registries 🇬🇧 | Thomas Barber Details Aufnahme 17:20 - 17:25 Zurück zu Saal Baaden 17:25 - 17:45 Celebrating the 25th Anniversary of OWASP and the 22nd of German Chapter 🇬🇧 | Boris Hemkemeier | Dirk Wetter Details Aufnahme 17:45 - 17:50 Chapter Lead: Thanks & meet you next year 🇬🇧 Aufnahme 17:50 - 20:00 25 Jahre OWASP - Gemeinsame Feier Im Anschluss an den German OWASP Day gibt es noch etwas Spezielles. Wir feiern 25 Jahre OWASP gemeinsam! Wer noch Zeit und Lust hat, bleibt einfach nach dem offiziellen Ende bei uns. Bis circa 20 Uhr gibt es noch Getränke und Snacks und Austausch mit der Community. Programm herunterladen --> Unsere Sponsoren Die nachfolgenden Unternehmen und Organisationen unterstützen dieses Jahr den German OWASP Day. Gold Sponsor Standard Sponsor Sponsormöglichkeiten zum German OWASP Day 2026 Wir erwarten rund 200 Teilnehmer*innen aus verschiedenen Branchen. Als Sponsor des German OWASP Day 2026 setzen Sie ein klares Zeichen: Sie unterstützen den deutschsprachigen Branchentreffpunkt im Bereich Application Security und stärken so sichtbar das Expertenimage Ihres Unternehmens. Aufgrund der bisherigen positiven Resonanz haben wir - neben der Präsenz im Internet und offiziellen Dokumenten - folgende attraktive Angebote für hohe Sichtbarkeit auf der Konferenz geschnürt. Standard Sponsor Gold Sponsor Preis (netto): 1.500 € Ihre Vorteile: Ihr Logo* auf der Konferenzhomepag
+
+Sign in
+Donate
+🇩🇪
+OWASP Germany
+
+Germany
+
+Join Chapter
+View chapter meetings
+Main
+Projekte
+Treffen
+Konferenz
+Supporters
+Über OWASP
+
+OWASP ist eine unabhängige, weltweite Community mit dem Ziel, die Bedeutung der Sicherheit von Webanwendungen »sichtbar zu machen« Know-How zur Entwicklung und den Betrieb sicherer Webanwendungen zu verbreiten und frei zur Verfügung zu stellen. Sämtliche OWASP-Instrumente, wie Dokumente, Videos, Slides, Podcasts etc. sind kostenlos unter einer freien Lizenz verwendbar. OWASP ist frei, offen und herstellerunabhängig. Alle Interessierten sind herzlich willkommen etwa in Projekten mitzuarbeiten oder nur am Wissen zu partizipieren. Eine prima Gelegenheit sich einen Eindruck zu verschaffen, sind die OWASP Stammtische, die regelmäßig in vielen deutschen Großstädten stattfinden.
+
+OWASP German Chapter
+
+OWASP organisiert sich in sogenannten Chaptern. Eines davon ist das deutsche Chapter, auf dessen Seite ihr euch gerade befindet. Der Chapter Lead wird jährlich im Chapter Meeting gewählt. Derzeitiger Chapter Lead ist Tobias Glemser.
+
+Mitarbeit
+
+Mitarbeit am OWASP German Chapter ist willkommen. Wir freuen uns auf Beiträge in unserer Mailingliste. Diese sollten natürlich einen Bezug zu Anwendungssicherheit haben. Denkbar sind also u. A. Fragen, Tipps, aktuelle Hinweise, Stellenangebote oder Projektgesuche. Es gibt auch ein Mailarchiv der alten Liste, die nicht mehr genutzt wird. Wenn Sie nicht an den Meetings teilnehmen können, kontaktieren Sie einfach einen der German Chapter Leader oder schreiben Sie eine E-Mail an unsere Mailingliste [email protected]. Vorab müssen Sie hierzu der Google Group beitreten.
+
+Social Media
+
+Wir sind auf • LinkedIn • Mastodon • Bluesky • X zu finden, in absteigender Interaktionsfrequenz.
+
+Aktuelles
+
+Der German OWASP Day 2025 findet am 26.11.2025 in Düsseldorf statt. Der Call for Presentations ist eröffnet. Wir werden diesmal zwei Tracks haben und sind tierisch gespannt auf ein weiteres bombastisches Event. Am 13.11.2024 fand in Leizpig in einer wunderschönen Lokation der German OWASP Day statt. Das Programm konnte sich wirklich blicken lassen. Am Vortrag gibt es drei Trainings und an dem Abend gab es wie üblich unser Social Event und schöne eine Gelegenheit zum Fachsimpeln, zum Austausch und zum Wiedersehen. Dank dem C3VOC hatten wir kurzfristig sogar Live-Streaming und die Videos der einzelnen Vorträge waren am selben Tag noch auf media.ccc.de. 2023 fand nach längerer Corona-Pause am 31.5. der German OWASP Day in Frankfurt statt, zu dem es zirka 190 Besucher hinzog. Am Vortrag wurden zwei Trainings angeboten, das Programm am Konferenztag und die Videos auf YouTube.
+
+About OWASP Germany
+Chapter meetings
+View all meetings
+09/23/2026, 8:00 AM CDT
+OWASP Germany Chapter Meeting
+IHK Karlsruhe
+Details & RSVP
+Chapter Leaders
+Dirk Wetter
+
+Chapter Leader
+
+Email
+
+Tobias Glemser
+
+Chapter Leader
+
+Email
+
+Bjoern Kimminich
+
+Chapter Leader
+
+Email
+
+Jan Wolff
+
+Chapter Leader
+
+Email
+
+Jasmin Mair
+
+Chapter Leader
+
+Email
+
+Connect With Us
+LinkedIn
+YouTube
+Join this chapter
+
+You need an account to join a chapter. Sign in or create one and we'll bring you right back here.
+
+Sign in
+Create account
+Join OWASP Germany
+
+Be part of Europe's cybersecurity community. Join us in advancing application security and fostering collaboration in Germany.
+
+Join Chapter
+Learn More
+Corporate Supporters
+Corporate Supporter Spotlight: GitGuardian
+
+GitGuardian is a global cybersecurity startup focusing on code security solutions for the DevOps generation. A leader in the market of secrets detection and remediation, its solutions are already used by hundred thousand developers in all industries. GitGuardian helps developers, cloud operation, security and compliance professionals secure software development, define and enforce policies consistently and globally across all their systems. GitGuardian solutions monitor public and private repositories in real-time, detect secrets, sensitive files, IaC misconfigurations and alert to allow investigation and quick remediation.
+
+Become a Corporate Supporter
+Meet our Corporate Supporters
+Supporter Job Postings
+OWASP is a nonprofit foundation improving software security through open-source projects, global communities, and education. All resources are free and open to everyone.
+Quick Links
+Awards
+Chapters
+Community
+Contact
+Corporate Supporters
+Events
+News
+OWASP Community
+Projects
+Security
+Staff
+OWASP Merch
+Legal & Governance
+About OWASP
+Board
+Board EU
+Finance (all documents)
+Finance & Governance
+Policies
+Impact Report 2025
+Strategic Plan 2026
+Socials
+Bluesky
+GitHub
+LinkedIn
+Mastodon
+Slack
+X
+YouTube
+Make a Donation
+Join Now
+Join Slack
+OWASP, the OWASP logo, and Global AppSec are registered trademarks and AppSec Days, AppSec California, AppSec Cali, SnowFROC, OWASP Boston Application Security Conference, and LASCON are trademarks of the OWASP Foundation, Inc.
+© 2026, OWASP Foundation Inc. All rights reserved.
+Menu
+Home
+Projects
+Loading…
+View all projects
+Submit Project
+Project Handbook
+Chapters
+View all chapters
+Events
+No events found
+View all events
+Meetings
+No meetings found
+View all meetings
+Events Calendar
+News
+No news posts found
+View all posts
+About
+About OWASP
+Awards
+Board
+Board EU
+Committees and Working Groups
+Contact
+Corporate Support
+Our Mission
+Staff
+COMMITTEES AND WORKING GROUPS
+No groups found
+View all groups
+Join the Community
+Become a Corporate Supporter

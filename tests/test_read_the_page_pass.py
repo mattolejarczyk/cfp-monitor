@@ -42,3 +42,47 @@ def test_scoring_ignores_failed_calls_and_counts_false_accepts():
              {"event": "c", "field": "start_date", "gold": "2027-02-27", "accepted": "", "call_failed": True}]
     s = L.score(items)
     assert s["calls_failed"] == 1 and s["false_accept"] == 1 and s["correct"] == 1 and s["facts"] == 2
+
+
+# ---- ACT-62: German main-conference labels (R-001) ----------------------------------------------------------------------------------------------------------------------------------
+from pathlib import Path
+
+OWASP_PAGE = (Path(__file__).parent / "fixtures" / "german_owasp_day_2026_page.txt").read_text(encoding="utf-8")        # real text of https://god.owasp.de/2026/ (ACT-56 page cache)
+OWASP_Q = "vom 23.-24. September 2026"
+
+
+def test_german_owasp_day_start_is_the_first_main_conference_day_not_the_training_day():
+    """The miss ACT-56 found: all five models answered 2026-09-23 and the code accepted it. Training/pre-day Wed 23, Conference Day Thu 24 (R-001: start = first main day)."""
+    bad = L.accept("start_date", {"value": "2026-09-23", "quote": OWASP_Q}, OWASP_PAGE, "2026")
+    assert bad[0] == "" and "2026-09-24" in bad[1]
+    assert L.accept("start_date", {"value": "2026-09-24", "quote": OWASP_Q}, OWASP_PAGE, "2026")[0] == "2026-09-24"
+    assert L.accept("end_date", {"value": "2026-09-24", "quote": OWASP_Q}, OWASP_PAGE, "2026")[0] == "2026-09-24"      # the end of the range is not touched
+
+
+def test_each_german_label_form_names_the_main_day():
+    for label in ("Konferenz - Donnerstag 24.09.", "Hauptveranstaltungstag (24.09.2026)", "Am 24. September erwartet euch der Conference Day", "Konferenztag am 24. September",
+                  "Hauptkonferenz: 24.09.2026"):
+        page = f"Die Veranstaltung findet {OWASP_Q} statt. {label} mit Vortraegen. Trainings - Mittwoch 23.09. " + "x " * 60
+        assert L.accept("start_date", {"value": "2026-09-23", "quote": OWASP_Q}, page, "2026")[0] == "", label
+        assert L.accept("start_date", {"value": "2026-09-24", "quote": OWASP_Q}, page, "2026")[0] == "2026-09-24", label
+
+
+def test_a_german_range_with_no_recognised_label_is_accepted_exactly_as_before():
+    page = f"Die Veranstaltung findet {OWASP_Q} in Karlsruhe statt. Es gibt Vortraege und Workshops. " + "x " * 60
+    assert L.accept("start_date", {"value": "2026-09-23", "quote": OWASP_Q}, page, "2026")[0] == "2026-09-23"
+    assert L.german_label_verdict(page, OWASP_Q, __import__("datetime").date(2026, 9, 23)) == (True, "ok")
+
+
+def test_a_german_main_day_outside_the_range_or_of_another_year_does_not_reject():
+    page = f"Die Veranstaltung findet {OWASP_Q} statt. Konferenz - Freitag 02.10.2026 ist ein anderer Termin. " + "x " * 60
+    assert L.accept("start_date", {"value": "2026-09-23", "quote": OWASP_Q}, page, "2026")[0] == "2026-09-23"
+
+
+def test_english_labelled_range_rule_is_unchanged():
+    page = "Training: June 1-2, 2026. Conference: June 3-5, 2026. " + "x " * 60
+    assert L.accept("start_date", {"value": "2026-06-03", "quote": "Conference: June 3-5, 2026"}, page, "2026")[0] == "2026-06-03"
+    bad = L.accept("start_date", {"value": "2026-06-01", "quote": "Training: June 1-2, 2026"}, page, "2026")
+    assert bad[0] == "" and "training" in bad[1]
+    # English 'Conference Day' wording does not trigger the German rule
+    eng = "The event runs September 23-24, 2026. Conference Day is September 24. Training is September 23. " + "x " * 60
+    assert L.german_label_verdict(L.norm(eng), L.norm("September 23-24, 2026"), __import__("datetime").date(2026, 9, 23)) == (True, "ok")
