@@ -5,6 +5,16 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-05 (evening) - customer sheets define the job; ruling R-001; Wave 2 and 3 reviewed
+
+- Gap found and logged (ACT-51): customer-sheet rows never reached the research queue. 56 customer events added to the input lists (`add_customer_rows.py`), upstream's ids stamped by URL (`stamp_given_ids.py`), ledger `given_ids.csv` so Saturday's stamping keeps stamps on new events (`stamp_input_ids.py` used to wipe them). Weekly route and recap line still to build.
+- Ruling R-001: START DATE is the first day of the main conference (docs/operations/OPERATOR-RULINGS.md); upstream accepted; German OWASP Day pin moved to 2026-09-24.
+- Upstream notes 29 to 32 sent and answered. Our note 29 was wrong on World of Concrete (a 2028 call); corrected in 29b; the 2028 row loaded live with the operator's approval for the one-row key_year update. Replies verified against our files and the pages before anything loaded; Industrial Net Zero patch not applied (the held id carries the 2027 edition); note 32 answer to be triaged (ACT-52).
+- Wave 2 reviewed (ACT-21, 26, 20, 23, 25 verified; ACT-20 patch applied to run_monthly.ps1) and Wave 3 reviewed (ACT-50, 49, 44 verified; ACT-40, 42 partial); full suite 1673 passed. New: scripts/add_customer_rows.py, scripts/stamp_given_ids.py (tests added), TOOLING and QA-REGISTER A39, A40 rows, WEEKEND-PROCESS step 4 updated.
+- Sponsorship: the gate is correctly link only (contract R20a makes the quote ours); decision parked as ACT-53.
+
+---
+
 ## 2026-10-05 - control list, builder waves, identity fixes, status-only label
 
 - Failure-point register by root cause (60) and the control list (docs/control): data-driven pages, `scripts/control_list.py set/verify`, builder brief, builder in an isolated worktree, reviewer verifies. Wave 1 built, reviewed (independent suite 1,553 passed, Friday awards rehearsal identical), merged and verified; Wave 2 started.
