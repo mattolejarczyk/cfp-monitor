@@ -1038,7 +1038,7 @@
       "wave": "W5",
       "step": "D",
       "owner": "you",
-      "state": "needs-you",
+      "state": "todo",
       "cost": "$0",
       "title": "Decide the sponsorship rule: link only at the gate (current) or link plus quote",
       "detail": "114 Yes rows have a SPONSOR_URL and none a quote. Enforcing the quote at the DELIVERY gate would hold back almost every live row every Saturday (112 of 125 say Yes), so the gate stays link only (contract R20a: the quote is ours to extract). Recommendation to discuss: (1) keep the gate link only and change the contract sentence to describe the state after OUR extraction; (2) run scripts/extract_sponsor_quotes.py with Chrome up (ACT-40) and put the share of Yes rows with a proven quote on the board; (3) a quote-less Yes shows on the page as unconfirmed (badge text, customer-facing wording: your call). The operator asked to sync on this later.",
@@ -1048,8 +1048,10 @@
       "depends": [
         "ACT-40"
       ],
-      "evidence": [],
-      "updated": "2026-10-05",
+      "evidence": [
+        "RULED 2026-10-06 by operator: (a) delivery gate stays link-only; (b) YES run extract_sponsor_quotes.py with Chrome (launch_chrome_cdp.bat) on a COPY of the db; (c) badge for a Yes with no quote becomes 'Sponsor required (unconfirmed)'. TO DO: badge wording in the customer page builder (builder), quote run (me)."
+      ],
+      "updated": "2026-10-06",
       "on_verify": {}
     },
     {
@@ -1128,7 +1130,7 @@
       "wave": "W6",
       "step": "D",
       "owner": "you",
-      "state": "needs-you",
+      "state": "todo",
       "cost": "$0",
       "title": "Decide how the ChatGPT subscription can be used for model tests",
       "detail": "The operator has a ChatGPT subscription and wants to use its capacity for testing GPT-6 Luna (max). A subscription is normally for the ChatGPT app and its coding tools, not for API calls from our scheduled scripts, which need an API key and are billed separately. Options: (1) call the model through OpenRouter with the existing key if it is listed there (cheapest to set up, no new key); (2) a new OpenAI API key with a spend cap, created and stored by the operator (keys are operator-only); (3) use the ChatGPT subscription by hand for a small, one-off blind second read of the hardest rows (the operator pastes, no automation, no scheduled use). Needs the operator to say which of these his subscription actually allows and which he prefers.",
@@ -1136,7 +1138,9 @@
       "closes": [],
       "acceptance": "A route recorded; the builder uses it in ACT-56.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "RULED 2026-10-06 by operator: GPT-6 Luna (max) via his ChatGPT subscription FIRST (must be set to max). If that fails or usage is exhausted, REPORT THE EXACT REASON to him; only then the existing OpenRouter key (no new keys). Free models (space-bunny-alpha) OK for public page text only."
+      ],
       "updated": "2026-10-06",
       "on_verify": {}
     },
@@ -1184,7 +1188,7 @@
       "wave": "W3",
       "step": "F",
       "owner": "you",
-      "state": "needs-you",
+      "state": "waiting",
       "cost": "$0",
       "title": "Friday 02:00 and Saturday 02:00: the computer must be on, plugged in, signed in and awake",
       "detail": "The two research tasks run only while the user is signed in (locked is fine), do not start on battery power and stop if the PC goes on battery, and do NOT wake the computer from sleep; if it is asleep at 02:00 they run late when it is next available (StartWhenAvailable). Read-only check of the registered tasks, 2026-10-06. Nothing can run the first awards job (Fri 2026-10-09 02:00) or the first automatic load with 140+ new events (Sat 2026-10-10 02:00) if the PC is asleep, off, on battery or signed out. Windows: Settings > System > Power & battery > Screen and sleep > \"When plugged in, put my device to sleep after\" = Never, until Sunday; keep it plugged in; stay signed in (Win+L to lock is fine, do not sign out or shut down).",
@@ -1192,7 +1196,9 @@
       "closes": [],
       "acceptance": "Friday and Saturday recaps arrive and say the job ran at about 02:00.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "Operator confirmed 2026-10-06: PC will be on as described."
+      ],
       "updated": "2026-10-06",
       "on_verify": {}
     }

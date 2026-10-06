@@ -16,3 +16,9 @@ A ruling here is a DEFINITION or a policy the operator decided, not a fact about
 - **Upstream:** the contract does not define which day START DATE means. Upstream should be told (draft with the Wave 4 notes) so their research uses the same day. Until then the importer and the arbiter (`scripts/start_date_arbiter.py`) are unchanged.
 - **Upstream accepted it on 2026-10-05 (reply to note 29):** START DATE is the first day of the main conference, CONFERENCE DATES the main-conference range, and a single contiguous range is used as published.
 - **To reverse:** delete this entry, set the German OWASP Day pin back to START DATE 2026-09-23 and CONFERENCE DATES "September 23 - September 24, 2026", and regenerate the answer key (`python scripts/answer_key_from_pins.py`).
+
+## R-002 (2026-10-06) Sponsorship and contacts
+- Delivery gate for sponsorship stays LINK-ONLY (R18b/R20a). Quotes are extracted by us (extract_sponsor_quotes.py, Chrome on port 9222, on a copy of the db first).
+- A "Yes" with no quote shows on the customer page as "Sponsor required (unconfirmed)".
+- An event with no call page but a published, named enquiry/programme email counts as FOUND/RESEARCHED: the address goes in COORDINATOR EMAIL, plus a row note (first case: Japan CCUS Summit 2026, Fiona@leader-associates.com).
+- Model tests: GPT-6 Luna (max) through the operator's ChatGPT subscription first; on failure or exhausted usage report the exact reason, then fall back to the existing OpenRouter key. Free models OK for public page text only.
