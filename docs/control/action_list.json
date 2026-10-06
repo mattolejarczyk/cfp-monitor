@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-10-05",
+  "as_of": "2026-10-06",
   "title": "CFP Control List",
   "intro": "The work list behind the failure-point register. Each action closes one or more root-cause failure points; when an action is verified, the register updates itself. A builder agent does the work in an isolated branch, the reviewer verifies it, and only the items marked Needs you wait for you.",
   "waves": [
@@ -1006,7 +1006,7 @@
       "wave": "W5",
       "step": "A",
       "owner": "me",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Apply upstream's note 32 rulings: Industrial Net Zero duplicate pair and the new 2026 row, AFPM blank row",
       "detail": "Upstream ruled (2026-10-05): 2026-industrial-net-zero-conference-sydney (holds the 2027 edition, start 2027-10-12) SURVIVES; 2027-industrial-net-zero-conference-tbd is DUP_OF it; the 2026 edition (13-14 Oct 2026) is a new row 2026-industrial-net-zero-conference-sydney-speaking (full 45-field row delivered); AFPM 2027 city and location cleared to blank. TO DO, verifying each claim first (check_delivery_ids, accept_delivery with the network, read the pages): (1) our Utility input row for the 2027 edition is stamped -tbd and is the one researched: restamp it to the survivor id and mark the old row DUP_OF (scripts/stamp_given_ids.py and the DUP_OF route; the DB has both rows, retire the duplicate by held_rows as for the 10-05 pairs, never delete); (2) gate and load the 2026 INZ row (it starts 2026-10-13: low value, add only if it passes) and add it to the input list with the ledger; (3) take upstream's AFPM row (blank dates and city) and blank the venue on our input row; (4) record the ids in docs/operations/given_ids.csv. Their STATUS Open on an event 8 days away needs a page that shows a call.",
@@ -1018,8 +1018,10 @@
       "depends": [
         "ACT-51"
       ],
-      "evidence": [],
-      "updated": "2026-10-05",
+      "evidence": [
+        "2026-10-06: upstream's note 32 reply triaged against our files and pages. Duplicate ruling accepted and applied to the input list (survivor restamped, unsupported 2027 dates blanked); 2026 edition added under upstream's id with the real URL; their two delivered rows NOT loaded (AFPM fails R11; 2026 row cites a dead domain and an unsupported Open). Draft note 33 written. REMAINING: retire the duplicate DB row -tbd after Saturday's load with ACT-47; confirm Saturday's research carries the survivor id."
+      ],
+      "updated": "2026-10-06",
       "on_verify": {}
     },
     {
