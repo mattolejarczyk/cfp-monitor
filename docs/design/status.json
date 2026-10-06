@@ -12,12 +12,12 @@
     "provable": {
       "label": "Provable submission date (live deadlines)",
       "definition": "Deadlines still ahead for events on the Cybersecurity and Utility market lists. Proven = our verifier found the stored date on the cited page and a citation exists. A deadline that has already passed is not scored: its page moves on to the next edition. Proven also includes dates you verified yourself on the event's own page (pinned: 4 today). Events more than 90 days off with no firm call are not counted (1 today): no page is expected to state a date yet.",
-      "rows": 16,
+      "rows": 17,
       "levels": [
         {
           "key": "confirmed",
           "label": "Date on the cited page",
-          "n": 11,
+          "n": 12,
           "tone": "good"
         },
         {
@@ -51,10 +51,10 @@
           "tone": "bad"
         }
       ],
-      "open_rows": 16,
-      "open_confirmed": 11,
+      "open_rows": 17,
+      "open_confirmed": 12,
       "note": "The earlier 28% (11 of 39) counted every stored deadline, including 44 of 48 that had already passed; the purpose audit itself said 15 of 16 'absent' and 11 of 12 'unreadable' rows were already-passed deadlines, 'not errors'. On live deadlines the unproven ones are a deliberate citation withdrawal and pages that refuse a plain fetch, not wrong dates.",
-      "source": "scripts/board_metrics.py provable_live, 2026-10-05; experiments/purpose_audit/RESULT.md for the all-rows audit"
+      "source": "scripts/board_metrics.py provable_live, 2026-10-06; experiments/purpose_audit/RESULT.md for the all-rows audit"
     },
     "customer": {
       "label": "Agreement with customer-verified dates (live rows)",
@@ -64,13 +64,13 @@
         {
           "key": "agree",
           "label": "Same date",
-          "n": 14,
+          "n": 16,
           "tone": "good"
         },
         {
           "key": "blank",
           "label": "Our deadline blank",
-          "n": 1,
+          "n": 0,
           "tone": "warn"
         },
         {
@@ -82,7 +82,7 @@
         {
           "key": "edition",
           "label": "Customer row is another edition or round (not scored)",
-          "n": 3,
+          "n": 2,
           "tone": "mute"
         },
         {
@@ -92,8 +92,8 @@
           "tone": "mute"
         }
       ],
-      "note": "All rows, rough (includes past dates and old editions): 32 of 39 agree. Scored: the live rows where both sides name the same edition. Not scored, shown beside it: a customer row holding another edition or an earlier round (more than 180 days apart, or their date already passed while ours is ahead: Troopers, CyberDefenseCon, Climate Change), and our blank on an event more than 90 days off, where no call is expected to be published yet. Those are coverage or timing questions, not disagreements about one date.",
-      "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-05; customer-withdrawn rows excluded"
+      "note": "All rows, rough (includes past dates and old editions): 35 of 40 agree. Scored: the live rows where both sides name the same edition. Not scored, shown beside it: a customer row holding another edition or an earlier round (more than 180 days apart, or their date already passed while ours is ahead: Troopers, CyberDefenseCon, Climate Change), and our blank on an event more than 90 days off, where no call is expected to be published yet. Those are coverage or timing questions, not disagreements about one date.",
+      "source": "scripts/board_metrics.py, client_conferences joined to our deadlines, 2026-10-06; customer-withdrawn rows excluded"
     }
   },
   "methods": [
@@ -325,12 +325,12 @@
     "good": [
       {
         "label": "Provable submission dates",
-        "now": "11 of 16 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
+        "now": "12 of 17 live deadlines proven on their cited page; the rest are a deliberate withdrawal or pages our plain reader cannot open",
         "target": "90% of open-call rows; the rest honestly blank, never guessed"
       },
       {
         "label": "Agreement with customer-verified dates",
-        "now": "14 of 15 live rows today (93%); 32 of 39 counting past dates and old editions",
+        "now": "16 of 16 live rows today (100%); 35 of 40 counting past dates and old editions",
         "target": "90%"
       },
       {
@@ -916,34 +916,34 @@
     }
   ],
   "quality": {
-    "as_of": "2026-10-05",
+    "as_of": "2026-10-06",
     "conference": {
       "split": {
         "kind": "conference",
-        "rows_scored": 83,
+        "rows_scored": 84,
         "grace_days": 90,
         "complete": 92,
         "fill_pct": 84,
         "coverage_pct": 100,
-        "expected": 556,
-        "filled": 468,
+        "expected": 564,
+        "filled": 475,
         "missing_by_field": {
           "deadline": 23,
           "deadline_evidence_url": 16,
           "deadline_quote": 21,
           "start_date": 6,
           "country": 5,
-          "submission_url": 16,
+          "submission_url": 17,
           "main_info_url": 1
         },
         "excused_fields": 108,
         "excused_rows": 27,
-        "accurate": 94,
-        "proven": 51,
+        "accurate": 95,
+        "proven": 57,
         "contradicted": 3,
         "unproven": 6,
         "unproven_excused": 1,
-        "unproven_share": 10,
+        "unproven_share": 9,
         "contradicted_names": [],
         "drivers": [
           "130 of 130 rows genuinely researched in the Saturday run (0 stubs)",
@@ -989,14 +989,14 @@
     "split_method": "COMPLETE % = expected fields that are filled (a pinned honest blank counts as filled) averaged with coverage of customer-tracked events. Edition facts (start date, city, country, main page) are always expected; the call fields (deadline, link, evidence) are excused while the event starts more than 90 days ahead and no call is open, because nothing is published yet. ACCURATE % = proven / (proven + contradicted) over facts we state (deadline vs its cited page, start year vs edition, pinned facts, customer-verified dates, spot checks); unproven is shown beside it and never counted wrong; a contradiction is never excused by the 90-day rule. Awards have no event start: their grace is a Closed award with no new cycle announced (no deadline or opening date ahead, no open call).",
     "source": "scripts/board_metrics.py split_for, process_drivers; docs/design/field_spotchecks.json",
     "manual_verification": {
-      "as_of": "2026-10-05",
-      "roster": 127,
+      "as_of": "2026-10-06",
+      "roster": 129,
       "definition": "Events a person had to verify on the event's own page, as a share of the events we track (Cybersecurity and Utility market lists, today's count). Counted from the pin ledger (ruled_on) and the operator edits log (entries where the operator verified or ruled on a named event). A month is shown from the first one with a record (2026-10); the current month is partial; the denominator is today's roster, so past months are an estimate. It should fall as the research gets more right.",
       "months": [
         {
           "month": "2026-10",
-          "events": 15,
-          "share_pct": 11.8,
+          "events": 20,
+          "share_pct": 15.5,
           "partial": true
         }
       ]

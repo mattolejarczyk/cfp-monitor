@@ -158,17 +158,19 @@
       "event": "CES 2027",
       "ruled_on": "2026-10-03",
       "by": "operator",
-      "why": "Copied by the operator from the event's own page: 'January 6-9, Las Vegas, NV'.",
+      "why": "Copied by the operator from the event's own page: 'January 6-9, Las Vegas, NV'. 2026-10-06: the operator also copied from https://www.ces.tech/cfs : 'Our CES 2027 Call for Speakers submission form is now closed.' The call is CLOSED. The customer's row (9 Jan 2029) is wrong.",
       "until": "2027-01-10",
       "links": [
-        "https://www.ces.tech/"
+        "https://www.ces.tech/",
+        "https://www.ces.tech/cfs"
       ],
       "set": {
         "START DATE": "2027-01-06",
         "CONFERENCE DATES": "January 6 - January 9, 2027",
         "CITY": "Las Vegas",
         "STATE_PROVINCE": "Nevada",
-        "COUNTRY": "USA"
+        "COUNTRY": "USA",
+        "STATUS DETAILS": "The CES 2027 Call for Speakers submission form is closed (page: 'Our CES 2027 Call for Speakers submission form is now closed.')."
       }
     },
     {
@@ -281,6 +283,80 @@
         "LOCATION": "Menino Convention and Exhibition Center, Boston, MA",
         "CITY": "Boston",
         "STATE_PROVINCE": "MA"
+      }
+    },
+    {
+      "canonical": "2027-ecml-pkdd-wuerzburg-speaking",
+      "event": "ECML PKDD 2027",
+      "ruled_on": "2026-10-06",
+      "by": "operator",
+      "why": "Operator verified manually on the event's page (https://ecmlpkdd.org/2027/): ECML PKDD 2027 is 30 August to 3 September 2027, Eindhoven, the Netherlands. The customer's row (7 Sep 2026) is the over 2026 edition; the city slug 'wuerzburg' in our permanent id is wrong (ids are locked, the city is not).",
+      "until": "2027-12-31",
+      "links": [
+        "https://ecmlpkdd.org/2027/"
+      ],
+      "set": {
+        "START DATE": "2027-08-30",
+        "CONFERENCE DATES": "August 30 - September 3, 2027",
+        "LOCATION": "Eindhoven, the Netherlands",
+        "CITY": "Eindhoven",
+        "COUNTRY": "Netherlands",
+        "MAIN_INFO_URL": "https://ecmlpkdd.org/2027/"
+      }
+    },
+    {
+      "canonical": "2026-ai-summit-new-york-new-york-speaking",
+      "event": "The AI Summit New York 2026",
+      "ruled_on": "2026-10-06",
+      "by": "operator",
+      "why": "Operator verified manually on the event's page (https://newyork.theaisummit.com/): December 9-10, 2026, Javits Center, New York. The customer's row says 8 Dec 2027, a year out.",
+      "until": "2027-03-31",
+      "links": [
+        "https://newyork.theaisummit.com/"
+      ],
+      "set": {
+        "START DATE": "2026-12-09",
+        "CONFERENCE DATES": "December 9 - December 10, 2026",
+        "LOCATION": "Javits Center, New York, NY, USA",
+        "CITY": "New York",
+        "STATE_PROVINCE": "NY",
+        "COUNTRY": "USA"
+      }
+    },
+    {
+      "canonical": "2027-carbon-capture-global-summit-london-speaking",
+      "event": "Carbon Capture Global Summit 2027",
+      "ruled_on": "2026-10-06",
+      "by": "operator",
+      "why": "Operator verified manually that three events are SEPARATE: Carbon Capture Global Summit is 7-8 September 2027, London; Carbon Capture Europe Summit is 13-14 April 2027, Rotterdam; Japan CCUS Summit is 19-20 October 2026, Tokyo. The customer's 'Carbon Capture Global Summit' row carries the Europe Summit's date and place (13 Apr 2027, Rotterdam): wrong.",
+      "until": "2027-12-31",
+      "links": [
+        "https://www.carboncaptureglobalsummit.com/"
+      ],
+      "set": {
+        "START DATE": "2027-09-07",
+        "CONFERENCE DATES": "September 7 - September 8, 2027",
+        "LOCATION": "London, United Kingdom",
+        "CITY": "London",
+        "COUNTRY": "United Kingdom"
+      }
+    },
+    {
+      "canonical": "2027-carbon-capture-europe-summit-rotterdam",
+      "event": "Carbon Capture Europe Summit 2027",
+      "ruled_on": "2026-10-06",
+      "by": "operator",
+      "why": "Operator verified manually that Carbon Capture Europe Summit is 13-14 April 2027, Rotterdam, a separate event from the Carbon Capture Global Summit (London, 7-8 September 2027) and the Japan CCUS Summit (Tokyo, 19-20 October 2026).",
+      "until": "2027-12-31",
+      "links": [
+        "https://www.carboncaptureeuropesummit.com"
+      ],
+      "set": {
+        "START DATE": "2027-04-13",
+        "CONFERENCE DATES": "April 13 - April 14, 2027",
+        "LOCATION": "Rotterdam, Netherlands",
+        "CITY": "Rotterdam",
+        "COUNTRY": "Netherlands"
       }
     }
   ]
