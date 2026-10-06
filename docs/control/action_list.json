@@ -722,7 +722,7 @@
       "wave": "W5",
       "step": "A",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Sponsorship quotes are OUR half (R20a): prove scripts/extract_sponsor_quotes.py in the sandbox and write the apply procedure",
       "detail": "Contract R20a: SPONSOR_QUOTE is populated downstream. The live database has 114 rows answering Yes with a SPONSOR_URL and none with a quote; the gate says a Yes must carry both. scripts/extract_sponsor_quotes.py exists. Rehearse it on a COPY of the live database and the approved files (sandbox), measure how many quotes it proves verbatim, how many pages fail, the cost, and whether the gate accepts the result; write the exact live apply procedure. The reviewer applies it.",
@@ -732,7 +732,9 @@
       ],
       "acceptance": "Sandbox result with counts; the apply procedure; a test for any change; no live file touched.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "builder/wave3: sandbox copy of live DB (live untouched), 114 Yes rows: 6 proved verbatim and stored, 51 blank, 3 not-on-page, 1 denies-speaking (new refusal), 52 unreadable (no Chrome CDP running: render fallback untested live), 1 outage; 0.032 USD. Code: fetch_page_text (render fallback) + DENIES_SPEAKING with 3 tests. PARTIAL: 52 pages unread; live apply procedure in QA-REGISTER A36. Gate accepts with or without quotes (R18b needs only SPONSOR_URL): decision for reviewer."
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
