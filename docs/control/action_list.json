@@ -645,7 +645,8 @@
       "acceptance": "The load ran unattended; trend read; shadow report read.",
       "depends": [],
       "evidence": [
-        "Watch on Saturday 10-10: (1) the 58 stamped customer events (docs/operations/given_ids.csv) must be created as NEW events by the import (never proved end to end: ids not yet in the database); (2) stamp_input_ids must report kept 115 + 2 DUP_OF (Cybersecurity) and kept 74 (Utility); (3) World of Concrete 2028 is researched and loads onto its id; (4) about 56 extra grounded calls (estimate 4 to 5 USD); (5) rows the gate rejects are held back one by one by the row rule."
+        "Watch on Saturday 10-10: (1) the 58 stamped customer events (docs/operations/given_ids.csv) must be created as NEW events by the import (never proved end to end: ids not yet in the database); (2) stamp_input_ids must report kept 115 + 2 DUP_OF (Cybersecurity) and kept 74 (Utility); (3) World of Concrete 2028 is researched and loads onto its id; (4) about 56 extra grounded calls (estimate 4 to 5 USD); (5) rows the gate rejects are held back one by one by the row rule.",
+        "Also check after Saturday's load: no Phuket row in the promoted Cybersecurity approved file; Jakarta row 2026-hitb-ootb-jakarta-speaking loads as Upcoming (pinned dates blank, Grand Hyatt) and the pin shows on the board."
       ],
       "updated": "2026-10-05",
       "on_verify": {
@@ -1062,7 +1063,8 @@
       ],
       "evidence": [
         "2026-10-06: Jakarta event added to the Cybersecurity input list (blank id; location Grand Hyatt, start date blank, URL ootb.net/jkt2026); draft note 34 asks upstream for the row and the retirement of the Phuket pair.",
-        "2026-10-06: upstream minted 2026-hitb-ootb-jakarta-speaking (stamped, ledger updated) and promised customer-first research and no schedule-based statuses; its Jakarta row says Closed (wrong: the organiser says postponed to Q4 2026) and its Phuket 'Discontinued' patch does not meet R16.1. Operator-verified pin added for the Jakarta event (dates blank, Grand Hyatt, postponed). Draft note 35. STILL OPEN: the two Phuket rows are still on the customer page (Conference Review 2026-10-05 shows 'Hack In The Box Security Conference 2026 - Phuket - Closed - typically runs in late August'); retire by held_rows after Saturday's load, operator to confirm."
+        "2026-10-06: upstream minted 2026-hitb-ootb-jakarta-speaking (stamped, ledger updated) and promised customer-first research and no schedule-based statuses; its Jakarta row says Closed (wrong: the organiser says postponed to Q4 2026) and its Phuket 'Discontinued' patch does not meet R16.1. Operator-verified pin added for the Jakarta event (dates blank, Grand Hyatt, postponed). Draft note 35. STILL OPEN: the two Phuket rows are still on the customer page (Conference Review 2026-10-05 shows 'Hack In The Box Security Conference 2026 - Phuket - Closed - typically runs in late August'); retire by held_rows after Saturday's load, operator to confirm.",
+        "2026-10-06: operator approved taking the Phuket rows off the customer page. Phuket input row skipped (DUP_OF Jakarta id); upstream's corrected Jakarta row gate-ACCEPTED (quote verified) and the Phuket pair dropped from their queue. TO CHECK: after Saturday's load the Phuket rows must be absent from the promoted approved file and from Monday's Conference Review; then move the customer link (client_conferences) from the Phuket id to the Jakarta id (a person decides)."
       ],
       "updated": "2026-10-06",
       "on_verify": {}
