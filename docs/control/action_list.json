@@ -1061,7 +1061,8 @@
         "ACT-51"
       ],
       "evidence": [
-        "2026-10-06: Jakarta event added to the Cybersecurity input list (blank id; location Grand Hyatt, start date blank, URL ootb.net/jkt2026); draft note 34 asks upstream for the row and the retirement of the Phuket pair."
+        "2026-10-06: Jakarta event added to the Cybersecurity input list (blank id; location Grand Hyatt, start date blank, URL ootb.net/jkt2026); draft note 34 asks upstream for the row and the retirement of the Phuket pair.",
+        "2026-10-06: upstream minted 2026-hitb-ootb-jakarta-speaking (stamped, ledger updated) and promised customer-first research and no schedule-based statuses; its Jakarta row says Closed (wrong: the organiser says postponed to Q4 2026) and its Phuket 'Discontinued' patch does not meet R16.1. Operator-verified pin added for the Jakarta event (dates blank, Grand Hyatt, postponed). Draft note 35. STILL OPEN: the two Phuket rows are still on the customer page (Conference Review 2026-10-05 shows 'Hack In The Box Security Conference 2026 - Phuket - Closed - typically runs in late August'); retire by held_rows after Saturday's load, operator to confirm."
       ],
       "updated": "2026-10-06",
       "on_verify": {}

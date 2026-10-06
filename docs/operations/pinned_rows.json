@@ -209,6 +209,27 @@
       }
     },
     {
+      "canonical": "2026-hitb-ootb-jakarta-speaking",
+      "event": "Hack In The Box (OOTB 2026 Jakarta)",
+      "ruled_on": "2026-10-06",
+      "by": "operator",
+      "why": "Operator verified on the organiser's pages: Out Of The Box (OOTB) 2026 - Jakarta, Grand Hyatt, Jakarta, POSTPONED to Q4 2026, new dates not announced (https://ootb.net/jkt2026: 'this event has been postponed to Q4 2026. The venue remains the same - new dates will be announced soon.'). The HITB home page and the customer's row still say April 29-30, Alila SCBD: stale. No dates are stated, so START DATE and CONFERENCE DATES stay blank.",
+      "until": "2027-03-31",
+      "links": [
+        "https://ootb.net/jkt2026",
+        "https://ootb.net/"
+      ],
+      "set": {
+        "START DATE": "",
+        "CONFERENCE DATES": "",
+        "LOCATION": "Grand Hyatt, Jakarta, Indonesia",
+        "CITY": "Jakarta",
+        "COUNTRY": "Indonesia",
+        "MAIN_INFO_URL": "https://ootb.net/jkt2026",
+        "STATUS DETAILS": "Postponed to Q4 2026 by the organiser (Out Of The Box, Jakarta, Grand Hyatt): new dates to be announced. The earlier April 29-30, 2026 dates and the Alila SCBD venue are out of date."
+      }
+    },
+    {
       "canonical": "2027-decarbonization-congress-berlin-speaking",
       "event": "Decarbonization Congress 2027",
       "ruled_on": "2026-10-03",
