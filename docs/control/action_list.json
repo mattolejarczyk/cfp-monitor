@@ -812,7 +812,7 @@
       "wave": "W5",
       "step": "A",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0",
       "title": "Every event on the two customer sheets must be in our research queue: classify the unmatched rows and prepare the request to upstream",
       "detail": "Operator rule (2026-10-05): any event the customer tracks on the Arnica (Cybersecurity) or Utility Global sheet that we do not research should be. The 2026-10-03 match files show 59 Arnica and 25 Utility rows with no confident match; some are ours already under another name or edition (it-sa Expo 2026, Industrial Net Zero 2027), others are genuinely missing (World Summit AI, CDAO Fall, European Hydrogen Week, LNG Americas). Classify EVERY unmatched row: (A) we hold it (matcher miss: say which id), (B) we hold another edition, (C) not held and still ahead: the request list, (D) over or not an event. For C read the event page to confirm it is live and find the right URL; for the matcher misses say what the matcher missed. Output: a CSV, a short report and a DRAFT note 30 for the operator to send asking upstream to add the C rows to their research (we never mint ids; upstream supplies them).",
@@ -822,7 +822,9 @@
       ],
       "acceptance": "Every unmatched row has a class A to D with its evidence; the C list has a page-confirmed URL; a draft note is written; no live file touched.",
       "depends": [],
-      "evidence": [],
+      "evidence": [
+        "builder/wave3: docs/qa/customer-unmatched-classified-20261003.csv: all 84 unmatched rows (59 Arnica + 25 Utility, Index_Confidence 0%) classified. A=2 (it-sa Expo 2026; ACS GC&E 2027 - ids named), B=2 (Google Cloud Next, Industrial Net Zero), C=57 (still ahead, not held), D=23 (over or not an event). Of the 57 C rows 51 are page-confirmed on 2026-10-06 (URL + sentence stating the date, plain fetch or headless render); 6 are partial or unconfirmed (month only: Enterprise AI Singapore, Planet Cyber Sec; date not on page: TMLS, Upfront Summit, AFPM; page 404: Chief AI Officer Summit UK). Customer-sheet data conflicts flagged in the note column (AI Summit New York year, Carbon Capture Global Summit, ECML PKDD). Draft note 30 not yet written (second commit). No live file touched."
+      ],
       "updated": "2026-10-05",
       "on_verify": {}
     },
