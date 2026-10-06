@@ -112,3 +112,43 @@ def test_an_llm_outage_reports_unavailable_not_blank(monkeypatch):
     monkeypatch.setitem(sys.modules, "litellm", Boom())
     q, kind, status = asyncio.run(esq.choose("some page text", "Conf", "", Stub()))
     assert status == "unavailable" and q == "", "an outage must not be recorded as a blank"
+
+
+# ------------------------------------- ACT-40: a verbatim sentence can deny the claim; walled pages go through the render --
+def test_a_verbatim_sentence_that_denies_speaking_is_recognised():
+    s = ("Does sponsorship include a speaking session? No. All technical presentations are selected through the independent Call for Papers process.")
+    assert esq.DENIES_SPEAKING.search(s)
+    assert not esq.DENIES_SPEAKING.search("Speaking slots are reserved for Gold and Platinum sponsors.")
+    assert not esq.DENIES_SPEAKING.search("Gold sponsorship includes a 6m booth and a 30-minute speaking session.")
+
+
+def _fake_litellm(monkeypatch, sentence):
+    import types
+
+    async def acompletion(**kw):
+        msg = types.SimpleNamespace(content='{"sentence": %s, "kind": "requirement"}' % __import__("json").dumps(sentence))
+        return types.SimpleNamespace(choices=[types.SimpleNamespace(message=msg)])
+    monkeypatch.setitem(sys.modules, "litellm", types.SimpleNamespace(acompletion=acompletion))
+
+
+def _settings():
+    import types
+    return types.SimpleNamespace(llm_proxy_url=None, llm_provider="x/y", provider_key=lambda: "k")
+
+
+def test_choose_refuses_a_sentence_that_denies_speaking_and_keeps_one_that_supports_it(monkeypatch):
+    page = "Does sponsorship include a speaking session? No. All technical presentations are selected through the independent Call for Papers process. Gold sponsors get a speaking slot."
+    _fake_litellm(monkeypatch, "Does sponsorship include a speaking session? No.")
+    assert asyncio.run(esq.choose(page, "X", "", _settings()))[2] == "denies-speaking"
+    _fake_litellm(monkeypatch, "Gold sponsors get a speaking slot.")
+    q, kind, status = asyncio.run(esq.choose(page, "X", "", _settings()))
+    assert status == "ok" and q == "Gold sponsors get a speaking slot."
+
+
+def test_run_reads_a_walled_page_through_fetch_page_text(monkeypatch):
+    seen = []
+    monkeypatch.setattr(esq, "fetch_page_text", lambda url: (seen.append(url) or ("Gold sponsors get a speaking slot.", "ok")))
+    _fake_litellm(monkeypatch, "Gold sponsors get a speaking slot.")
+    row = {"event_id": "e1", "name": "X", "sponsor_url": "https://walled.test/p", "sponsor_cost": ""}
+    tally, writes = asyncio.run(esq.run([row], _settings(), ":memory:", False))
+    assert seen == ["https://walled.test/p"] and tally["ok"] == 1 and writes == [("Gold sponsors get a speaking slot.", "e1")]
