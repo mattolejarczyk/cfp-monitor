@@ -5,6 +5,14 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-06 - customer rows, promise ledger, rulings R-002, model bake-off, Luna shadow
+
+- Customer coverage: 145 of 145 customer rows ahead are queued or answered; new rows enter with blank ids and upstream's ids are stamped (stamp_given_ids.py, given_ids.csv); Hack In The Box root cause (customer row is OOTB Jakarta; Phuket rows were upstream's phantom); Japan CCUS Summit 2026 added (organiser site verified, programme contact email recorded).
+- Upstream promises: ledger of 32 (upstream_commitments.csv) + check_commitments.py; notes 39 to 45 drafted/sent; Saturday recap now reports kept / NOT kept with a subject FLAG (ACT-58, built).
+- Rulings R-002: sponsorship gate stays link-only; unconfirmed badge; published enquiry email counts as found; model routing (ChatGPT Plus via Codex first, exact error then OpenRouter).
+- ACT-40 sponsor quotes rerun with Chrome on a db copy: 3 of 114 proved (53 pages unreadable). ACT-56 bake-off merged (see HANDOFF). ACT-62 merged and verified. ACT-61 Luna shadow applied live (last Saturday step; backup run_monthly.ps1.pre-lunashadow-20261006).
+- Lessons: system python lacks litellm/pytest (use .venv python and uv run --with ...); run_bakeoff --repeats counts from run 1 (use --first-run); a builder's taskkill killed unrelated python processes; verify a builder's failing tests against the unchanged base; worktrees for builders are made by hand when the session folder is not a git repo.
+
 ## 2026-10-05 (evening) - customer sheets define the job; ruling R-001; Wave 2 and 3 reviewed
 
 - Gap found and logged (ACT-51): customer-sheet rows never reached the research queue. 56 customer events added to the input lists (`add_customer_rows.py`), upstream's ids stamped by URL (`stamp_given_ids.py`), ledger `given_ids.csv` so Saturday's stamping keeps stamps on new events (`stamp_input_ids.py` used to wipe them). Weekly route and recap line still to build.
