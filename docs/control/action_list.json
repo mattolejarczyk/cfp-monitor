@@ -1223,14 +1223,17 @@
         "ACT-31",
         "ACT-56"
       ],
-      "evidence": [],
+      "evidence": [
+        "2026-10-06 operator: YES run the Luna shadow on Saturday 2026-10-10. Luna max 3-run bake-off: 17/17/16 of 21, wrong-accepted 0 after the German rule, edge over DeepSeek ~1 fact. Plan: builder builds scripts/luna_shadow.py (post-step after the recap, failure-isolated, token budget, early stop, registry rows, one-line recap result); reviewer applies to run_monthly.ps1 with a backup before Sat 02:00 only after review.",
+        "2026-10-06 builder wave8 (0ef3334) merged; 23 tests pass. scripts/luna_shadow.py applied LIVE to Markets\\run_monthly.ps1 as the LAST Saturday step (after shadow_reader and the finder), backup run_monthly.ps1.pre-lunashadow-20261006; PowerShell parse ok; -ListPostSteps shows it as step 6 after the finder; diff vs backup = 7 added lines. Budget 1.5M tokens, 45 min, exact-error stop, never falls back, exits 0. Rehearsal on a db copy: 9 calls, 98,890 tokens, 24 facts, 13 agree, 0 disagree. Summary line goes to the Saturday LOG only (the recap is sent before this step). Verify after Sat 2026-10-10: LUNA SHADOW line in the log, runs_out/qa/<date>/luna_shadow.md, tokens used, no effect on the load/recap."
+      ],
       "updated": "2026-10-06",
       "on_verify": {},
       "id": "ACT-61",
       "wave": "W7",
       "step": "D",
       "owner": "me",
-      "state": "todo",
+      "state": "review",
       "cost": "Subscription tokens only (about 1.4M a week for ~130 events at max effort: check the weekly limit first)",
       "title": "Shadow GPT-6 Luna (max) as a second page reader on four Saturdays",
       "detail": "Operator YES 2026-10-06 after the ACT-56 bake-off (experiments/model_bakeoff/RESULTS.md): Luna found 17 of 21 against DeepSeek V4.1 Flash 15.7 with the same precision, but only 1 run. Shadow = runs beside the existing reader on Saturday, changes NOTHING, results into the bake-off registry (registry.jsonl) for comparison. Route: Codex CLI on the ChatGPT subscription, model gpt-6-luna, effort max, fresh ephemeral call each time; on any limit/auth/model error stop and report the exact text. Design after ACT-31 (the first Saturday shadow infrastructure runs 2026-10-10); needs a usage check (weekly limit resets Fri 18:30) and an early-stop rule at a token budget the operator sets.",
