@@ -1,4 +1,4 @@
-# Process failure points by root cause - 2026-10-05
+# Process failure points by root cause - 2026-10-06
 
 Every way the CFP process can produce missing, wrong or late data, described by its ROOT CAUSE and not by the web page where we happened to see it. A page is only evidence: the same cause will appear on the next site we discover and crawl. Grouped by the six macro steps on the status board, and inside each step ordered by how often the cause occurs and how much it hurts. Generated from `docs/operations/failure_points.json` by `scripts/failure_points_doc.py`; the QA register (`QA-REGISTER.md`) lists the checks, the runbook (`market-runbook.md`) lists the symptoms, this lists the causes.
 
