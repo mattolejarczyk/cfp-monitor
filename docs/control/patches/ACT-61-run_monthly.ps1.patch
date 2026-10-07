@@ -1,0 +1,16 @@
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -65,6 +65,13 @@
+     if ($kind -eq 'saturday' -and $conf.Count -gt 0) {
+         [void]$steps.Add(@("$cfpDir\shadow_reader.py", "--markets") + $conf + @("--max-minutes", "45", "--run-log", $RunLog))
+     }
++    # 2026-10-06 (ACT-61): SHADOW SECOND READER (scripts/luna_shadow.py): GPT-6 Luna (max, Codex CLI on the ChatGPT subscription) reads the same non-deadline facts from the same pages, blind, and is
++    # compared with the existing reader and the database. AFTER the existing shadow reader (it uses that step's newest shadow_reader_*.json) and BEFORE the finder. Changes nothing: report
++    # runs_out\qa\<date>\luna_shadow.md and rows appended to experiments\model_bakeoff\registry.jsonl. Capped at 45 minutes and 1.5M subscription tokens; skips itself when the job has used
++    # 4.6 hours or Codex is not signed in; any Codex error stops it with the exact text in the log; never falls back to another provider; exits 0. Saturday only.
++    if ($kind -eq 'saturday' -and $conf.Count -gt 0) {
++        [void]$steps.Add(@("$cfpDir\luna_shadow.py", "--markets") + $conf + @("--max-minutes", "45", "--token-budget", "1500000", "--run-log", $RunLog))
++    }
+     # 2026-10-04: SHADOW RUN of the real-URL deadline finder (scripts/shadow_finder.py). LAST, after the load and the recap, so it can delay nothing.
+     # Read-only: it records what the pages say next to what we ship and emails the disagreements; it changes no data. It skips itself if the job
+     # has already used 4.25 hours (the task is limited to 5) and never fails the run. Saturday only.
