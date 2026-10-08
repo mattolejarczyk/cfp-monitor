@@ -37,6 +37,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from scripts.stamp_given_ids import iso_of, norm_url                      # noqa: E402
 from src.cfp_monitor import identity, qa_report                           # noqa: E402
+from src.cfp_monitor.link_agreement import link_disagreement             # noqa: E402  (ACT-54: ONE rule, shared with match_customer_sheet)
 
 MARKETS = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
 LIVE_DB = Path(os.environ.get("LOCALAPPDATA", "")) / "CFP-Monitor" / "cfp_monitor.db"
@@ -134,15 +135,7 @@ def disagreement(row: dict, fact: dict | None, today: str) -> str:
     customer's date, or its city not named in the customer's location. Past events are included: a wrong link is wrong whatever the date."""
     if not fact or int(row.get("withdrawn_by_customer") or 0):
         return ""
-    theirs, ours = iso_of(row.get("event_start_date") or ""), iso_of(fact.get("start_date") or "")
-    why = []
-    gap = days_apart(theirs, ours) if theirs and ours else None
-    if gap is not None and gap > DATE_TOLERANCE_DAYS:
-        why.append(f"date: customer {theirs}, linked event {ours} ({gap} days apart)")
-    city, loc = (fact.get("city") or "").strip().lower(), (row.get("location") or "").strip().lower()
-    if city and loc and city not in loc:
-        why.append(f"place: customer '{row.get('location')}', linked event city '{fact.get('city')}'")
-    return "; ".join(why)
+    return link_disagreement(row.get("location") or "", iso_of(row.get("event_start_date") or ""), fact.get("city") or "", iso_of(fact.get("start_date") or ""), DATE_TOLERANCE_DAYS)
 
 
 def check(rows: list[dict], inputs: dict[str, list[dict]], up_to_canon: dict[str, str], ledger: list[dict], today: str, facts: dict | None = None) -> dict:

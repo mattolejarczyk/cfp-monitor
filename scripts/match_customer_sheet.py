@@ -45,6 +45,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from src.cfp_monitor.link_agreement import link_disagreement          # noqa: E402  (ACT-54: the one date-and-place rule)
 # Fewer anchors than this and calibration is guesswork - see where anchors are built.
 MIN_ANCHORS = 10
 STOP = {"the", "and", "of", "for", "on", "in", "a", "an", "conference", "summit", "expo",
@@ -280,6 +282,7 @@ def main() -> int:
         print(f"   {m:<16} {weight[m]:.2f}")
 
     CERTAIN = ("exact URL", "unique domain", "name+city+date")
+    n_disagree = 0
     for i, raw in enumerate(body):
         r = raw + [""] * (len(header) - len(raw))
         v, td, h, hs = votes[i]
@@ -356,6 +359,21 @@ def main() -> int:
                         f"sibling events apart and their name has word(s) ours lacks "
                         f"({', '.join(extra)}). A person should confirm.")
 
+        # ACT-54 (b). THE SAME WEBSITE IS NOT THE SAME EVENT. Hack In The Box: the customer tracks conference.hitb.org,
+        # Alila SCBD, Jakarta, 29 Apr 2026; we held a Phuket event of 24 Aug 2026 on the same site. An exact URL scored
+        # 100 and the customer's status was attached to the wrong event. When the customer's row carries a date and a
+        # place and the linked event's city or start date disagree (more than 30 days), nothing is certain: the link is
+        # capped into the review band, so apply_client_match.py never writes it and a person decides.
+        disagree = link_disagreement(r[CL] if CL is not None else "", r[CD] if CD is not None else "",
+                                     canon[best]["city"], start_of.get(best, ""))
+        if disagree:
+            n_disagree += 1
+            conf = min(conf, 69)
+            earlier = head if head.startswith("NOT CERTAIN") else ""      # keep the sibling-event explanation when it also applied
+            head = (f"DISAGREES with {best}: {disagree}. The same website or name is not the same event "
+                    f"(it may be another edition, another place, or postponed); a person decides which is right.")
+            head = f"{head} {earlier}".strip()
+
         total = len(v)
         parts = [head,
                  f"{len(who[best])} of {total} tests agree: {', '.join(sorted(who[best]))}."]
@@ -384,7 +402,8 @@ def main() -> int:
     for k in ("100%", "90-99%", "70-89%", "40-69%", "under 40%"):
         if band[k]:
             print(f"  {band[k]:>3}  {k}")
-    print(f"\nwrote {a.output}")
+    print(f"\nlinked rows that disagree on date or place (held back for review, never certain): {n_disagree}")
+    print(f"wrote {a.output}")
     return 0
 
 
