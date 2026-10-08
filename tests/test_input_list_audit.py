@@ -84,3 +84,13 @@ def test_ids_with_a_year_other_than_the_edition_are_listed():
     rows = [_row(EVENT_ID_CANON="2026-nullcon-goa-bambolim", EDITION="2027"), _row(EVENT_ID_CANON="2027-x", EDITION="2027"), _row(EVENT_ID_CANON="2026-y", EDITION="", **{"START DATE": "3/2/2026"})]
     m = A.id_year_mismatch(rows)
     assert [x["id"] for x in m] == ["2026-nullcon-goa-bambolim"] and m[0]["edition"] == "2027"
+
+
+def test_country_aliases_are_folded_so_uk_is_not_a_difference():
+    assert A.same_country("UK", "ExCeL London, London, United Kingdom")
+    assert A.same_country("United States", "Houston, Texas, USA")
+    assert not A.same_country("Austria", "Hamburg, Germany")
+    fields = {"city": {"value": "London", "quote": "ExCeL London, UK"}, "country": {"value": "UK", "quote": "ExCeL London, UK"}}
+    page = "Cloud and Cyber Security Expo at ExCeL London, UK. " + "filler text. " * 30
+    res = A.judge(_row(LOCATION="ExCeL London, London, United Kingdom"), A.accept_all(fields, page, "2027"), page, "2027", ["u"])
+    assert res["LOCATION"]["verdict"] == "AGREES"

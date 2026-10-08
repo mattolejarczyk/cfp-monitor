@@ -184,10 +184,29 @@ def _why_none(why: str, text: str, edition: str) -> str:
     return (why if why and why != "blank" else "the page states nothing for this field and edition") + note
 
 
+COUNTRY_SAME = {"usa": "united states", "us": "united states", "u s a": "united states", "united states of america": "united states", "america": "united states", "uk": "united kingdom",
+                "u k": "united kingdom", "great britain": "united kingdom", "england": "united kingdom", "scotland": "united kingdom", "wales": "united kingdom", "northern ireland": "united kingdom",
+                "uae": "united arab emirates", "the netherlands": "netherlands", "holland": "netherlands", "korea": "south korea", "republic of korea": "south korea", "czechia": "czech republic",
+                "turkiye": "turkey", "deutschland": "germany"}
+
+
+def _cn(s: str) -> str:
+    x = " ".join(re.sub(r"[^a-z ]+", " ", (s or "").lower()).split())
+    return COUNTRY_SAME.get(x, x)
+
+
+def same_country(page_country: str, ours_location: str) -> bool:
+    """The page's country is named in our LOCATION text: as its last comma part or as any part, aliases folded (UK = United Kingdom, USA = United States)."""
+    want = _cn(page_country)
+    parts = [_cn(x) for x in (ours_location or "").split(",") if x.strip()]
+    if want in parts:
+        return True
+    return bool(want) and want in _cn(ours_location)
+
+
 def judge(row: dict, acc: dict, text: str, edition: str, pages: list[str]) -> dict:
     """{field: {verdict, ours, page, quote, url, why}} for the four fields of one row."""
     from scripts.shadow_reader import compare_field
-    from src.cfp_monitor.regions import country_matches
     res = {}
 
     def mk(field, verdict, ours, page_val="", quote="", why=""):
@@ -234,11 +253,7 @@ def judge(row: dict, acc: dict, text: str, edition: str, pages: list[str]) -> di
             if rel == "differs":
                 bad.append("city")
         if ctry:
-            last = [x.strip() for x in ours_loc.split(",") if x.strip()][-1] if ours_loc else ""
-            ok_c = bool(last) and (country_matches(ctry, last) or country_matches(last, ctry) or re.sub(r"[^a-z]", "", ctry.lower()) in re.sub(r"[^a-z]", "", ours_loc.lower()))
-            alias = {"usa": "united states", "us": "united states", "uk": "united kingdom"}
-            if not ok_c and alias.get(re.sub(r"[^a-z ]", "", last.lower()).strip(), "") == ctry.lower():
-                ok_c = True
+            ok_c = same_country(ctry, ours_loc)
             parts.append(f"country {ctry}")
             if ours_loc and not ok_c:
                 bad.append("country")
@@ -357,6 +372,26 @@ def write_csv(path: Path, rows: list[dict], cols: list[str]) -> None:
         w.writerows(rows)
 
 
+def write_outputs(out: Path, results: list[dict], todo: list[dict], meta: dict, mism: list[dict]) -> dict:
+    """All four output files, from the results so far (called every 10 rows so a dropped session keeps its work)."""
+    summ = summarize(results)
+    by_key = {r["EVENT_ID_CANON"] + "|" + r["_market"]: r for r in todo}
+    audit_rows, prop_rows = [], []
+    for res in results:
+        row = by_key[res["id"] + "|" + res["market"]]
+        for f, v in res["fields"].items():
+            audit_rows.append({"market": res["market"], "id": res["id"], "conference": res["conference"], "edition": res["edition"], "field": f, "verdict": v["verdict"], "ours": v["ours"],
+                               "page_value": v["page"], "quote": v["quote"], "url": v["url"], "why": v["why"]})
+            p = propose(row, f, v, res["readable"])
+            if p:
+                prop_rows.append(p)
+    write_csv(out / "input_audit.csv", audit_rows, ["market", "id", "conference", "edition", "field", "verdict", "ours", "page_value", "quote", "url", "why"])
+    write_csv(out / "proposed_corrections.csv", prop_rows, ["market", "id", "conference", "field", "current", "verdict", "action", "proposed", "strength", "quote", "url", "why", "note"])
+    (out / "input_audit.md").write_text(report_md(results, summ, meta, mism), encoding="utf-8")
+    (out / "input_audit.json").write_text(json.dumps({"meta": meta, "summary": summ, "rows": results, "id_year_not_edition": mism}, indent=1, ensure_ascii=False), encoding="utf-8")
+    return summ
+
+
 def run(a) -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     rows = load_rows(Path(a.lists), a.markets)
@@ -382,11 +417,39 @@ def run(a) -> int:
     out = Path(a.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    R.RENDER["on"] = not a.no_render
+    R.RENDER["on"] = False                                                         # plain fetch in the parallel pass; the render pass is separate and sequential
     R.LOG = out / f"input_audit_llm_log_{stamp}.jsonl"
     R.MAX_REQUESTS, R.MAX_USD = 2000, a.max_usd
     cache: dict[str, str] = {}
     results, no_page, t0, stopped = [], 0, time.time(), ""
+    from concurrent.futures import ThreadPoolExecutor
+    want = sorted({u for r in todo for u in urls_of(r, extra) if not P.lib_text(u)})
+    print(f"prefetching {len(want)} pages with {a.workers} workers", flush=True)
+
+    def _get(u):
+        try:
+            R.page_text(u, cache)
+        except Exception as e:                                                       # noqa: BLE001
+            print(f"    page {u[:60]}: {type(e).__name__}: {e}", flush=True)
+    with ThreadPoolExecutor(max_workers=a.workers) as ex:
+        list(ex.map(_get, want))
+    print(f"prefetched in {(time.time() - t0) / 60:.1f} minutes", flush=True)
+    if not a.no_render:                                                              # real-Chrome render of pages with no dates in the plain text, ONE at a time (one shared browser)
+        from experiments.read_the_page_pass import pass_lib as _L
+        from src.cfp_monitor.render_text import render_text
+        for u in want:
+            if (time.time() - t0) / 60 > a.max_minutes / 3:
+                print("  render pass stopped at a third of the time limit", flush=True)
+                break
+            if _L.looks_dateless(cache.get(u, "")):
+                try:
+                    rt, note = render_text(u)
+                except Exception as e:                                               # noqa: BLE001
+                    print(f"  render {u[:60]}: {type(e).__name__}: {e}", flush=True)
+                    continue
+                if len(rt) > len(cache.get(u, "")):
+                    cache[u] = rt
+                    print(f"  rendered {u[:60]}: {len(rt)} chars ({note})", flush=True)
     for i, r in enumerate(todo, 1):
         if (time.time() - t0) / 60 > a.max_minutes:
             stopped = f"stopped at the {a.max_minutes}-minute limit"
@@ -425,23 +488,10 @@ def run(a) -> int:
                     f["why"] = err
         results.append({"conference": r["CONFERENCE"], "market": r["_market"], "id": r["EVENT_ID_CANON"], "edition": ed, "pages": [u for u, _t in pages], "readable": bool(text.strip()), "fields": fj})
         print(f"  [{i}/{len(todo)}] {r['CONFERENCE'][:46]:46} " + " ".join(f"{f[:5]}={fj[f]['verdict'][:4]}" for f in FIELDS), flush=True)
-        time.sleep(0.5)
+        if i % 10 == 0:
+            write_outputs(out, results, todo, {"stamp": stamp, "today": a.today, "skipped": skipped, "no_page": no_page, "stopped": "partial", "minutes": (time.time() - t0) / 60, "usd": R.spent()[1], "model": a.model}, mism)
     meta = {"stamp": stamp, "today": a.today, "skipped": skipped, "no_page": no_page, "stopped": stopped, "minutes": (time.time() - t0) / 60, "usd": R.spent()[1], "model": a.model}
-    summ = summarize(results)
-    by_key = {r["EVENT_ID_CANON"] + "|" + r["_market"]: r for r in todo}
-    audit_rows, prop_rows = [], []
-    for res in results:
-        row = by_key[res["id"] + "|" + res["market"]]
-        for f, v in res["fields"].items():
-            audit_rows.append({"market": res["market"], "id": res["id"], "conference": res["conference"], "edition": res["edition"], "field": f, "verdict": v["verdict"], "ours": v["ours"],
-                               "page_value": v["page"], "quote": v["quote"], "url": v["url"], "why": v["why"]})
-            p = propose(row, f, v, res["readable"])
-            if p:
-                prop_rows.append(p)
-    write_csv(out / "input_audit.csv", audit_rows, ["market", "id", "conference", "edition", "field", "verdict", "ours", "page_value", "quote", "url", "why"])
-    write_csv(out / "proposed_corrections.csv", prop_rows, ["market", "id", "conference", "field", "current", "verdict", "action", "proposed", "strength", "quote", "url", "why", "note"])
-    (out / "input_audit.md").write_text(report_md(results, summ, meta, mism), encoding="utf-8")
-    (out / "input_audit.json").write_text(json.dumps({"meta": meta, "summary": summ, "rows": results, "id_year_not_edition": mism}, indent=1, ensure_ascii=False), encoding="utf-8")
+    summ = write_outputs(out, results, todo, meta, mism)
     d = sum(s["DIFFERS"] for s in summ.values())
     u = sum(s["UNSUPPORTED"] for s in summ.values())
     print(f"INPUT AUDIT: {len(results)} rows; DIFFERS {d}, UNSUPPORTED {u} (fields); {meta['usd']:.3f} USD{'; ' + stopped if stopped else ''} -> {out}")
@@ -456,6 +506,7 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--only", default="")
     ap.add_argument("--no-render", action="store_true", help="plain fetch only (skip the real-Chrome render of dateless pages)")
+    ap.add_argument("--workers", type=int, default=6, help="parallel page fetches (different hosts; the model calls stay one at a time)")
     ap.add_argument("--max-minutes", type=float, default=150)
     ap.add_argument("--extra-pages", default="", help="CSV id,url: more pages to read for an id (the listed pages can be stale)")
     ap.add_argument("--model", default="C")
