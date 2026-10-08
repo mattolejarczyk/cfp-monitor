@@ -55,7 +55,7 @@ def _list(ps1: Path, markets: str):
 def test_saturday_lists_the_shadow_reader_before_the_finder_with_its_caps(tmp_path):
     steps = _list(_patched_copy(tmp_path), "'Cybersecurity','Utility'")
     names = [Path(s[0]).name for s in steps]
-    assert names == ["weekend_import.py", "post_load_qa.py", "weekend_recap.py", "shadow_reader.py", "shadow_finder.py"]
+    assert names == ["weekend_import.py", "post_load_qa.py", "weekend_recap.py", "shadow_reader.py", "shadow_finder.py", "luna_shadow.py"]   # luna: ACT-61, applied live 2026-10-06
     rd = steps[3]
     assert rd[1:4] == ["--markets", "Cybersecurity", "Utility"] and rd[-4:-2] == ["--max-minutes", "45"] and rd[-2] == "--run-log"
     assert "Awards" not in steps[4]                                                                  # Saturday's finder is the conference one

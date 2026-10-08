@@ -20,6 +20,6 @@ def _copy(tmp_path):
 def test_saturday_lists_luna_shadow_right_after_the_shadow_reader_with_its_caps(tmp_path):
     steps = H._list(_copy(tmp_path), "'Cybersecurity','Utility'")
     names = [Path(s[0]).name for s in steps]
-    assert names.index("luna_shadow.py") == names.index("shadow_reader.py") + 1
+    assert names.index("luna_shadow.py") == names.index("shadow_finder.py") + 1 == len(names) - 1 and names.index("shadow_reader.py") < names.index("shadow_finder.py")   # after the reader AND the finder, last
     s = steps[names.index("luna_shadow.py")]
     assert s[1:4] == ["--markets", "Cybersecurity", "Utility"] and "--max-minutes" in s and s[s.index("--token-budget") + 1] == "1500000" and "--run-log" in s

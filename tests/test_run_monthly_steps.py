@@ -72,7 +72,8 @@ def test_the_saturday_steps_are_whole_real_commands_in_the_right_order():
     names = [Path(s[0]).name for s in steps]
     # ACT-20: once the reviewer applies docs/control/patches/ACT-20-run_monthly.ps1.patch the shadow reader sits before the finder (tests/test_shadow_reader_hook.py guards that list)
     assert names in (["weekend_import.py", "post_load_qa.py", "weekend_recap.py", "shadow_finder.py"],
-                     ["weekend_import.py", "post_load_qa.py", "weekend_recap.py", "shadow_reader.py", "shadow_finder.py"])
+                     ["weekend_import.py", "post_load_qa.py", "weekend_recap.py", "shadow_reader.py", "shadow_finder.py"],
+                     ["weekend_import.py", "post_load_qa.py", "weekend_recap.py", "shadow_reader.py", "shadow_finder.py", "luna_shadow.py"])
     for s in steps:
         assert s[0].lower().endswith(".py") and all(len(tok) > 1 or tok.isdigit() for tok in s), f"flattened or malformed step: {s}"           # the 10-03 bug made single-character arguments
     assert steps[0][1:3] == ["--markets", "Cybersecurity"] and "Utility" in steps[0] and steps[2][1] == "saturday"
