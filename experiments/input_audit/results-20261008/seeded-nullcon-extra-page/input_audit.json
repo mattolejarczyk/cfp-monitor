@@ -1,0 +1,99 @@
+{
+ "meta": {
+  "stamp": "20261008-112805",
+  "today": "2026-10-08",
+  "skipped": 0,
+  "no_page": 0,
+  "stopped": "",
+  "minutes": 0.58529585202535,
+  "usd": 0.00166646,
+  "model": "C"
+ },
+ "summary": {
+  "START DATE": {
+   "AGREES": 1,
+   "DIFFERS": 0,
+   "UNSUPPORTED": 0,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  },
+  "CONFERENCE DATES": {
+   "AGREES": 1,
+   "DIFFERS": 0,
+   "UNSUPPORTED": 0,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  },
+  "LOCATION": {
+   "AGREES": 1,
+   "DIFFERS": 0,
+   "UNSUPPORTED": 0,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  },
+  "SUBMISSION DEADLINE": {
+   "AGREES": 0,
+   "DIFFERS": 1,
+   "UNSUPPORTED": 0,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  }
+ },
+ "rows": [
+  {
+   "conference": "Nullcon Goa 2027 (18th Edition)",
+   "market": "Cybersecurity",
+   "id": "2026-nullcon-goa-bambolim",
+   "edition": "2027",
+   "pages": [
+    "https://nullcon.net/",
+    "https://nullcon.net/cfp/",
+    "https://nullcon.net/event/nullcon-goa-2027/"
+   ],
+   "readable": true,
+   "fields": {
+    "START DATE": {
+     "verdict": "AGREES",
+     "ours": "2/27/2027",
+     "page": "2027-02-27",
+     "quote": "Conference: 27th – 28th February 2027",
+     "url": "https://nullcon.net/",
+     "why": "ok (4 ranges on the page; this one is labelled 'ay zero: 26th february 2027 conference:   2027 venue: tba, goa con' by the page)"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "AGREES",
+     "ours": "February 27 - February 28, 2027",
+     "page": "2027-02-27 to 2027-02-28",
+     "quote": "Conference: 27th – 28th February 2027",
+     "url": "https://nullcon.net/",
+     "why": "ok"
+    },
+    "LOCATION": {
+     "verdict": "AGREES",
+     "ours": "Grand Hyatt Goa, Bambolim, Goa, India",
+     "page": "city Goa, country India",
+     "quote": "Venue: TBA, Goa || Nullcon Goa is Nullcon’s flagship cybersecurity conference and training experience in India.",
+     "url": "https://nullcon.net/",
+     "why": "ok"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "DIFFERS",
+     "ours": "11/30/2026",
+     "page": "2026-10-30",
+     "quote": "30th October 2026 🔒 Call for Papers Closes",
+     "url": "https://nullcon.net/event/nullcon-goa-2027/",
+     "why": "ok"
+    }
+   }
+  }
+ ],
+ "id_year_not_edition": [
+  {
+   "market": "Cybersecurity",
+   "id": "2026-nullcon-goa-bambolim",
+   "conference": "Nullcon Goa 2027 (18th Edition)",
+   "id_year": "2026",
+   "edition": "2027"
+  }
+ ]
+}

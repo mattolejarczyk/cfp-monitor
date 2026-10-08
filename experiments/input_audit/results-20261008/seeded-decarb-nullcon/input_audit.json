@@ -1,0 +1,142 @@
+{
+ "meta": {
+  "stamp": "20261008-111835",
+  "today": "2026-10-08",
+  "skipped": 0,
+  "no_page": 0,
+  "stopped": "",
+  "minutes": 3.9961536566416425,
+  "usd": 0.0017737960999999998,
+  "model": "C"
+ },
+ "summary": {
+  "START DATE": {
+   "AGREES": 1,
+   "DIFFERS": 1,
+   "UNSUPPORTED": 0,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  },
+  "CONFERENCE DATES": {
+   "AGREES": 1,
+   "DIFFERS": 1,
+   "UNSUPPORTED": 0,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  },
+  "LOCATION": {
+   "AGREES": 0,
+   "DIFFERS": 1,
+   "UNSUPPORTED": 1,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  },
+  "SUBMISSION DEADLINE": {
+   "AGREES": 0,
+   "DIFFERS": 0,
+   "UNSUPPORTED": 2,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  }
+ },
+ "rows": [
+  {
+   "conference": "Nullcon Goa 2027 (18th Edition)",
+   "market": "Cybersecurity",
+   "id": "2026-nullcon-goa-bambolim",
+   "edition": "2027",
+   "pages": [
+    "https://nullcon.net/",
+    "https://nullcon.net/cfp/"
+   ],
+   "readable": true,
+   "fields": {
+    "START DATE": {
+     "verdict": "AGREES",
+     "ours": "2/27/2027",
+     "page": "2027-02-27",
+     "quote": "Conference: 27th – 28th February 2027",
+     "url": "https://nullcon.net/",
+     "why": "ok (2 ranges on the page; this one is labelled 'ay zero: 26th february 2027 conference:   2027 venue: tba, goa con' by the page)"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "AGREES",
+     "ours": "February 27 - February 28, 2027",
+     "page": "2027-02-27 to 2027-02-28",
+     "quote": "Conference: 27th – 28th February 2027",
+     "url": "https://nullcon.net/",
+     "why": "ok"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "Grand Hyatt Goa, Bambolim, Goa, India",
+     "page": "city Goa",
+     "quote": "Venue: TBA, Goa",
+     "url": "https://nullcon.net/",
+     "why": "only the city is proven (it agrees); the other part is not"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "11/30/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    }
+   }
+  },
+  {
+   "conference": "Decarb Connect Europe 2027",
+   "market": "Utility",
+   "id": "2027-decarb-connect-europe-vienna",
+   "edition": "2027",
+   "pages": [
+    "https://decarbconnecteurope.com/"
+   ],
+   "readable": true,
+   "fields": {
+    "START DATE": {
+     "verdict": "DIFFERS",
+     "ours": "6/8/2027",
+     "page": "2027-04-14",
+     "quote": "14 - 15 April, 2027",
+     "url": "https://decarbconnecteurope.com/",
+     "why": "ok"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "DIFFERS",
+     "ours": "June 8 - June 10, 2027",
+     "page": "2027-04-14 to 2027-04-15",
+     "quote": "14 - 15 April, 2027",
+     "url": "https://decarbconnecteurope.com/",
+     "why": "ok"
+    },
+    "LOCATION": {
+     "verdict": "DIFFERS",
+     "ours": "Hamburg, Germany",
+     "page": "city Vienna, country Austria",
+     "quote": "Vienna, Austria",
+     "url": "https://decarbconnecteurope.com/",
+     "why": "differs in city and country"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "1/30/2027",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    }
+   }
+  }
+ ],
+ "id_year_not_edition": [
+  {
+   "market": "Cybersecurity",
+   "id": "2026-nullcon-goa-bambolim",
+   "conference": "Nullcon Goa 2027 (18th Edition)",
+   "id_year": "2026",
+   "edition": "2027"
+  }
+ ]
+}

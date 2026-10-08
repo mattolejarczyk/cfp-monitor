@@ -122,6 +122,15 @@ def id_year_mismatch(rows: list[dict]) -> list[dict]:
 
 
 # ---------------------------------------------------------------- code acceptance of the reader's claims
+OTHER_CALL = re.compile(r"training|workshop|tutorial|sponsor|exhibitor|booth|registration|early[- ]?bird|notification|camera[- ]?ready|announce|hackathon|ctf", re.I)
+TALK_CALL = re.compile(r"paper|talk|speaker|abstract|proposal|briefing|presentation|cfp|call for (?:speakers|presentations|submissions)|session|lightning", re.I)
+
+
+def other_call(quote: str) -> bool:
+    """True when the quote is about another call (training, workshop, sponsor, registration, announcement...) and says nothing of talks, papers or abstracts."""
+    return bool(OTHER_CALL.search(quote or "")) and not TALK_CALL.search(quote or "")
+
+
 def accept_deadline(item: dict, page: str, edition: str) -> tuple[str, str]:
     """(ISO value or '', why). Quote on the page, states day+month+year, call wording, year = the edition's or the year before (a call closes before the event)."""
     from experiments.read_the_page_pass import pass_lib as L
@@ -140,6 +149,8 @@ def accept_deadline(item: dict, page: str, edition: str) -> tuple[str, str]:
         return "", "the quote does not state that day, month and year"
     if not CALL_WORDS.search(quote):
         return "", "the quote has no call wording"
+    if other_call(quote):
+        return "", "the quote is about another call (training, workshop, sponsor, registration or announcement), not the talk or paper call"
     if edition and str(d.year) not in (edition, str(int(edition) - 1)):
         return "", f"deadline year {d.year} is not the edition's year ({edition}) or the year before"
     return value, "ok"
@@ -392,6 +403,28 @@ def write_outputs(out: Path, results: list[dict], todo: list[dict], meta: dict, 
     return summ
 
 
+def rescore(a) -> int:
+    """Re-apply the CURRENT deadline rule to the deadline claims of an earlier run (input_audit.json in --rescore DIR) without any network or model call; writes to --out-dir."""
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    old = json.loads((Path(a.rescore) / "input_audit.json").read_text(encoding="utf-8"))
+    rows = load_rows(Path(a.lists), a.markets)
+    todo = [r for r in rows if not (r.get("DUP_OF") or "").strip()]
+    mism = id_year_mismatch(rows)
+    n = 0
+    for res in old["rows"]:
+        v = res["fields"]["SUBMISSION DEADLINE"]
+        if v["verdict"] in ("DIFFERS", "FILLS", "AGREES") and other_call(v["quote"]):
+            ours = v["ours"]
+            v.update(verdict="UNSUPPORTED" if ours else "NO_VALUE", page="", quote="", url="", why="the page's date is for another call (training, workshop, sponsor, registration or announcement), not the talk or paper call")
+            n += 1
+    out = Path(a.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    meta = dict(old["meta"], rescored=n)
+    summ = write_outputs(out, old["rows"], todo, meta, mism)
+    print(f"RESCORED: {n} deadline claims downgraded; DIFFERS {sum(x['DIFFERS'] for x in summ.values())}, UNSUPPORTED {sum(x['UNSUPPORTED'] for x in summ.values())} -> {out}")
+    return 0
+
+
 def run(a) -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     rows = load_rows(Path(a.lists), a.markets)
@@ -512,10 +545,11 @@ def main() -> int:
     ap.add_argument("--model", default="C")
     ap.add_argument("--max-usd", type=float, default=0.30)
     ap.add_argument("--today", default=date.today().isoformat())
+    ap.add_argument("--rescore", default="", help="DIR of an earlier run: re-apply the current deadline rule to its claims, no network, no model")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     try:
-        return run(a)
+        return rescore(a) if a.rescore else run(a)
     except Exception as e:                                                           # noqa: BLE001
         print(f"INPUT AUDIT FAILED (nothing was changed): {type(e).__name__}: {e}")
         return 1

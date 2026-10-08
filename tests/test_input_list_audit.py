@@ -94,3 +94,12 @@ def test_country_aliases_are_folded_so_uk_is_not_a_difference():
     page = "Cloud and Cyber Security Expo at ExCeL London, UK. " + "filler text. " * 30
     res = A.judge(_row(LOCATION="ExCeL London, London, United Kingdom"), A.accept_all(fields, page, "2027"), page, "2027", ["u"])
     assert res["LOCATION"]["verdict"] == "AGREES"
+
+
+def test_a_training_or_sponsor_date_is_not_the_talk_deadline():
+    page = "FIRST 38th Annual Conference 2026. Call for Trainings will close October 24, 2025. " + "filler text. " * 30
+    item = {"value": "2025-10-24", "quote": "Call for Trainings will close October 24, 2025."}
+    assert A.accept_deadline(item, page, "2026")[0] == ""
+    ok = {"value": "2025-10-24", "quote": "Call for Papers and trainings will close October 24, 2025."}
+    assert A.other_call("Sponsor registration closes 3 March 2027") and not A.other_call("Abstract submission closes 3 March 2027")
+    assert A.accept_deadline(ok, page + " Call for Papers and trainings will close October 24, 2025.", "2026")[0] == "2025-10-24"
