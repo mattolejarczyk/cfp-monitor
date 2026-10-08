@@ -31,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.cfp_monitor import clients          # noqa: E402
+from src.cfp_monitor.link_agreement import linked_disagreements          # noqa: E402  (ACT-54)
 
 PROTECTED = ("conferences", "grounding_facts", "conference_markets", "evidence")
 
@@ -109,6 +110,13 @@ def main() -> int:
             print(f"      {x}")
     print(f"  candidates raised {c['raised']}, pending {c['pending']}"
           "  (undecided - nothing joins an industry list on its own)")
+
+    # ACT-54 (b): links we already hold are never rewritten by this run, but they are REVISITED: any whose linked event disagrees
+    # with the customer's own date or place (more than 30 days / another city) is listed for a person. Read-only; nothing is changed.
+    bad = linked_disagreements(con, a.client)
+    print(f"  LINKED BUT DISAGREES (listed for a person, links not changed)  {len(bad)}")
+    for x in bad:
+        print(f"      {x['name']}: linked to {x['event_id']} - {x['why']}")
 
     drift = {t: (before[t], after[t]) for t in PROTECTED if before[t] != after[t]}
     if drift:

@@ -23,6 +23,6 @@
     "scripts/narrow_overlay.py": "aa90e47b3a9d7d6ee6c158f7bac0c81743fdfebac135cab071371cc663d19799",
     "scripts/start_date_arbiter.py": "ab8c13a43d043a47fa6e7ecf8f93c08e95ade3941d2afb23967d8b9addcc0998",
     "scripts/pinned_rows.py": "ce4f5d78d371985d74592fe96858e6feb1c9ddff643f956e26eea40cee707a5c",
-    "scripts/customer_coverage.py": "6d9e5ad0c408cfc1138c1b783d6eb7b90046e963103b4ca5202222d5da209116"
+    "scripts/customer_coverage.py": "05614213694e18211df9af3d2a1af9b1469c359541cf2d6c71acd0a528c83213"
   }
 }

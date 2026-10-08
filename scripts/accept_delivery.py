@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.cfp_monitor.verify import fetch_text, fold_punctuation, is_block_page, is_script_shell, link_status      # noqa: E402
 from src.cfp_monitor.rules import is_aggregator_url                                           # noqa: E402,F401  (ACT-14; trap_cases probes it here)
+from src.cfp_monitor.schedule_only import find_schedule_only                                  # noqa: E402  (ACT-54 e)
 
 # 36 since the v1.2 amendment added FORMAT as the last column (2026-08-05).
 # Deliveries still emitting 35 columns predate the amendment and fail check 1,
@@ -708,6 +709,15 @@ class Gate:
         if declared_doubt:
             self.note("R16b", "Unconfirmed discontinuation(s) shipping as 'Needs Verification' "
                               "- allowed, but they are someone's follow-up", declared_doubt)
+
+        # R16c (ACT-54 e). NO PAGE, NO STATUS. A row that says Open / Closed / Upcoming and rests only on the event's typical calendar (or on the
+        # absence of listings) with no citation pair is a guess shipped as a fact: Hack In The Box 'Closed - typically runs in late August'. It should
+        # read Needs Verification. ADVISORY for now (reported, not rejected): upstream promised on 2026-10-06 to stop writing schedule-based statuses;
+        # promote to self.add() once a run shows none. Rule and measured false-positive cases: src/cfp_monitor/schedule_only.py.
+        sched = [f'{x["name"][:40]}: STATUS={x["status"]} rests on "{x["phrase"]}" and carries no cited page - should read Needs Verification'
+                 for x in find_schedule_only(self.rows)]
+        if sched:
+            self.note("R16c", "Status supported only by the typical schedule (no page, no status)", sched)
 
         # ---- R18, v1.5. Skipped entirely on a pre-v1.5 delivery. ----
         # A cost figure is the most consequential number in this file: it either kills an
