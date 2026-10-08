@@ -54,6 +54,7 @@ DESCRIBED = {
     "scripts/start_date_arbiter.py": ROOT / "scripts" / "start_date_arbiter.py",
     "scripts/pinned_rows.py": ROOT / "scripts" / "pinned_rows.py",
     "scripts/customer_coverage.py": ROOT / "scripts" / "customer_coverage.py",
+    "scripts/customer_auto_add.py": ROOT / "scripts" / "customer_auto_add.py",
 }
 
 

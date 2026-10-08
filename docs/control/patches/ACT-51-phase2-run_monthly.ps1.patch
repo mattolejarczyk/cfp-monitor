@@ -1,0 +1,32 @@
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -240,5 +240,29 @@
+         Write-Host "COVERAGE: UNKNOWN - $($_.Exception.Message)"
+     }
+     Write-Host ""
+ }
+ 
++# ----------------------------------------- STEP 0a1: ADD MISSING CUSTOMER ROWS (ACT-51 phase 2) ----
++# Right after the coverage check and BEFORE the stamping and the research: scripts/customer_auto_add.py gates each customer row that is not in the queue (ADD, or HOLD for a person: a row
++# linked to an event we hold, a website the list already carries under another edition, no URL, or more than 10 rows for a market) and prints AUTOADD: lines that weekend_recap.py reads.
++# SWITCH: it only PROPOSES (dry run, writes the proposal files under runs_out\qa\<date>\ and a DRAFT request to upstream that the operator sends) unless the environment variable
++# CFP_AUTOADD_APPLY is 1, in which case the ADD rows are appended to <Market>_input.csv (backup and read-back proof, blank EVENT_ID_CANON: an id is never minted).
++# Like the intake it can never stop the research: wrapped, exit code ignored. Not run for an Awards-only run or -WhatIf.
++if ($liveMarkets.Count -gt 0 -and -not $WhatIf) {
++    $aaPy  = "C:\Users\matts\cfp-monitor\.venv\Scripts\python.exe"
++    $aaPy_ = "C:\Users\matts\cfp-monitor\scripts\customer_auto_add.py"
++    $aaArgs = @()
++    if ($env:CFP_AUTOADD_APPLY -eq '1') { $aaArgs = @('--apply', '--live') }
++    try {
++        if ((Test-Path $aaPy) -and (Test-Path $aaPy_)) {
++            & $aaPy $aaPy_ @aaArgs
++        } else {
++            Write-Host "AUTOADD: UNKNOWN - interpreter or script not found ($aaPy / $aaPy_)."
++        }
++    } catch {
++        Write-Host "AUTOADD: UNKNOWN - $($_.Exception.Message)"
++    }
++    Write-Host ""
++}
++
+ # ------------------------------------------------------- STEP 0a: PERMANENT IDS (2026-09-27) ----

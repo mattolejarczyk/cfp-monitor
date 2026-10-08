@@ -168,7 +168,8 @@ citations.
 **Who owns the list of events we research (2026-10-06, ACT-51).** The customer's two sheets define it: every event on them is researched, whatever its subject. Upstream supplies the
 permanent id of each event (we never mint one); downstream's duty is to put every customer event on the research list (`<Market>_input.csv`) and to say, each Saturday, how many are not there
 (`scripts/customer_coverage.py`, target 0). The only ways a customer row stays off the list are an event that is over, a row the customer removed, a duplicate, or a row the operator has ruled out in
-`docs/operations/customer_not_researched.csv`; each is listed with its reason, never silent.
+`docs/operations/customer_not_researched.csv`; each is listed with its reason, never silent. The weekly route that puts a missing row on the list is `scripts/customer_auto_add.py` (2026-10-08): it appends
+only rows its gate calls safe, with a blank id, never mints or joins on an id, and holds for a person any row linked to an event we hold or sharing a website with a row already listed.
 
 Two columns exist in the schema but are computed downstream and ignored on import:
 `GATED_STATUS` and `ISSUES`. Upstream leaves them blank.
