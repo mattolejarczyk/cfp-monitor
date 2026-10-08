@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-10-06",
+  "as_of": "2026-10-08",
   "title": "CFP Control List",
   "intro": "The work list behind the failure-point register. Each action closes one or more root-cause failure points; when an action is verified, the register updates itself. A builder agent does the work in an isolated branch, the reviewer verifies it, and only the items marked Needs you wait for you.",
   "waves": [
@@ -1185,7 +1185,7 @@
       "wave": "W5",
       "step": "C",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "about 0.2 USD (cheap reader, ~220 rows); no live change by the builder",
       "title": "Input-list hints must be page-supported: audit START DATE, CONFERENCE DATES, LOCATION and SUBMISSION DEADLINE in the research input lists against each row's own page",
       "detail": "FOUND 2026-10-06 (operator question about Decarb Connect Europe): our input row said Hamburg, June 8-10, 2027, Verified (2027); the event's page says 14-15 April 2027, Vienna (Amsterdam was the 2022 edition). We measured the labels: of 213 input rows with a start date, 0 have a name year, EDITION and dates-text year that disagree; the database has 1 of 395. So the problem is NOT year labels: it is a row whose label and date agree on 2027 while NO page of that edition supports the value (it may be the previous edition's data carried under next year's name; the 2026 edition's own place and date are not stated on the event pages, so that stays unproven). Another example found the same day: Nullcon Goa input deadline 11/30/2026 was the speaker-announcements date; the call closes 30 Oct 2026. Our year checks (Y1-Y4, start_date_arbiter) judge rows of a DELIVERY; the input list hints are never checked and they are what the research starts from. BUILD: a read-only audit that, for every row of Cybersecurity_input.csv and Utility_input.csv (about 220), reads the row's own pages (reuse scripts/shadow_reader.py and experiments/read_the_page_pass: page library, verbatim quote, year-aware: a 2026 date never proves 2027) and lists per field AGREES / DIFFERS (page states another value, with the quote) / UNSUPPORTED (the page states nothing for that edition). Output a CSV and a report. For DIFFERS and UNSUPPORTED hints propose the correction or the honest blank; the reviewer applies them to the input lists with backups. Also report which rows have id year != edition (frozen keys, by design) so a person is not misled. Rules: a quote on a page is not proof it answers the row's edition; check the date.",
@@ -1193,8 +1193,10 @@
       "closes": [],
       "acceptance": "Every input row has a per-field verdict with a quote or the reason nothing could be read; a proposed-corrections CSV; count of DIFFERS and UNSUPPORTED reported.",
       "depends": [],
-      "evidence": [],
-      "updated": "2026-10-06",
+      "evidence": [
+        "branch builder/wave9 commits 386f037,2ecc5c4,4c4264a + this json commit. NEW scripts/input_list_audit.py (tests/test_input_list_audit.py, 10 tests pass offline incl. Decarb Connect Europe and Nullcon Goa fixtures; TOOLING row, QA-REGISTER A46). Ran: 10-row dry run, 2 seeded live checks (old Decarb Hamburg/June 8-10 values -> DIFFERS on start, dates, location with page quote '14 - 15 April, 2027 Vienna, Austria'; old Nullcon deadline 11/30/2026 -> DIFFERS to 2026-10-30 'Call for Papers Closes' ONLY when the event page nullcon.net/event/nullcon-goa-2027/ is added via --extra-pages: the row's listed pages show 2025), full run 219 rows (model B deepseek-v4.1-flash, 0.225 USD): DIFFERS 84 fields, UNSUPPORTED 369, AGREES 212, FILLS 77, NO_VALUE 134; 3 rows no readable page; 7 rows id year != edition. Results experiments/input_audit/results-20261008/full-run/ (input_audit.md, proposed_corrections.csv). Full suite: 1760 passed, 5 failed (hook tests that read Markets/run_monthly.ps1, same as baseline: test_luna_shadow_hook, test_run_monthly_steps, 3x test_shadow_reader_hook). Fixture-only vs live: acceptance rules fixture+live; DIFFERS NOT yet read by a person page by page."
+      ],
+      "updated": "2026-10-08",
       "on_verify": {}
     },
     {
