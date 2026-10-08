@@ -69,6 +69,28 @@ def coverage_sentence(cov: dict | None) -> str:
             f"Run scripts/customer_coverage.py --propose and add them (scripts/add_customer_rows.py).{note}")
 
 
+def autoadd_facts(log: str) -> dict | None:
+    """ACT-51 phase 2: the `AUTOADD:` line scripts/customer_auto_add.py prints after the coverage check. None when the log has no such line (the step is not switched on)."""
+    line = first(r"^AUTOADD: (.+)$", log, flags=re.M)
+    if line is None:
+        return None
+    return {"line": line, "applied": "mode=applied" in line, "unknown": line.startswith("UNKNOWN") or line.startswith("REFUSED"),
+            "held_names": first(r"^AUTOADD HELD: (.+)$", log, flags=re.M) or "", "missed_names": first(r"^AUTOADD NOT PICKED UP: (.+)$", log, flags=re.M) or ""}
+
+
+def autoadd_sentence(a: dict | None) -> str:
+    if a is None:
+        return ""
+    if a["unknown"]:
+        return f"Automatic add of customer rows: could not run ({a['line']})."
+    out = f"Automatic add of customer rows: {a['line']}."
+    if a["held_names"]:
+        out += f" Held for a person (see runs_out/qa/<date>/auto_add.md): {a['held_names']}."
+    if a["missed_names"]:
+        out = "FLAG - customer rows added to the plan but NOT picked up: " + a["missed_names"] + ". " + out
+    return out
+
+
 def commitment_facts(markets_dir: Path, ledger: Path | None = None, db: Path | None = None) -> dict | None:
     """ACT-58: did upstream keep what it promised? Runs scripts/check_commitments.py's own `run` on the published
     files, after the load. {'kept', 'broken', 'pending', 'total', 'broken_lines'} or None if the checker could not run."""
@@ -99,6 +121,7 @@ def parse_saturday(log: str) -> dict:
     out["exit"] = first(r"=== run_monthly exit code: (-?\d+) ===", log)
     out["intake"] = first(r"INTAKE HEALTH: (.+)", log)
     out["coverage"] = coverage_facts(log)
+    out["autoadd"] = autoadd_facts(log)
     if re.search(r"CANARY PASSED", log):
         out["canary"] = "passed"
     elif re.search(r"Canary passed [\d.]+h ago - reusing it", log):
@@ -246,6 +269,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     facts = [f"5-row test before the run: {s['canary']}.",
              f"Customer sheet check-in: {s['intake'] or 'no result in the log'}.",
              *([coverage_sentence(s["coverage"])] if kind != "friday" else []),      # awards have no customer sheet
+             *([autoadd_sentence(s["autoadd"])] if kind != "friday" and s.get("autoadd") else []),
              f"AI requests in total: about {total_req}."]
     if s["timeouts"]:
         facts.append(f"Google was slow: {s['timeouts']} '504' timeouts (Google's server took too "
@@ -296,6 +320,8 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     cov_n = (s["coverage"] or {}).get("not_in")
     if kind != "friday" and cov_n:
         status += f" - FLAG: {cov_n} customer row(s) not in the research queue"
+    if kind != "friday" and (s.get("autoadd") or {}).get("missed_names"):
+        status += " - FLAG: customer row(s) added but not picked up"
     if kind != "friday" and commitments and commitments["broken"]:
         status += f" - FLAG: {commitments['broken']} upstream promise(s) NOT kept"
     subject = f"CFP {label} {status} - {datetime.now():%a %b %d}"

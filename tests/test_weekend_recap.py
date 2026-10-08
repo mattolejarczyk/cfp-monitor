@@ -74,3 +74,21 @@ def test_commitment_facts_and_sentence_flag_a_broken_promise(tmp_path):
     assert "did not run" in commitment_sentence(None)
     subject, text, _ = saturday_recap(LOG_OK, None, md, "saturday", None, c)
     assert "1 upstream promise(s) NOT kept" in subject and "NOT kept" in text
+
+
+# --- ACT-51 phase 2: the AUTOADD line ---
+LOG_AUTO = ("COVERAGE: 17 of 20 customer rows ahead of 2026-10-10 are in the research queue; 3 are NOT\nCOVERAGE NOT IN QUEUE: Alpha Con; Beta Expo; Gamma Summit\n"
+            "AUTOADD: mode=applied; 1 added, 2 held for a person, 4 waiting for an id; 2 customer rows NOT in the queue after the step\n"
+            "AUTOADD HELD: Beta Expo; Gamma Summit\nAUTOADD NOT PICKED UP: Beta Expo; Gamma Summit\n")
+
+
+def test_parse_saturday_reads_the_autoadd_lines():
+    from scripts.weekend_recap import parse_saturday, autoadd_sentence
+    a = parse_saturday(LOG_AUTO)["autoadd"]
+    assert a["applied"] and a["held_names"] == "Beta Expo; Gamma Summit" and a["missed_names"] == "Beta Expo; Gamma Summit"
+    assert autoadd_sentence(a).startswith("FLAG - customer rows added to the plan but NOT picked up: Beta Expo")
+    assert parse_saturday(LOG_OK)["autoadd"] is None and autoadd_sentence(None) == ""
+    u = parse_saturday("AUTOADD: UNKNOWN - coverage could not run (x)\n")["autoadd"]
+    assert u["unknown"] and "could not run" in autoadd_sentence(u)
+    d = parse_saturday("AUTOADD: mode=dry-run; 2 to add, 0 held for a person, 0 waiting for an id; 2 customer rows NOT in the queue after the step\n")["autoadd"]
+    assert not d["missed_names"] and "FLAG" not in autoadd_sentence(d)

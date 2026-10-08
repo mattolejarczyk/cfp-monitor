@@ -892,3 +892,6 @@ The customers' sheets define the list of events we research (contract section 3)
 (a same-named event in a different EDITION is not the same event: open the page), then `scripts/add_customer_rows.py --classified <csv>` (report first, then `--apply`), and when upstream gives the ids
 `scripts/stamp_given_ids.py`. An event the customer tracks that we must NOT research goes in `docs/operations/customer_not_researched.csv` (event_name, url, client, reason, ruled_by, ruled_on); only the
 operator adds to it.
+The weekly route that adds the missing rows is `python scripts/customer_auto_add.py` (Saturday step 3b; dry run by default: it proposes into `runs_out/qa/<date>/` and drafts the request to upstream for the ids). Its `--apply`
+appends the gated rows with a blank id (refused on the live Markets folder without `--live`; on the weekly job it is switched by `CFP_AUTOADD_APPLY=1`). Rows it HOLDS (`auto_add.md`) are for a person: put the held event on the
+list by stamping its canonical id, or rule it out in the ledger. Rehearse on copies: `--markets-dir <copy> --db <copy of the database> --out-dir <scratch>`.
