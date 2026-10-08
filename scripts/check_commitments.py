@@ -136,7 +136,7 @@ def lint_ledger(rows: list[dict], up_to_canon: dict[str, str], known_ids: set[st
     return out
 
 
-def run(ledger: Path, files: dict[str, Path], db: Path, today: str) -> list[dict]:
+def run(ledger: Path, files: dict[str, Path], db: Path, today: str, strict_ids: bool = False) -> list[dict]:
     up_to_canon, _ = seed_map(str(db)) if Path(db).exists() else ({}, [])
     loaded: dict[str, tuple[list[dict], dict[str, dict]]] = {}
     for market, p in files.items():
@@ -145,7 +145,7 @@ def run(ledger: Path, files: dict[str, Path], db: Path, today: str) -> list[dict
             loaded[market] = (rows, {to_canonical((r.get("EVENT_ID") or "").strip(), up_to_canon): r for r in rows})
     known: set[str] = set()
     try:
-        known = market_canonical_ids(str(db)) if Path(db).exists() else set()
+        known = market_canonical_ids(str(db)) if (strict_ids and Path(db).exists()) else set()   # strict only: promises are usually about rows not yet delivered, so "not one we hold" is noise by default
     except Exception:                                                        # no seed sheets visible: the id check is skipped, not failed
         known = set()
     if known:                                                                # only trust the id check when a real id source was seen
@@ -200,10 +200,11 @@ def main() -> int:
     ap.add_argument("--today", default=date.today().isoformat())
     ap.add_argument("--out-dir")
     ap.add_argument("--lint", action="store_true", help="print only the ledger-hygiene problems")
+    ap.add_argument("--strict-ids", action="store_true", help="also flag ids we do not hold (noisy: promises are about rows not yet delivered)")
     a = ap.parse_args()
     try:
         files = {"*": Path(a.file)} if a.file else {m: Path(a.markets_dir) / f"{m}_audited.final.csv" for m in ("Cybersecurity", "Utility")}
-        res = run(Path(a.ledger), files, Path(a.db), a.today)
+        res = run(Path(a.ledger), files, Path(a.db), a.today, strict_ids=a.strict_ids)
     except Exception as e:                                   # a checker must never stop the job
         print(f"COMMITMENTS: UNKNOWN - {type(e).__name__}: {e}")
         return 0
