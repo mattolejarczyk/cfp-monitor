@@ -1,0 +1,356 @@
+# Input-list audit 20261008-115228 (read-only; changes nothing)
+
+219 rows audited (3 skipped as duplicates or already marked DUP_OF); 3 rows with no readable page; cost 0.2248 USD; 68 minutes. Today 2026-10-08.
+
+**DIFFERS: 84 fields. UNSUPPORTED: 369 fields.** AGREES 212, FILLS 77, NO_VALUE 134.
+
+| field | AGREES | DIFFERS | UNSUPPORTED | FILLS | NO_VALUE |
+|---|---|---|---|---|---|
+| START DATE | 99 | 29 | 83 | 1 | 7 |
+| CONFERENCE DATES | 34 | 30 | 62 | 62 | 31 |
+| LOCATION | 79 | 24 | 116 | 0 | 0 |
+| SUBMISSION DEADLINE | 0 | 1 | 108 | 14 | 96 |
+
+DIFFERS: the page states another value for THIS edition (verbatim quote); one of the two is wrong and a person looks. UNSUPPORTED: no page of this edition states the hint; unproven, NOT wrong. A date of another year never counts for the edition.
+
+## DIFFERS (84)
+
+- **Gartner Identity & Access Management Summit 2026** (Cybersecurity, edition 2026) LOCATION: ours `Gaylord Texan Resort & Convention Center, Grapevine, Texas, USA`, page `city Las Vegas, country United States`; differs in city
+  - https://www.gartner.com/en/conferences/na/identity-access-management-us  "Las Vegas, NV || December 7 – 9, 2026 | Las Vegas, NV"
+- **Cloud & Cyber Security Expo London 2027** (Cybersecurity, edition 2027) START DATE: ours `3/3/2027`, page `2027-03-10`; ok
+  - https://www.cloudsecurityexpo.com/  "WEDNESDAY 10 MARCH 2027 - 09:00 - 17:00"
+- **Cloud & Cyber Security Expo London 2027** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `March 3 - March 4, 2027`, page `2027-03-10 to 2027-03-11`; ok
+  - https://www.cloudsecurityexpo.com/  "WEDNESDAY 10 MARCH 2027 - 09:00 - 17:00 || THURSDAY 11 MARCH 2027 - 09:30 - 17:00"
+- **DEF CON Singapore 2026 (Inaugural Edition)** (Cybersecurity, edition 2026) SUBMISSION DEADLINE: ours `8/15/2026`, page `2026-02-15`; ok
+  - https://defcon.org/html/defcon-singapore/dc-singapore-index.html  "The deadline is Feb 15, 2026, and it will be here before you know it."
+- **OffensiveCon Berlin 2026** (Cybersecurity, edition 2026) START DATE: ours `2/13/2026`, page `2026-05-15`; ok
+  - https://www.offensivecon.org/  "May 15-16th 2026"
+- **OffensiveCon Berlin 2026** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `February 13 - February 14, 2026`, page `2026-05-15 to 2026-05-16`; ok
+  - https://www.offensivecon.org/  "May 15-16th 2026"
+- **AppSec Israel 2026 (OWASP AppSec Israel)** (Cybersecurity, edition 2026) START DATE: ours `9/15/2026`, page `2026-10-06`; ok
+  - https://appsecil.org/  "October 06, 2026 | Tel Aviv Expo, Pavilion 10"
+- **AppSec Israel 2026 (OWASP AppSec Israel)** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `September 15 - September 16, 2026`, page `2026-10-06 to 2026-10-06`; ok
+  - https://appsecil.org/  "October 06, 2026 | Tel Aviv Expo, Pavilion 10 || Conference: October 06, 2026"
+- **IEEE Symposium on Security & Privacy 2026 (47th IEEE S&P / Oakland)** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `May 18 - May 21, 2026`, page `2026-05-18 to 2026-05-20`; ok
+  - https://sp2026.ieee-security.org/  "The Symposium will be held on May 18-20, 2026, and the Security and Privacy Workshops will be held on May 21, 2026."
+- **OWASP Italy Day 2026** (Cybersecurity, edition 2026) START DATE: ours `6/17/2026`, page `2026-06-18`; ok
+  - https://owasp.org/www-chapter-italy/  "06/18/2026, 8:30 AM CDT"
+- **OWASP Italy Day 2026** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `June 17 - June 18, 2026`, page `2026-06-18 to ?`; first day differs; last day not proven
+  - https://owasp.org/www-chapter-italy/  "06/18/2026, 8:30 AM CDT"
+- **AppSec Village at DEF CON 34** (Cybersecurity, edition 2026) START DATE: ours `8/6/2026`, page `2026-08-07`; ok (2 ranges on the page; this one is labelled 'march 24-26, 2026 learn more def con 34  , 2026 learn more get inv' by the page)
+  - https://www.appsecvillage.com/  "DEF CON 34 August 7-9, 2026"
+- **AppSec Village at DEF CON 34** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `August 6 - August 9, 2026`, page `2026-08-07 to 2026-08-09`; ok
+  - https://www.appsecvillage.com/  "DEF CON 34 August 7-9, 2026"
+- **InfoSec World 2026** (Cybersecurity, edition 2026) START DATE: ours `10/12/2026`, page `2026-10-11`; ok
+  - https://www.infosecworldusa.com/  "October 11-15, 2026"
+- **InfoSec World 2026** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `October 12 - October 14, 2026`, page `2026-10-11 to 2026-10-15`; ok
+  - https://www.infosecworldusa.com/  "October 11-15, 2026"
+- **LabsCon 2026 (SentinelOne LabsCon)** (Cybersecurity, edition 2026) START DATE: ours `9/20/2026`, page `2026-09-16`; ok
+  - https://www.labscon.io/  "LABScon will take place at Omni Scottsdale Resort & Spa at Montelucia in Scottsdale, Arizona from Wednesday, September 16, 2026 to Saturday, September 19, 2026."
+- **LabsCon 2026 (SentinelOne LabsCon)** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `September 20 - September 23, 2026`, page `2026-09-16 to 2026-09-19`; ok
+  - https://www.labscon.io/  "LABScon will take place at Omni Scottsdale Resort & Spa at Montelucia in Scottsdale, Arizona from Wednesday, September 16, 2026 to Saturday, September 19, 2026."
+- **OWASP AppSec Days France 2026** (Cybersecurity, edition 2026) START DATE: ours `11/18/2026`, page `2026-09-24`; ok
+  - https://owaspappsecdays.fr/  "Elle se tiendra le jeudi 24 septembre 2026."
+- **OWASP AppSec Days France 2026** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `November 18 - November 19, 2026`, page `2026-09-24 to 2026-09-24`; ok
+  - https://owaspappsecdays.fr/  "Elle se tiendra le jeudi 24 septembre 2026. || cet évènement se déroulera sur une journée : le jeudi 24 septembre 2026."
+- **LASCON 2026 (Lonestar Application Security Conference)** (Cybersecurity, edition 2026) START DATE: ours `10/22/2026`, page `2026-10-29`; ok
+  - https://lascon.org/  "Conference dates will be Thursday and Friday, October 29-30, 2026."
+- **LASCON 2026 (Lonestar Application Security Conference)** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `October 22 - October 23, 2026`, page `2026-10-29 to 2026-10-30`; ok
+  - https://lascon.org/  "Conference dates will be Thursday and Friday, October 29-30, 2026."
+- **it-sa Expo & Congress 2026** (Cybersecurity, edition 2026) START DATE: ours `10/6/2026`, page `2026-10-27`; ok
+  - https://www.itsa365.de/en/it-sa-expo-congress  "27 - 29 October 2026 | Nuremberg, Germany"
+- **it-sa Expo & Congress 2026** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `October 6 - October 8, 2026`, page `2026-10-27 to 2026-10-29`; ok
+  - https://www.itsa365.de/en/it-sa-expo-congress  "27 - 29 October 2026 | Nuremberg, Germany"
+- **SecTor 2026 (Black Hat Canada / SecTor)** (Cybersecurity, edition 2026) START DATE: ours `10/20/2026`, page `2026-10-06`; ok
+  - https://www.blackhat.com/sector/  "October 6-8, 2026"
+- **SecTor 2026 (Black Hat Canada / SecTor)** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `October 20 - October 22, 2026`, page `2026-10-06 to 2026-10-08`; ok
+  - https://www.blackhat.com/sector/  "October 6-8, 2026"
+- **Wild West Hackin' Fest Deadwood 2026** (Cybersecurity, edition 2026) START DATE: ours `10/6/2026`, page `2026-10-07`; ok (2 ranges on the page; this one is labelled 'ber 6-7, 2026 live & virtual conference  , 2026 location deadwood' by the page)
+  - https://wildwesthackinfest.com/  "Live & Virtual Conference October 7-9, 2026"
+- **Wild West Hackin' Fest Deadwood 2026** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `October 6 - October 9, 2026`, page `2026-10-07 to 2026-10-09`; ok
+  - https://wildwesthackinfest.com/  "Live & Virtual Conference October 7-9, 2026"
+- **ISC2 Security Congress 2026** (Cybersecurity, edition 2026) START DATE: ours `10/19/2026`, page `2026-10-24`; ok
+  - https://www.isc2.org/congress  "OCTOBER 24-28, 2026 | GAYLORD ROCKIES + VIRTUAL"
+- **ISC2 Security Congress 2026** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `October 19 - October 21, 2026`, page `2026-10-24 to 2026-10-28`; ok
+  - https://www.isc2.org/congress  "OCTOBER 24-28, 2026 | GAYLORD ROCKIES + VIRTUAL"
+- **SANS Cyber Defense Initiative 2026 (CDI 2026)** (Cybersecurity, edition 2026) LOCATION: ours `Grand Hyatt Washington, Washington, D.C., USA`, page `city Washington D.C.`; differs in city
+  - https://www.sans.org/cyber-security-training-events/cyber-defense-initiative-2026  "Washington D.C."
+- **fwd:cloudsec North America 2026** (Cybersecurity, edition 2026) START DATE: ours `9/14/2026`, page `2026-06-01`; ok
+  - https://fwdcloudsec.org/  "June 1-2, 2026"
+- **fwd:cloudsec North America 2026** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `September 14 - September 15, 2026`, page `2026-06-01 to 2026-06-02`; ok
+  - https://fwdcloudsec.org/  "June 1-2, 2026"
+- **fwd:cloudsec North America 2026** (Cybersecurity, edition 2026) LOCATION: ours `Philadelphia, Pennsylvania, USA`, page `city Bellevue, country USA`; differs in city
+  - https://fwdcloudsec.org/  "Where : 4th floor of the Meydenbauer Center in Bellevue, Washington, USA"
+- **SecureWorld New York City 2026** (Cybersecurity, edition 2026) LOCATION: ours `New York, New York, USA`, page `city New York City, country United States`; differs in city
+  - https://www.secureworld.io/  "New York City, NY 2026 2026-10-29 2026-10-29"
+- **OWASP Boston Application Security Conference (BASC 2027)** (Cybersecurity, edition 2027) LOCATION: ours `Boston, MA, USA`, page `city Cambridge`; differs in city
+  - https://basconf.org/  "50 Broadway, Cambridge MA 02142"
+- **AI World Congress** (Cybersecurity, edition 2026) LOCATION: ours `The Great Hall, Kensington Conference and Events Centre, Hornton St, Kensington, London W8`, page `city London, country UK`; differs in country
+  - https://aiconference.london/  "London || UK"
+- **AWS re: Invent** (Cybersecurity, edition 2026) LOCATION: ours `Las Vegas, NV`, page `city Las Vegas, country United States`; differs in country
+  - https://aws.amazon.com/events/reinvent/  "Join us Nov. 30 – Dec. 4 in Las Vegas for cloud and AI's biggest week. || Nov. 30 – Dec. 4 | Las Vegas, NV"
+- **Cyber Security Summit Jacksonville** (Cybersecurity, edition 2026) LOCATION: ours `Sawgrass Marriott Golf Resort & Spa, 1000 Tournament Players Club Blvd, Ponte Vedra Beach,`, page `city Ponte Vedra Beach, country United States`; differs in country
+  - https://cyberriskalliance.swoogo.com/jacksonville-dec-2026  "Ponte Vedra Beach, FL 32082"
+- **The Official Cybersecurity Summit** (Cybersecurity, edition 2027) LOCATION: ours `To Be Announced`, page `city Atlanta`; differs in city
+  - https://cybersecuritysummit.com/summit/atlanta-3/  "Atlanta 2027 Grand Hyatt Atlanta in Buckhead"
+- **AI Dev World DeveloperWeek** (Cybersecurity, edition 2027) LOCATION: ours `Santa Clara Convention Center, Santa Clara, CA`, page `city Santa Clara, country United States`; differs in country
+  - https://www.developerweek.com/ai-devworld/  "Santa Clara, CA || Feb 9-11, 2027 Santa Clara, CA"
+- **Zero Trust World (ZTW by Threatlocker)** (Cybersecurity, edition 2027) LOCATION: ours `Loews Meeting Complex at Universal Orlando, Orlando, FL`, page `city Orlando, country United States`; differs in country
+  - https://ztw.com/  "Orlando, FL || February 17-19, 2027 Orlando, FL"
+- **EmTech AI** (Cybersecurity, edition 2027) LOCATION: ours `MIT Media Lab, Cambridge, MA`, page `city Cambridge, country United States`; differs in country
+  - https://event.technologyreview.com/emtech-ai-2027/  "Cambridge, MA || EmTech AI 2027 in Cambridge, MA"
+- **Secure 360 Conference** (Cybersecurity, edition 2027) LOCATION: ours `Mystic Lake Center, Prior Lake, MN`, page `city Prior Lake, country United States`; differs in country
+  - https://www.secure360.org/  "Mystic Lake Center in Prior Lake, MN"
+- **Data + AI Summit** (Cybersecurity, edition 2027) LOCATION: ours `San Francisco + Virtual`, page `city San Francisco, country United States`; differs in country
+  - https://www.databricks.com/dataaisummit  "The conference will take place at Moscone North, West and South (the address is 747 Howard Street, San Francisco, CA 94103)."
+- **Planet Cyber Sec Conference** (Cybersecurity, edition 2027) START DATE: ours `2/1/2027`, page `2027-03-03`; ok
+  - https://planetcybersec.com/  "March 3, 2027 Planet Cyber Sec AI - Conference Orange County, CA"
+- **Planet Cyber Sec Conference** (Cybersecurity, edition 2027) LOCATION: ours `Orange County, CA`, page `country United States`; differs in country
+  - https://planetcybersec.com/  "March 3, 2027 Planet Cyber Sec AI - Conference Orange County, CA"
+- **CDAO Defense & Security 2027** (Cybersecurity, edition 2027) LOCATION: ours `Washington, DC, USA`, page `city Washington, D.C.`; differs in city
+  - https://cdao-def.coriniumintelligence.com/  "JOIN US September 22-23, 2027 | Washington, D.C."
+- **Wild West Hackin' Fest @ Mile High** (Cybersecurity, edition 2027) LOCATION: ours `Sheraton Denver Downtown Hotel, 1550 Court Pl, Denver, CO 80202`, page `city Denver, country United States`; differs in country
+  - https://wildwesthackinfest.com/wild-west-hackin-fest-mile-high-2027/  "1550 Court Pl, Denver, CO 80202 || Location : Sheraton Denver Downtown Hotel 1550 Court Pl, Denver, CO 80202"
+- **ODSC Open Data Science Conference West** (Cybersecurity, edition 2026) LOCATION: ours `Hyatt Regency SFO, 1333 Old Bayshore Hwy, Burlingame, CA 94010, USA`, page `city San Francisco`; differs in city
+  - https://odsc.ai/west/  "SAN FRANCISCO"
+- **SXSW AI Track** (Cybersecurity, edition 2027) LOCATION: ours `Austin, TX`, page `city Austin, country United States`; differs in country
+  - https://sxsw.com/tracks/  "Austin, TX || March 15–21, 2027 | Austin, TX"
+- **Hydrogen Technology World Expo Europe 2026** (Utility, edition 2026) START DATE: ours `10/21/2026`, page `2026-10-20`; ok
+  - https://www.hydrogen-worldexpo.com/  "Tuesday 20th October 2026"
+- **Hydrogen Technology World Expo Europe 2026** (Utility, edition 2026) CONFERENCE DATES: ours `October 21 - October 22, 2026`, page `2026-10-20 to 2026-10-22`; ok
+  - https://www.hydrogen-worldexpo.com/  "Tuesday 20th October 2026 || Thursday 22nd October 2026"
+- **Reuters Events: Energy Transition Europe 2026** (Utility, edition 2026) START DATE: ours `11/11/2026`, page `2026-10-20`; ok (year 2026 taken from the nearest earlier year on the page)
+  - https://events.reutersevents.com/energy-transition/energy-transition-europe  "20 - 21 Oct"
+- **Reuters Events: Energy Transition Europe 2026** (Utility, edition 2026) CONFERENCE DATES: ours `November 11 - November 12, 2026`, page `2026-10-20 to 2026-10-21`; ok
+  - https://events.reutersevents.com/energy-transition/energy-transition-europe  "20 - 21 Oct"
+- **Reuters Events: Energy Transition Europe 2026** (Utility, edition 2026) LOCATION: ours `InterContinental London - The O2, London, United Kingdom`, page `city Amsterdam`; differs in city
+  - https://events.reutersevents.com/energy-transition/energy-transition-europe  "Amsterdam"
+- **Carbon Capture Technology Expo Europe 2026** (Utility, edition 2026) START DATE: ours `10/21/2026`, page `2026-10-20`; ok
+  - https://www.carboncapture-expo.com/  "Tuesday 20th October 2026"
+- **Carbon Capture Technology Expo Europe 2026** (Utility, edition 2026) CONFERENCE DATES: ours `October 21 - October 22, 2026`, page `2026-10-20 to 2026-10-22`; ok
+  - https://www.carboncapture-expo.com/  "Tuesday 20th October 2026 || Thursday 22nd October 2026"
+- **Decarb Connect Canada 2026** (Utility, edition 2026) START DATE: ours `11/3/2026`, page `2026-10-27`; ok
+  - https://decarbconnectcanada.com/  "27 - 27 October, 2026"
+- **Decarb Connect Canada 2026** (Utility, edition 2026) CONFERENCE DATES: ours `November 3 - November 4, 2026`, page `2026-10-27 to 2026-10-27`; ok
+  - https://decarbconnectcanada.com/  "27 - 27 October, 2026"
+- **CarbonZero Global Conference & Exhibition 2026** (Utility, edition 2026) START DATE: ours `11/12/2026`, page `2026-10-27`; ok (6 ranges on the page; this one is labelled 'taking place in brussels, belgium from   2026, the event brings t' by the page)
+  - https://industrylink.eu/event/carbonzero-global-conference-exhibition-2026/  "27–29 October 2026"
+- **CarbonZero Global Conference & Exhibition 2026** (Utility, edition 2026) CONFERENCE DATES: ours `November 12 - November 13, 2026`, page `2026-10-27 to 2026-10-29`; ok
+  - https://industrylink.eu/event/carbonzero-global-conference-exhibition-2026/  "27–29 October 2026"
+- **Horizons Clean Energy Expansion Week 2026 (HCEE Week 2026)** (Utility, edition 2026) START DATE: ours `10/13/2026`, page `2026-11-24`; ok
+  - https://www.hceeweek.com/  "24 – 27 November 2026 Bella Center, Copenhagen"
+- **Horizons Clean Energy Expansion Week 2026 (HCEE Week 2026)** (Utility, edition 2026) CONFERENCE DATES: ours `October 13 - October 15, 2026`, page `2026-11-24 to 2026-11-27`; ok
+  - https://www.hceeweek.com/  "24 – 27 November 2026 Bella Center, Copenhagen"
+- **Clean Fuels Conference 2027** (Utility, edition 2027) START DATE: ours `1/17/2027`, page `2027-02-01`; ok
+  - https://www.cleanfuelsconference.org/  "Join us February 1-4, 2027!"
+- **Clean Fuels Conference 2027** (Utility, edition 2027) CONFERENCE DATES: ours `January 17 - January 20, 2027`, page `2027-02-01 to 2027-02-04`; ok
+  - https://www.cleanfuelsconference.org/  "Join us February 1-4, 2027!"
+- **India Energy Week 2027 (IEW 2027)** (Utility, edition 2027) LOCATION: ours `Yashobhoomi (IICC) / Pragati Maidan, New Delhi, India`, page `city Kolkata`; differs in city
+  - https://www.indiaenergyweek.com/  "New Town Convention Centre, Kolkata"
+- **Decarb Connect North America 2027** (Utility, edition 2027) START DATE: ours `3/23/2027`, page `2027-02-09`; ok
+  - https://decarbconnectnorthamerica.com/  "09 - 11 February, 2027"
+- **Decarb Connect North America 2027** (Utility, edition 2027) CONFERENCE DATES: ours `March 23 - March 25, 2027`, page `2027-02-09 to 2027-02-11`; ok
+  - https://decarbconnectnorthamerica.com/  "09 - 11 February, 2027"
+- **Carbon Capture Technology Expo North America 2027** (Utility, edition 2027) START DATE: ours `6/23/2027`, page `2027-02-10`; ok (3 ranges on the page; this one is labelled 'hydrogen technology expo north america  , 2027 george r brown con' by the page)
+  - https://www.ccus-expo.com/  "February 10-11, 2027"
+- **Carbon Capture Technology Expo North America 2027** (Utility, edition 2027) CONFERENCE DATES: ours `June 23 - June 24, 2027`, page `2027-02-10 to 2027-02-11`; ok
+  - https://www.ccus-expo.com/  "February 10-11, 2027"
+- **Hydrogen Technology Expo North America 2027** (Utility, edition 2027) START DATE: ours `6/23/2027`, page `2027-02-10`; ok (3 ranges on the page; this one is labelled 'n capture technology expo north america   2027 george r brown conv' by the page)
+  - https://www.hydrogen-expo.com/  "February 10 - 11 2027 George R Brown Convention Center, Houston, Texas, USA"
+- **Hydrogen Technology Expo North America 2027** (Utility, edition 2027) CONFERENCE DATES: ours `June 23 - June 24, 2027`, page `2027-02-10 to 2027-02-11`; ok
+  - https://www.hydrogen-expo.com/  "February 10 - 11 2027 George R Brown Convention Center, Houston, Texas, USA"
+- **Carbon Capture Europe Summit 2027** (Utility, edition 2027) START DATE: ours `1/26/2027`, page `2027-04-13`; ok
+  - https://www.carboncaptureeuropesummit.com/  "13-14 April 2027"
+- **Carbon Capture Europe Summit 2027** (Utility, edition 2027) CONFERENCE DATES: ours `January 26 - January 27, 2027`, page `2027-04-13 to 2027-04-14`; ok
+  - https://www.carboncaptureeuropesummit.com/  "13-14 April 2027"
+- **Canadian Hydrogen Convention 2027** (Utility, edition 2027) CONFERENCE DATES: ours `April 20 - April 22, 2027`, page `2027-04-20 to 2027-04-21`; ok
+  - https://www.hydrogenexpo.com/  "2027 Expo & Conference: April 20-21, 2027 | Site Tours: April 22, 2027"
+- **Innovation Zero 2027 (The UK's Clean Tech Congress)** (Utility, edition 2027) START DATE: ours `4/28/2027`, page `2027-04-27`; ok
+  - https://www.innovationzero.com/  "Tuesday 27 April 2027 (8:45 to 17:30)"
+- **Innovation Zero 2027 (The UK's Clean Tech Congress)** (Utility, edition 2027) CONFERENCE DATES: ours `April 28 - April 29, 2027`, page `2027-04-27 to 2027-04-28`; ok
+  - https://www.innovationzero.com/  "Tuesday 27 April 2027 (8:45 to 17:30) || Wednesday 28 April 2027 (8:45 to 17:15)"
+- **ACT Expo 2027 (Advanced Clean Transportation Expo)** (Utility, edition 2027) START DATE: ours `5/3/2027`, page `2027-05-17`; ok
+  - https://www.actexpo.com/  "CONFERENCE: MAY 17 - 20, 2027"
+- **ACT Expo 2027 (Advanced Clean Transportation Expo)** (Utility, edition 2027) CONFERENCE DATES: ours `May 3 - May 6, 2027`, page `2027-05-17 to 2027-05-20`; ok
+  - https://www.actexpo.com/  "CONFERENCE: MAY 17 - 20, 2027"
+- **World Hydrogen 2027 Summit & Exhibition** (Utility, edition 2027) START DATE: ours `5/11/2027`, page `2027-05-18`; ok
+  - https://www.world-hydrogen-summit.com/  "World Hydrogen Summit 18 May 2027 Rotterdam Ahoy"
+- **World Hydrogen 2027 Summit & Exhibition** (Utility, edition 2027) CONFERENCE DATES: ours `May 11 - May 13, 2027`, page `2027-05-18 to ?`; first day differs; last day not proven
+  - https://www.world-hydrogen-summit.com/  "World Hydrogen Summit 18 May 2027 Rotterdam Ahoy"
+- **LNG Americas Energy Summit** (Utility, edition 2026) LOCATION: ours `Lake Charles, LA`, page `city Lake Charles, country USA`; differs in country
+  - https://www.americaslngsummit.com/  "October 13-15, 2026 | Event Center Lake Charles, Lake Charles, USA"
+- **Carbon Capture Global Summit** (Utility, edition 2027) LOCATION: ours `Rotterdam`, page `city London`; differs in city
+  - https://www.carboncaptureglobalsummit.com/  "7-8 September 2027 | Church House Westminster, London"
+- **ARPA-E Summit** (Utility, edition 2027) LOCATION: ours `Gaylord Palms Resort & Convention Center, Orlando, FL`, page `city Orlando, country United States`; differs in country
+  - https://www.arpae-summit.com/  "The 2027 ARPA-E Energy Innovation Summit will take place April 26-28, 2027, at the Gaylord Palms Resort & Convention Center in Orlando, Florida."
+
+## FILLS (77)
+
+- **Black Hat Asia 2027 (Call for Briefings)** (Cybersecurity, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2026-10-20`; ok
+  - https://blackhat.com/call-for-papers.html  "Call for Briefings Closes: 20 October 2026 (23:59 Singapore Time GMT/UTC +8h)"
+- **SANS Cyber Threat Intelligence Summit and OSINT Summit** (Cybersecurity, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2026-10-19`; ok
+  - https://www.sans.org/cyber-security-summit/speak-at-a-summit  "Deadline for submission is October 19, 2026."
+- **OWASP Boston Application Security Conference (BASC 2027)** (Cybersecurity, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2027-01-15`; ok
+  - https://basconf.org/  "Jan 15, 2027
+
+Call for Papers closes
+
+Submissions due by 11:59 PM EST."
+- **AAIML Conference 2027** (Cybersecurity, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2026-10-10`; ok
+  - https://aaiml.net/  "Submission Deadline October 10, 2026"
+- **ICRAI 2026: International Conference on Robotics and Artificial Intelligence** (Cybersecurity, edition 2026) SUBMISSION DEADLINE: ours `(blank)`, page `2026-10-10`; ok
+  - https://www.icrai.org/  "Submission Deadline: October 10, 2026"
+- **RAAI 2026: International Conference on Robotics, Automation and Artificial Intelligence** (Cybersecurity, edition 2026) SUBMISSION DEADLINE: ours `(blank)`, page `2026-10-10`; ok
+  - https://raai.net/  "Submission Deadline: October 10th, 2026"
+- **ODSC East 2027 (Open Data Science Conference)** (Cybersecurity, edition 2027) START DATE: ours `(blank)`, page `2027-05-10`; ok
+  - https://odsc.ai/east/  "Menino Convention and Exhibition Center, Boston, MA | May 10-12th, 2027"
+- **ODSC East 2027 (Open Data Science Conference)** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-05-10 to 2027-05-12`; ok
+  - https://odsc.ai/east/  "Menino Convention and Exhibition Center, Boston, MA | May 10-12th, 2027"
+- **AAAI/ACM Conference on AI Ethics & Society** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-10-12 to 2026-10-14`; ok
+  - https://www.aies-conference.com/2026/  "October 12-14, 2026"
+- **CDAO Fall** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-10-26 to 2026-10-27`; ok
+  - https://cdao-fall.coriniumintelligence.com/  "October 26-27, 2026"
+- **AI Native DevCon NYC 2026** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-11-02 to 2026-11-04`; ok
+  - https://tessl.io/devcon  "aiDevCon 2 — 4 November 2026"
+- **AI Native DevCon NYC 2026** (Cybersecurity, edition 2026) SUBMISSION DEADLINE: ours `(blank)`, page `2026-10-01`; ok
+  - https://tessl.io/devcon  "Rolling review. Closes 1st Oct 2026."
+- **AI World Congress** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-11-25 to 2026-11-26`; ok
+  - https://aiconference.london/  "November 25-26"
+- **OWASP BeNeLux** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-11-26 to 2026-11-26`; ok
+  - https://2026.owaspbenelux.eu/  "Conference Day 26/11/2026"
+- **Cyber Security Summit Jacksonville** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-12-02 to 2026-12-02`; ok
+  - https://cyberriskalliance.swoogo.com/jacksonville-dec-2026  "Wednesday, December 2, 2026 || Wednesday, December 2, 2026 8:00 AM - 6:00 PM EST"
+- **Black Hat Europe** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-12-07 to 2026-12-10`; ok
+  - https://blackhat.com/europe/  "Black Hat Europe returns to the Excel in London with a four-day program, 7-10 December 2026."
+- **GITEX Global** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-12-07 to 2026-12-11`; ok
+  - https://www.gitex.com/  "GITEX GLOBAL | 7-11 DEC 2026 | DUBAI"
+- **AI Summit New York** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-12-09 to 2026-12-10`; ok
+  - https://newyork.theaisummit.com/  "December 9-10, 2026 | Javits Center, New York"
+- **AI & Big Data Expo Global** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-02-03 to 2027-02-04`; ok
+  - https://www.ai-expo.net/global/  "3-4 FEBRUARY 2027"
+- **The Official Cybersecurity Summit** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-02-04 to 2027-02-04`; ok
+  - https://cybersecuritysummit.com/summit/atlanta-3/  "February 4, 2027 | 8:00AM - 6:00PM"
+- **AI Dev World DeveloperWeek** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-02-09 to 2027-02-11`; ok
+  - https://www.developerweek.com/ai-devworld/  "Feb 9-11, 2027 Santa Clara, CA"
+- **AppSec & DevSecOps (Corinium)** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-02-10 to 2027-02-10`; ok
+  - https://appsec-devsecops-syd.coriniumintelligence.com/  "JOIN US 10 February 2027 AppSec & DevSecOps Sydney"
+- **Zero Trust World (ZTW by Threatlocker)** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-02-17 to 2027-02-19`; ok
+  - https://ztw.com/  "February 17-19, 2027"
+- **HumanX** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-03-07 to 2027-03-10`; ok
+  - https://www.humanx.co/us  "Las Vegas | March 7-10, 2027"
+- **AppWorld InCyber Forum** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-03-09 to 2027-03-11`; ok
+  - https://europe.forum-incyber.com/en/home-en/  "MARCH 9-11, 2027 LILLE, FRANCE"
+- **AppWorld Cybersecurity Conference** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-03-16 to 2027-03-18`; ok
+  - https://www.f5.com/appworld  "Save the date! March 16–18, 2027 at Fontainebleau Las Vegas"
+- **QCon London** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-04-13 to 2027-04-15`; ok
+  - https://qconlondon.com/  "Conference: April 13-15, 2027"
+- **AISTATS Conference on AI and Statistics** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-05-03 to 2027-05-06`; ok
+  - https://virtual.aistats.org/  "May 3rd - 6th, 2027"
+- **AISTATS Conference on AI and Statistics** (Cybersecurity, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2026-09-29`; ok
+  - https://virtual.aistats.org/  "Abstract Submission Deadline Sep 29 '26 (Anywhere on Earth)"
+- **EmTech AI** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-05-11 to 2027-05-13`; ok
+  - https://event.technologyreview.com/emtech-ai-2027/  "Tuesday, May 11, 2027 || Thursday, May 13, 2027"
+- **Secure 360 Conference** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-05-12 to 2027-05-13`; ok
+  - https://www.secure360.org/  "May 12, 2027 - May 13, 2027"
+- **Open Source Summit North America** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-05-17 to 2027-05-19`; ok
+  - https://events.linuxfoundation.org/open-source-summit-north-america/  "May 17-19, 2027"
+- **The AI Summit London** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-06-09 to 2027-06-10`; ok
+  - https://london.theaisummit.com/  "9-10 June 2027 | Tobacco Dock, London"
+- **AI & Big Data Expo North America** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-06-16 to 2027-06-17`; ok
+  - https://www.ai-expo.net/northamerica/  "June 16-17, 2027"
+- **AI For Good Global Summit** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-06-21 to 2027-06-24`; ok
+  - https://aiforgood.itu.int/summit27/  "21–24 June 2027"
+- **Data + AI Summit** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-06-21 to 2027-06-24`; ok
+  - https://www.databricks.com/dataaisummit  "June 21–24, 2027 / San Francisco + Virtual"
+- **ECML PKDD European Conference on Machine Learning and Principles and Practice of Knowledge Discovery in Databases** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-08-30 to 2027-09-03`; ok
+  - https://ecmlpkdd.org/2027/  "30 August to 3 September 2027"
+- **AI Infra Summit** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-08-31 to 2027-09-02`; ok
+  - https://www.ai-infra-summit.com/  "Aug 31 - Sept 2, 2027"
+- **Google Cloud Next Las Vegas 2027** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-04-13 to 2027-04-15`; ok
+  - https://cloud.google.com/next  "April 13-15, 2027"
+- **CDAO Defense & Security 2027** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-09-22 to 2027-09-23`; ok
+  - https://cdao-def.coriniumintelligence.com/  "JOIN US September 22-23, 2027 | Washington, D.C."
+- **Gartner Identity & Access Management Summit** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-03-08 to 2027-03-09`; ok
+  - https://www.gartner.com/en/conferences/emea/identity-access-management-uk  "8 – 9 March 2027"
+- **Wild West Hackin' Fest @ Mile High** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-02-17 to 2027-02-19`; ok
+  - https://wildwesthackinfest.com/wild-west-hackin-fest-mile-high-2027/  "Live and Virtual Conference February 17-19, 2027"
+- **Nullcon Berlin** (Cybersecurity, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-11-05 to 2026-11-06`; ok
+  - https://nullcon.net/event/nullcon-berlin-2026/  "Conference: 5th - 6th November 2026"
+- **Nullcon Berlin** (Cybersecurity, edition 2026) SUBMISSION DEADLINE: ours `(blank)`, page `2026-07-12`; ok
+  - https://nullcon.net/event/nullcon-berlin-2026/  "12th July 2026 ✍ CFP Closes Closed"
+- **CYBERUK** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-05-11 to 2027-05-13`; ok
+  - https://www.cyberuk.uk/  "11 - 13 MAY 2027, LIVERPOOL EXPERIENCE CAMPUS"
+- **Gartner Security & Risk Management Summit (London)** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-09-21 to 2027-09-23`; ok
+  - https://www.gartner.com/en/conferences/emea/security-risk-management-uk  "21 – 23 September 2027"
+- **Gartner Security & Risk Management Summit (National Harbor)** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-06-14 to 2027-06-16`; ok
+  - https://www.gartner.com/en/conferences/na/security-risk-management-us  "June 14 – 16, 2027"
+- **IEEE Symposium on Security & Privacy** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-05-17 to 2027-05-19`; ok
+  - https://www.ieee-security.org/TC/SP2027/  "The Symposium will be held on May 17-19, 2027"
+- **Infosecurity Europe 2027** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-06-08 to 2027-06-10`; ok
+  - https://www.infosecurityeurope.com/  "Tuesday 8 June 2027 9:30am - 5:30pm || Thursday 10 June 2027 9:30am - 4pm"
+- **SXSW AI Track** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-03-15 to 2027-03-21`; ok
+  - https://sxsw.com/tracks/  "March 15–21, 2027"
+- **World Summit AI Amsterdam 2027** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-10-06 to 2027-10-07`; ok
+  - https://worldsummit.ai/form-speakers-enquiries/  "World Summit AI, 06-07 October 2027, Amsterdam, Netherlands"
+- **VulnCon 2027 (FIRST)** (Cybersecurity, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-03-30 to 2027-04-02`; ok
+  - https://www.first.org/conference/vulncon27/  "The conference will take place March 30-April 2, 2027, at the DoubleTree Resort by Hilton Paradise Valley in Scottsdale, Arizona, USA."
+- **31st Annual Green Chemistry & Engineering Conference (GC&E)** (Utility, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2026-10-13`; ok
+  - https://www.gcande.org/  "Call for Symposia: Deadline October 13, 2026"
+- **Fuel Ethanol Workshop and Expo & Sustainable Fuels Summit** (Utility, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2027-02-12`; ok
+  - https://few.bbiconferences.com/ema/DisplayPage.aspx?pageId=Sustainable_Fuels_Summit__SAF__Renewable_Diesel__Biodiesel  "Presentation abstracts will be accepted for the 2027 Sustainable Fuels Summit: SAF, Renewable Diesel, Biodiesel through February 12, 2027 ."
+- **LNG Americas Energy Summit** (Utility, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-10-13 to 2026-10-15`; ok
+  - https://www.americaslngsummit.com/  "October 13-15, 2026 | Event Center Lake Charles, Lake Charles, USA"
+- **Global Syngas Technologies Conferences (GSTC)** (Utility, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-10-18 to 2026-10-21`; ok
+  - https://globalsyngas.org/annual-conference/  "October 18-21, 2026"
+- **European Hydrogen Week** (Utility, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-10-26 to 2026-10-30`; ok
+  - https://euhydrogenweek.eu/  "Save the Date: 26-30 October 2026"
+- **AIST Environmental Solutions Air Conference** (Utility, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-10-27 to 2026-10-29`; ok
+  - https://imis.aist.org/Shared_Content/Events/EventENVIRO26.aspx?EventKey=ENVIRO26  "27–29 October 2026"
+- **Alternative Fuels & Chemicals Coalition** (Utility, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-11-01 to 2026-11-03`; ok
+  - https://www.altfuelchem.org/afcc-event-detail  "Below are links to all of the information and events at the 6th Annual AFCC Global Biobased Economy Conference and Exhibition being held in Washington, DC, from November 1-3, 2026."
+- **Sustainable Aviation Futures (MENA)** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-02-01 to 2027-02-03`; ok
+  - https://www.safcongressmena.com/  "1–3 February 2027"
+- **Sustainable Aviation Futures Congress** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-05-24 to 2027-05-26`; ok
+  - https://www.safcongress.com/  "24 – 26 May 2027"
+- **Biofuels Internatinal Conference & Expo** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-06-15 to 2027-06-16`; ok
+  - https://biofuels-news.com/conference/  "15-16 June 2027"
+- **Carbon Capture Global Summit** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-09-07 to 2027-09-08`; ok
+  - https://www.carboncaptureglobalsummit.com/  "7-8 September 2027 | Church House Westminster, London"
+- **AIST Material Science and Technology (MS&T)** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-10-24 to 2027-10-27`; ok
+  - https://www.matscitech.org/MST27  "October 24–27, 2027 | David L. Lawrence Convention Center | Pittsburgh, Pennsylvania, USA"
+- **AIST Material Science and Technology (MS&T)** (Utility, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2027-05-01`; ok
+  - https://www.matscitech.org/MST27  "Abstracts Due May 1, 2027"
+- **Industrial Net Zero Conference 2026** (Utility, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-10-13 to 2026-10-14`; ok
+  - https://www.industrialnetzeroconference.com.au/  "13 - 14 October 2026 Greenhouse | Sydney"
+- **Hydrogen Technology Expo MENA 2027** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-06-08 to 2027-06-09`; ok
+  - https://www.hydrogenccs-menaexpo.com/welcome-hydrogen  "Tuesday 8th June 2027 || Wednesday 9th June 2027"
+- **Sustainable Aviation Futures (NAM)** (Utility, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-11-04 to 2026-11-06`; ok
+  - https://www.safcongressna.com/  "November 4–6, 2026 · Marriott Marquis, Houston"
+- **Asia Pacific Hydrogen Summit & Exhibition** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-09-23 to 2027-09-24`; ok
+  - https://www.world-hydrogen-summit.com/asia-pacific/en-gb.html  "Thursday 23 September 2027 || Friday 24 September 2027"
+- **Gastech** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-09-14 to 2027-09-17`; ok
+  - https://www.gastechevent.com  "EXHIBITION & CONFERENCE 14 - 17 SEPTEMBER 2027 HOUSTON, UNITED STATES"
+- **Decarb Connect UK 2027** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-04-13 to 2027-04-15`; ok
+  - https://decarbconnectuk.com  "13 - 15 April, 2027"
+- **Clean Tech Forum** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-01-25 to 2027-01-27`; ok
+  - https://www.cleantech.com/event/cleantech-forum-na/  "January 25-27, 2027"
+- **CO2-based Fuels and Chemicals Conference** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-04-21 to 2027-04-22`; ok
+  - https://co2-chemistry.eu/  "21-22 April 2027"
+- **CO2-based Fuels and Chemicals Conference** (Utility, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2026-11-16`; ok
+  - https://co2-chemistry.eu/  "Call for Abstracts: 16 Nov. 2026"
+- **ARPA-E Summit** (Utility, edition 2027) CONFERENCE DATES: ours `(blank)`, page `2027-04-26 to 2027-04-28`; ok
+  - https://www.arpae-summit.com/  "The 2027 ARPA-E Energy Innovation Summit will take place April 26-28, 2027, at the Gaylord Palms Resort & Convention Center in Orlando, Florida."
+- **European Biomass Conference & Exhibition** (Utility, edition 2027) SUBMISSION DEADLINE: ours `(blank)`, page `2026-10-30`; ok
+  - https://www.eubce.com/  "Abstract Submission Deadline: 30 October 2026"
+- **Japan CCUS Summit 2026** (Utility, edition 2026) CONFERENCE DATES: ours `(blank)`, page `2026-10-19 to 2026-10-20`; ok
+  - https://www.japanccussummit.com  "19-20 October 2026"
+
+## Rows whose id year differs from the edition (7); frozen keys by design, NOT errors
+
+- 2026-nullcon-goa-bambolim  (Nullcon Goa 2027 (18th Edition), Cybersecurity): id year 2026, edition 2027
+- 2026-industrial-net-zero-conference-sydney  (Industrial Net Zero Conference 2027, Utility): id year 2026, edition 2027
+- 2026-nineteenth-international-conference-on-climate-johannesburg  (International Conference on Climate Change: Impacts and Responses 2027 (19th ICCC), Utility): id year 2026, edition 2027
+- 2026-decarb-connect-north-america-houston  (Decarb Connect North America 2027, Utility): id year 2026, edition 2027
+- 2026-act-expo-las-vegas  (ACT Expo 2027 (Advanced Clean Transportation Expo), Utility): id year 2026, edition 2027
+- 2026-co2-based-fuels-and-chemicals-conference-cologne  (CO2-based Fuels and Chemicals Conference, Utility): id year 2026, edition 2027
+- 2026-european-biomass-conference-exhibition-reims  (European Biomass Conference & Exhibition, Utility): id year 2026, edition 2027

@@ -1,0 +1,5 @@
+market,id,conference,edition,field,verdict,ours,page_value,quote,url,why
+Cybersecurity,2026-nullcon-goa-bambolim,Nullcon Goa 2027 (18th Edition),2027,START DATE,AGREES,2/27/2027,2027-02-27,Conference: 27th – 28th February 2027,https://nullcon.net/,"ok (4 ranges on the page; this one is labelled 'ay zero: 26th february 2027 conference:   2027 venue: tba, goa con' by the page)"
+Cybersecurity,2026-nullcon-goa-bambolim,Nullcon Goa 2027 (18th Edition),2027,CONFERENCE DATES,AGREES,"February 27 - February 28, 2027",2027-02-27 to 2027-02-28,Conference: 27th – 28th February 2027,https://nullcon.net/,ok
+Cybersecurity,2026-nullcon-goa-bambolim,Nullcon Goa 2027 (18th Edition),2027,LOCATION,AGREES,"Grand Hyatt Goa, Bambolim, Goa, India","city Goa, country India","Venue: TBA, Goa || Nullcon Goa is Nullcon’s flagship cybersecurity conference and training experience in India.",https://nullcon.net/,ok
+Cybersecurity,2026-nullcon-goa-bambolim,Nullcon Goa 2027 (18th Edition),2027,SUBMISSION DEADLINE,DIFFERS,11/30/2026,2026-10-30,30th October 2026 🔒 Call for Papers Closes,https://nullcon.net/event/nullcon-goa-2027/,ok

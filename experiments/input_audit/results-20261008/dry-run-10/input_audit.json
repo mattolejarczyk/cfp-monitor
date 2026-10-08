@@ -1,0 +1,540 @@
+{
+ "meta": {
+  "stamp": "20261008-114906",
+  "today": "2026-10-08",
+  "skipped": 3,
+  "no_page": 4,
+  "stopped": "",
+  "minutes": 1.1870075742403665,
+  "usd": 0.004510785,
+  "model": "B"
+ },
+ "summary": {
+  "START DATE": {
+   "AGREES": 1,
+   "DIFFERS": 1,
+   "UNSUPPORTED": 8,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  },
+  "CONFERENCE DATES": {
+   "AGREES": 1,
+   "DIFFERS": 1,
+   "UNSUPPORTED": 8,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  },
+  "LOCATION": {
+   "AGREES": 0,
+   "DIFFERS": 1,
+   "UNSUPPORTED": 9,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  },
+  "SUBMISSION DEADLINE": {
+   "AGREES": 0,
+   "DIFFERS": 0,
+   "UNSUPPORTED": 10,
+   "FILLS": 0,
+   "NO_VALUE": 0
+  }
+ },
+ "rows": [
+  {
+   "conference": "ShmooCon 2027",
+   "market": "Cybersecurity",
+   "id": "2027-shmoocon-washington",
+   "edition": "2027",
+   "pages": [
+    "https://shmoocon.org/",
+    "https://shmoocon.org/call-for-papers/"
+   ],
+   "readable": false,
+   "fields": {
+    "START DATE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "1/15/2027",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "UNSUPPORTED",
+     "ours": "January 15 - January 17, 2027",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "Hilton Washington, Washington, D.C., USA",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "11/15/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    }
+   }
+  },
+  {
+   "conference": "CyberTech Global Tel Aviv 2027",
+   "market": "Cybersecurity",
+   "id": "2027-cybertech-global-tel-aviv-tel-aviv",
+   "edition": "2027",
+   "pages": [
+    "https://www.cybertechisrael.com/"
+   ],
+   "readable": true,
+   "fields": {
+    "START DATE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "1/25/2027",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the quote does not state that day, month and year"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "UNSUPPORTED",
+     "ours": "January 25 - January 27, 2027",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the quote does not state that day, month and year"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "Expo Tel Aviv (Pavilion 2), Tel Aviv, Israel",
+     "page": "city Tel Aviv",
+     "quote": "Join us in Tel Aviv for a dynamic three-day conference that connects government officials, industry leaders, academics, and innovative startups from all over the world, fostering a robust global cyber community.",
+     "url": "https://www.cybertechisrael.com/",
+     "why": "only the city is proven (it agrees); the other part is not"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "11/1/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    }
+   }
+  },
+  {
+   "conference": "Wild West Hackin' Fest @ Mile High 2026",
+   "market": "Cybersecurity",
+   "id": "2026-wild-west-hackin-fest-mile-high-denver",
+   "edition": "2026",
+   "pages": [
+    "https://wildwesthackinfest.com/"
+   ],
+   "readable": true,
+   "fields": {
+    "START DATE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "10/21/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "UNSUPPORTED",
+     "ours": "October 21 - October 23, 2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "Hyatt Regency Denver at Colorado Convention Center, Denver, Colorado, USA",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "7/1/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    }
+   }
+  },
+  {
+   "conference": "Nullcon Goa 2027 (18th Edition)",
+   "market": "Cybersecurity",
+   "id": "2026-nullcon-goa-bambolim",
+   "edition": "2027",
+   "pages": [
+    "https://nullcon.net/",
+    "https://nullcon.net/cfp/"
+   ],
+   "readable": true,
+   "fields": {
+    "START DATE": {
+     "verdict": "AGREES",
+     "ours": "2/27/2027",
+     "page": "2027-02-27",
+     "quote": "Conference: 27th – 28th February 2027",
+     "url": "https://nullcon.net/",
+     "why": "ok (2 ranges on the page; this one is labelled 'ay zero: 26th february 2027 conference:   2027 venue: tba, goa con' by the page)"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "AGREES",
+     "ours": "February 27 - February 28, 2027",
+     "page": "2027-02-27 to 2027-02-28",
+     "quote": "Conference: 27th – 28th February 2027",
+     "url": "https://nullcon.net/",
+     "why": "ok"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "Grand Hyatt Goa, Bambolim, Goa, India",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "10/30/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    }
+   }
+  },
+  {
+   "conference": "Gartner Identity & Access Management Summit 2026",
+   "market": "Cybersecurity",
+   "id": "2026-gartner-identity-access-management-summit-las-vegas",
+   "edition": "2026",
+   "pages": [
+    "https://www.gartner.com/en/conferences/na/identity-access-management-us",
+    "https://www.gartner.com/en/conferences/"
+   ],
+   "readable": false,
+   "fields": {
+    "START DATE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "12/7/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "UNSUPPORTED",
+     "ours": "December 7 - December 9, 2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "Gaylord Texan Resort & Convention Center, Grapevine, Texas, USA",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "8/31/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    }
+   }
+  },
+  {
+   "conference": "Cloud & Cyber Security Expo London 2027",
+   "market": "Cybersecurity",
+   "id": "2027-cloud-cyber-security-expo-london-london",
+   "edition": "2027",
+   "pages": [
+    "https://www.cloudsecurityexpo.com/"
+   ],
+   "readable": true,
+   "fields": {
+    "START DATE": {
+     "verdict": "DIFFERS",
+     "ours": "3/3/2027",
+     "page": "2027-03-10",
+     "quote": "WEDNESDAY 10 MARCH 2027 - 09:00 - 17:00",
+     "url": "https://www.cloudsecurityexpo.com/",
+     "why": "ok"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "DIFFERS",
+     "ours": "March 3 - March 4, 2027",
+     "page": "2027-03-10 to 2027-03-11",
+     "quote": "WEDNESDAY 10 MARCH 2027 - 09:00 - 17:00 || THURSDAY 11 MARCH 2027 - 09:30 - 17:00",
+     "url": "https://www.cloudsecurityexpo.com/",
+     "why": "ok"
+    },
+    "LOCATION": {
+     "verdict": "DIFFERS",
+     "ours": "ExCeL London, London, United Kingdom",
+     "page": "city London, country UK",
+     "quote": "Excel London || The UK's Leading Cyber Security & Cloud Event",
+     "url": "https://www.cloudsecurityexpo.com/",
+     "why": "differs in country"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "11/15/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    }
+   }
+  },
+  {
+   "conference": "Troopers 2026 (Troopers Cybersecurity Conference)",
+   "market": "Cybersecurity",
+   "id": "2026-troopers-heidelberg",
+   "edition": "2026",
+   "pages": [
+    "https://troopers.de/"
+   ],
+   "readable": true,
+   "fields": {
+    "START DATE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "6/22/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "UNSUPPORTED",
+     "ours": "June 22 - June 26, 2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "Heidelberg Convention Center, Heidelberg, Germany",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "3/1/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    }
+   }
+  },
+  {
+   "conference": "RSA Conference 2027 (RSAC 2027)",
+   "market": "Cybersecurity",
+   "id": "2027-rsa-conference-san-francisco",
+   "edition": "2027",
+   "pages": [
+    "https://www.rsaconference.com/",
+    "https://www.rsaconference.com/call-for-speakers"
+   ],
+   "readable": false,
+   "fields": {
+    "START DATE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "5/17/2027",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "UNSUPPORTED",
+     "ours": "May 17 - May 20, 2027",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "Moscone Center, San Francisco, California, USA",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "10/16/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    }
+   }
+  },
+  {
+   "conference": "Security BSides Austin 2026",
+   "market": "Cybersecurity",
+   "id": "2026-security-bsides-austin-austin",
+   "edition": "2026",
+   "pages": [
+    "https://bsidesaustin.org/",
+    "https://bsidesaustin.org/cfp/"
+   ],
+   "readable": false,
+   "fields": {
+    "START DATE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "11/12/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "UNSUPPORTED",
+     "ours": "November 12 - November 13, 2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "JJ Pickle Research Campus, Austin, Texas, USA",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "8/31/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "no page could be read"
+    }
+   }
+  },
+  {
+   "conference": "CYBERUK 2026",
+   "market": "Cybersecurity",
+   "id": "2026-cyberuk-glasgow",
+   "edition": "2026",
+   "pages": [
+    "https://www.cyberuk.uk/"
+   ],
+   "readable": true,
+   "fields": {
+    "START DATE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "5/12/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "CONFERENCE DATES": {
+     "verdict": "UNSUPPORTED",
+     "ours": "May 12 - May 14, 2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "LOCATION": {
+     "verdict": "UNSUPPORTED",
+     "ours": "Scottish Event Campus (SEC Glasgow), Glasgow, Scotland, United Kingdom",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    },
+    "SUBMISSION DEADLINE": {
+     "verdict": "UNSUPPORTED",
+     "ours": "1/31/2026",
+     "page": "",
+     "quote": "",
+     "url": "",
+     "why": "the page states nothing for this field and edition"
+    }
+   }
+  }
+ ],
+ "id_year_not_edition": [
+  {
+   "market": "Cybersecurity",
+   "id": "2026-nullcon-goa-bambolim",
+   "conference": "Nullcon Goa 2027 (18th Edition)",
+   "id_year": "2026",
+   "edition": "2027"
+  },
+  {
+   "market": "Utility",
+   "id": "2026-industrial-net-zero-conference-sydney",
+   "conference": "Industrial Net Zero Conference 2027",
+   "id_year": "2026",
+   "edition": "2027"
+  },
+  {
+   "market": "Utility",
+   "id": "2026-nineteenth-international-conference-on-climate-johannesburg",
+   "conference": "International Conference on Climate Change: Impacts and Responses 2027 (19th ICCC)",
+   "id_year": "2026",
+   "edition": "2027"
+  },
+  {
+   "market": "Utility",
+   "id": "2026-decarb-connect-north-america-houston",
+   "conference": "Decarb Connect North America 2027",
+   "id_year": "2026",
+   "edition": "2027"
+  },
+  {
+   "market": "Utility",
+   "id": "2026-act-expo-las-vegas",
+   "conference": "ACT Expo 2027 (Advanced Clean Transportation Expo)",
+   "id_year": "2026",
+   "edition": "2027"
+  },
+  {
+   "market": "Utility",
+   "id": "2026-co2-based-fuels-and-chemicals-conference-cologne",
+   "conference": "CO2-based Fuels and Chemicals Conference",
+   "id_year": "2026",
+   "edition": "2027"
+  },
+  {
+   "market": "Utility",
+   "id": "2026-european-biomass-conference-exhibition-reims",
+   "conference": "European Biomass Conference & Exhibition",
+   "id_year": "2026",
+   "edition": "2027"
+  }
+ ]
+}
