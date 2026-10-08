@@ -19,6 +19,9 @@ WHAT IT ASKS
     what to look at        a deadline that moved EARLIER, a row that disappeared, an Open row
                            whose deadline has passed, a disputed deadline, a dead link on an open call
 
+    upstream's promises    (ACT-58) every promise in docs/operations/upstream_commitments.csv that is NOT KEPT, or whose ledger line is malformed, against the files being published; each is a "look at"
+                           and a draft note to upstream naming them is filed beside this report (NOTE-TO-UPSTREAM-DRAFT-commitments.md), for the operator to send. Never sent by code.
+
 Counts and row names only. It changes nothing.
 """
 from __future__ import annotations
@@ -217,7 +220,48 @@ def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: 
     return {"counts": report_rows, "changes": changes, "flags": flags, "past": past}
 
 
-def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool | None) -> dict:
+def commitment_results(on: date, markets_dir: Path | None = None) -> list[dict] | None:
+    """ACT-58: scripts/check_commitments.py's own `run` on the published files, or None when the checker could not run (a QA step never fails the build)."""
+    try:
+        import check_commitments as cc                                  # scripts/ is on sys.path when this file runs as a script
+        md = Path(markets_dir) if markets_dir else cc.MARKETS
+        files = {m: md / f"{m}_audited.final.csv" for m in cc.MARKET_NAMES}
+        return cc.run(cc.LEDGER, files, cc.LIVE_DB, on.isoformat())
+    except Exception:                                                   # noqa: BLE001
+        return None
+
+
+def commitments_section(rep: dict, results: list[dict] | None, on: date, out_dir: Path | None = None) -> None:
+    """Add the promises section and its flags to `rep`; file the draft note beside the report when any promise is NOT KEPT."""
+    if results is None:
+        rep["sections"].append({"title": "Upstream's promises", "note": "The promise check did not run (see scripts/check_commitments.py).", "columns": [], "rows": [], "flags": []})
+        return
+    kept = sum(r["state"] == "KEPT" for r in results)
+    pend = sum(r["state"] == "NOT YET" for r in results)
+    bad = [r for r in results if r["state"] in ("NOT KEPT", "BAD LEDGER LINE")]
+    flags = [f"upstream promise {r['state']}: {r['id']} (note {r['note']}) {r['what']} - {r['detail']}" for r in bad]
+    note_line = ""
+    if any(r["state"] == "NOT KEPT" for r in results):
+        try:
+            import check_commitments as cc
+            text = cc.draft_note(results, on.isoformat())
+            d = Path(out_dir) / rep["cycle"] if out_dir else qa_report.QA_ROOT / rep["cycle"]
+            d.mkdir(parents=True, exist_ok=True)
+            (d / cc.DRAFT_NAME).write_text(text, encoding="utf-8")
+            note_line = f"A draft note to upstream naming each unmet promise is at `{d / cc.DRAFT_NAME}` (for the operator to send; code never sends it)."
+        except Exception as exc:                                        # noqa: BLE001
+            note_line = f"The draft note to upstream could not be written ({type(exc).__name__})."
+    rep["sections"].append({
+        "title": "Upstream's promises", "note": f"{kept} kept, {len([r for r in bad if r['state'] == 'NOT KEPT'])} NOT kept, {pend} not yet due, "
+                                                f"{len([r for r in bad if r['state'] == 'BAD LEDGER LINE'])} malformed ledger line(s) (of {len(results)}). {note_line}".strip(),
+        "columns": ["Promise", "Note", "State", "What was promised", "What was found"],
+        "rows": [[r["id"], r["note"], r["state"], r["what"], r["detail"]] for r in bad], "flags": flags})
+    rep["flags"] += flags
+
+
+def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool | None, commitments: list[dict] | None | bool = False,
+          out_dir: Path | None = None) -> dict:
+    """`commitments`: False = do not check (tests), None = the checker could not run, a list = its results."""
     rep = qa_report.new_report("build", on)
     rep["published"] = published
     if published is False:
@@ -240,7 +284,13 @@ def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool 
             "flags": res["flags"]})
         rep["flags"] += res["flags"]
         rep["past"] = rep.get("past", []) + res["past"]
+    if commitments is not False:
+        commitments_section(rep, commitments, on, out_dir)
     return qa_report.finish(rep, "nothing on the pages needs a look before sending")
+
+
+def commitments_for_main(on: date):
+    return commitment_results(date.today())
 
 
 def main() -> int:
@@ -275,7 +325,8 @@ def main() -> int:
         return 0
 
     on = date.fromisoformat(a.on) if a.on else (page_date(pairs[0][1]) or date.today())
-    rep = build(pairs, on, None if a.published is None else a.published == "yes")
+    sys.path.insert(0, str(ROOT / "scripts"))
+    rep = build(pairs, on, None if a.published is None else a.published == "yes", commitments_for_main(on), Path(a.out))
     md = qa_report.to_markdown(rep, "Build QA - what the customer will see")
     print(md)
     try:

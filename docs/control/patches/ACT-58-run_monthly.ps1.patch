@@ -1,0 +1,15 @@
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -57,6 +57,12 @@
+     # 2026-10-04: the Friday awards load gets the same "did it lose anything we had proven?" check and the per-step failure count, in its own report (load_awards).
+     if ($live -contains 'Awards') {
+         [void]$steps.Add(@("$cfpDir\post_load_qa.py", "--import-json", $ImpJson, "--markets", "Awards"))
++    }
++    # 2026-10-08 (ACT-58): UPSTREAM'S PROMISES (scripts/check_commitments.py): after the load, BEFORE the recap, check docs/operations/upstream_commitments.csv against the published files. Prints the
++    # COMMITMENTS line into the log, writes runs_out\qa\<date>\commitments.md/.json and, when any promise is NOT KEPT, a DRAFT note to upstream (NOTE-TO-UPSTREAM-DRAFT-commitments.md) for the operator to
++    # send. Read-only, never sends anything, exits 0 whatever happens (a bad ledger line is reported, an error prints COMMITMENTS: UNKNOWN). Saturday only (Cybersecurity and Utility files).
++    if ($kind -eq 'saturday' -and $conf.Count -gt 0) {
++        [void]$steps.Add(@("$cfpDir\check_commitments.py"))
+     }
+     [void]$steps.Add(@("$cfpDir\weekend_recap.py", $kind, "--log", $RunLog, "--import-json", $ImpJson))
+     # 2026-10-05 (ACT-20): SHADOW READER of the non-deadline facts (scripts/shadow_reader.py): start date, city, country, venue, organizer and format, read from each live row's own pages
