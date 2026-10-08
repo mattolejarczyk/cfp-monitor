@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-10-06",
+  "as_of": "2026-10-08",
   "title": "CFP Control List",
   "intro": "The work list behind the failure-point register. Each action closes one or more root-cause failure points; when an action is verified, the register updates itself. A builder agent does the work in an isolated branch, the reviewer verifies it, and only the items marked Needs you wait for you.",
   "waves": [
@@ -1175,9 +1175,10 @@
         "2026-10-06 night 2: upstream re-keyed three events to our ids, sent a real 45-field CSV: 17 promises kept, 0 broken on it; the gate rejected the World Summit AI row (check 4) and CyberDefenseCon status is unsupported; draft note 42; ledger 30 promises. Progress: the protocol worked once the checker named each problem.",
         "2026-10-06 night 3: upstream fixed World Summit AI (accepted) but set CyberDefenseCon to Closed / invitation-only without reading the Call for Speakers page we named; the live call (enterprise CISOs, no deadline) contradicts it. Ledger 32; draft note 43. Pattern: a fix that satisfies the letter of our message and misses the fact.",
         "2026-10-06 night 4: CyberDefenseCon accepted after the call page was read (8 kept, 0 broken); upstream wrongly reported a row as 'loaded downstream' (corrected in note 44). Japan CCUS Summit added (organiser site found). Ledger 32.",
-        "2026-10-06: BUILT. weekend_recap.py commitment_facts/commitment_sentence: Saturday recap states promises kept / NOT kept / not yet, names each broken one, subject gets 'FLAG: n upstream promise(s) NOT kept'. 1 new test (13 pass with existing). Live check today: 7 kept, 0 NOT kept, 25 not yet (of 32). WEEKEND-PROCESS step 10 updated and confirmed. Still to build: Monday build QA list and auto-drafted note to upstream."
+        "2026-10-06: BUILT. weekend_recap.py commitment_facts/commitment_sentence: Saturday recap states promises kept / NOT kept / not yet, names each broken one, subject gets 'FLAG: n upstream promise(s) NOT kept'. 1 new test (13 pass with existing). Live check today: 7 kept, 0 NOT kept, 25 not yet (of 32). WEEKEND-PROCESS step 10 updated and confirmed. Still to build: Monday build QA list and auto-drafted note to upstream.",
+        "builder/wave12 commit 99f58fd (+ this JSON commit). Built: qa_build.py Monday section 'Upstream's promises' (NOT KEPT + malformed ledger lines as look-ats, failure-isolated); check_commitments.py ledger lint (--lint; BAD LEDGER LINE never skipped) and auto draft NOTE-TO-UPSTREAM-DRAFT-commitments.md (event, field, found, promised; ASCII; never sent); patch docs/control/patches/ACT-58-run_monthly.ps1.patch adds a Saturday post-step (reviewer applies). Tests: tests/test_commitments_followup.py (9), tests/test_commitments_hook.py (4), plus test_check_commitments/test_qa_build/test_weekend_recap pass. Lint on real ledger with real published Utility file, no db: 0 malformed of 32 (id-resolution check not exercised live). Full suite: 1762 passed, 5 failed, all 5 are existing run_monthly ListPostSteps/shadow-hook tests whose old patches no longer apply to the current live script (unrelated). Nothing live changed."
       ],
-      "updated": "2026-10-06",
+      "updated": "2026-10-08",
       "on_verify": {}
     },
     {
