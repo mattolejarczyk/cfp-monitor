@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-08 - pre-flight, four builders merged (nothing live)
+
+- Pre-flight (read-only): tasks Ready (awards next 10/9 02:00, Saturday 10/10 02:00), sleep Never, commitments 7 kept / 0 NOT kept / 25 not yet.
+- Builders (worktrees builder9..12) reviewed and merged: ACT-51 phase 2 customer_auto_add.py (dry-run default, 10-per-market cap, blank ids); ACT-54 link_agreement / customer_row_answers / schedule_only (live read-only: 224 customer rows, 29 DISAGREE); ACT-58 remainder (Monday QA promises, draft note, ledger lint); ACT-59 input_list_audit.py (219 rows, 84 DIFFERS, 0.225 USD). No live patch applied; patches for run_monthly.ps1 are under docs/control/patches/.
+- Reviewer fixes: ledger lint id-we-hold check made opt-in (false FLAG on 23 of 32 real promises); 5 stale hook tests and the ACT-22 patch re-anchored on the Luna step order; doc-merge conflicts resolved keeping all rows.
+- Lessons: run a new check on real data before it can feed a recap flag; baseline a builder's "pre-existing failure" on main; CRLF can disguise a 5-line doc edit as 250 lines (diff --ignore-space-at-eol).
+
 ## 2026-10-06 - customer rows, promise ledger, rulings R-002, model bake-off, Luna shadow
 
 - Customer coverage: 145 of 145 customer rows ahead are queued or answered; new rows enter with blank ids and upstream's ids are stamped (stamp_given_ids.py, given_ids.csv); Hack In The Box root cause (customer row is OOTB Jakarta; Phuket rows were upstream's phantom); Japan CCUS Summit 2026 added (organiser site verified, programme contact email recorded).
