@@ -2,6 +2,9 @@
 
 Written 2026-10-05 (Monday), at the end of a long session. Read this first, then `HANDOFF.md` (top block), then `docs/control/action_list.json` / `ACTION-LIST.html`. Everything below is also true if you have no memory of the conversation.
 
+> **UPDATE 2026-10-09 (afternoon).** ACT-30 read: Friday's awards run is done and loaded (see HANDOFF top block): two first-run bugs (canary sample, coverage validator) fixed in Markets with backups, 127 awards shipped, 7 held back. Step (1) of the 10-08 stopping point is complete. Remaining order: apply (or defer) the ACT-58 / ACT-51-phase-2 run_monthly patches before Sat 02:00; read Saturday (ACT-31); then the rest. The 5 awards needing permanent ids go in the next note to upstream.
+>
+
 > **STOPPING POINT 2026-10-08 (evening).** Merged on main, all UNAPPLIED live: ACT-51 phase 2, ACT-54, ACT-58 remainder, ACT-59 (see HANDOFF top block). NEXT, in order: (1) after Fri 10-09 02:00 read the awards run (ACT-30); (2) if clean, with the operator apply docs/control/patches/ACT-58-run_monthly.ps1.patch and ACT-51-phase2-run_monthly.ps1.patch to Marketsun_monthly.ps1 (backup first; check with -ListPostSteps; check_process_doc.py), leave CFP_AUTOADD_APPLY unset (dry run); (3) after Sat 10-10 read the load (ACT-31) incl. AUTOADD / COMMITMENTS / LUNA SHADOW lines; (4) then ACT-46, ACT-47, re-point the 2 deferred client links, read the 84 ACT-59 DIFFERS page by page and apply the real ones with backups, hook ACT-54 reports into run_monthly and the recap. Operator owes: send note 45 and the VulnCon email; PC on and signed in Thu-Sat; ACT-51 phase 2 approvals (add rule, cap 10, customer_not_researched.csv).
 >
 

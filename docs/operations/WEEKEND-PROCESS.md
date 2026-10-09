@@ -68,7 +68,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    not been researched for 56 days is researched; each other Closed award is looked at about once every four weeks, a quarter of them each week. If the plan ever wanted to skip over 70% it
    skips nothing. A fault in this step leaves every award to be researched. *(refresh_plan.py -> the REFRESH_SKIP column; the audit skips marked rows like duplicates)*
 4. **[Safety check]** **Runs a 5-row test** - researches 5 awards and checks real Google searches
-   happened. If not, the job stops before spending the full budget. *(run_canary.ps1 -ResearchOnly)*
+   happened. If not, the job stops before spending the full budget. The 5 rows are taken from the awards that WILL be researched, never from the dormant ones step 3b marked (changed 2026-10-09: the first Friday run failed here because 4 of the first 5 awards were dormant). *(run_canary.ps1 -ResearchOnly)*
 5. **[Setup]** **Files away last week's awards research** into the archive.
 6. **[Research]** **Researches every award** - dates, entry windows and links, each with its cited page.
    Awards listed twice on the customer sheets are researched once. *(run_market_audit.py)*

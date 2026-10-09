@@ -5,6 +5,12 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-09 - first Friday awards run: two first-run bugs fixed, awards loaded
+
+- 02:00 run failed at its canary (our bug, not the search): the canary took the first 5 awards and the refresh plan had marked 4 of them dormant (REFRESH_SKIP). Fixed run_canary.ps1 (QA-REGISTER A54). Operator started the task by hand 07:36 (the permission classifier blocked me from starting it): canary passed, 80 awards researched (86 requests, 80 grounded, HEALTHY).
+- That run was also failed, by validate_market_output.py check_coverage ('52 absent' = 9 DUP_OF + 43 REFRESH_SKIP). Fixed (A55). Sandbox rehearsal, then live weekend_import: 127 shipped (58 new, 69 kept from last week), 7 held back (5 no permanent id, 2 Fast Company rows with a passed deadline marked Open). post_load_qa PASS (17 passed-date changes listed), live invariants hold (check_invariants with --db explicit; its default db path points at a stale copy and shows 112 false failures). The first Friday email said FAILED; no corrected recap sent.
+- Lessons: a feature (refresh skip) that changes which rows are researched must be checked against EVERY check that assumes all rows are researched (canary, coverage validator); a rehearsal must have the same prior files as production or it hides the carry-over.
+
 ## 2026-10-08 - pre-flight, four builders merged (nothing live)
 
 - Pre-flight (read-only): tasks Ready (awards next 10/9 02:00, Saturday 10/10 02:00), sleep Never, commitments 7 kept / 0 NOT kept / 25 not yet.

@@ -2,7 +2,7 @@
   "document": "WEEKEND-PROCESS.md",
   "scripts": {
     "run_monthly.ps1": "70bf513bf0a40fb4c460ef8eb8310c58ebeda3a41d34483e64215db9c78a5d14",
-    "run_canary.ps1": "46e7431641fb57f621d1e8deb7bef889031e9fac5cbde7c2c53ecf2726d2bad2",
+    "run_canary.ps1": "4aa1cde888b90e8da5565a3b4ad1d0d6eb6cb56cb25c1ed954a55cb0b00f7661",
     "run_overnight.ps1": "3a9695ca0707743e933272f816450710c7eb7c598b8b895cc2b0b9005dbcd2ee",
     "run_all.ps1": "e7ae4f68ff580d1551e45cd7c2fb8d121c3678180afdbd32f09ae906ade2fda1",
     "scripts/weekly_intake.py": "c3950f4925cd61963837d03f304b3b697ea784572ba736f4c915c3424ba7710b",

@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-10-08",
+  "as_of": "2026-10-09",
   "title": "CFP Control List",
   "intro": "The work list behind the failure-point register. Each action closes one or more root-cause failure points; when an action is verified, the register updates itself. A builder agent does the work in an isolated branch, the reviewer verifies it, and only the items marked Needs you wait for you.",
   "waves": [
@@ -611,7 +611,7 @@
       "wave": "W3",
       "step": "E",
       "owner": "me",
-      "state": "waiting",
+      "state": "review",
       "cost": "$0",
       "due": "2026-10-09",
       "title": "Read Friday's awards run: canary, grounded rate, load report, refresh plan",
@@ -626,9 +626,10 @@
       "acceptance": "Grounded rate and stub count read; load_awards.md clean or fixed; refresh plan result matches the rehearsal.",
       "depends": [],
       "evidence": [
-        "Watch on Friday 10-09: the first awards import runs check_invariants over the WHOLE database; it was clean on 2026-10-05 night after the World of Concrete 2028 row was completed. If check 7 or 2 fails, a hand-loaded row is the cause."
+        "Watch on Friday 10-09: the first awards import runs check_invariants over the WHOLE database; it was clean on 2026-10-05 night after the World of Concrete 2028 row was completed. If check 7 or 2 fails, a hand-loaded row is the cause.",
+        "2026-10-09: read. 02:00 run failed at the canary (4 of 5 sample rows REFRESH_SKIP; fixed in run_canary.ps1, QA A54). By-hand rerun 07:36: canary 4 of 5, 80 of 80 researched rows grounded, 86 requests, HEALTHY, refresh plan research 80 / skip 43 (about 2.62 USD saved). Run then failed on check_coverage counting 9 DUP_OF + 43 REFRESH_SKIP as lost (fixed, QA A55). Sandbox rehearsal and live load: 127 shipped, load_awards.md PASS, live invariants hold. NOT YET: Monday 10-12 page build shows this week's awards."
       ],
-      "updated": "2026-10-05",
+      "updated": "2026-10-09",
       "on_verify": {
         "E3": {
           "status": "OVERCOME",
