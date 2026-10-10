@@ -125,6 +125,8 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    behind them are thrown out and retried. If search breaks down (10 failures in a row) or the
    quota runs out, it stops itself. This is the only expensive step. *(run_overnight.ps1 ->
    run_all.ps1 -> run_market_audit.py)*
+   **If it stops on quota (exit 3) or is interrupted:** finish the SAME cycle with `run_monthly.ps1 -Markets Cybersecurity,Utility -Resume` (added 2026-10-10). Without `-Resume` every start archives the
+   audited file and progress ledger, so the audit would research every row again. With it, finished rows are skipped and only the rest is researched; the load, recap and shadow steps then run as usual.
 8. **[Safety check]** **Checks the output's format** against the agreed structure before anything else uses it.
    *(validate_market_output.py)*
 
@@ -256,6 +258,8 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-10** - `run_monthly.ps1 -Resume`: continue a run that stopped on quota without archiving its finished rows (a plain re-run would research everything again).
+- **2026-10-09** - the 5-row test before the Friday run takes its rows from the awards that WILL be researched (4 of the first 5 were dormant, so the first Friday run stopped at its own test); the coverage check no longer counts duplicates and dormant awards as lost.
 - **2026-10-08** - new Saturday step 3b: adds the customer rows missing from the research list (gated, backup and proof, blank ids), built but dry-run until the reviewer switches it on; the recap carries its `AUTOADD:` lines (ACT-51 phase 2).
 - **2026-10-06** - new Saturday step 3a: a check that every event on the two customer sheets is on the research list (`customer_coverage.py`), reported in the recap; report only for now (ACT-51).
 - **2026-09-28** - Monday registers this week's links before re-reading them, and results are filed under every research ID (renamed events had lost their results).
