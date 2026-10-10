@@ -55,10 +55,10 @@ def _list(ps1: Path, markets: str):
 def test_saturday_lists_the_shadow_reader_before_the_finder_with_its_caps(tmp_path):
     steps = _list(_patched_copy(tmp_path), "'Cybersecurity','Utility'")
     names = [Path(s[0]).name for s in steps]
-    assert names == ["weekend_import.py", "post_load_qa.py", "weekend_recap.py", "shadow_reader.py", "shadow_finder.py", "luna_shadow.py"]   # luna: ACT-61, applied live 2026-10-06
-    rd = steps[3]
+    assert names == ["weekend_import.py", "post_load_qa.py", "check_commitments.py", "weekend_recap.py", "shadow_reader.py", "shadow_finder.py", "luna_shadow.py"]   # check_commitments: ACT-58, applied live 2026-10-09   # luna: ACT-61, applied live 2026-10-06
+    rd = steps[names.index("shadow_reader.py")]
     assert rd[1:4] == ["--markets", "Cybersecurity", "Utility"] and rd[-4:-2] == ["--max-minutes", "45"] and rd[-2] == "--run-log"
-    assert "Awards" not in steps[4]                                                                  # Saturday's finder is the conference one
+    assert "Awards" not in steps[names.index("shadow_finder.py")]                                                                  # Saturday's finder is the conference one
     assert all(len(tok) > 1 or tok.isdigit() for s in steps for tok in s), "flattened or malformed step"
 
 
