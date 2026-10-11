@@ -75,8 +75,8 @@ What the customer notices: nothing in the normal case. The only risk is a sponso
 
 Target: built and rehearsed during the week of 12 October, applied before Saturday 17 October 02:00 if the dry run looks right. It saves nothing until applied.
 
-## 8. Decisions needed
+## 8. Decisions (made by the operator, 2026-10-11)
 
-1. Re-check cadence N for settled answers (4, 6 or 8 weeks)?
-2. Re-ask Unknown every 2 weeks (proposed) or every week?
-3. Approve building it as ACT-64 (zero spend to build)?
+1. Re-check cadence N for settled answers: **8 weeks** (expected steady cost about 9 USD per Saturday, saving about 35 USD).
+2. Unknown answers: re-asked **every 2 weeks**.
+3. Build approved as ACT-64 (zero spend to build). Applying it to the live job still needs the operator to run the apply script and is not done until the dry run has been read.

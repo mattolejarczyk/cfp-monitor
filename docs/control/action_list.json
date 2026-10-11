@@ -1288,11 +1288,12 @@
       "acceptance": "A researched row whose id is in the given_ids ledger and not in the database loads as a new event on the Saturday import (sandbox proof with the 2026-10-10 output: the 82 events plus Japan CCUS), a row with an unknown id is still held with an honest reason, the load QA IDENTITY count falls from 62/21, and the hold message is true."
     },
     {
-      "needs_you": "Decide: re-check cadence N for settled answers (4, 6 or 8 weeks); Unknown re-asked every 2 weeks or weekly; approve the build.",
+      "needs_you": "",
       "closes": [],
       "depends": [],
       "evidence": [
-        "2026-10-11: plan drafted from the code and the 2026-10-10 research against last week's approved files (read-only counts: 104 could be skipped, 104 new, 11 unknown)."
+        "2026-10-11: plan drafted from the code and the 2026-10-10 research against last week's approved files (read-only counts: 104 could be skipped, 104 new, 11 unknown).",
+        "2026-10-11 operator decisions: re-check settled answers every 8 weeks; re-ask Unknown every 2 weeks; build approved (zero spend to build)."
       ],
       "updated": "2026-10-11",
       "on_verify": "",
@@ -1300,10 +1301,10 @@
       "wave": "W5",
       "step": "B",
       "owner": "builder",
-      "state": "waiting",
+      "state": "todo",
       "cost": "$0 to build; estimated saving 31 to 40 USD per Saturday at list price (see docs/design/sponsor-check-cost-plan.md)",
       "title": "Sponsor check: carry last week's settled answers instead of re-buying them (cost plan, awaiting the operator's decisions)",
-      "detail": "PLAN WRITTEN 2026-10-11, NOT BUILT: docs/design/sponsor-check-cost-plan.md. The sponsor-only pass (run_market_audit.py run_sponsor_only_pass) is designed to skip rows already Yes/No, but each Saturday run_monthly.ps1 archives last week's audited file and the new research file has blank sponsor cells, so every row is asked again (about 235 requests, about 3,100 searches, about 44 USD at list price on 2026-10-10; 104 of 219 checks repeated an answer held from last week). BUILD (after the operator decides): scripts/sponsor_prefill.py run before the pass: carry a Yes/No answer for the same permanent id and edition when its sponsor link is alive and it is not due for the rotating re-check (N weeks); Unknown re-asked every 2 weeks; sources: approved file, then the previous archived audited file; failure isolated; dry run on the real 2026-10-10 files must reproduce the plan's table; a one-line run_overnight.ps1 call applied by the operator with a backup.",
+      "detail": "PLAN WRITTEN 2026-10-11, NOT BUILT: docs/design/sponsor-check-cost-plan.md. The sponsor-only pass (run_market_audit.py run_sponsor_only_pass) is designed to skip rows already Yes/No, but each Saturday run_monthly.ps1 archives last week's audited file and the new research file has blank sponsor cells, so every row is asked again (about 235 requests, about 3,100 searches, about 44 USD at list price on 2026-10-10; 104 of 219 checks repeated an answer held from last week). BUILD (operator decided 2026-10-11: N = 8 weeks for settled answers, Unknown every 2 weeks): scripts/sponsor_prefill.py run before the pass: carry a Yes/No answer for the same permanent id and edition when its sponsor link is alive and it is not due for the rotating re-check (N weeks); Unknown re-asked every 2 weeks; sources: approved file, then the previous archived audited file; failure isolated; dry run on the real 2026-10-10 files must reproduce the plan's table; a one-line run_overnight.ps1 call applied by the operator with a backup.",
       "acceptance": "Dry run on the 2026-10-10 files reproduces the carry/ask counts; tests cover every carry rule and the failure-isolated fallback; the first live Saturday log shows rows carried and rows asked; sponsor spend per Saturday falls to the plan's estimate for the chosen N; no settled answer is lost and the badge and quote steps are unchanged."
     }
   ]
