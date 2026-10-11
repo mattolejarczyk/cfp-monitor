@@ -1316,7 +1316,8 @@
         "ACT-64"
       ],
       "evidence": [
-        "2026-10-11: operator asked to do it today; scan counts above."
+        "2026-10-11: operator asked to do it today; scan counts above.",
+        "branch builder/wave15; sponsor_url joins weekly_verify sweep (sponsor-Yes rows only, browser-confirmed, 20-min sponsor browser budget); page marks 'Sponsorship page (not found)' like other dead links; tests added in test_weekly_dead_links/test_review_page/test_handback_dead_fields, full suite green; proof on DB copy: 177 sponsor links, 39 browser-dead, 22 blocked 403; Cyber+Utility pages viewed in browser"
       ],
       "updated": "2026-10-11",
       "on_verify": "",
@@ -1324,7 +1325,7 @@
       "wave": "W5",
       "step": "E",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0 (links only, no AI calls)",
       "title": "Sponsor links join the weekly link check, and the customer page flags a dead sponsor link",
       "detail": "2026-10-11 read-only scan of the 174 distinct sponsor links on the Yes rows of both approved files: 91 load, 35 return a plain 404 (about one in five), 16 return 403 (script-blocked), 32 failed to connect in the scan. The Sunday sweep (weekly_verify.CUSTOMER_FACING, also copies in link_check_awards.py and make_handback.py) does not check sponsor_url, and build_review_page.py flags a dead submission, evidence and main link but not a dead sponsor link, so customers can click a broken sponsor page and nothing says so; ACT-64's prefill also cannot tell a dead sponsor link (87 of 104 settled Yes rows have no link record). BUILD: (1) sponsor_url joins the sweep (weekly_verify; keep make_handback consistent; every dead link still browser-confirmed, a plain 404 or 403 is never enough); (2) the review page marks a dead sponsor link exactly the way it marks the other dead links (same marker, same wording pattern); (3) tests; (4) prove it by building a page from a COPY of the live database with the sponsor links checked and show the rendered page in a browser. Monday's build (weekly_deliverable step 2b) already calls check_all_submission_links, so (1) takes effect there automatically.",
