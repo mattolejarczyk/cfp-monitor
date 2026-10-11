@@ -130,26 +130,34 @@ def test_a_dead_sponsor_link_forces_an_ask(tmp_path):
     assert "1 to ask" in line and "1 link dead/edition changed" in line
 
 
-def test_a_sponsor_link_missing_from_link_checks_forces_an_ask(tmp_path):
+def test_a_sponsor_link_with_no_link_checks_record_is_carried_and_counted(tmp_path):
     c = not_due_id()
     e = Env(tmp_path, [row(c)], [row(c, "Yes", URL, "x")], links={"https://other.example/": "alive"})
-    e.run(apply=True)
+    line = e.run(apply=True)
+    assert read_rows(e.audited)[0]["SPONSOR_REQUIRED"] == "Yes"
+    r = e.report()[c]
+    assert r["reason"] == "carried" and r["link"] == "not_recorded" and "not recorded" in r["detail"]
+    assert "1 carried, 0 to ask" in line and "link not recorded, carried" in line
+    assert "of which carried with link not recorded | 1" in (tmp_path / "out" / "sponsor_prefill_Cybersecurity.md").read_text(encoding="utf-8")
+
+
+def test_the_strict_switch_asks_when_the_link_has_no_record(tmp_path):
+    c = not_due_id()
+    e = Env(tmp_path, [row(c)], [row(c, "Yes", URL, "x")])
+    e.run(apply=True, missing_link_asks=True)
     assert read_rows(e.audited)[0]["SPONSOR_REQUIRED"] == ""
     assert e.report()[c]["reason"] == "link_missing"
+    p = subprocess.run([sys.executable, str(ROOT / "scripts" / "sponsor_prefill.py"), "--market", "Cybersecurity", "--missing-link-asks", "--markets-dir", str(e.markets),
+                        "--db", str(e.db), "--today", TODAY.isoformat(), "--out-dir", str(tmp_path / "o2")], capture_output=True, text=True, cwd=ROOT)
+    assert "0 carried, 1 to ask" in p.stdout and "1 link dead/edition changed" in p.stdout
 
 
-def test_a_yes_with_a_blank_sponsor_url_forces_an_ask(tmp_path):
-    c = not_due_id()
-    e = Env(tmp_path, [row(c)], [row(c, "Yes", "", "x")])
-    e.run()
-    assert e.report()[c]["reason"] == "link_missing"
-
-
-def test_a_trailing_slash_does_not_hide_a_live_link_and_an_unknown_state_is_not_alive(tmp_path):
+def test_a_trailing_slash_does_not_hide_a_recorded_dead_link_and_an_unclear_state_is_not_alive(tmp_path):
     a, b = not_due_id("a"), not_due_id("b")
-    e = Env(tmp_path, [row(a), row(b)], [row(a, "Yes", URL + "/", "x"), row(b, "Yes", URL + "2", "x")], links={URL: "alive", URL + "2": "checking"})
+    e = Env(tmp_path, [row(a), row(b)], [row(a, "Yes", URL + "/", "x"), row(b, "Yes", URL + "2", "x")], links={URL: "dead", URL + "2": "checking"})
     e.run()
-    assert e.report()[a]["reason"] == "carried" and e.report()[b]["reason"] == "link_missing"
+    assert e.report()[a]["reason"] == "link_dead"
+    assert e.report()[b]["reason"] == "carried" and e.report()[b]["link"] == "not_recorded"
 
 
 def test_a_changed_or_blank_edition_forces_an_ask(tmp_path):

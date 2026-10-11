@@ -25,6 +25,6 @@
     "scripts/pinned_rows.py": "ce4f5d78d371985d74592fe96858e6feb1c9ddff643f956e26eea40cee707a5c",
     "scripts/customer_coverage.py": "05614213694e18211df9af3d2a1af9b1469c359541cf2d6c71acd0a528c83213",
     "scripts/customer_auto_add.py": "4f387f67e0bb34f39d0541eb449060da68cfb12902cb94b12961a62886c2e41e",
-    "scripts/sponsor_prefill.py": "d5763439ba0130424229d52d6c2ebb3271bf136b64e860936029d31d8478b4c8"
+    "scripts/sponsor_prefill.py": "e3d34e090f811d74ef00dc2a526e9d813242613ffeb01d746f2cb37f08b01a73"
   }
 }

@@ -9,7 +9,8 @@ free. But every Saturday run_monthly.ps1 archives last week's audited file and t
 A row is CARRIED (SPONSOR_REQUIRED, SPONSOR_URL, SPONSOR_COST copied from last week's row; SPONSOR_QUOTE is left to sponsor_carry's rule 4 in the import, which fills a blank quote when the answer is the same) only when ALL hold:
   1. the same permanent id (identity.to_canonical on both sides; this week's id from <Market>_audited.identity.csv, never by name and never a direct join on upstream ids) and the same non-blank EDITION;
   2. last week's SPONSOR_REQUIRED is Yes or No (Unknown and blank are never carried);
-  3. for a Yes: last week's SPONSOR_URL is present and `link_checks` (opened mode=ro) says it is ALIVE; a dead link, a link not in link_checks, or a blank URL means ask again;
+  3. for a Yes: last week's SPONSOR_URL is present and is not RECORDED DEAD in `link_checks` (opened mode=ro). A blank URL or a recorded-dead link means ask again. A URL with NO record
+     (the weekly sweep does not cover sponsor_url yet) is carried, and the 8-week rotation is the safety net; `--missing-link-asks` (constant MISSING_LINK_ASKS) makes it ask instead;
   4. the row is not due for the re-check. SETTLED rows: due when stable_hash(canonical id) % 8 equals this week's number % 8 (about 1/8 of rows each week, each row once in 8 weeks, none twice in a window;
      scripts/refresh_plan.stable_hash), or when carry_ledger.json says the sponsorship unit was last confirmed 8 weeks ago or more (a safety net on top of the rotation). UNKNOWN rows follow the same
      idea with 2 buckets (half each week). A first-time event (no prior row) is always asked.
@@ -43,9 +44,10 @@ from src.cfp_monitor import identity, qa_report                   # noqa: E402
 MARKETS = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
 LIVE_DB = Path(os.environ.get("LOCALAPPDATA", "")) / "CFP-Monitor" / "cfp_monitor.db"
 CELLS = ("SPONSOR_REQUIRED", "SPONSOR_URL", "SPONSOR_COST")
+MISSING_LINK_ASKS = False     # reviewer 2026-10-11: a Yes whose link has NO link_checks record is carried (the sweep does not cover sponsor_url yet); True = ask again (the strict rule, one switch away)
 SETTLED_WEEKS = 8            # operator decision 2026-10-11
 UNKNOWN_WEEKS = 2
-REPORT_COLS = ["market", "row", "canonical", "conference", "edition", "decision", "reason", "prior_source", "prior_answer", "detail"]
+REPORT_COLS = ["market", "row", "canonical", "conference", "edition", "decision", "reason", "link", "prior_source", "prior_answer", "detail"]
 REASONS = ("carried", "new_event", "unknown_ask", "unknown_deferred", "due_recheck", "link_dead", "link_missing", "edition_changed", "doubt")
 
 
@@ -147,7 +149,8 @@ def load_priors(markets_dir: Path, market: str, up_to_canon: dict[str, str], app
     return out, notes
 
 
-def plan(rows: list[dict], canons: list[str], priors: dict[str, list[tuple[dict, str]]], states: dict[str, str], ledger: dict, today: date) -> list[dict]:
+def plan(rows: list[dict], canons: list[str], priors: dict[str, list[tuple[dict, str]]], states: dict[str, str], ledger: dict, today: date,
+         missing_link_asks: bool = MISSING_LINK_ASKS) -> list[dict]:
     """One decision per row of the new file. Pure. decision is carry | ask | skip."""
     count: dict[str, int] = {}
     for c in canons:
@@ -156,7 +159,7 @@ def plan(rows: list[dict], canons: list[str], priors: dict[str, list[tuple[dict,
     out = []
     for i, (row, canon) in enumerate(zip(rows, canons)):
         d = {"market": row.get("Market", ""), "row": i, "canonical": canon, "conference": cell(row, "CONFERENCE"), "edition": cell(row, "EDITION"),
-             "decision": "ask", "reason": "", "prior_source": "", "prior_answer": "", "detail": "", "values": None}
+             "decision": "ask", "reason": "", "link": "", "prior_source": "", "prior_answer": "", "detail": "", "values": None}
         out.append(d)
         cur = cell(row, "SPONSOR_REQUIRED").lower()
         if cell(row, "DUP_OF"):
@@ -193,16 +196,25 @@ def plan(rows: list[dict], canons: list[str], priors: dict[str, list[tuple[dict,
             continue
         if prior.lower() == "yes":
             url = cell(prow, "SPONSOR_URL")
-            st = link_state(url, states) if url else "missing"
-            if st != "alive":
-                d.update(reason="link_dead" if st == "dead" else "link_missing",
-                         detail=("sponsor link is dead in link_checks" if st == "dead" else "sponsor link is blank or not in link_checks") + (f": {url}" if url else ""))
+            if not url:
+                d.update(reason="link_missing", detail="a Yes with a blank sponsor link")
                 continue
+            st = link_state(url, states)
+            if st == "dead":
+                d.update(reason="link_dead", detail=f"sponsor link is recorded dead in link_checks: {url}")
+                continue
+            if st == "missing" and missing_link_asks:
+                d.update(reason="link_missing", detail=f"sponsor link has no (clear) link_checks record and the strict rule is on: {url}")
+                continue
+            if st == "missing":
+                d["link"] = "not_recorded"
         due, why = settled_due(canon, today, ledger)
         if due:
             d.update(reason="due_recheck", detail=why)
             continue
-        d.update(decision="carry", reason="carried", detail="settled, same edition, link alive" if prior.lower() == "yes" else "settled No, same edition",
+        d.update(decision="carry", reason="carried",
+                 detail=("settled Yes, same edition, link not recorded in link_checks (carried; the 8-week rotation is the safety net)" if d.get("link") == "not_recorded"
+                         else "settled Yes, same edition, link alive") if prior.lower() == "yes" else "settled No, same edition",
                  values={c: cell(prow, c) for c in CELLS})
         d["values"]["SPONSOR_REQUIRED"] = prior
     return out
@@ -211,11 +223,14 @@ def plan(rows: list[dict], canons: list[str], priors: dict[str, list[tuple[dict,
 def summarize(decisions: list[dict]) -> tuple[str, dict]:
     n = {k: 0 for k in REASONS}
     n["skip"] = 0
+    n["carried_link_not_recorded"] = 0
     for d in decisions:
         if d["decision"] == "skip":
             n["skip"] += 1
         else:
             n[d["reason"]] += 1
+            if d["reason"] == "carried" and d.get("link") == "not_recorded":
+                n["carried_link_not_recorded"] += 1
     ask = len(decisions) - n["skip"] - n["carried"]
     unknown = n["unknown_ask"] + n["unknown_deferred"]
     other = n["doubt"]
@@ -223,6 +238,8 @@ def summarize(decisions: list[dict]) -> tuple[str, dict]:
             f"{n['link_dead'] + n['link_missing'] + n['edition_changed']} link dead/edition changed)")
     if other:
         line += f"; {other} asked for lack of certainty"
+    if n["carried_link_not_recorded"]:
+        line += f"; {n['carried_link_not_recorded']} of the carried have no link_checks record (link not recorded, carried)"
     if n["skip"]:
         line += f"; {n['skip']} already answered or duplicate (left as they are)"
     return line, n
@@ -257,7 +274,7 @@ def write_report(decisions: list[dict], market: str, out_dir: Path, line: str, c
         w.writerows([{**d, "market": market} for d in decisions])
     mp = out_dir / f"sponsor_prefill_{market}.md"
     lines = [f"# Sponsor prefill - {market}", "", f"`{line}`", "", *[f"- {m}" for m in meta], "", "| reason | rows |", "|---|---|"]
-    lines += [f"| {k} | {v} |" for k, v in counts.items() if v]
+    lines += [f"| {k if k != 'carried_link_not_recorded' else 'of which carried with link not recorded'} | {v} |" for k, v in counts.items() if v]
     for title, keys in (("Carried (not asked)", ("carried",)), ("Asked: why", tuple(k for k in REASONS if k != "carried"))):
         lines += ["", f"## {title}", ""]
         for d in decisions:
@@ -268,7 +285,7 @@ def write_report(decisions: list[dict], market: str, out_dir: Path, line: str, c
 
 
 def run(market: str, markets_dir: Path, db: Path, today: date, out_dir: Path, apply: bool, prior: Path | None = None, ledger_path: Path | None = None,
-        audited: Path | None = None) -> str:
+        audited: Path | None = None, missing_link_asks: bool = MISSING_LINK_ASKS) -> str:
     audited = audited or Path(markets_dir) / f"{market}_audited.csv"
     if not audited.exists():
         raise FileNotFoundError(f"{audited} not found")
@@ -283,7 +300,7 @@ def run(market: str, markets_dir: Path, db: Path, today: date, out_dir: Path, ap
     priors, notes = load_priors(Path(markets_dir), market, up_to_canon, approved=prior)
     states = read_link_states(db)
     ledger = load_ledger(ledger_path or (Path(db).parent / "carry_ledger.json"))
-    decisions = plan(rows, canons, priors, states, ledger, today)
+    decisions = plan(rows, canons, priors, states, ledger, today, missing_link_asks)
     line, counts = summarize(decisions)
     meta = [f"date {today.isoformat()}, week number {week_number(today)} (settled slot {week_number(today) % SETTLED_WEEKS} of {SETTLED_WEEKS}, unknown slot {week_number(today) % UNKNOWN_WEEKS} of {UNKNOWN_WEEKS})",
             f"new file: {audited.name}, {len(rows)} rows", *notes, f"link_checks rows read: {len(states)}", f"carry ledger entries: {len(ledger)}",
@@ -305,12 +322,15 @@ def main() -> int:
     ap.add_argument("--db", default=str(LIVE_DB))
     ap.add_argument("--out-dir", default="", help="default runs_out/qa/<today>")
     ap.add_argument("--prior", default="", help="the approved file to use as last week's answers (default <Market>_audited.final.csv)")
+    ap.add_argument("--missing-link-asks", action="store_true", default=MISSING_LINK_ASKS,
+                    help="strict: a Yes whose sponsor link has no link_checks record is asked again (default off: only a RECORDED dead link or a blank link asks)")
     ap.add_argument("--ledger", default="", help="carry_ledger.json (default beside the db)")
     a = ap.parse_args()
     try:
         today = date.fromisoformat(a.today)
         print(run(a.market, Path(a.markets_dir), Path(a.db), today, Path(a.out_dir) if a.out_dir else qa_report.QA_ROOT / a.today, a.apply,
-                  Path(a.prior) if a.prior else None, Path(a.ledger) if a.ledger else None))
+                  Path(a.prior) if a.prior else None, Path(a.ledger) if a.ledger else None,
+                  missing_link_asks=a.missing_link_asks))
     except BaseException as e:                              # nothing here may stop the Saturday job; carrying nothing is today's behaviour
         if isinstance(e, KeyboardInterrupt):
             raise
