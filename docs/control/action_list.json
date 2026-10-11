@@ -695,7 +695,7 @@
       "wave": "W3",
       "step": "E",
       "owner": "builder",
-      "state": "conditional",
+      "state": "review",
       "cost": "Code only; estimated saving $2 to $3 a week",
       "title": "Refresh scheduler for conferences (lifecycle-based)",
       "detail": "Built after Friday's awards evidence confirms the approach. Applied to the job by the reviewer.",
@@ -708,8 +708,11 @@
       "depends": [
         "ACT-30"
       ],
-      "evidence": [],
-      "updated": "2026-10-05",
+      "evidence": [
+        "Branch builder/wave16, commits eb59cef..4faa01f (+ this one). scripts/refresh_plan.py conference mode (--market Cybersecurity|Utility; groups 1-4, overrides, guard 50 pct, dry run by default, --apply with backup and read-back, --clear), docs/operations/refresh_policy.json + refresh_overrides.txt, scripts/next_edition_mentions.py, patch docs/control/patches/ACT-33-run_monthly.ps1.patch (Saturday only, before the canary, CFP_REFRESH_APPLY=1 to mark, dry run otherwise). Tests: full suite 1978 passed, 1 skipped, 0 failed (new: test_refresh_plan_conferences 55, test_refresh_consumers 8, test_refresh_plan_hook 8, test_next_edition_mentions 6, plus recap/carry-age additions). Rehearsal on copies of Saturday 2026-10-10 (no model call): full vs skipped load via weekend_import --sandbox --new-events, 25 rows skipped: same shipped rows (113/83), same held back (22/8), same 17 load flags, check_invariants exit 0, 25 of 25 skipped events carried byte-identical, DB rows unchanged. Plan 2026-10-17: Cyber 19 skipped, Utility 8 skipped, saving about 3.2 USD (estimate). next_editions list: 11 of 50 ended Closed rows (4 without any successor or listed row). NOT applied live: reviewer applies the patch.",
+        "Branch builder/wave16, commits eb59cef..4faa01f plus the hand-over commit. scripts/refresh_plan.py conference mode (--market Cybersecurity|Utility; groups 1-4, overrides, guard 50 pct, dry run by default, --apply with backup and read-back, --clear), docs/operations/refresh_policy.json + refresh_overrides.txt, scripts/next_edition_mentions.py, patch docs/control/patches/ACT-33-run_monthly.ps1.patch (Saturday only, before the canary, CFP_REFRESH_APPLY=1 to mark, dry run otherwise). Tests: full suite 1978 passed, 1 skipped, 0 failed (new: test_refresh_plan_conferences 65, test_refresh_consumers 8, test_refresh_plan_hook 8, test_next_edition_mentions 6, plus recap and carry-age additions). Rehearsal on copies of Saturday 2026-10-10 (no model call): full vs skipped load via weekend_import --sandbox --new-events, 25 rows skipped: same shipped rows (113/83), same held back (22/8), same 17 load flags, check_invariants exit 0, 25 of 25 skipped events carried byte-identical, DB rows unchanged. Plan 2026-10-17: Cyber 19 skipped, Utility 8 skipped, saving about 3.2 USD (estimate). next_editions list: 11 of 50 ended Closed rows (4 with no successor row in the database or on the list). NOT applied live: the reviewer applies the patch."
+      ],
+      "updated": "2026-10-11",
       "on_verify": {}
     },
     {
