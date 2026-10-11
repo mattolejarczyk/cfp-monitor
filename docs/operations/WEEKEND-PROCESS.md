@@ -127,6 +127,18 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    run_all.ps1 -> run_market_audit.py)*
    **If it stops on quota (exit 3) or is interrupted:** finish the SAME cycle with `run_monthly.ps1 -Markets Cybersecurity,Utility -Resume` (added 2026-10-10). Without `-Resume` every start archives the
    audited file and progress ledger, so the audit would research every row again. With it, finished rows are skipped and only the rest is researched; the load, recap and shadow steps then run as usual.
+7a. **[Research]** **Asks the sponsorship question, one event at a time, for Arnica and Utility Global only** (right after each market's research, inside the same overnight run; this is the part that cost
+   about 235 requests and about $44 on 2026-10-10, half of all searches that week). The existing pass asks only events whose sponsorship cell is blank or Unknown and passes a Yes or No through for free,
+   but the new research file always starts with those cells blank, so until now every event was asked again every week even though 104 of 219 repeated last week's answer.
+   **ACT-64, built 2026-10-11, NOT LIVE until the reviewer applies `docs/control/patches/ACT-64-run_overnight.ps1.patch`:** one line, right before the pass, first copies last week's Yes or No answer
+   (with its sponsor page and cost) into the new file for an event when ALL of these hold: it is the same permanent ID (never matched by name) and the same edition; last week's answer was Yes or No
+   (an Unknown is never copied); for a Yes, it has a sponsor page that is not recorded as dead in the link checks (a dead page, or no page at all, means ask again; a page the link checks have not recorded yet is carried, because the Sunday link check does not cover sponsor pages today, and the re-check below is the safety net); and the event is not due for its
+   re-check. Every settled answer is asked again about every 8 weeks, spread evenly so about one eighth of them come due each Saturday (a fixed rule on the event's ID, so the same events come up on the same
+   weeks every time; the carry ledger can also force a re-check once an answer was last confirmed 8 weeks ago). A new event is always asked. An Unknown is meant to be asked every 2 weeks, but the pass
+   itself cannot skip an Unknown, so for now it is asked every week (about 11 events). Last week's answer is taken from the approved file first, then from the newest archived research file, so an event that
+   never shipped keeps its answer. Anything unclear means nothing is copied for that event; any fault means nothing is copied at all and the pass runs exactly as before. The log prints
+   `SPONSOR-PREFILL: <n> carried, <m> to ask (<a> new, <b> unknown, <c> due for re-check, <d> link dead/edition changed)` and a per-event report is filed under `runs_out\qa\<date>\sponsor_prefill_<market>.md/.csv`.
+   Nothing else about the check changes; the quote step and the badge read the cells as before. *(sponsor_prefill.py -> then run_market_audit.py --sponsor-only)*
 8. **[Safety check]** **Checks the output's format** against the agreed structure before anything else uses it.
    *(validate_market_output.py)*
 

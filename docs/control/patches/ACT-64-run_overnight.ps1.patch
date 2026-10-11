@@ -1,0 +1,12 @@
+--- a/Markets/run_overnight.ps1
++++ b/Markets/run_overnight.ps1
+@@ -90,6 +90,9 @@
+     if ($m -in @('Cybersecurity', 'Utility')) {
+         $auditedFile = "${m}_audited.csv"
+         if (Test-Path $auditedFile) {
++            # 2026-10-11 (ACT-64): BEFORE the sponsor pass, copy last week's settled Yes/No answer (same permanent id and edition, sponsor link alive, not due for the 8-week re-check) into the new file so the pass skips it
++            # (scripts/sponsor_prefill.py; docs/design/sponsor-check-cost-plan.md). Failure-isolated: the try/catch and the script's own exit 0 mean an error here can never stop the run, it only means every row is asked, as before.
++            try { & py "C:\Users\matts\cfp-monitor\scripts\sponsor_prefill.py" --market $m --markets-dir (Get-Location).Path --apply } catch { Write-Host "SPONSOR-PREFILL: UNKNOWN - $($_.Exception.Message)" }
+             Write-Host ""
+             Write-Host "SPONSORSHIP: checking rows still Unknown for $m (R19.3)" -ForegroundColor Cyan
+             $sponsorTemp = "${auditedFile}.sponsor-tmp.csv"
