@@ -896,3 +896,14 @@ operator adds to it.
 The weekly route that adds the missing rows is `python scripts/customer_auto_add.py` (Saturday step 3b; dry run by default: it proposes into `runs_out/qa/<date>/` and drafts the request to upstream for the ids). Its `--apply`
 appends the gated rows with a blank id (refused on the live Markets folder without `--live`; on the weekly job it is switched by `CFP_AUTOADD_APPLY=1`). Rows it HOLDS (`auto_add.md`) are for a person: put the held event on the
 list by stamping its canonical id, or rule it out in the ledger. Rehearse on copies: `--markets-dir <copy> --db <copy of the database> --out-dir <scratch>`.
+
+### 7.10 Which closed events are researched this week? (ACT-33, QA-REGISTER A59)
+
+Saturday step 4a (`scripts/refresh_plan.py --market Cybersecurity|Utility`, before the 5-row test) marks closed events that cannot have changed in the `REFRESH_SKIP` column of `Markets/<Market>_input.csv`; the audit
+skips a marked row like a duplicate and the import carries last week's approved row for it. The rule and every number are in `docs/operations/refresh_policy.json` (change a number there, no code). The weekly job runs it as a
+DRY RUN until `CFP_REFRESH_APPLY=1` is set in the task's environment (the reviewer applies `docs/control/patches/ACT-33-run_monthly.ps1.patch` first). To look by hand, any day: `python scripts/refresh_plan.py --market Utility --today 2026-10-24`
+(dry run; writes `runs_out/qa/<date>/refresh_plan_Utility.md` and `.csv` with the group, the reason and the next Saturday each event is due). To make sure one event is researched every week whatever its group, add its permanent id
+(EVENT_ID_CANON) on its own line of `docs/operations/refresh_overrides.txt`. To switch the policy off after it was applied: `python scripts/refresh_plan.py --market <Market> --clear` for both markets (the dry-run report warns
+about leftover marks), then unset the variable. Before trusting the figures read the 'Skipped this week' list of the report. Rehearse a load with skipped rows exactly as `experiments/act33_rehearsal/` did: copy the Saturday files into a scratch folder,
+drop the marked rows from the copy of the audited file and run `weekend_import.py --sandbox <abs scratch> --live <copy of the live build> --markets-dir <scratch copy> --new-events`, then compare with the run on the full file.
+The free companion `python scripts/next_edition_mentions.py` lists ended Closed events that announce a next edition (candidates for the overrides file or a new research row).

@@ -84,3 +84,8 @@ experiments/act33_rehearsal/reports_*/
 experiments/act33_rehearsal/sbx_*/
 experiments/act33_rehearsal/*.json
 experiments/act33_rehearsal/*.log
+experiments/act33_rehearsal/report*/
+experiments/act33_rehearsal/out_*/
+experiments/act33_rehearsal/qa_*/
+experiments/act33_rehearsal/awards_copy/
+experiments/act33_rehearsal/*.txt

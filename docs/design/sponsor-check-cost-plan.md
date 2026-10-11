@@ -92,3 +92,8 @@ The Sunday sweep and Monday's step 2b now check `sponsor_url` of every sponsor-Y
 1. Re-check cadence N for settled answers: **8 weeks** (expected steady cost about 9 USD per Saturday, saving about 35 USD).
 2. Unknown answers: re-asked **every 2 weeks**.
 3. Build approved as ACT-64 (zero spend to build). Applying it to the live job still needs the operator to run the apply script and is not done until the dry run has been read.
+
+## 9. Related (ACT-33, 2026-10-11)
+
+The conference refresh policy (`scripts/refresh_plan.py`, `docs/operations/refresh_policy.json`; QA-REGISTER A59) cuts the NARROW research question on closed events the same way this plan cuts the sponsor question. The two are independent: a row the refresh policy skips is absent from the
+new audited file, so `sponsor_prefill.py` and the sponsor-only pass have nothing to ask or carry for it (proven in `tests/test_refresh_consumers.py`).

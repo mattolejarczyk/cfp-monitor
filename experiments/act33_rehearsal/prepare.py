@@ -35,7 +35,8 @@ def copy_ro_db(src: Path, dst: Path) -> None:
 def main() -> None:
     pre = HERE / "live_pre"
     shutil.rmtree(pre, ignore_errors=True)
-    (pre / "market_sheets").mkdir(parents=True)
+    # the WHOLE market_sheets folder (the invariants read every market's seed), then the three files the weekend import had backed up before Saturday's load
+    shutil.copytree(L / "market_sheets", pre / "market_sheets", ignore=shutil.ignore_patterns("*.bak*", "*before-merge*", "*backup*", "*.pre-*", "*pre-weekend*", "*.tmp"))
     copy_ro_db(L / "cfp_monitor.db.pre-weekend-20261010-230054", pre / "cfp_monitor.db")
     for src, dst in (("cyber_seed.csv.pre-weekend-20261010-230054", "cyber_seed.csv"), ("utility_seed.csv.pre-weekend-20261010-230054", "utility_seed.csv"),
                      ("held_rows.txt.pre-weekend-20261010-230054", "held_rows.txt")):
