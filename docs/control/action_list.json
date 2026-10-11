@@ -1293,7 +1293,8 @@
       "depends": [],
       "evidence": [
         "2026-10-11: plan drafted from the code and the 2026-10-10 research against last week's approved files (read-only counts: 104 could be skipped, 104 new, 11 unknown).",
-        "2026-10-11 operator decisions: re-check settled answers every 8 weeks; re-ask Unknown every 2 weeks; build approved (zero spend to build)."
+        "2026-10-11 operator decisions: re-check settled answers every 8 weeks; re-ask Unknown every 2 weeks; build approved (zero spend to build).",
+        "branch builder/wave14, commit e177550 (+ this JSON commit). scripts/sponsor_prefill.py (dry run default, --apply with backup and read-back, failure-isolated), tests/test_sponsor_prefill.py (34 tests, all pass; the pass-skips-carried test needs google-genai, passes with it), full suite 1841 passed on the branch tree (baseline on main: no failures). Dry run on RO copies of 2026-10-10 files (post-pass file with sponsor cells blanked): new 66+38 matches plan; settled 61+44 (plan 60+44); unknown 7+3 (plan 8+3). AS-IS carries only 13 of 219 because 87 of 104 settled Yes sponsor URLs are not in link_checks (weekly sweep omits sponsor_url); ceiling with links alive: 91 carried. Unknown rows cannot be skipped by the unchanged pass. Patch docs/control/patches/ACT-64-run_overnight.ps1.patch NOT applied live. Docs: TOOLING, QA-REGISTER A57, WEEKEND-PROCESS 7a (confirmed), plan 7a."
       ],
       "updated": "2026-10-11",
       "on_verify": "",
@@ -1301,7 +1302,7 @@
       "wave": "W5",
       "step": "B",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0 to build; estimated saving 31 to 40 USD per Saturday at list price (see docs/design/sponsor-check-cost-plan.md)",
       "title": "Sponsor check: carry last week's settled answers instead of re-buying them (cost plan, awaiting the operator's decisions)",
       "detail": "PLAN WRITTEN 2026-10-11, NOT BUILT: docs/design/sponsor-check-cost-plan.md. The sponsor-only pass (run_market_audit.py run_sponsor_only_pass) is designed to skip rows already Yes/No, but each Saturday run_monthly.ps1 archives last week's audited file and the new research file has blank sponsor cells, so every row is asked again (about 235 requests, about 3,100 searches, about 44 USD at list price on 2026-10-10; 104 of 219 checks repeated an answer held from last week). BUILD (operator decided 2026-10-11: N = 8 weeks for settled answers, Unknown every 2 weeks): scripts/sponsor_prefill.py run before the pass: carry a Yes/No answer for the same permanent id and edition when its sponsor link is alive and it is not due for the rotating re-check (N weeks); Unknown re-asked every 2 weeks; sources: approved file, then the previous archived audited file; failure isolated; dry run on the real 2026-10-10 files must reproduce the plan's table; a one-line run_overnight.ps1 call applied by the operator with a backup.",
