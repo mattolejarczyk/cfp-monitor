@@ -297,6 +297,9 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
             # event site is down.
             'urldead': bool((d['CONFERENCE URL'] or d['MAIN_INFO_URL']) and
                             (d['CONFERENCE URL'] or d['MAIN_INFO_URL']) in dead_links),
+            # ...and the sponsorship page (ACT-65). The page only offers it on a 'Yes' row, so only
+            # that row can carry the flag. Same blank guard as above: '' in dead_links is True.
+            'spondead': bool(d['SPONSOR_URL'] and d['SPONSOR_URL'] in dead_links),
             'chk': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('v', ''),
             'chku': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('u', ''),
             'chkq': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('q', ''),
@@ -822,7 +825,9 @@ function render(){
           ? `<a href="${esc(r.ev)}" target="_blank" rel="noopener" class="dl-dead">Where the deadline was read (page gone)</a>`
           : `<a href="${esc(r.ev)}" target="_blank" rel="noopener">Where the deadline was read</a>`):''}
        ${clickable(r.chku)?`<a href="${esc(r.chku)}" target="_blank" rel="noopener">Page we checked</a>`:''}
-       ${(r.spon&&clickable(r.sponurl))?`<a href="${esc(r.sponurl)}" target="_blank" rel="noopener">Sponsorship page</a>`:''}
+       ${(r.spon&&clickable(r.sponurl))?(r.spondead
+          ? `<a href="${esc(r.sponurl)}" target="_blank" rel="noopener" class="dl-dead">Sponsorship page (not found)</a>`
+          : `<a href="${esc(r.sponurl)}" target="_blank" rel="noopener">Sponsorship page</a>`):''}
      </div></td></tr>`).join('');
   drawViews();
   drawSubs();
