@@ -343,7 +343,8 @@ def test_any_exception_means_carry_nothing_and_exit_zero(tmp_path):
     assert p.returncode == 0 and "UNKNOWN" in p.stdout
 
 
-def test_an_empty_seed_map_is_an_error_not_a_silent_join_on_nothing(tmp_path):
+def test_an_empty_seed_map_is_an_error_not_a_silent_join_on_nothing(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)   # reviewer 2026-10-11: the seed lookup also searches the working directory, which in the main repo holds real seed sheets (not hermetic)
     c = not_due_id()
     e = Env(tmp_path, [row(c)], [row(c, "No")])
     (e.data / "market_sheets" / "cyber_seed.csv").unlink()
