@@ -912,3 +912,10 @@ Grouped by area; file pointers in parentheses. **98 offline tests green.**
   smoke test on a clean/fresh Windows profile; v2 wrap in an Inno Setup `.exe`.
 - Optional later: reconciliation **accept/reject per diff**; **Google Sheets** reconciliation (v2);
   `PROXY_MODEL` bump after the DeepSeek name deprecation.
+
+## 2026-10-11 late - ACT-33 conference refresh policy MERGED (4b2e7bf), NOT applied live
+- Reviewed builder/wave16: 108 related tests re-run by reviewer, all pass (builder full suite 1978 passed). State on the control list: review.
+- To apply: copy Markets/run_monthly.ps1 to a dated backup, apply docs/control/patches/ACT-33-run_monthly.ps1.patch (hook test shows it applies to the live script). Apply AFTER the Sat 2026-10-17 run so that run is measured alone. Dry run is the default; read refresh_plan_<Market>.md and the REFRESH-PLAN recap line, then set CFP_REFRESH_APPLY=1 to go live. Off-switch: refresh_plan.py --market <M> --clear for both markets, then unset the variable.
+- Numbers live in docs/operations/refresh_policy.json. Expected saving about 3-5 USD a week (estimate).
+- Free report: scripts/next_edition_mentions.py. Four ended events have no successor row: SecureWorld Quantum Cryptography, DECARBON, Reuters Global Energy Forum, Billington (operator: add to overrides file or research list).
+- Known risk: 12 of 39 schedule-skippable rows are forced back by a recorded-dead link; an unfixed dead link means weekly research of that row.
