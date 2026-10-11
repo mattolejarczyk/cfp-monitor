@@ -1,0 +1,13 @@
+{
+  "_comment": "Conference refresh policy (ACT-33, approved by the operator 2026-10-11). Read by scripts/refresh_plan.py every Saturday; a missing file or a missing key means the built-in default shown here. Change a number, no code. A typo'd key or a nonsense number stops the plan (UNKNOWN: every row is researched, as before). Rules: docs/operations/WEEKEND-PROCESS.md.",
+  "group2_after_days": 60,
+  "group2_every_weeks": 2,
+  "group3_check_from_days": 14,
+  "group3_check_to_days": 21,
+  "group4_near_days": 30,
+  "group4_mid_days": 90,
+  "group4_mid_every_weeks": 2,
+  "group4_far_every_weeks": 4,
+  "guard_max_skip_share": 0.5,
+  "cost_per_row_usd": 0.12
+}
