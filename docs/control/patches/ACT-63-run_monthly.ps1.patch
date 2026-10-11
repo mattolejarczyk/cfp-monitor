@@ -1,0 +1,11 @@
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -52,4 +52,7 @@
+     $steps = New-Object System.Collections.ArrayList
+     if ($live.Count -eq 0) { return ,$steps }
+-    [void]$steps.Add(@("$cfpDir\weekend_import.py", "--markets") + $live + @("--research-exit", "$ExitCode", "--report", $ImpJson))
++    # 2026-10-10 (ACT-63): FIRST LOAD OF A NEW EVENT. A researched row whose permanent id upstream GAVE us (docs/operations/given_ids.csv, stamped on our input row) and that is not in the database yet is loaded as a
++    # NEW event by the Saturday import (guards: id in the ledger and on the input row, gate, backup, read-back proof, at most 100 per run; an id the ledger does not hold stays held). Saturday only; the Friday awards run is unchanged.
++    $newEvents = if ($kind -eq 'saturday') { @("--new-events") } else { @() }
++    [void]$steps.Add(@("$cfpDir\weekend_import.py", "--markets") + $live + @("--research-exit", "$ExitCode", "--report", $ImpJson) + $newEvents)
+     # 2026-10-03: "did the load lose anything we had proven?" runs right after the load and before the recap, so the recap can say
