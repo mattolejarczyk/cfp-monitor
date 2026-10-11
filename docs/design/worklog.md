@@ -5,6 +5,14 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-11 - Sunday: sponsor prefill, sponsor links in the sweep, conference refresh policy (ACT-64, 65, 33)
+
+- ACT-64 sponsor_prefill.py merged: carries last week's settled sponsor answer (8-week rotation). Patch for Markets/run_overnight.ps1 NOT applied: operator runs the apply script before Sat 2026-10-17 02:00, then it is verified. Est. saving about 35 USD a week.
+- ACT-65 merged: sponsor links checked in the Sunday sweep (free of AI spend); customer page flags a dead sponsor page. Monday digest will list about 47 as new (one-off).
+- ACT-33 merged (4b2e7bf), NOT applied live: conference refresh policy in refresh_plan.py (numbers in docs/operations/refresh_policy.json), next_edition_mentions.py, patch ACT-33-run_monthly.ps1.patch. Reviewer re-ran 108 tests, pass; rehearsal on Saturday copies: 25 skipped rows carried byte-identical. Apply AFTER the 10-17 run; ships as dry run (CFP_REFRESH_APPLY unset). Est. saving 3-5 USD a week.
+- Documents: docs/customer/HOW-WE-KEEP-YOUR-DATA-CURRENT.md (customer-facing draft, unsent) and docs/design/refresh-policy-internal-justification.md.
+- Stray http.server on 8765 stopped; dashboard preview is on 61885 (needed only to view status.html).
+
 ## 2026-10-10 - Saturday run: spending cap twice, -Resume, loads, cost analysis, ids correction, Japan CCUS, ACT-63
 
 - 02:00 run hit Google AI Studio's MONTHLY SPENDING CAP (429) after 134 of 137 Cybersecurity rows; nothing loaded. Operator raised the cap twice. A plain re-run would have archived the finished rows and respent everything, so `run_monthly.ps1 -Resume` (skips only the archive step) was added by the operator's apply script (classifier blocks my live edits). Resume 1: Cybersecurity sponsor check + Utility 60/85; resume 2: Utility 25 rows + 85 sponsor checks, then both markets promoted by the job itself.
