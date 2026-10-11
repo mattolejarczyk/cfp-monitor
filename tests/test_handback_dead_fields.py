@@ -29,7 +29,7 @@ _spec.loader.exec_module(mh)
 
 FIELDS = ("submission_url", "deadline_evidence_url", "main_info_url", "url")
 COLS = ("event_id", "name", "verify_state", "verify_detail", "deadline", "deadline_quote",
-        "conference_key", *FIELDS)
+        "conference_key", *FIELDS, "sponsor_url")
 
 
 def _setup(tmp_path, rows, dead_urls, last_alive=None):
@@ -141,3 +141,11 @@ def test_the_never_count_matches_the_table(tmp_path, monkeypatch):
     assert f"**{table_never}**" in claimed[0], (
         f"summary says {claimed[0]!r} but the table has {table_never} 'never' rows")
     assert table_never == 2, "two of the three URLs were never alive"
+
+
+def test_a_dead_sponsor_url_is_ours_and_stays_out_of_the_upstream_handback(tmp_path, monkeypatch):
+    """ACT-65: SPONSOR_URL is our half, so upstream is not asked to fix it."""
+    dead = "https://gone.example.com/sponsorship"
+    txt = _run(*_setup(tmp_path, [{"event_id": "e1", "name": "Sponsor Only Conf",
+                                   "sponsor_url": dead}], [dead]), monkeypatch)
+    assert dead not in txt

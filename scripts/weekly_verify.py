@@ -109,7 +109,22 @@ def run(cmd: list[str], cwd: Path) -> int:
 # them, not just the one we started with: on 2026-08-12 the page offered 24 dead evidence
 # links and 2 dead event sites, because only submission_url had ever been checked and the
 # page had nothing to consult about the rest.
-CUSTOMER_FACING = ("submission_url", "deadline_evidence_url", "main_info_url", "url")
+CUSTOMER_FACING = ("submission_url", "deadline_evidence_url", "main_info_url", "url",
+                   "sponsor_url")
+
+# ACT-65 (2026-10-11): sponsor_url is a customer-facing link too (the page's "Sponsorship page"),
+# but it is only SHOWN on a row whose sponsor_required is 'Yes'. So it is harvested only from
+# those rows, which also keeps the added work bounded (about 170 links, not every blank).
+SPONSOR_FIELD = "sponsor_url"
+
+# Worst-case guard on the Monday build (ACT-65). browser_check confirms suspects one at a time
+# with a 25 s page timeout, so a flood of slow sponsor suspects could run for hours. Suspects
+# whose ONLY customer-facing field is sponsor_url are confirmed in chunks until this budget
+# (seconds) is spent; the rest are left UNRECORDED this run (never marked dead, never marked
+# alive: dead means browser-confirmed only) and are picked up next run. Every other link is
+# confirmed exactly as before, unbounded.
+SPONSOR_BROWSER_BUDGET_S = 20 * 60
+SPONSOR_CHUNK = 10
 
 
 def check_all_submission_links(
@@ -157,6 +172,10 @@ def check_all_submission_links(
         for field in CUSTOMER_FACING:
             if field not in keys:
                 continue
+            if field == SPONSOR_FIELD and (
+                    "sponsor_required" not in keys
+                    or (r["sponsor_required"] or "").strip().lower() != "yes"):
+                continue                      # the page offers a sponsor link on a Yes row only
             u = (r[field] or "").strip()
             if u.startswith("http"):
                 by_url.setdefault(u, {})[r["event_id"]] = r["name"] or r["event_id"]
@@ -181,11 +200,25 @@ def check_all_submission_links(
     # the column that distinguishes "broke recently" from "never worked", was only ever set on
     # weeks that happened to contain a failure. A clean week is data too.
     unconfirmed = False
+    unreached: set[str] = set()
     if suspect and not use_browser:
         print("  --no-browser: reporting fast-pass results unconfirmed")
         dead, unconfirmed = list(suspect), True
     elif suspect:
-        res = asyncio.run(browser_check(suspect))
+        import time as _time                                         # noqa: PLC0415
+        core = [u for u in suspect if url_fields[u] != {SPONSOR_FIELD}]
+        spon = [u for u in suspect if url_fields[u] == {SPONSOR_FIELD}]
+        res = asyncio.run(browser_check(core)) if core else {}
+        t0 = _time.monotonic()
+        for i in range(0, len(spon), SPONSOR_CHUNK):
+            if _time.monotonic() - t0 > SPONSOR_BROWSER_BUDGET_S:
+                break
+            res.update(asyncio.run(browser_check(spon[i:i + SPONSOR_CHUNK])))
+        unreached = {u for u in suspect if u not in res}
+        if unreached:
+            print(f"  {len(unreached)} sponsor suspect(s) NOT browser-checked this run "
+                  f"(time budget {SPONSOR_BROWSER_BUDGET_S // 60} min); left unrecorded")
+        suspect = [u for u in suspect if u not in unreached]
         dead = [u for u in suspect if res.get(u, ("", 0, 0))[0] != "ALIVE"]
         for u in suspect:                   # the browser's status beats the fast pass
             if res.get(u) and res[u][1]:
@@ -229,7 +262,7 @@ def check_all_submission_links(
              last_alive  = case when excluded.state = 'alive' then excluded.checked_at
                                 else link_checks.last_alive end""",
         [{"u": u, "s": "dead" if u in dead_set else "alive", "t": now,
-          "h": status.get(u)} for u in by_url])
+          "h": status.get(u)} for u in by_url if u not in unreached])
     con.commit()
     con.close()
 

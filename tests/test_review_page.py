@@ -305,3 +305,36 @@ def test_a_sponsor_requirement_with_no_quote_says_so_rather_than_going_quiet():
     yet the page must SAY that, not present the figure as though it were sourced."""
     assert "unverified until we have" in brp.PAGE
     assert "not yet read a sentence" in brp.PAGE
+
+
+# ------------------------------------------------ the sponsorship page (ACT-65) --
+SPON_DEAD = "https://example.com/sponsor-gone/"
+
+
+def _spon(**kw):
+    return row(**{"SPONSOR_REQUIRED": "Yes", "SPONSOR_URL": SPON_DEAD, **kw})
+
+
+def test_a_dead_sponsor_link_is_flagged():
+    out = brp.build([_spon()], dead_links={SPON_DEAD})
+    assert out[0]["spondead"] is True
+
+
+def test_a_live_sponsor_link_is_not_flagged():
+    out = brp.build([_spon()], dead_links={DEAD})
+    assert out[0]["spondead"] is False
+
+
+def test_an_unchecked_sponsor_link_is_not_flagged():
+    assert brp.build([_spon()], dead_links=set())[0]["spondead"] is False
+
+
+def test_a_blank_sponsor_url_is_never_flagged_even_with_a_blank_in_the_dead_set():
+    out = brp.build([_spon(SPONSOR_URL="")], dead_links={DEAD, ""})
+    assert out[0]["spondead"] is False
+
+
+def test_the_template_marks_a_dead_sponsor_link_like_the_other_dead_links():
+    src = (ROOT / "scripts" / "build_review_page.py").read_text(encoding="utf-8")
+    assert 'class="dl-dead">Sponsorship page (not found)</a>' in src
+    assert "r.spondead" in src

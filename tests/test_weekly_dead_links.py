@@ -192,3 +192,78 @@ def test_the_old_three_column_table_is_migrated_not_replaced(tmp_path, fake_net)
     kept = con.execute("select state from link_checks where url = ?",
                        ("https://legacy.example.com/",)).fetchone()
     assert kept and kept[0] == "alive", "pre-existing rows must survive the migration"
+
+
+# ------------------------------------------------ sponsor_url joins the sweep (ACT-65) --
+SPON_DEAD = "https://gone.example.com/sponsor"
+SPON_LIVE = "https://fine.example.com/sponsor"
+
+
+def _spon_db(tmp_path, rows):
+    """rows: (event_id, sponsor_required, sponsor_url)"""
+    p = tmp_path / "s.db"
+    con = sqlite3.connect(p)
+    con.execute("""create table grounding_facts (event_id text primary key, name text,
+                   submission_url text, deadline_evidence_url text, main_info_url text,
+                   url text, sponsor_required text, sponsor_url text)""")
+    for eid, req, u in rows:
+        con.execute("insert into grounding_facts (event_id, name, sponsor_required, sponsor_url)"
+                    " values (?,?,?,?)", (eid, eid, req, u))
+    con.commit()
+    con.close()
+    return str(p)
+
+
+def test_sponsor_url_is_a_customer_facing_field():
+    assert "sponsor_url" in wv.CUSTOMER_FACING
+
+
+def test_a_dead_sponsor_link_on_a_yes_row_is_recorded_dead(tmp_path, fake_net):
+    db = _spon_db(tmp_path, [("e1", "Yes", SPON_DEAD), ("e2", "Yes", SPON_LIVE)])
+    new, _ = wv.check_all_submission_links(db)
+    assert new == [("e1", "e1", SPON_DEAD)]
+    con = sqlite3.connect(db)
+    got = dict(con.execute("select url, state from link_checks"))
+    assert got == {SPON_DEAD: "dead", SPON_LIVE: "alive"}
+
+
+def test_sponsor_links_on_non_yes_or_blank_rows_are_not_checked(tmp_path, fake_net):
+    db = _spon_db(tmp_path, [("e1", "No", SPON_DEAD), ("e2", "Unknown", SPON_DEAD),
+                             ("e3", "Yes", ""), ("e4", None, SPON_DEAD)])
+    new, standing = wv.check_all_submission_links(db)
+    assert new == [] and standing == []
+    con = sqlite3.connect(db)
+    assert con.execute("select count(*) from link_checks").fetchone()[0] == 0
+
+
+def test_a_plain_404_is_not_dead_unless_the_browser_confirms(tmp_path, monkeypatch):
+    import recheck_dead_links as rdl
+
+    import src.cfp_monitor.verify as verify
+    monkeypatch.setattr(verify, "link_status", lambda u: (404, ""))
+
+    async def _browser(urls):
+        return {u: ("ALIVE", 200, 5000) for u in urls}
+    monkeypatch.setattr(rdl, "browser_check", _browser)
+    db = _spon_db(tmp_path, [("e1", "Yes", SPON_DEAD)])
+    new, standing = wv.check_all_submission_links(db)
+    assert new == [] and standing == []
+
+
+def test_the_sponsor_browser_budget_leaves_the_rest_unrecorded_never_dead(tmp_path, monkeypatch):
+    import recheck_dead_links as rdl
+
+    import src.cfp_monitor.verify as verify
+    monkeypatch.setattr(verify, "link_status", lambda u: (404, ""))
+    monkeypatch.setattr(wv, "SPONSOR_BROWSER_BUDGET_S", -1)       # already spent
+    calls = []
+
+    async def _browser(urls):
+        calls.append(list(urls))
+        return {u: ("dead", 404, 0) for u in urls}
+    monkeypatch.setattr(rdl, "browser_check", _browser)
+    db = _spon_db(tmp_path, [("e1", "Yes", SPON_DEAD)])
+    new, standing = wv.check_all_submission_links(db)
+    assert new == [] and standing == [] and calls == []
+    con = sqlite3.connect(db)
+    assert con.execute("select count(*) from link_checks").fetchone()[0] == 0

@@ -209,8 +209,10 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
    it afterwards - only if it opened it. *(cdp_ctl.py)*
 2. **[Update]** **Re-checks every deadline we hold** against its cited page - a quick read first, moving up to
    the real browser when a site resists. No AI requests. *(weekly_verify.py -> verify_grounding.py)*
-3. **[Update]** **Re-checks every "submit here" link.** A link is only called dead after a real browser
-   confirms it. *(recheck_dead_links.py)*
+3. **[Update]** **Re-checks every link the customer can click** - submit page, evidence page, event site and,
+   since 2026-10-11, the sponsorship page of every event whose sponsorship answer is Yes. A link is only called
+   dead after a real browser confirms it. Sponsorship pages share a 20-minute browser time budget; any left over
+   is checked next run, never called dead unchecked. Monday's build repeats this check. *(weekly_verify.py, recheck_dead_links.py)*
 4. **[Safety check]** **Runs the database health check** against Saturday's approved files. *(check_invariants.py)*
 5. **[Report]** **Writes a summary of what changed this week** - newly broken links, database items to watch,
    and older broken links still waiting.
@@ -281,6 +283,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 - **2026-10-09** - the 5-row test before the Friday run takes its rows from the awards that WILL be researched (4 of the first 5 were dormant, so the first Friday run stopped at its own test); the coverage check no longer counts duplicates and dormant awards as lost.
 - **2026-10-08** - new Saturday step 3b: adds the customer rows missing from the research list (gated, backup and proof, blank ids), built but dry-run until the reviewer switches it on; the recap carries its `AUTOADD:` lines (ACT-51 phase 2).
 - **2026-10-06** - new Saturday step 3a: a check that every event on the two customer sheets is on the research list (`customer_coverage.py`), reported in the recap; report only for now (ACT-51).
+- **2026-10-11** - Dead sponsorship pages are now recorded and marked on the page like other dead links (ACT-65).
 - **2026-09-28** - Monday registers this week's links before re-reading them, and results are filed under every research ID (renamed events had lost their results).
 - **2026-09-28** - Friday weekly awards research added, same machinery as Saturday. Monday uses the approved awards file. Customer pages hide Closed rows by default in the four work-queue views.
 - **2026-09-28** - Monday's review list separates changes to already-past dates from what needs a look, and a copy is saved beside the published pages.

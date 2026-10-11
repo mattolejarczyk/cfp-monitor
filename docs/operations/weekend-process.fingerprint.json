@@ -12,7 +12,7 @@
     "scripts/shadow_finder.py": "0fb1de2942bde32bdc95b2d2cfed4a4a87046cbe5e7495ea7e18e4cf01a1799e",
     "scripts/refresh_plan.py": "db1751c0cf7534277e14ed772fb0dd3b636d36b69ed31b603a2cd9818fb368fc",
     "scripts/run_weekly.bat": "e34d53e10c3282e23d78d56cb9314dceff5e15db411d35e644f0a33c4d3d49de",
-    "scripts/weekly_verify.py": "7f6b260f6ab1c574dee2c67df517f0fee07d6d3d0fab8871bbc3f4abb2ffdd68",
+    "scripts/weekly_verify.py": "cc5e4ba792fea67b6eaa872172068ba5da18dcdd2f8b3e7b059b9cb1a4e96223",
     "scripts/weekly_discovery.py": "28e7247f63c4b85782117dfd1f3f154989b32853ed2cce7cc5014a7724c3d811",
     "scripts/apply_resolutions.py": "8eaf056e98153a4c743e3d86794196629ba18158a543649dac4f673f77f98370",
     "scripts/weekly_deliverable.py": "d9ab1d3de8e1471b6d720f4c9ae9815dfd1e1d6466fa84f96cd37cfe2080a2af",

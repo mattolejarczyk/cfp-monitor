@@ -83,6 +83,10 @@ Target: built and rehearsed during the week of 12 October, applied before Saturd
 - **Second limit (unchanged):** the existing pass treats every blank or Unknown cell as pending, so Unknown rows cannot be skipped. The 2-week Unknown rotation is computed and reported (`unknown_deferred`) but those rows (about 11, about 2 USD a week) are still asked every week until `run_market_audit.py` (upstream's file, outside this work) is changed.
 - The carry ledger (ACT-17) only records values carried by `sponsor_carry` after the fact. A row carried by this script looks FRESH to the import, so its ledger entry is dropped; the 6-week "carried values not re-confirmed" flag therefore does not age these rows. The rotation alone guarantees the 8-week re-check (this corrects the earlier remark that the ledger supplies the last-confirmed date).
 
+### 7b. Dead sponsor links are now recorded (ACT-65, 2026-10-11)
+
+The Sunday sweep and Monday's step 2b now check `sponsor_url` of every sponsor-Yes row (browser-confirmed dead only) and write the result to `link_checks`, and the review page marks a dead one. The strict switch of `sponsor_prefill.py` (a recorded-dead link forces a re-ask; `--missing-link-asks` for no record) therefore sees real data from the first sweep after this is merged, instead of "no record" for 87 of 104 settled Yes rows. Until a sweep has run, the dry-run numbers above still apply.
+
 ## 8. Decisions (made by the operator, 2026-10-11)
 
 1. Re-check cadence N for settled answers: **8 weeks** (expected steady cost about 9 USD per Saturday, saving about 35 USD).

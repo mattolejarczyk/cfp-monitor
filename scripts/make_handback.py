@@ -88,6 +88,10 @@ def main() -> int:
     #
     # The comment that used to sit here read "weekly_verify checks EVERY submission link" - true
     # when written, false for two weeks before anyone noticed. Same shape as clean_city.
+    # sponsor_url is DELIBERATELY not here (ACT-65, 2026-10-11). weekly_verify now checks it, but
+    # SPONSOR_URL is OUR half (written by our own sponsor-only pass, not upstream's field), so a
+    # dead sponsor page is not something upstream can fix. It goes to sponsor_prefill's re-ask
+    # (a recorded-dead sponsor link forces the question again), not into this hand-back.
     CUSTOMER_FACING = ("submission_url", "deadline_evidence_url", "main_info_url", "url")
     dead_field: dict[str, list[str]] = {}
     if known_dead:
