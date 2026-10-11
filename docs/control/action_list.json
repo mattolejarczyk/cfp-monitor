@@ -695,7 +695,7 @@
       "wave": "W3",
       "step": "E",
       "owner": "builder",
-      "state": "conditional",
+      "state": "todo",
       "cost": "Code only; estimated saving $2 to $3 a week",
       "title": "Refresh scheduler for conferences (lifecycle-based)",
       "detail": "Built after Friday's awards evidence confirms the approach. Applied to the job by the reviewer.",
@@ -708,8 +708,10 @@
       "depends": [
         "ACT-30"
       ],
-      "evidence": [],
-      "updated": "2026-10-05",
+      "evidence": [
+        "2026-10-11 operator decisions (conference refresh policy): Group 1 live (not Closed) weekly; Group 2 ended more than 60 days ago every 2 weeks; Group 3 ended within 60 days: ONE check about 2-3 weeks after the event ends then skip until day 60; Group 4 call closed, event ahead: within 30 days weekly, 31-90 days every 2 weeks, over 90 days every 4 weeks; always re-read on a dead link, a year rollover, a customer-sheet flag or an upstream note naming the row. Policy as a SETTING (file), dry run by default, never applied live without the reviewer. Build approved; apply after the 2026-10-17 Saturday so it is measured alone. Estimated saving about 5 USD a week."
+      ],
+      "updated": "2026-10-11",
       "on_verify": {}
     },
     {
