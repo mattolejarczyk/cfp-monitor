@@ -72,3 +72,20 @@ experiments/purpose_audit/sandbox_2026*/
 experiments/purpose_audit/answer_key_pages.json
 experiments/read_the_page_pass/pages.json
 experiments/model_bakeoff/pages/
+
+# 2026-10-11 (ACT-33): rehearsal copies of live data stay local (public repo)
+experiments/act33_rehearsal/live/
+experiments/act33_rehearsal/work*/
+experiments/act33_rehearsal/*.csv
+experiments/act33_rehearsal/live_pre/
+experiments/act33_rehearsal/full/
+experiments/act33_rehearsal/skip/
+experiments/act33_rehearsal/reports_*/
+experiments/act33_rehearsal/sbx_*/
+experiments/act33_rehearsal/*.json
+experiments/act33_rehearsal/*.log
+experiments/act33_rehearsal/report*/
+experiments/act33_rehearsal/out_*/
+experiments/act33_rehearsal/qa_*/
+experiments/act33_rehearsal/awards_copy/
+experiments/act33_rehearsal/*.txt

@@ -695,7 +695,7 @@
       "wave": "W3",
       "step": "E",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "Code only; estimated saving $2 to $3 a week",
       "title": "Refresh scheduler for conferences (lifecycle-based)",
       "detail": "Built after Friday's awards evidence confirms the approach. Applied to the job by the reviewer.",
@@ -709,7 +709,8 @@
         "ACT-30"
       ],
       "evidence": [
-        "2026-10-11 operator decisions (conference refresh policy): Group 1 live (not Closed) weekly; Group 2 ended more than 60 days ago every 2 weeks; Group 3 ended within 60 days: ONE check about 2-3 weeks after the event ends then skip until day 60; Group 4 call closed, event ahead: within 30 days weekly, 31-90 days every 2 weeks, over 90 days every 4 weeks; always re-read on a dead link, a year rollover, a customer-sheet flag or an upstream note naming the row. Policy as a SETTING (file), dry run by default, never applied live without the reviewer. Build approved; apply after the 2026-10-17 Saturday so it is measured alone. Estimated saving about 5 USD a week."
+        "2026-10-11 operator decisions (conference refresh policy): Group 1 live (not Closed) weekly; Group 2 ended more than 60 days ago every 2 weeks; Group 3 ended within 60 days: ONE check about 2-3 weeks after the event ends then skip until day 60; Group 4 call closed, event ahead: within 30 days weekly, 31-90 days every 2 weeks, over 90 days every 4 weeks; always re-read on a dead link, a year rollover, a customer-sheet flag or an upstream note naming the row. Policy as a SETTING (file), dry run by default, never applied live without the reviewer. Build approved; apply after the 2026-10-17 Saturday so it is measured alone. Estimated saving about 5 USD a week.",
+        "Merged builder/wave16 (reviewed 2026-10-11): refresh_plan.py conference mode, refresh_policy.json, next_edition_mentions.py, patch docs/control/patches/ACT-33-run_monthly.ps1.patch. 108 related tests re-run by reviewer, all passed; builder full suite 1978 passed. Rehearsal: 25 skipped rows carried byte-identical, same shipped/held/flags. NOT applied live: apply after Sat 2026-10-17 run (dry run first), CFP_REFRESH_APPLY=1 only after reading the first plan."
       ],
       "updated": "2026-10-11",
       "on_verify": {}

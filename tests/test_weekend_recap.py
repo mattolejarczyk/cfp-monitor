@@ -92,3 +92,32 @@ def test_parse_saturday_reads_the_autoadd_lines():
     assert u["unknown"] and "could not run" in autoadd_sentence(u)
     d = parse_saturday("AUTOADD: mode=dry-run; 2 to add, 0 held for a person, 0 waiting for an id; 2 customer rows NOT in the queue after the step\n")["autoadd"]
     assert not d["missed_names"] and "FLAG" not in autoadd_sentence(d)
+
+
+# --- ACT-33: rows the refresh policy deliberately did not research are not a shortfall ---
+def _market_block(name, rows_in, skipped, written, grounded):
+    lines = "".join(f"[SKIP] [{i}/{rows_in}] Skipping (refresh policy: G3 dormant: closed): Conf {i}\n" for i in range(skipped))
+    return (f"Market : {name}\n{lines}Rows read: {rows_in} | already in file: 0 | skipped (already done): {skipped} | attempted: {written} | written: {written} | in output file: {written} (expected {written})\n"
+            f"API requests spent this run: 900\nGROUNDING TRAIL: {written} rows | {grounded} grounded | 0 no_search\nRUN HEALTH: HEALTHY\n")
+
+
+LOG_SKIP = ("=== run_monthly exit code: 0 ===\nREFRESH-PLAN Cybersecurity: 134 rows, 117 researched (g1 22, g2 6, g3 5, g4 9, overrides 75), 17 skipped (saving about 2.04 USD, an estimate)\n"
+            "REFRESH-PLAN Utility: UNKNOWN - FileNotFoundError: x; nothing skipped, every row will be researched\n"
+            "=== OVERNIGHT RUN\n" + _market_block("Cybersecurity", 134, 17, 117, 117) + _market_block("Utility", 85, 0, 85, 85))
+
+
+def test_rows_done_and_the_percentage_are_counted_against_the_rows_that_were_due():
+    from scripts.weekend_recap import parse_saturday
+    s = parse_saturday(LOG_SKIP)
+    assert s["markets"]["Cybersecurity"]["refresh_skipped"] == 17 and s["markets"]["Utility"]["refresh_skipped"] == 0
+    subject, text, html_ = _recap(LOG_SKIP)
+    assert "117 of 117 (17 not due this week, kept)" in text            # not "117 of 134"
+    assert "117 (100%)" in text and "117 of 134" not in text
+    assert "85 of 85" in text and "not due this week" not in text.split("85 of 85")[1].split("\n")[0]
+
+
+def test_the_refresh_plan_lines_reach_the_recap_and_an_unknown_is_said_plainly():
+    subject, text, html_ = _recap(LOG_SKIP)
+    assert "Refresh policy" in text and "17 skipped" in text and "UNKNOWN" in text and "every row was researched as before" in text
+    assert "Refresh policy" not in _recap(LOG_OK)[1]                       # step not switched on: the recap is unchanged
+    assert "Refresh policy" not in _recap(LOG_SKIP, "friday")[1]           # Friday's recap does not carry the conference plan

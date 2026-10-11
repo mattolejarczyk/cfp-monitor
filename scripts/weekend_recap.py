@@ -121,6 +121,7 @@ def parse_saturday(log: str) -> dict:
     out["exit"] = first(r"=== run_monthly exit code: (-?\d+) ===", log)
     out["intake"] = first(r"INTAKE HEALTH: (.+)", log)
     out["coverage"] = coverage_facts(log)
+    out["refresh_plan"] = re.findall(r"^REFRESH-PLAN (.+)$", log, flags=re.M)        # ACT-33: one line per market (a summary, or UNKNOWN - why)
     out["autoadd"] = autoadd_facts(log)
     if re.search(r"CANARY PASSED", log):
         out["canary"] = "passed"
@@ -139,6 +140,8 @@ def parse_saturday(log: str) -> dict:
              "requests": first(r"API requests spent this run: (\d+)", block),
              "grounded": first(r"GROUNDING TRAIL: \d+ rows \| (\d+) grounded", block),
              "stubs": first(r"(\d+) row\(s\) written as UNGROUNDED STUBS", block) or "0",
+             # ACT-33: rows the refresh policy deliberately did not research ("[SKIP] ... Skipping (refresh policy: ...)"): not a shortfall
+             "refresh_skipped": len(re.findall(r"Skipping \(refresh policy:", block)),
              "composed": first(r"\| (\d+) citation-host-not-in-sources", block) or "0",
              "health": first(r"RUN HEALTH: (\S+)", block),
              # from the audit's own RUN HEALTH tally, not by counting log lines: each 504
@@ -194,6 +197,28 @@ def text_table(head: list[str], rows: list[list[str]]) -> str:
     widths = [max(len(str(x)) for x in col) for col in zip(head, *rows)]
     fmt = lambda r: " | ".join(str(c).ljust(w) for c, w in zip(r, widths))  # noqa: E731
     return "\n".join([fmt(head), "-+-".join("-" * w for w in widths)] + [fmt(r) for r in rows])
+
+
+def rows_due(m: dict):
+    """Rows the run was meant to research: rows read minus the ones the refresh policy deliberately left (ACT-33; Friday's awards have always done the same). Strings as parsed."""
+    try:
+        return str(int(m["rows_in"]) - int(m.get("refresh_skipped") or 0))
+    except (TypeError, ValueError):
+        return m["rows_in"]
+
+
+def rows_done_cell(m: dict) -> str:
+    n = int(m.get("refresh_skipped") or 0)
+    return f"{m['written']} of {rows_due(m)}" + (f" ({n} not due this week, kept)" if n else "")
+
+
+def refresh_plan_sentence(lines: list[str]) -> str | None:
+    """ACT-33: what the Saturday refresh plan decided, from the REFRESH-PLAN lines of the log. None when the step did not print (not switched on)."""
+    if not lines:
+        return None
+    unk = [l for l in lines if "UNKNOWN" in l]
+    head = "Refresh policy (which closed events are not re-researched this week; the estimate is not a bill): " + " | ".join(lines)
+    return head + (" - the plan could not run for the market(s) marked UNKNOWN, so every row was researched as before." if unk else "")
 
 
 def pct(a, b) -> str:
@@ -258,9 +283,9 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     research_ok = s["exit"] == "0" and bool(s["markets"])
     head = ["", *s["markets"].keys()]
     rows = [
-        ["Rows done", *[f"{m['written']} of {m['rows_in']}" for m in s["markets"].values()]],
+        ["Rows done", *[rows_done_cell(m) for m in s["markets"].values()]],
         ["Researched with real Google searches",
-         *[pct(m["grounded"], m["rows_in"]) for m in s["markets"].values()]],
+         *[pct(m["grounded"], rows_due(m)) for m in s["markets"].values()]],
         ["Not researched (kept last week's info)", *[m["stubs"] for m in s["markets"].values()]],
         ["AI requests used", *[m["requests"] for m in s["markets"].values()]],
     ]
@@ -270,6 +295,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
              f"Customer sheet check-in: {s['intake'] or 'no result in the log'}.",
              *([coverage_sentence(s["coverage"])] if kind != "friday" else []),      # awards have no customer sheet
              *([autoadd_sentence(s["autoadd"])] if kind != "friday" and s.get("autoadd") else []),
+             *([refresh_plan_sentence(s["refresh_plan"])] if kind != "friday" and s.get("refresh_plan") else []),
              f"AI requests in total: about {total_req}."]
     if s["timeouts"]:
         facts.append(f"Google was slow: {s['timeouts']} '504' timeouts (Google's server took too "

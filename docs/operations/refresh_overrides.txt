@@ -1,0 +1,3 @@
+# Conferences that must be researched EVERY Saturday whatever the refresh policy says (ACT-33).
+# One permanent id (the EVENT_ID_CANON of Markets/<Market>_input.csv) per line. Blank lines and text after # are ignored.
+# Use it for a customer-sheet flag or an upstream note saying a closed event has news. Remove the line when the news is settled.

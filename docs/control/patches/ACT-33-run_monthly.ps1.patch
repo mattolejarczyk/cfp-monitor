@@ -1,0 +1,56 @@
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -306,7 +306,53 @@
+     }
+     Write-Host ""
+ }
+ 
++# ------------------------------------------- STEP 0a3: CONFERENCE REFRESH PLAN (2026-10-11, ACT-33) ----
++# SATURDAY ONLY (a run of Cybersecurity and/or Utility; the Friday awards run never gets this step and keeps its own 0a2). Decides, BEFORE the research and the canary, which CLOSED events are not
++# worth researching this week (operator-approved policy 2026-10-11: scripts/refresh_plan.py, numbers in cfp-monitor\docs\operations\refresh_policy.json) and marks them in the REFRESH_SKIP column of
++# <Market>_input.csv. The audit skips a marked row like a DUP_OF row, the canary samples only unmarked rows, and the weekend import carries last week's accepted row for it. Not-closed events are never skipped.
++# SWITCH: the environment variable CFP_REFRESH_APPLY. Unset (or anything but 1) = DRY RUN: the plan is only REPORTED (runs_out\qa\<date>\refresh_plan_<Market>.md/.csv and one REFRESH-PLAN line per market
++# in this log, tagged DRY RUN) and nothing is marked, so every row is researched as before. 1 = the marks are written (backup, read-back proof). Turning the switch off after an apply leaves the last
++# marks in the input list: run `refresh_plan.py --market <Market> --clear` once (the plan warns about stale marks in its report).
++# Like the other pre-research steps it can never stop the research: wrapped, exit code ignored; any planner fault prints REFRESH-PLAN <market>: UNKNOWN and researches every row. If the planner cannot even
++# start while the switch is on, the marks of the previous Saturday are cleared here (plain PowerShell) so a stale mark never skips a row it should not.
++if ($liveMarkets.Count -gt 0 -and $Markets -notcontains 'Awards' -and -not $WhatIf) {
++    $rfPy  = "C:\Users\matts\cfp-monitor\.venv\Scripts\python.exe"
++    $rfPy_ = "C:\Users\matts\cfp-monitor\scripts\refresh_plan.py"
++    $rfArgs = @()
++    if ($env:CFP_REFRESH_APPLY -eq '1') { $rfArgs = @('--apply') }
++    foreach ($rfMarket in $liveMarkets) {
++        $rfOk = $false
++        try {
++            if ((Test-Path $rfPy) -and (Test-Path $rfPy_)) {
++                $rfOut = @($null | & $rfPy $rfPy_ --market $rfMarket @rfArgs)
++                $rfOut | ForEach-Object { Write-Host $_ }
++                $rfOk = [bool]($rfOut | Where-Object { "$_" -like 'REFRESH-PLAN *' })
++            } else {
++                Write-Host "REFRESH-PLAN ${rfMarket}: UNKNOWN - interpreter or script not found ($rfPy / $rfPy_). Every row will be researched."
++            }
++        } catch {
++            Write-Host "REFRESH-PLAN ${rfMarket}: UNKNOWN - $($_.Exception.Message). Every row will be researched."
++        }
++        if (-not $rfOk -and $env:CFP_REFRESH_APPLY -eq '1') {
++            try {
++                $rfIn = Join-Path $PSScriptRoot "${rfMarket}_input.csv"
++                if (Test-Path -LiteralPath $rfIn) {
++                    $rfRows = @(Import-Csv -LiteralPath $rfIn)
++                    if ($rfRows.Count -gt 0 -and $rfRows[0].PSObject.Properties['REFRESH_SKIP']) {
++                        foreach ($rfRow in $rfRows) { $rfRow.REFRESH_SKIP = '' }
++                        $rfRows | Export-Csv -LiteralPath $rfIn -NoTypeInformation -Encoding UTF8
++                        Write-Host "REFRESH-PLAN ${rfMarket}: the planner did not run; the previous marks were cleared so every row is researched."
++                    }
++                }
++            } catch {
++                Write-Host "REFRESH-PLAN ${rfMarket}: UNKNOWN - could not clear older marks: $($_.Exception.Message)"
++            }
++        }
++    }
++    Write-Host ""
++}
++
+ # ---------------------------------------------------------------- STEP 0b: CANARY ----
+ # Prove the chain works on a few rows BEFORE committing the window. Deliberately placed
+ # ahead of the archive step: a canary that fails must leave the previous cycle's files
