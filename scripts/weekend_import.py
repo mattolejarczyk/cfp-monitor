@@ -31,6 +31,12 @@ WHAT A FAILURE DOES
     sheets and held_rows.txt are restored from the backup taken at the start, and nothing is
     promoted. Nothing half-imported survives.
 
+--new-events (ACT-63, default OFF) lets a researched row for an event that is NOT in the database yet load as a new event, but only
+when its permanent id is one upstream GAVE us (docs/operations/given_ids.csv, same market) and is stamped on our input row; the row
+passes the gate like any other, the load reads back that exactly those ids were added (else everything is undone from the backup),
+and --new-events-cap (default 100) limits a run. Rules in scripts/first_load.py. Without the flag such a row is held, with a reason
+that says it is waiting for the switch. Never mints or derives an id.
+
 --sandbox <dir> copies the database and the seed sheets into <dir> and does everything there,
 promoting into <dir> too - a full rehearsal that cannot touch the live data.
 
@@ -73,6 +79,7 @@ AWARDS = "Awards"
 NAME_PREFIX = 38
 MAX_ROUNDS = 3
 MAX_OUTPUT_AGE_H = 30
+WAITING_MARK = "so it waits"          # in the hold reasons for an id upstream gave when the first-load path is off or capped
 
 
 # ============================================================================ csv helpers
@@ -224,7 +231,7 @@ def check_research(market: str, markets_dir: Path, research_exit: int | None) ->
 
 def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
                    up_to_canon: dict[str, str], log: list[str],
-                   ledger: Path | None = None) -> dict:
+                   ledger: Path | None = None, first_load: dict | None = None) -> dict:
     """Repair, gate, apply the row rule until the gate ACCEPTS. Touches no database."""
     res: dict = {"market": market, "status": "FAILED", "decisions": []}
     src = markets_dir / f"{market}_audited.csv"
@@ -270,13 +277,33 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     canon_of: dict[str, str] = {}
     pre_bad: dict[int, list[str]] = {}
     seen_canon: set[str] = set()
+    # ACT-63: the guarded first load of a brand-new event (default OFF). Ids the ledger holds for this market, and the ids stamped on our input list.
+    from scripts import first_load as fl
+    fl_cfg = {"enabled": False, "cap": fl.DEFAULT_CAP, "ledger": ROOT / "docs" / "operations" / "given_ids.csv", **(first_load or {})}
+    fl_ledger = fl.read_ledger(fl_cfg["ledger"], market) if market != AWARDS else set()
+    fl_input = fl.input_canons(markets_dir / f"{market}_input.csv") if market != AWARDS else set()
+    new_ids: set[str] = set()
     for i, r in enumerate(rows):
         c = identity.get((r.get("EVENT_ID") or "").strip(), "")
         if "Audit Exception" in (r.get("STATUS DETAILS") or ""):
             pre_bad[i] = ["not researched this week (every search attempt failed)"]
+        elif c and c not in known and c in seen_canon:
+            pre_bad[i] = [f"a second row for the same event ({c})"]
         elif not c or c not in known:
-            pre_bad[i] = ["no permanent id - cannot tell for certain which event this is, so it "
-                          "is not loaded (a rename would otherwise create a duplicate)"]
+            # ACT-63: a NEW event may load only through the guarded first-load path (scripts/first_load.py);
+            # otherwise it is held, with the reason that is true.
+            if market == AWARDS:
+                pre_bad[i] = ["no permanent id - cannot tell for certain which event this is, so it "
+                              "is not loaded (a rename would otherwise create a duplicate)"]
+            else:
+                ok, why = fl.decide(c, enabled=fl_cfg["enabled"], ledger=fl_ledger, input_ids=fl_input,
+                                    known=known, up_to_canon=up_to_canon, to_canonical=to_canonical,
+                                    taken=len(new_ids), cap=fl_cfg["cap"],
+                                    edition=r.get("EDITION") or "")
+                if ok:
+                    new_ids.add(c)
+                else:
+                    pre_bad[i] = [why]
         elif c in seen_canon:
             pre_bad[i] = [f"a second row for the same event ({c})"]
         if c:
@@ -381,6 +408,18 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
                        from_last_week=sum(1 for s in sources if s == "prior"),
                        rounds=rnd)
             res["held_back"] = sum(1 for d in res["decisions"] if d["action"] == "held-back")
+            # ACT-63: which allowed first loads survived the gate (a row the gate failed had no prior, so it was held back above)
+            by_canon = {to_canonical(r.get("EVENT_ID", ""), lookup): r for r, s_ in zip(rows, sources) if s_ == "new"}
+            res["new_events"] = [{"canonical": c, "conference": by_canon[c].get("CONFERENCE", "")}
+                                 for c in sorted(new_ids) if c in by_canon]
+            res["new_events_failed_gate"] = sorted(c for c in new_ids if c not in by_canon)
+            res["new_events_waiting"] = sum(1 for r_ in pre_bad.values() if r_ and WAITING_MARK in r_[0])
+            # given by upstream but held for another reason (edition differs from the id's year, id not on our input row, an alias): for a person
+            res["new_events_held_for_person"] = sum(1 for r_ in pre_bad.values() if r_ and "was given by upstream" in r_[0] and WAITING_MARK not in r_[0])
+            for e in res["new_events"]:
+                log.append(f"[{market}] NEW EVENT (first load, id given by upstream): {e['canonical']} - {e['conference'][:60]}")
+            if res["new_events_waiting"]:
+                log.append(f"[{market}] {res['new_events_waiting']} new event(s) wait: id given by upstream but the first-load path is off or capped")
             # ACT-17: what this week carried instead of re-confirming, for the carry-age ledger (written by main() only after the load sticks)
             from scripts.carry_age import carried_units
             res["carry_age"] = {"carried": carried_units(ov, sp, prior_by_canon),
@@ -533,7 +572,40 @@ def invariant_failures(out: str) -> dict[str, list[str]]:
     return fails
 
 
-def load_markets(resolved: list[dict], db: Path, data_root: Path, log: list[str]) -> str | None:
+def prove_first_loads(res: dict, before: set[str], db: Path, seed_csv: Path, strict: bool) -> str | None:
+    """Read-back proof for the guarded first load (ACT-63). None when it holds, else why.
+
+    Every expected new event is now in grounding_facts under exactly the id the ledger gave, with the name
+    of the row we shipped, and its row is in the seed sheet. With the path on (`strict`), NOTHING else was
+    added either: an id nobody expected appearing means a minted or derived id, and the whole load is undone.
+    """
+    import sqlite3
+    expected = {e["canonical"]: e for e in res.get("new_events", [])}
+    after = db_ids(db)
+    added = after - before
+    if strict and added - set(expected):
+        return "ids appeared that were not expected: " + ", ".join(sorted(added - set(expected))[:5])
+    miss = sorted(set(expected) - after)
+    if miss:
+        return "expected new event(s) not in the database: " + ", ".join(miss[:5])
+    if expected:
+        con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+        try:
+            for c, e in expected.items():
+                row = con.execute("select name from grounding_facts where event_id=?", (c,)).fetchone()
+                if not row or (e["conference"] and (row[0] or "").strip() != e["conference"].strip()):
+                    return f"{c}: the database row does not match the researched row"
+        finally:
+            con.close()
+        seeded = {(r.get("EVENT_ID_CANON") or "").strip() for r in read_csv(seed_csv)[1]} if seed_csv.exists() else set()
+        lost = sorted(set(expected) - seeded)
+        if lost:
+            return "no seed row for: " + ", ".join(lost[:5])
+    return None
+
+
+def load_markets(resolved: list[dict], db: Path, data_root: Path, log: list[str],
+                 first_load_on: bool = False) -> str | None:
     """Import, verify, re-gate with the database, reconcile. None on success, else why."""
     for res in resolved:
         m = res["market"]
@@ -551,11 +623,15 @@ def load_markets(resolved: list[dict], db: Path, data_root: Path, log: list[str]
             if rc != 0:
                 return f"{m}: import_awards exited {rc}"
             continue
+        before_ids = db_ids(db)
         rc = run([PY, ROOT / "scripts" / "import_grounding.py", cand,
                   "--out", f"market_sheets/{seed_name}", "--seed", db,
                   "--ids", res["ids_csv"]], data_root, log)
         if rc != 0:
             return f"{m}: import_grounding exited {rc}"
+        bad = prove_first_loads(res, before_ids, db, data_root / "market_sheets" / seed_name, first_load_on)
+        if bad:
+            return f"{m}: first-load read-back failed: {bad}"
         # verify BETWEEN import and reconcile: skipping it leaves every new row with no verify
         # state, which check 4 reports (runbook, 2026-09-20).
         rc = run([PY, ROOT / "scripts" / "verify_grounding.py", "--db", db, "--market", label,
@@ -628,6 +704,10 @@ def main() -> int:
     ap.add_argument("--live", default=str(LIVE), help="the live build (database + market_sheets)")
     ap.add_argument("--sandbox", help="rehearse on copies in this directory; touches nothing live")
     ap.add_argument("--report", help="write the result JSON here (default: <work>/weekend_import.json)")
+    ap.add_argument("--new-events", action="store_true",
+                    help="ACT-63: let a researched row whose id upstream GAVE us (docs/operations/given_ids.csv) load as a NEW event. Default OFF")
+    ap.add_argument("--new-events-cap", type=int, default=100, help="most new events one run may add (default 100)")
+    ap.add_argument("--given-ids", default=str(ROOT / "docs" / "operations" / "given_ids.csv"), help="the given-ids ledger")
     args = ap.parse_args()
 
     stamp = f"{datetime.now():%Y%m%d-%H%M%S}"
@@ -668,6 +748,12 @@ def main() -> int:
                   + (f" - {m.get('shipped')} rows shipped ({m.get('from_this_week')} this week, "
                      f"{m.get('from_last_week')} kept from last week, {m.get('held_back')} held back)"
                      if m["status"] in ("ACCEPTED", "PROMOTED") else f" - {m.get('why', '')}"))
+        for m in report["markets"]:
+            if m.get("status") in ("ACCEPTED", "PROMOTED") and (m.get("new_events") or m.get("new_events_waiting") or m.get("new_events_failed_gate") or m.get("new_events_held_for_person")):
+                print(f"  NEW EVENTS {m['market']}: {len(m.get('new_events', []))} loaded as new, "
+                      f"{m.get('new_events_waiting', 0)} waiting (id given, path off or capped), "
+                      f"{m.get('new_events_held_for_person', 0)} held for a person (id given, but edition or input row disagree), "
+                      f"{len(m.get('new_events_failed_gate', []))} failed the gate")
         print(f"  report: {report_path}")
         return 0 if status in ("DONE", "PARTIAL") else 1
 
@@ -684,7 +770,8 @@ def main() -> int:
         if why:
             report["markets"].append({"market": m, "status": "FAILED", "why": why})
             continue
-        res = resolve_market(m, markets_dir, work, db, up_to_canon, log, ledger)
+        res = resolve_market(m, markets_dir, work, db, up_to_canon, log, ledger,
+                             {"enabled": args.new_events, "cap": args.new_events_cap, "ledger": Path(args.given_ids)})
         report["markets"].append(res)
         if res["status"] == "ACCEPTED":
             resolved.append(res)
@@ -696,7 +783,7 @@ def main() -> int:
                    + [data_root / "market_sheets" / MARKETS[r["market"]][0] for r in resolved
                       if MARKETS[r["market"]][0]], stamp)
     report["backup"] = str(saved.get(db, ""))
-    why = load_markets(resolved, db, data_root, log)
+    why = load_markets(resolved, db, data_root, log, args.new_events)
     if why:
         restore(saved)
         for r in resolved:
