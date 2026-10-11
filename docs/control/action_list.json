@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-10-09",
+  "as_of": "2026-10-10",
   "title": "CFP Control List",
   "intro": "The work list behind the failure-point register. Each action closes one or more root-cause failure points; when an action is verified, the register updates itself. A builder agent does the work in an isolated branch, the reviewer verifies it, and only the items marked Needs you wait for you.",
   "waves": [
@@ -1271,7 +1271,8 @@
       "closes": [],
       "depends": [],
       "evidence": [
-        "2026-10-10: root cause found by the reviewer; upstream reply to note 46 confirmed all 82 ids already held (ledger, input canon, none in the database)."
+        "2026-10-10: root cause found by the reviewer; upstream reply to note 46 confirmed all 82 ids already held (ledger, input canon, none in the database).",
+        "branch builder/wave13 commits f005047, 0cdfe7f. NEW scripts/first_load.py + weekend_import.py --new-events [--new-events-cap 100] [--given-ids] (default OFF); true hold reasons; read-back proof prove_first_loads (exactly the expected ids added, names match, seed row present, else whole load undone); edition-vs-id-year guard found in rehearsal (Upfront Summit: 2026 edition under a 2027 id broke invariant 7). Patch docs/control/patches/ACT-63-run_monthly.ps1.patch (not applied). Tests: tests/test_first_load.py (12), tests/test_first_load_hook.py (4); full suite 1840 passed (baseline main 2693cbb 1823 passed). Sandbox rehearsal on copy of live DB + real 2026-10-10 output: 65 of 82 loaded as new (48 Cyber, 17 Utility), 16 held by the gate, 1 held for a person (edition); grounding_facts 430 -> 495; check_invariants all hold; load QA IDENTITY 0/0; second run adds 0. Fixture-only: the run_monthly patch (applied to a copy)."
       ],
       "updated": "2026-10-10",
       "on_verify": "",
@@ -1279,7 +1280,7 @@
       "wave": "W5",
       "step": "B",
       "owner": "builder",
-      "state": "todo",
+      "state": "review",
       "cost": "$0 to build; saves about 18 USD a week of research that cannot ship",
       "title": "A brand-new customer event whose id upstream gave us must be loadable: the Saturday import holds every event not already in the database as \"no permanent id\"",
       "detail": "FOUND 2026-10-10: Saturday's first load of the customer events added since 2026-10-05 shipped none of them. weekend_import.py resolve_market holds back any researched row whose canonical id is not already in the database (db_ids), labelled 'no permanent id - cannot tell for certain which event this is'. But the 82 held events (62 Cybersecurity, 20 Utility) DO have a permanent id: upstream gave all 82 on 2026-10-05, they are in docs/operations/given_ids.csv and stamped on our input rows; note 46 asked upstream for them again and upstream's reply (2026-10-10) is the same 82 ids, unchanged. So the hold is ours: no automatic path creates a NEW event in the database (World of Concrete 2028 and the 59 stamped ids needed hand loads, runbook 7.1 step 4: import_grounding --ids, verify_grounding --seed-csv, seed row appended). The message is also wrong (the row has an id). Japan CCUS Summit 2026 (accepted 2026-10-10, ACCEPTED by the gate) is blocked the same way. Cost: about 18 USD a week of research and sponsor checks on events that cannot reach a customer page. BUILD: in the weekend import, a row whose canonical id is in the given_ids ledger (or a delivery's own id list) and not in the database takes a GUARDED first-load path: same guards as import_grounding --ids plus verify_grounding, seed row appended, backup and read-back, report line per event, a cap per run, nothing for an id the ledger does not hold; keep holding rows with a truly unknown id and say which. Reword the hold reason so it says what is true. Prove on a sandbox copy with the real Saturday output (Cybersecurity_audited.csv, Utility_audited.csv of 2026-10-10 and the ids in given_ids.csv); the reviewer rehearses and applies. Never mint an id; identity.to_canonical for every join.",
