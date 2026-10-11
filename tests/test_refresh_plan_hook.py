@@ -28,8 +28,8 @@ def test_patch_only_adds_lines_and_applies_only_when_the_environment_switch_is_o
     assert "refresh_plan.py" in added and "REFRESH-PLAN" in added and "-not $WhatIf" in added
     assert "CFP_REFRESH_APPLY -eq '1'" in added, "marking is a switch, off by default"
     assert added.count("'--apply'") == 1 and "$rfArgs = @()" in added
-    assert "--clear" not in "
-".join(l for l in added.splitlines() if not l.lstrip().startswith("#"))      # the fallback is plain PowerShell; --clear is the operator's command
+    code_lines = [l for l in added.splitlines() if not l.lstrip().startswith("#")]
+    assert not [l for l in code_lines if "--clear" in l]          # the fallback is plain PowerShell; --clear is the operator's command
 
 
 def test_the_step_is_for_the_saturday_run_only_never_the_friday_awards_run():
