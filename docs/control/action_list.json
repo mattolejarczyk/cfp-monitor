@@ -1308,6 +1308,27 @@
       "title": "Sponsor check: carry last week's settled answers instead of re-buying them (cost plan, awaiting the operator's decisions)",
       "detail": "PLAN WRITTEN 2026-10-11, NOT BUILT: docs/design/sponsor-check-cost-plan.md. The sponsor-only pass (run_market_audit.py run_sponsor_only_pass) is designed to skip rows already Yes/No, but each Saturday run_monthly.ps1 archives last week's audited file and the new research file has blank sponsor cells, so every row is asked again (about 235 requests, about 3,100 searches, about 44 USD at list price on 2026-10-10; 104 of 219 checks repeated an answer held from last week). BUILD (operator decided 2026-10-11: N = 8 weeks for settled answers, Unknown every 2 weeks): scripts/sponsor_prefill.py run before the pass: carry a Yes/No answer for the same permanent id and edition when its sponsor link is alive and it is not due for the rotating re-check (N weeks); Unknown re-asked every 2 weeks; sources: approved file, then the previous archived audited file; failure isolated; dry run on the real 2026-10-10 files must reproduce the plan's table; a one-line run_overnight.ps1 call applied by the operator with a backup.",
       "acceptance": "Dry run on the 2026-10-10 files reproduces the carry/ask counts; tests cover every carry rule and the failure-isolated fallback; the first live Saturday log shows rows carried and rows asked; sponsor spend per Saturday falls to the plan's estimate for the chosen N; no settled answer is lost and the badge and quote steps are unchanged."
+    },
+    {
+      "needs_you": "",
+      "closes": [],
+      "depends": [
+        "ACT-64"
+      ],
+      "evidence": [
+        "2026-10-11: operator asked to do it today; scan counts above."
+      ],
+      "updated": "2026-10-11",
+      "on_verify": "",
+      "id": "ACT-65",
+      "wave": "W5",
+      "step": "E",
+      "owner": "builder",
+      "state": "todo",
+      "cost": "$0 (links only, no AI calls)",
+      "title": "Sponsor links join the weekly link check, and the customer page flags a dead sponsor link",
+      "detail": "2026-10-11 read-only scan of the 174 distinct sponsor links on the Yes rows of both approved files: 91 load, 35 return a plain 404 (about one in five), 16 return 403 (script-blocked), 32 failed to connect in the scan. The Sunday sweep (weekly_verify.CUSTOMER_FACING, also copies in link_check_awards.py and make_handback.py) does not check sponsor_url, and build_review_page.py flags a dead submission, evidence and main link but not a dead sponsor link, so customers can click a broken sponsor page and nothing says so; ACT-64's prefill also cannot tell a dead sponsor link (87 of 104 settled Yes rows have no link record). BUILD: (1) sponsor_url joins the sweep (weekly_verify; keep make_handback consistent; every dead link still browser-confirmed, a plain 404 or 403 is never enough); (2) the review page marks a dead sponsor link exactly the way it marks the other dead links (same marker, same wording pattern); (3) tests; (4) prove it by building a page from a COPY of the live database with the sponsor links checked and show the rendered page in a browser. Monday's build (weekly_deliverable step 2b) already calls check_all_submission_links, so (1) takes effect there automatically.",
+      "acceptance": "Sponsor links are checked and browser-confirmed in the sweep; a dead sponsor link is marked on the rendered page like the other dead links and a live one is not; page and sweep tests pass; a page rendered from a database copy was looked at; the Monday build time is measured and reported."
     }
   ]
 }
