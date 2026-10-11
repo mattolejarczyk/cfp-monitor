@@ -205,6 +205,19 @@ def build(old: dict, new: dict, finals: dict[str, list[dict]], signed: dict[str,
     rep["sections"].append({"title": "Deadline evidence from a third-party listing instead of the organizer", "note": "A listing can be wrong or may not list the event at all (trap case T05). Not rejected by the gate; needs the organizer's own page from upstream.",
                             "columns": ["Row"], "rows": [[x] for x in agg], "flags": agg})
     rep["flags"] += agg
+    if not awards:                                    # ACT-33: a row the refresh policy skipped is carried whole; flag one carried longer than the policy can explain
+        from scripts.carry_age import rows_carried_whole
+        from scripts.refresh_plan import load_policy, max_explained_days
+        try:
+            limit = max_explained_days(load_policy())
+            old_rows = [[m, x["name"], x["source_as_of"], x["days"]] for m, rs in finals.items() for x in rows_carried_whole(rs, today, limit)]
+            oflags = [f"{m}: {n} was last researched {d} days ago ({s}); the refresh policy explains at most {limit} days - check why it is still being carried" for m, n, s, d in old_rows]
+        except Exception as e:                                          # noqa: BLE001  a faulty policy file must not break the load report
+            old_rows, oflags = [], [f"the refresh-policy age check could not run: {type(e).__name__}: {e}"]
+        rep["sections"].append({"title": "Rows carried whole for longer than the refresh policy explains",
+                                "note": "Closed rows are re-researched on a schedule (scripts/refresh_plan.py, docs/operations/refresh_policy.json); between checks the last accepted row is carried. A row older than the longest scheduled gap is flagged.",
+                                "columns": ["Market", "Event", "Last researched", "Days"], "rows": old_rows, "flags": oflags})
+        rep["flags"] += oflags
     if not awards:                                    # awards have no event start date: nothing here applies to them
         drows, dflags = [], []
         for m, rs in finals.items():

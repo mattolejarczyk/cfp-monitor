@@ -248,6 +248,12 @@ def test_guard_skips_nothing_when_the_plan_would_skip_over_the_share():
     assert "GUARD" in rp.summary_line("Cybersecurity", pl, POL) and ", 0 skipped" in rp.summary_line("Cybersecurity", pl, POL)
 
 
+def test_dry_run_line_says_nothing_was_marked():
+    pl = plan_for(conf_rows(1), {"r0": dormant_prior(0)})
+    assert rp.summary_line("Utility", pl, POL, dry=True).endswith("[DRY RUN: nothing was marked, so every row is researched this week]")
+    assert "DRY RUN" not in rp.summary_line("Utility", pl, POL)
+
+
 def test_guard_share_is_a_setting():
     rows = conf_rows(10)
     priors = {f"r{i}": dormant_prior(i) for i in range(10)}
@@ -316,7 +322,7 @@ def test_dry_run_writes_only_the_report(world, capsys):
     before_inputs, before_db = snapshot(mk), db.read_bytes()
     assert run_main(mk, db, tmp) == 0
     out = capsys.readouterr().out
-    assert out.startswith("REFRESH-PLAN Utility: 16 rows, 11 researched") and "dry run" in out
+    assert out.startswith("REFRESH-PLAN Utility: 16 rows, 11 researched") and "[DRY RUN" in out and "dry run: the input list was not changed" in out
     assert snapshot(mk) == before_inputs and db.read_bytes() == before_db                       # nothing but the report changed
     assert sorted(p.name for p in (tmp / "out").iterdir()) == ["refresh_plan_Utility.csv", "refresh_plan_Utility.md"]
     rows = list(csv.DictReader(open(tmp / "out" / "refresh_plan_Utility.csv", encoding="utf-8")))

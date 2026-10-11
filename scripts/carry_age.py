@@ -106,3 +106,18 @@ def save_ledger(path: Path, ledger: dict) -> None:
     tmp = Path(str(path) + ".tmp")
     tmp.write_text(json.dumps(ledger, indent=1, sort_keys=True), encoding="utf-8")
     tmp.replace(path)
+
+
+def rows_carried_whole(rows: list[dict], today: date, limit_days: int) -> list[dict]:
+    """ACT-33: rows of an approved file whose SOURCE_AS_OF (when the row was last researched) is older than `limit_days`, oldest first. Under the conference refresh policy
+    a Closed row is skipped for some Saturdays and its whole last accepted row is carried; the longest gap the policy can explain is refresh_plan.max_explained_days().
+    A row older than that was carried for a reason the policy does not give (a plan that stopped covering it, a stuck mark): flag it. A blank or unreadable date is not flagged. Pure."""
+    out = []
+    for r in rows:
+        d = _iso(r.get("SOURCE_AS_OF", ""))
+        if not d:
+            continue
+        days = (today - date.fromisoformat(d)).days
+        if days > limit_days:
+            out.append({"name": (r.get("CONFERENCE") or "")[:60], "source_as_of": d, "days": days})
+    return sorted(out, key=lambda x: (-x["days"], x["name"]))

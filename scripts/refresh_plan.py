@@ -213,6 +213,15 @@ def load_policy(path: Path | None = None) -> dict:
     return pol
 
 
+def max_explained_days(pol: dict | None = None) -> int:
+    """The longest a row can go without being researched under the policy, plus one week of slack (ACT-33; scripts/carry_age.rows_carried_whole flags anything older).
+    Group 2 waits group2_every_weeks; group 4 far waits group4_far_every_weeks; a group 3 row waits from its one check (day group3_check_to_days at the latest)
+    to the first group 2 slot after day group2_after_days."""
+    pol = pol or load_policy()
+    g3 = (pol["group2_after_days"] - pol["group3_check_from_days"]) + 7 * int(pol["group2_every_weeks"])
+    return max(7 * int(pol["group2_every_weeks"]), 7 * int(pol["group4_mid_every_weeks"]), 7 * int(pol["group4_far_every_weeks"]), g3) + 7
+
+
 def week_index(d: date) -> int:
     """Continuous week number (Monday-to-Sunday blocks), so a Saturday is always exactly one more than last Saturday, across New Year too."""
     return d.toordinal() // 7
@@ -371,11 +380,11 @@ def conference_plan(rows: list[dict], prior_by_canon: dict[str, dict], states: d
     return {"decisions": decisions, "skip": skip, "counts": counts, "fuse": fuse, "rows": n, "researched": n - len(skip)}
 
 
-def summary_line(market: str, pl: dict, pol: dict) -> str:
+def summary_line(market: str, pl: dict, pol: dict, dry: bool = False) -> str:
     c, n, k, s = pl["counts"], pl["rows"], pl["researched"], len(pl["skip"])
     line = (f"REFRESH-PLAN {market}: {n} rows, {k} researched (g1 {c['g1']}, g2 {c['g2']}, g3 {c['g3']}, g4 {c['g4']}, overrides {c['overrides']}), "
             f"{s} skipped (saving about {s * pol['cost_per_row_usd']:.2f} USD, an estimate)")
-    return line + (f" [{pl['fuse']}]" if pl["fuse"] else "")
+    return line + (f" [{pl['fuse']}]" if pl["fuse"] else "") + (" [DRY RUN: nothing was marked, so every row is researched this week]" if dry else "")
 
 
 def prior_rows_by_canon(final_path: Path, up_to_canon: dict[str, str]) -> dict[str, dict]:
@@ -484,7 +493,7 @@ def conference_main(a) -> int:
             except Exception as e2:                                  # noqa: BLE001
                 print(f"  WARNING: could not clear older marks ({type(e2).__name__}: {e2})")
         return 0
-    line = summary_line(market, pl, pol)
+    line = summary_line(market, pl, pol, dry=not a.apply)
     print(line)
     if pl["fuse"]:
         print("  " + pl["fuse"])

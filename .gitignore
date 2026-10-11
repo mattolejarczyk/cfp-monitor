@@ -77,3 +77,10 @@ experiments/model_bakeoff/pages/
 experiments/act33_rehearsal/live/
 experiments/act33_rehearsal/work*/
 experiments/act33_rehearsal/*.csv
+experiments/act33_rehearsal/live_pre/
+experiments/act33_rehearsal/full/
+experiments/act33_rehearsal/skip/
+experiments/act33_rehearsal/reports_*/
+experiments/act33_rehearsal/sbx_*/
+experiments/act33_rehearsal/*.json
+experiments/act33_rehearsal/*.log
