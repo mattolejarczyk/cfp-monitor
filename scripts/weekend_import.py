@@ -31,6 +31,12 @@ WHAT A FAILURE DOES
     sheets and held_rows.txt are restored from the backup taken at the start, and nothing is
     promoted. Nothing half-imported survives.
 
+--new-events (ACT-63, default OFF) lets a researched row for an event that is NOT in the database yet load as a new event, but only
+when its permanent id is one upstream GAVE us (docs/operations/given_ids.csv, same market) and is stamped on our input row; the row
+passes the gate like any other, the load reads back that exactly those ids were added (else everything is undone from the backup),
+and --new-events-cap (default 100) limits a run. Rules in scripts/first_load.py. Without the flag such a row is held, with a reason
+that says it is waiting for the switch. Never mints or derives an id.
+
 --sandbox <dir> copies the database and the seed sheets into <dir> and does everything there,
 promoting into <dir> too - a full rehearsal that cannot touch the live data.
 
@@ -73,7 +79,7 @@ AWARDS = "Awards"
 NAME_PREFIX = 38
 MAX_ROUNDS = 3
 MAX_OUTPUT_AGE_H = 30
-WAITING_MARK = "was given by upstream (given_ids ledger) but the event is not in the database yet"
+WAITING_MARK = "so it waits"          # in the hold reasons for an id upstream gave when the first-load path is off or capped
 
 
 # ============================================================================ csv helpers
@@ -292,7 +298,8 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
             else:
                 ok, why = fl.decide(c, enabled=fl_cfg["enabled"], ledger=fl_ledger, input_ids=fl_input,
                                     known=known, up_to_canon=up_to_canon, to_canonical=to_canonical,
-                                    taken=len(new_ids), cap=fl_cfg["cap"])
+                                    taken=len(new_ids), cap=fl_cfg["cap"],
+                                    edition=r.get("EDITION") or "")
                 if ok:
                     new_ids.add(c)
                 else:
@@ -407,6 +414,8 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
                                  for c in sorted(new_ids) if c in by_canon]
             res["new_events_failed_gate"] = sorted(c for c in new_ids if c not in by_canon)
             res["new_events_waiting"] = sum(1 for r_ in pre_bad.values() if r_ and WAITING_MARK in r_[0])
+            # given by upstream but held for another reason (edition differs from the id's year, id not on our input row, an alias): for a person
+            res["new_events_held_for_person"] = sum(1 for r_ in pre_bad.values() if r_ and "was given by upstream" in r_[0] and WAITING_MARK not in r_[0])
             for e in res["new_events"]:
                 log.append(f"[{market}] NEW EVENT (first load, id given by upstream): {e['canonical']} - {e['conference'][:60]}")
             if res["new_events_waiting"]:
@@ -740,9 +749,10 @@ def main() -> int:
                      f"{m.get('from_last_week')} kept from last week, {m.get('held_back')} held back)"
                      if m["status"] in ("ACCEPTED", "PROMOTED") else f" - {m.get('why', '')}"))
         for m in report["markets"]:
-            if m.get("status") in ("ACCEPTED", "PROMOTED") and (m.get("new_events") or m.get("new_events_waiting") or m.get("new_events_failed_gate")):
+            if m.get("status") in ("ACCEPTED", "PROMOTED") and (m.get("new_events") or m.get("new_events_waiting") or m.get("new_events_failed_gate") or m.get("new_events_held_for_person")):
                 print(f"  NEW EVENTS {m['market']}: {len(m.get('new_events', []))} loaded as new, "
                       f"{m.get('new_events_waiting', 0)} waiting (id given, path off or capped), "
+                      f"{m.get('new_events_held_for_person', 0)} held for a person (id given, but edition or input row disagree), "
                       f"{len(m.get('new_events_failed_gate', []))} failed the gate")
         print(f"  report: {report_path}")
         return 0 if status in ("DONE", "PARTIAL") else 1

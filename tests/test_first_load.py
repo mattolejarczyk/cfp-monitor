@@ -129,8 +129,20 @@ def test_second_run_adds_nothing(tmp_path, monkeypatch):
 def test_an_alias_of_a_held_event_is_not_loaded_as_new():
     ok, why = fl.decide(NEW1, enabled=True, ledger={NEW1}, input_ids={NEW1}, known=set(),
                         up_to_canon={NEW1: "2027-some-other-canonical"},
-                        to_canonical=lambda e, m: m.get(e, e), taken=0, cap=100)
+                        to_canonical=lambda e, m: m.get(e, e), taken=0, cap=100, edition="2027")
     assert not ok and "alias" in why
+
+
+def test_edition_that_disagrees_with_the_id_year_stays_held(tmp_path, monkeypatch):
+    # 2026-10-10 rehearsal: Upfront Summit was researched as the 2026 edition under a 2027 id; loading it fails invariant 7 and undoes everything.
+    md, led, db = world(tmp_path)
+    rows = list(csv.reader(open(md / f"{M}_audited.csv", encoding="utf-8")))
+    rows[1][5] = "2026"                                   # Alpha: id 2027-..., edition 2026
+    write(md / f"{M}_audited.csv", rows[0], rows[1:])
+    res = resolve(tmp_path, monkeypatch, md, led, db, enabled=True)
+    assert [e["canonical"] for e in res["new_events"]] == [NEW2, NEW3]
+    assert "carries 2027" in reasons(res)[NEW1]
+    assert res["new_events_held_for_person"] == 1 and res["new_events_waiting"] == 0
 
 
 def test_blank_id_is_never_loaded():

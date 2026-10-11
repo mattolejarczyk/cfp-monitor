@@ -14,7 +14,8 @@ a researched row is let through as a NEW event only when ALL of these hold
      row and the id on our input row agree);
   4. identity.to_canonical maps it to itself (it is not an upstream alias of an event we already hold)
      and it is not in the database;
-  5. this run has not already let `cap` new events through (default 100).
+  5. the row's EDITION year equals the year the id carries (a mismatch would fail invariant 7 and undo the load);
+  6. this run has not already let `cap` new events through (default 100).
 The row then goes through the gate like every other row. An id the ledger does not hold is never loaded.
 Nothing here mints, derives or normalises an id.
 """
@@ -44,7 +45,7 @@ def input_canons(input_csv: Path) -> set[str]:
 
 
 def decide(canon: str, *, enabled: bool, ledger: set[str], input_ids: set[str], known: set[str],
-           up_to_canon: dict, to_canonical, taken: int, cap: int) -> tuple[bool, str]:
+           up_to_canon: dict, to_canonical, taken: int, cap: int, edition: str = "") -> tuple[bool, str]:
     """(load it as a new event?, the plain reason it is held when not)."""
     if not canon:
         return False, ("no permanent id on our input row (EVENT_ID_CANON is blank), so it is not "
@@ -61,6 +62,12 @@ def decide(canon: str, *, enabled: bool, ledger: set[str], input_ids: set[str], 
         return False, held + "it is not stamped on our input row, so the two do not agree; not loaded"
     if to_canonical(canon, up_to_canon) != canon:
         return False, held + "it is an alias of an event we already hold; not loaded as new"
+    # The id is frozen with the year it carries (invariant 7: key_year = the edition at creation). A row researched for another
+    # edition than the id's year would fail reconciliation and undo the whole load, so it is held for a person instead.
+    ed = (edition or "").strip()[:4]
+    if ed != canon[:4]:
+        return False, held + (f"the researched row is for edition '{(edition or '').strip() or 'blank'}' but the id carries {canon[:4]}; "
+                              "a person must say which edition this is; not loaded")
     if not enabled:
         return False, held + "the first-load path is OFF (weekend_import.py --new-events), so it waits"
     if taken >= cap:

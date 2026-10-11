@@ -161,9 +161,16 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    the page. A cited page that an anti-bot wall will not let a plain read open (it answers with a
    short notice instead of the page) is not counted as a missing quote; it is listed in the
    approval report as "not checked" so that a person can confirm it. *(accept_delivery.py - the one approval check)*
+   A row for an event that is NOT in the database yet has no last week's version to fall back on; it is held back here unless the first-load path of step 5 lets it through.
 4. **[Load]** **Backs up the database** before touching it.
 5. **[Load]** **Loads each row onto its permanent ID**, so a renamed event updates its name instead of
    becoming a duplicate. *(import_grounding.py --ids)*
+   **A brand-new event (added 2026-10-10, ACT-63; the switch `--new-events` is OFF in the code and the reviewer switches it on in `run_monthly.ps1`):** a researched row for an event that is not in the database yet
+   loads as a NEW event only when upstream GAVE us its id (listed for that market in `docs/operations/given_ids.csv` and stamped on our input row), the id is not an alias of an event we already hold, and this run has not
+   yet added 100 new events (`--new-events-cap`). The row still passes the approval check of step 3 like every other row. After the import the load reads back that exactly those ids, and no others, were added, that each
+   has the researched name, and that its row is in the market's seed sheet; any mismatch undoes the whole load from the backup (step 4). The log has one `NEW EVENT` line per event and the summary prints
+   `NEW EVENTS <market>: n loaded as new, w waiting, p held for a person, f failed the gate`. A row whose researched edition is not the year its id carries is held for a person (the id is frozen with that year). An id the ledger does not hold is never loaded (we never mint or derive an id): the row is held back and the report says which true thing
+   applies - upstream gave the id but the path is off or capped (it waits), the id is not in the ledger, our input row does not carry that id, or the edition differs from the id's year. *(weekend_import.py, first_load.py)*
 6. **[Load]** **Re-verifies the new rows** against their cited pages. *(verify_grounding.py, fix_edition.py)*
 7. **[Safety check]** **Runs the database health check.** If anything is wrong, **everything is undone from the
    backup** and nothing is approved. *(check_invariants.py)*

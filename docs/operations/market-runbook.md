@@ -820,6 +820,7 @@ These are the things that were done by hand in a hurry, found real defects, and 
    check because they claim nothing. ACCEPTED then means "nothing to check".
 3. Read every cited page the gate could not (walled, script-built) in the built-in browser and write down the verbatim sentence. A person's read is the proof.
 4. Load only with upstream's own ids (`import_grounding.py --ids`), then `verify_grounding.py --market <M> --seed-csv <seed of just those rows> --apply`.
+   Since 2026-10-10 (ACT-63) the Saturday import does this itself for a researched row whose id is in `docs/operations/given_ids.csv` and stamped on our input row (`weekend_import.py --new-events`, switched on in `run_monthly.ps1` by the reviewer; cap 100 per run). The hand path above remains for a delivery that is not Saturday's research, and for any id the ledger does not hold (record it with `stamp_given_ids.py` first).
 5. **Write down every promise upstream makes** in the same triage: one line per correction in `docs/operations/upstream_commitments.csv` (event by our canonical id, column, expected value, due date), and run `python scripts/check_commitments.py --file <their delivery>` the day it arrives. A promise nobody checks is not a promise (2026-10-06: notes 33 to 38 were full of 'we will'; QA-REGISTER A42).
 
 ### 7.2 Two dates disagree for one event
