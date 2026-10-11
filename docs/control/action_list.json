@@ -1265,6 +1265,25 @@
       "title": "Date-label rule gap (German 'vom 23.-24. September') and the 'Sponsor required (unconfirmed)' badge",
       "detail": "(1) ACT-56 found one wrong-accepted item for EVERY model: German OWASP Day 2026, page says 'vom 23.-24. September 2026' (training day 23, Conference Day 24); key START DATE 2026-09-24 (R-001: first main-conference day). The labelled-range rule (R-001 / ACT-23) does not recognise German labels, so the headline range is accepted. Extend the rule to recognise main-conference labels in German (e.g. Konferenztag, Hauptkonferenz, Konferenz) and keep the rule's English behaviour; add tests from this real page text; do not loosen anything. (2) R-002: a customer page row with SPONSOR_REQUIRED=Yes and no SPONSOR_QUOTE shows the badge 'Sponsor required (unconfirmed)'; a row with a proven quote keeps 'Sponsor required'; detail text unchanged otherwise. Find the page builder via TOOLING.md; add tests; rehearse on a COPY of the database/files and show before/after for 3 rows.",
       "acceptance": "German label test reproduces the miss and passes after the change; no English regression; badge shows the new wording only when no quote; tests; nothing live touched; rehearsal output shown."
+    },
+    {
+      "needs_you": "",
+      "closes": [],
+      "depends": [],
+      "evidence": [
+        "2026-10-10: root cause found by the reviewer; upstream reply to note 46 confirmed all 82 ids already held (ledger, input canon, none in the database)."
+      ],
+      "updated": "2026-10-10",
+      "on_verify": "",
+      "id": "ACT-63",
+      "wave": "W5",
+      "step": "B",
+      "owner": "builder",
+      "state": "todo",
+      "cost": "$0 to build; saves about 18 USD a week of research that cannot ship",
+      "title": "A brand-new customer event whose id upstream gave us must be loadable: the Saturday import holds every event not already in the database as \"no permanent id\"",
+      "detail": "FOUND 2026-10-10: Saturday's first load of the customer events added since 2026-10-05 shipped none of them. weekend_import.py resolve_market holds back any researched row whose canonical id is not already in the database (db_ids), labelled 'no permanent id - cannot tell for certain which event this is'. But the 82 held events (62 Cybersecurity, 20 Utility) DO have a permanent id: upstream gave all 82 on 2026-10-05, they are in docs/operations/given_ids.csv and stamped on our input rows; note 46 asked upstream for them again and upstream's reply (2026-10-10) is the same 82 ids, unchanged. So the hold is ours: no automatic path creates a NEW event in the database (World of Concrete 2028 and the 59 stamped ids needed hand loads, runbook 7.1 step 4: import_grounding --ids, verify_grounding --seed-csv, seed row appended). The message is also wrong (the row has an id). Japan CCUS Summit 2026 (accepted 2026-10-10, ACCEPTED by the gate) is blocked the same way. Cost: about 18 USD a week of research and sponsor checks on events that cannot reach a customer page. BUILD: in the weekend import, a row whose canonical id is in the given_ids ledger (or a delivery's own id list) and not in the database takes a GUARDED first-load path: same guards as import_grounding --ids plus verify_grounding, seed row appended, backup and read-back, report line per event, a cap per run, nothing for an id the ledger does not hold; keep holding rows with a truly unknown id and say which. Reword the hold reason so it says what is true. Prove on a sandbox copy with the real Saturday output (Cybersecurity_audited.csv, Utility_audited.csv of 2026-10-10 and the ids in given_ids.csv); the reviewer rehearses and applies. Never mint an id; identity.to_canonical for every join.",
+      "acceptance": "A researched row whose id is in the given_ids ledger and not in the database loads as a new event on the Saturday import (sandbox proof with the 2026-10-10 output: the 82 events plus Japan CCUS), a row with an unknown id is still held with an honest reason, the load QA IDENTITY count falls from 62/21, and the hold message is true."
     }
   ]
 }

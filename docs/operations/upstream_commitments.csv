@@ -31,3 +31,7 @@ C29,2026-10-06,42,Cybersecurity,2027-world-summit-ai-amsterdam-speaking,IS_PROJE
 C30,2026-10-06,42,Cybersecurity,2026-nullcon-goa-bambolim,SUBMISSION DEADLINE,equals,2026-10-30,2026-10-10,Nullcon Goa 2027: call for papers closes 30 October 2026 (their delivered value; page verified by us)
 C31,2026-10-06,43,Cybersecurity,2026-cyberdefensecon-orlando,STATUS,equals,Open,2026-10-10,"CyberDefenseCon 2026: the Call for Speakers page is live (enterprise CISOs, no deadline listed): STATUS Open, not Closed (requested in note 43)"
 C32,2026-10-06,43,Cybersecurity,2026-cyberdefensecon-orlando,CFP MODEL TYPE,equals,Rolling Form,2026-10-10,CyberDefenseCon 2026: a form with no deadline is Rolling Form (requested in note 43)
+C33,2026-10-10,45,Utility,2026-japan-ccus-summit-tokyo-speaking,STATUS,equals,Open,2026-10-17,"Japan CCUS Summit 2026: STATUS Open (reply to note 45; programme contact is the route, no call page)"
+C34,2026-10-10,45,Utility,2026-japan-ccus-summit-tokyo-speaking,CFP MODEL TYPE,equals,Rolling Form,2026-10-17,Japan CCUS Summit 2026: Rolling Form (reply to note 45)
+C35,2026-10-10,45,Utility,2026-japan-ccus-summit-tokyo-speaking,COORDINATOR EMAIL,equals,Fiona@leader-associates.com,2026-10-17,Japan CCUS Summit 2026: the published programme and speakers contact in COORDINATOR EMAIL (reply to note 45)
+C36,2026-10-10,45,Utility,*,STATUS DETAILS,not_contains,active on official portal,2026-10-17,No-call-page policy confirmed by upstream (note 45 reply): no row is described as active on a portal unless a dedicated submission page is verified
