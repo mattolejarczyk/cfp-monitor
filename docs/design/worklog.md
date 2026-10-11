@@ -5,6 +5,14 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-10 - Saturday run: spending cap twice, -Resume, loads, cost analysis, ids correction, Japan CCUS, ACT-63
+
+- 02:00 run hit Google AI Studio's MONTHLY SPENDING CAP (429) after 134 of 137 Cybersecurity rows; nothing loaded. Operator raised the cap twice. A plain re-run would have archived the finished rows and respent everything, so `run_monthly.ps1 -Resume` (skips only the archive step) was added by the operator's apply script (classifier blocks my live edits). Resume 1: Cybersecurity sponsor check + Utility 60/85; resume 2: Utility 25 rows + 85 sponsor checks, then both markets promoted by the job itself.
+- Cost analysis (estimates): grounded search about 14 USD per 1,000 queries; Oct 3-10 logs about 8,940 searches = about 125 USD gross; sponsor checks about 56% of searches; list growth from customer events (Cybersecurity research 73 -> 134 requests), new Friday awards job; about 18 USD a week on rows that could not ship.
+- CORRECTION: the 82 events held as 'no permanent id' were never missing ids (all in given_ids.csv since 10-05, stamped on input rows); weekend_import could not create a NEW event at all. Note 46 asked upstream for nothing new. ACT-63 built (first_load.py, --new-events, default off), merged, applied by hand at 23:00: 65 new events (48 + 17), approved files Cybersecurity 120 rows, Utility 84, grounding_facts 495.
+- Upstream reply to note 45 accepted (Japan CCUS; no-call-page standard confirmed); ledger C33-C36; Japan CCUS hand-loaded (DB, seed, approved file, promoted).
+- Lessons: read the entry point's first step before telling the operator to re-run; check what we already hold before saying another party owes us something; a classifier block means prepare a script and let the operator run it.
+
 ## 2026-10-09 - first Friday awards run: two first-run bugs fixed, awards loaded
 
 - 02:00 run failed at its canary (our bug, not the search): the canary took the first 5 awards and the refresh plan had marked 4 of them dormant (REFRESH_SKIP). Fixed run_canary.ps1 (QA-REGISTER A54). Operator started the task by hand 07:36 (the permission classifier blocked me from starting it): canary passed, 80 awards researched (86 requests, 80 grounded, HEALTHY).

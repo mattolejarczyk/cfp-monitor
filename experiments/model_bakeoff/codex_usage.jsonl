@@ -72,3 +72,128 @@
 {"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-3:trap::T02::2027", "seconds": 10.8, "tokens_used": 2609, "returncode": 0}
 {"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-3:trap::T02::2026", "seconds": 38.1, "tokens_used": 17650, "returncode": 0}
 {"ts": "2026-10-06", "model": "gpt-6-luna", "effort": "max", "tag": "luna-20261006-3:trap::T09::2027", "seconds": 12.7, "tokens_used": 4627, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Horizons Clean Energy Expansion Week 202", "seconds": 40.6, "tokens_used": 16860, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Industrial Net Zero & Decarbonisation Eu", "seconds": 8.9, "tokens_used": 16104, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Energy Transition North America 2026 (Re", "seconds": 17.1, "tokens_used": 17831, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:SANS Cyber Defense Initiative 2026 (CDI ", "seconds": 15.9, "tokens_used": 8508, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:ICRAI 2026: International Conference on ", "seconds": 11.7, "tokens_used": 18107, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:RAAI 2026: International Conference on R", "seconds": 10.4, "tokens_used": 14935, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:International Conference on Climate Chan", "seconds": 13.1, "tokens_used": 19294, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:CyberTech Global Tel Aviv 2027", "seconds": 10.5, "tokens_used": 4893, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:European Carbon Capture, Utilization & S", "seconds": 8.1, "tokens_used": 18826, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Decarb Connect North America 2027", "seconds": 9.2, "tokens_used": 4523, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Apres-Cyber Slopes Summit 2027", "seconds": 30.9, "tokens_used": 20456, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Nullcon Goa 2027 (18th Edition)", "seconds": 15.1, "tokens_used": 6231, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:World Sustainable Energy Days 2027", "seconds": 9.2, "tokens_used": 16184, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:CERAWeek 2027 (by S&P Global)", "seconds": 10.9, "tokens_used": 7528, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Cloud & Cyber Security Expo London 2027", "seconds": 19.0, "tokens_used": 7818, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:AAIML Conference 2027", "seconds": 9.8, "tokens_used": 17813, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:OWASP Boston Application Security Confer", "seconds": 9.0, "tokens_used": 3106, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:RSA Conference 2027 (RSAC 2027)", "seconds": 14.2, "tokens_used": 4892, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Carbon Capture Europe Summit 2027", "seconds": 14.7, "tokens_used": 20204, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Sustainable Fuels Global Summit 2027", "seconds": 15.5, "tokens_used": 4892, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Industry Connect Europe 2027", "seconds": 9.8, "tokens_used": 4193, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:ODSC East 2027 (Open Data Science Confer", "seconds": 10.9, "tokens_used": 3975, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:World Hydrogen 2027 Summit & Exhibition", "seconds": 18.4, "tokens_used": 16936, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:AI Con USA 2027", "seconds": 8.0, "tokens_used": 3156, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Global Energy Show Canada 2027", "seconds": 20.7, "tokens_used": 19196, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:17th ACM Conference on Data and Applicat", "seconds": 8.2, "tokens_used": 3513, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:TROOPERS27", "seconds": 17.3, "tokens_used": 17812, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Hydrogen Technology World Expo 2027", "seconds": 9.3, "tokens_used": 6976, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Decarb TechInvest 2027", "seconds": 6.1, "tokens_used": 17352, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Industry Connect Canada 2026", "seconds": 15.9, "tokens_used": 18720, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:SecureWorld East 2026", "seconds": 9.0, "tokens_used": 11865, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:SecureWorld Government & Critical Infras", "seconds": 14.0, "tokens_used": 4126, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:World Future Energy Summit 2027", "seconds": 13.1, "tokens_used": 4009, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:India Energy Week 2027", "seconds": 18.8, "tokens_used": 3818, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:SANS Cyber Threat Intelligence Summit an", "seconds": 23.3, "tokens_used": 4798, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Black Hat Asia 2027 (Call for Summits Se", "seconds": 22.0, "tokens_used": 5384, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Canadian Hydrogen Convention 2027", "seconds": 16.8, "tokens_used": 4249, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Innovation Zero World Congress 2027", "seconds": 19.0, "tokens_used": 7685, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-054605:Industrial Net Zero Conference 2027", "seconds": 7.6, "tokens_used": 6059, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Horizons Clean Energy Expansion Week 202", "seconds": 30.6, "tokens_used": 3537, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Industrial Net Zero & Decarbonisation Eu", "seconds": 8.4, "tokens_used": 15448, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Energy Transition North America 2026 (Re", "seconds": 41.6, "tokens_used": 18890, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:SANS Cyber Defense Initiative 2026 (CDI ", "seconds": 16.6, "tokens_used": 5958, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:ICRAI 2026: International Conference on ", "seconds": 9.6, "tokens_used": 15783, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:RAAI 2026: International Conference on R", "seconds": 13.6, "tokens_used": 15105, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:International Conference on Climate Chan", "seconds": 22.8, "tokens_used": 18699, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:CyberTech Global Tel Aviv 2027", "seconds": 15.8, "tokens_used": 4755, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:European Carbon Capture, Utilization & S", "seconds": 8.7, "tokens_used": 17180, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Decarb Connect North America 2027", "seconds": 12.2, "tokens_used": 18481, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Apres-Cyber Slopes Summit 2027", "seconds": 18.1, "tokens_used": 7930, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Nullcon Goa 2027 (18th Edition)", "seconds": 13.0, "tokens_used": 19196, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:World Sustainable Energy Days 2027", "seconds": 9.8, "tokens_used": 18078, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:CERAWeek 2027 (by S&P Global)", "seconds": 5.8, "tokens_used": 6555, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Cloud & Cyber Security Expo London 2027", "seconds": 25.2, "tokens_used": 5782, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:AAIML Conference 2027", "seconds": 8.4, "tokens_used": 17338, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:OWASP Boston Application Security Confer", "seconds": 10.1, "tokens_used": 5673, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:RSA Conference 2027 (RSAC 2027)", "seconds": 7.6, "tokens_used": 16689, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Carbon Capture Europe Summit 2027", "seconds": 10.2, "tokens_used": 6062, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Sustainable Fuels Global Summit 2027", "seconds": 29.9, "tokens_used": 6094, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Industry Connect Europe 2027", "seconds": 10.2, "tokens_used": 7490, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:ODSC East 2027 (Open Data Science Confer", "seconds": 51.5, "tokens_used": 8426, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:World Hydrogen 2027 Summit & Exhibition", "seconds": 10.6, "tokens_used": 17853, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:AI Con USA 2027", "seconds": 8.6, "tokens_used": 5746, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Global Energy Show Canada 2027", "seconds": 9.9, "tokens_used": 8181, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:17th ACM Conference on Data and Applicat", "seconds": 9.3, "tokens_used": 3569, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:TROOPERS27", "seconds": 9.4, "tokens_used": 3730, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Hydrogen Technology World Expo 2027", "seconds": 23.2, "tokens_used": 6629, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Decarb TechInvest 2027", "seconds": 8.7, "tokens_used": 3871, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Industry Connect Canada 2026", "seconds": 11.0, "tokens_used": 18987, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:SecureWorld East 2026", "seconds": 9.1, "tokens_used": 5284, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:SecureWorld Government & Critical Infras", "seconds": 8.7, "tokens_used": 18204, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:World Future Energy Summit 2027", "seconds": 18.5, "tokens_used": 4652, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:India Energy Week 2027", "seconds": 11.8, "tokens_used": 6710, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:SANS Cyber Threat Intelligence Summit an", "seconds": 10.2, "tokens_used": 7580, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Black Hat Asia 2027 (Call for Summits Se", "seconds": 18.7, "tokens_used": 5122, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Canadian Hydrogen Convention 2027", "seconds": 23.7, "tokens_used": 5314, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Innovation Zero World Congress 2027", "seconds": 10.5, "tokens_used": 4345, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-090847:Industrial Net Zero Conference 2027", "seconds": 6.5, "tokens_used": 3870, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Horizons Clean Energy Expansion Week 202", "seconds": 27.5, "tokens_used": 17639, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Industrial Net Zero & Decarbonisation Eu", "seconds": 7.6, "tokens_used": 15475, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:SANS Cyber Defense Initiative 2026 (CDI ", "seconds": 15.6, "tokens_used": 6126, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:ICRAI 2026: International Conference on ", "seconds": 9.7, "tokens_used": 16250, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:RAAI 2026: International Conference on R", "seconds": 7.0, "tokens_used": 16325, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:International Conference on Climate Chan", "seconds": 11.3, "tokens_used": 5171, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Clean Tech Forum", "seconds": 9.7, "tokens_used": 6782, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:CyberTech Global Tel Aviv 2027", "seconds": 8.3, "tokens_used": 18784, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:European Carbon Capture, Utilization & S", "seconds": 8.6, "tokens_used": 18435, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Decarb Connect North America 2027", "seconds": 8.9, "tokens_used": 18639, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Apres-Cyber Slopes Summit 2027", "seconds": 10.6, "tokens_used": 17864, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Nullcon Goa 2027 (18th Edition)", "seconds": 10.7, "tokens_used": 19192, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Black Hat Asia 2027 (Call for Briefings)", "seconds": 11.1, "tokens_used": 17251, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:CERAWeek 2027 (by S&P Global)", "seconds": 7.6, "tokens_used": 6861, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Cloud & Cyber Security Expo London 2027", "seconds": 16.4, "tokens_used": 6136, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:AAIML Conference 2027", "seconds": 15.8, "tokens_used": 4366, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:OWASP Boston Application Security Confer", "seconds": 7.4, "tokens_used": 3687, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:RSA Conference 2027 (RSAC 2027)", "seconds": 19.1, "tokens_used": 5492, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Carbon Capture Europe Summit 2027", "seconds": 10.4, "tokens_used": 19297, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Sustainable Fuels Global Summit 2027", "seconds": 25.8, "tokens_used": 17342, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Industry Connect Europe 2027", "seconds": 11.4, "tokens_used": 7299, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:CO2-based Fuels and Chemicals Conference", "seconds": 8.4, "tokens_used": 16218, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:ARPA-E Summit", "seconds": 8.3, "tokens_used": 16344, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Innovation Zero 2027 (The UK's Clean Tec", "seconds": 10.3, "tokens_used": 19193, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:ODSC East 2027 (Open Data Science Confer", "seconds": 17.2, "tokens_used": 6622, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:World Hydrogen 2027 Summit & Exhibition", "seconds": 13.2, "tokens_used": 18302, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:AI Con USA 2027", "seconds": 9.4, "tokens_used": 6256, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Carbon Capture Technology Expo MENA 2027", "seconds": 30.7, "tokens_used": 5719, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Global Energy Show Canada 2027", "seconds": 8.7, "tokens_used": 7795, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:17th ACM Conference on Data and Applicat", "seconds": 22.0, "tokens_used": 15700, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Fuel Ethanol Workshop and Expo & Sustain", "seconds": 8.3, "tokens_used": 5147, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:TROOPERS27", "seconds": 22.1, "tokens_used": 4434, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Hydrogen Technology World Expo 2027", "seconds": 11.3, "tokens_used": 3873, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Decarb TechInvest 2027", "seconds": 6.7, "tokens_used": 6452, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Industrial Net Zero Conference 2027", "seconds": 7.1, "tokens_used": 3385, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Energy Transition North America 2026 (Re", "seconds": 15.8, "tokens_used": 7514, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Industry Connect Canada 2026", "seconds": 10.6, "tokens_used": 7125, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:SecureWorld Government & Critical Infras", "seconds": 8.2, "tokens_used": 4655, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:World Future Energy Summit 2027 (WFES 20", "seconds": 10.7, "tokens_used": 8161, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:SANS Cyber Threat Intelligence Summit an", "seconds": 7.9, "tokens_used": 17982, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Black Hat Asia 2027 (Call for Summits Se", "seconds": 14.1, "tokens_used": 9022, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Decarb Connect Europe 2027", "seconds": 12.3, "tokens_used": 5789, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Canadian Hydrogen Convention 2027", "seconds": 9.2, "tokens_used": 4197, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Innovation Zero World Congress 2027", "seconds": 12.0, "tokens_used": 4556, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:31st Annual Green Chemistry & Engineerin", "seconds": 10.2, "tokens_used": 18542, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:World of Concrete 2028", "seconds": 17.3, "tokens_used": 5221, "returncode": 0}
+{"ts": "2026-10-10", "model": "gpt-6-luna", "effort": "max", "tag": "lunashadow-2026-10-10-20261010-185431:Carbon Capture Technology Expo MENA 2026", "seconds": 10.7, "tokens_used": 2870, "returncode": 0}

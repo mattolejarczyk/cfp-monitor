@@ -2,6 +2,9 @@
 
 Written 2026-10-05 (Monday), at the end of a long session. Read this first, then `HANDOFF.md` (top block), then `docs/control/action_list.json` / `ACTION-LIST.html`. Everything below is also true if you have no memory of the conversation.
 
+> **UPDATE 2026-10-11 (just past midnight).** Saturday done: both markets loaded (Cybersecurity 120 rows, Utility 84), 65 new customer events live via ACT-63 (applied by hand, --new-events), Japan CCUS loaded. NEXT, in order: (1) Sun 01:00 verification digest; (2) Mon 07:00 pages published? (Arnica 120, Utility 84, awards 127); (3) before Sat 10-17 02:00 apply docs/control/patches/ACT-63-run_monthly.ps1.patch (backup first; classifier blocks my live edit: prepare a one-shot script like apply_resume_switch.py and let the operator run it); (4) Fri 10-16 awards, Sat 10-17 read ACT-31/63; (5) decide the cost cuts (sponsor check only for unknown or changed rows; dormant skip for conferences); (6) the 16 gate-held new events and Upfront Summit (edition ruling). To resume a quota-stopped run NEVER re-run without `-Resume`. Real spend: check AI Studio.
+>
+
 > **UPDATE 2026-10-09 (afternoon).** ACT-30 read: Friday's awards run is done and loaded (see HANDOFF top block): two first-run bugs (canary sample, coverage validator) fixed in Markets with backups, 127 awards shipped, 7 held back. Step (1) of the 10-08 stopping point is complete. Remaining order: apply (or defer) the ACT-58 / ACT-51-phase-2 run_monthly patches before Sat 02:00; read Saturday (ACT-31); then the rest. The 5 awards needing permanent ids go in the next note to upstream.
 >
 
