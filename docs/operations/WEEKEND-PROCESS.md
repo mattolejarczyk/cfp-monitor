@@ -61,7 +61,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 
 1. **[Setup]** **Starts a log file** in `Markets\logs\`. *(run_monthly.ps1)*
 2. **[Safety check]** **Checks the AI key is present.**
-2b. **[Take in]** **Takes in the customers' AWARDS sheets and checks that every award on them is in the research queue** *(ACT-67, built 2026-10-12; NOT LIVE until the reviewer applies `docs/control/patches/ACT-67-run_monthly.ps1.patch`; once applied it
+2b. **[Take in]** **Takes in the customers' AWARDS sheets and checks that every award on them is in the research queue** *(ACT-67, built 2026-10-12; APPLIED to `run_monthly.ps1` by the reviewer on 2026-10-12 (patch `docs/control/patches/ACT-67-run_monthly.ps1.patch`); it
    runs as a DRY RUN every Friday and Saturday until the switch `CFP_AWARDS_AUTOADD_APPLY=1` is set)*. The cycle starts with the customer sheets for awards too: the customers' own awards sheets (Arnica 87 rows, Utility Global 66 on
    2026-10-12) define the job, exactly as their conference sheets do, but until now nothing read them into the queue, so 30 of their awards were never researched and never reached the Awards page. On an awards run the step first fetches the
    two awards sheets (read-only service account, a copy is saved in `Markets\customer_snapshots\`; the Saturday intake, step 3, already fetches them with the conference sheets and reports their age as `INTAKE AWARDS:`), then compares
@@ -131,7 +131,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    that the old rows are unchanged. By default it only PROPOSES (writes the proposal, the list of held rows and a DRAFT request to upstream for the missing IDs under `runs_out\qa\<date>\`; the operator sends the
    request, code sends nothing); it writes the list only when the switch `CFP_AUTOADD_APPLY=1` is set. It prints `AUTOADD:` lines; the recap repeats them and puts FLAG in its subject when a row was added but is still
    not in the queue. A row waits, researched but not loaded as a new event, until upstream gives its ID (step 4). It can never stop the research. *(customer_auto_add.py, add_customer_rows.py)*
-3c. **[Safety check]** **Checks the customers' AWARDS sheets the same way (ACT-67)**, once the same patch is applied: the Saturday intake (step 3) has just taken the two awards sheets with the conference sheets, so the step reads those copies and prints the
+3c. **[Safety check]** **Checks the customers' AWARDS sheets the same way (ACT-67)**, the Saturday intake (step 3) has just taken the two awards sheets with the conference sheets, so the step reads those copies and prints the
    `AWARDS COVERAGE:` / `AWARDS AUTOADD:` lines described in Friday step 2b. The Saturday recap repeats them with the same FLAG. Awards are researched and loaded on Friday; Saturday only reports, so a missing award is known a week before the Friday run. *(customer_awards.py)*
 4. **[Update]** **Adds permanent IDs to the research list.** Each event on the list is tagged with its
    permanent ID, so a renamed event cannot turn into a duplicate. An event that cannot be matched
