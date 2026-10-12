@@ -61,19 +61,18 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 
 1. **[Setup]** **Starts a log file** in `Markets\logs\`. *(run_monthly.ps1)*
 2. **[Safety check]** **Checks the AI key is present.**
-2b. **[Take in]** **Takes in the customers' AWARDS sheets and checks that every award on them is in the research queue** *(ACT-67, built 2026-10-12; NOT LIVE until the reviewer applies `docs/control/patches/ACT-67-run_monthly.ps1.patch`; once applied it
+2b. **[Take in]** **Takes in the customers' AWARDS sheets and checks that every award on them is in the research queue** *(ACT-67, built 2026-10-12; APPLIED to `run_monthly.ps1` by the reviewer on 2026-10-12 (patch `docs/control/patches/ACT-67-run_monthly.ps1.patch`); it
    runs as a DRY RUN every Friday and Saturday until the switch `CFP_AWARDS_AUTOADD_APPLY=1` is set)*. The cycle starts with the customer sheets for awards too: the customers' own awards sheets (Arnica 87 rows, Utility Global 66 on
    2026-10-12) define the job, exactly as their conference sheets do, but until now nothing read them into the queue, so 30 of their awards were never researched and never reached the Awards page. On an awards run the step first fetches the
    two awards sheets (read-only service account, a copy is saved in `Markets\customer_snapshots\`; the Saturday intake, step 3, already fetches them with the conference sheets and reports their age as `INTAKE AWARDS:`), then compares
    every customer award with the awards list (`Markets\Awards_input.csv`) by name (case, "&", brackets and years ignored, so "Grist 50" and "Grist 50 (2026)" are one award) or by the award's own submission web address (the part after
    "?" is kept, so `?AwardID=807` and `?AwardID=808` are two awards; a bare website proves nothing). It prints `AWARDS COVERAGE: <n> of <m> customer awards are on the research input list; <k> are NOT; <w> only under the other market; <e> excluded with a reason`
    plus the first five names. Left out and listed with the reason: an award the operator has ruled out for that sheet (`docs/operations/customer_not_researched.csv`, client `arnica-awards` or `utility-awards`; only the operator adds to it) and an
-   award whose only match is a row marked DUP_OF (the audit skips such a row and researches the award it duplicates). An award that is on the list only under the OTHER market is reported and never added (the customer's page would not show it,
-   but a second row for one award starts a duplicate: a person decides). A second list shows each row marked DUP_OF that the customer lists as a row of its own, with the customer's priority, deadline and status (information only). Then the same step
+   award whose only match is a row marked DUP_OF (the audit skips such a row and researches the award it duplicates). An award that is on the list only under the OTHER market (Fast Company Most Innovative Companies 2027 is on Arnica's sheet but was on our list only for Utility Global) is ADDED as a MARKET SIBLING row (operator ruling 2026-10-12: the customer's sheet is the source of truth, every row on it is researched and shown): a copy of the other market's row with the customer's market and `DUP_OF = MARKET_SIBLING`. The audit skips it, so the award is researched ONCE; the Friday import then ships the researched row under both markets (the gate's rule is one row per award per market, so this is allowed) and the load keeps ONE award record with TWO market memberships, each customer's page showing it. A second list shows each row marked DUP_OF that the customer lists as a row of its own, with the customer's priority, deadline and status (information only). Then the same step
    sorts each award that is NOT on the list into ADD or HOLD FOR A PERSON (no name; a name already on the list; the same award twice on the customer's sheet; more than 30 awards for one market at once, which means the sheet changed shape or the matching
    broke), and appends the ADD rows to `Awards_input.csv` with a BLANK permanent ID (we never mint one), a backup first and a read-back proof that the old rows are unchanged. By default it only PROPOSES (`awards_coverage.md`,
    `awards_proposed_additions.csv` and a DRAFT request to upstream for the ids, `request_to_upstream_awards_<date>.md`, under `runs_out\qa\<date>\`; the operator sends the request, code sends nothing). It prints `AWARDS AUTOADD:` lines; the Friday AND the Saturday
-   recap repeat them and put FLAG in the subject when an award is missing, sits under the other market, or was added but is still not in the queue. It can never stop the research. *(customer_awards.py)*
+   recap repeat them and put FLAG in the subject when an award is missing, sits under the other market (until the sibling row is added), or was added but is still not in the queue. It can never stop the research. *(customer_awards.py)*
 3. **[Update]** **Adds permanent IDs to the awards list**, from last week's awards page, exact names only.
    An id that UPSTREAM GAVE US for a brand-new award (`stamp_given_ids.py --awards`, recorded in `docs/operations/given_ids.csv` under market `Awards`) is kept even though the award is not in the database yet.
    *(stamp_input_ids.py)*
@@ -132,7 +131,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    that the old rows are unchanged. By default it only PROPOSES (writes the proposal, the list of held rows and a DRAFT request to upstream for the missing IDs under `runs_out\qa\<date>\`; the operator sends the
    request, code sends nothing); it writes the list only when the switch `CFP_AUTOADD_APPLY=1` is set. It prints `AUTOADD:` lines; the recap repeats them and puts FLAG in its subject when a row was added but is still
    not in the queue. A row waits, researched but not loaded as a new event, until upstream gives its ID (step 4). It can never stop the research. *(customer_auto_add.py, add_customer_rows.py)*
-3c. **[Safety check]** **Checks the customers' AWARDS sheets the same way (ACT-67)**, once the same patch is applied: the Saturday intake (step 3) has just taken the two awards sheets with the conference sheets, so the step reads those copies and prints the
+3c. **[Safety check]** **Checks the customers' AWARDS sheets the same way (ACT-67)**, the Saturday intake (step 3) has just taken the two awards sheets with the conference sheets, so the step reads those copies and prints the
    `AWARDS COVERAGE:` / `AWARDS AUTOADD:` lines described in Friday step 2b. The Saturday recap repeats them with the same FLAG. Awards are researched and loaded on Friday; Saturday only reports, so a missing award is known a week before the Friday run. *(customer_awards.py)*
 4. **[Update]** **Adds permanent IDs to the research list.** Each event on the list is tagged with its
    permanent ID, so a renamed event cannot turn into a duplicate. An event that cannot be matched
@@ -270,6 +269,8 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
 
 ## Monday 7:00 AM - Customer pages
 
+*Awards page rule (ACT-67, 2026-10-12): the page is built from the approved awards file. A row our research typed as something other than an award (Speaking, Registration) is left off UNLESS the customer's awards sheet lists it; then it stays, because the customer's sheet is the source of truth (World Hydrogen and Carbon Asia, Clinton Global Initiative). If the customers' sheet copies cannot be read, every row is kept. The build QA lists such kept rows for information instead of flagging them as a retired label.*
+
 *Scheduled task "CFP Weekly Customer Pages" -> `cfp-monitor\scripts\weekly_deliverable.py`*
 
 1. **[Safety check]** **Records the starting point** - what Saturday's automatic load left in the database, so any
@@ -319,6 +320,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-12** - (follow-up) an award the customer lists but we hold only under the other market is added as a market sibling row (one research, one record, two memberships); the Awards page keeps non-award rows the customer lists.
 - **2026-10-12** - the cycle starts with the customers' AWARDS sheets too: a coverage check and a gated, dry-run-first add of the missing awards (Friday step 2b, Saturday step 3c), a guarded first load of a new award whose id upstream gave us (Friday step 9, switch off), new awards that cannot be loaded are named in the report and both recaps, and the step that ties a gate failure to a row now uses the date in the failure, so a stale carried-over edition can no longer take a freshly researched one with it (the Fast Company Most Innovative Companies 2027 row dropped on 2026-10-09) (ACT-67).
 - **2026-10-10** - `run_monthly.ps1 -Resume`: continue a run that stopped on quota without archiving its finished rows (a plain re-run would research everything again).
 - **2026-10-09** - the 5-row test before the Friday run takes its rows from the awards that WILL be researched (4 of the first 5 were dormant, so the first Friday run stopped at its own test); the coverage check no longer counts duplicates and dormant awards as lost.

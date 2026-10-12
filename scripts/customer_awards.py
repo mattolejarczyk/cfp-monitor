@@ -10,13 +10,15 @@ THE ANSWER, per customer award (the newest snapshot of the sheet, read from file
   * IN_QUEUE      a live (not DUP_OF) row of `Awards_input.csv` for the customer's market has the same NAME KEY (case, '&', parentheses and years ignored), or the same SUBMISSION URL
                   (scheme, 'www', fragment and trailing slash ignored; the query STAYS, so ?AwardID=807 and ?AwardID=808 differ). A URL counts only when it has a path or query (a bare
                   website says nothing about which award) and no other award of the customer's own sheet uses it under another name.
-  * WRONG_MARKET  only a row of the OTHER market has it: researched, but the customer's page will not show it (the Awards page is built per market). Reported, never auto-added.
+  * WRONG_MARKET  only a row of the OTHER market has it: researched, but the customer's page will not show it (the Awards page is built per market). Added as a MARKET SIBLING row (operator ruling
+                  2026-10-12: the customer's sheet is the source of truth): a copy of the other market's row with Market set to this customer's and DUP_OF = MARKET_SIBLING. The audit skips a DUP_OF row (the
+                  award is researched ONCE); weekend_import.add_market_siblings then ships the researched row under both markets and import_awards adds the second award_markets membership.
   * EXCLUDED      each with its reason, never silent: the row is in the operator's ledger docs/operations/customer_not_researched.csv; the only row it matches is labelled DUP_OF.
   * NOT_IN_QUEUE  none of the above.
 Also reported (information only, nothing is changed): every DUP_OF-labelled input row that the customer lists as a row of its own with its own priority and dates.
 
 THE GATE for auto-add (each HOLD names its reason; HOLD rows are listed, never changed): no name; a name already on the list (exact, case-insensitive, any market); the same award twice on the
-customer's own sheet (the first is added); WRONG_MARKET (a second row for one award starts a duplicate - a person decides); more than --cap (30) ADD rows for one market in one run
+customer's own sheet (the first is added); WRONG_MARKET whose primary row cannot be found (a person decides); more than --cap (30) ADD rows for one market in one run
 (the sheet changed shape or the matching broke: that market adds NOTHING). Rows are appended by scripts/add_customer_rows.write_with_proof (the existing writer: timestamped backup first, .tmp,
 read-back proof that the old rows are unchanged and exactly the new ones were added, then replace) with a BLANK EVENT_ID_CANON. An id is NEVER minted: a new award waits for an id upstream gives
 (draft request below), is then stamped with scripts/stamp_given_ids.py --awards, and loads as a new award on the next Friday import (weekend_import.py --new-awards).
@@ -54,6 +56,7 @@ CLIENTS = {"arnica-awards": {"market": "Cybersecurity", "label": "Arnica", "shor
 CAP_PER_MARKET = 30
 PROPOSE_COLS = ["client", "sheet_row", "award", "submission_url", "location", "priority", "customer_status", "customer_deadline", "market", "note"]
 SECOND_LEVEL = {"co", "com", "org", "net", "ac", "gov", "edu"}
+SIBLING = "MARKET_SIBLING"          # DUP_OF value of a row that says 'the same award, also for the customer of THIS market' (see weekend_import.award_siblings); the audit skips it, the import adds a membership
 
 
 # ============================================================================ reading
@@ -116,6 +119,36 @@ def load_ledger(path: Path) -> list[dict]:
     return read_csv(path) if Path(path).exists() else []
 
 
+def customer_index(sheets_dir: Path = SNAPSHOTS) -> dict | None:
+    """Every award on the customers' two awards sheets (newest snapshots), as {'names': {name key}, 'urls': {url key}}; None when a snapshot cannot be read (the caller then keeps everything).
+    Used by the page builders to decide that a row the customer LISTS stays on the page, whatever type our own research gave it (operator ruling 2026-10-12: the customer's sheet is the source of truth)."""
+    names: set[str] = set()
+    urls: set[str] = set()
+    try:
+        for client in CLIENTS:
+            p = newest_sheet(Path(sheets_dir), client)
+            if p is None:
+                return None
+            for r in sheet_rows(p, client):
+                if name_key(r["name"]):
+                    names.add(name_key(r["name"]))
+                if url_key(r["url"]):
+                    urls.add(url_key(r["url"]))
+    except Exception:                                                        # noqa: BLE001
+        return None
+    return {"names": names, "urls": urls} if names else None
+
+
+def is_listed(index: dict | None, name: str, *urls: str) -> bool:
+    """Is this page row an award the customers list? By name key, else by a deep submission/main URL. Never joins on an id."""
+    if not index:
+        return False
+    k = name_key(name)
+    if k and k in index["names"]:
+        return True
+    return any(url_key(u) and url_key(u) in index["urls"] for u in urls)
+
+
 # ============================================================================ the question
 def build_queue(inp: list[dict]) -> dict:
     """Per market: live rows (name keys, URL keys) and DUP_OF rows, from Awards_input.csv. A row with no OPPORTUNITY_TYPE 'Awards' is still a listing of that name."""
@@ -125,7 +158,7 @@ def build_queue(inp: list[dict]) -> dict:
         nm, k = tidy(r.get("CONFERENCE")), name_key(r.get("CONFERENCE"))
         urls = {url_key(r.get("SUBMISSION URL")), url_key(r.get("CONFERENCE URL"))} - {""}
         q["names"].add(nm.lower())
-        bucket = q["dup"] if (r.get("DUP_OF") or "").strip() else q["live"]
+        bucket = q["dup"] if (r.get("DUP_OF") or "").strip() not in ("", SIBLING) else q["live"]      # a market sibling IS a live listing for its market
         d = bucket.setdefault(market, {"names": {}, "urls": {}})
         d["names"].setdefault(k, (nm, (r.get("DUP_OF") or "").strip()))
         for u in urls:
@@ -169,7 +202,7 @@ def dup_listed_separately(rows: list[dict], inp: list[dict], market_of: dict[str
     out = []
     for r in inp:
         tgt = (r.get("DUP_OF") or "").strip()
-        if not tgt:
+        if not tgt or tgt == SIBLING:
             continue
         c = by_key.get(((r.get("Market") or "").strip(), name_key(r.get("CONFERENCE"))))
         if c:
@@ -240,9 +273,23 @@ def gate(res: dict, inp: list[dict], cols: list[str], cap: int) -> tuple[list[tu
             continue
         seen_keys[key] = item["name"]
         add.setdefault(item["market"], []).append((item, new_input_row(item, cols)))
+    sib: dict[str, list[tuple[dict, dict]]] = {}
     for item in res["wrong_market"]:
-        hold.append((item, item["why"] + ": a second row for one award starts a duplicate; a person decides"))
+        # OPERATOR RULING 2026-10-12: the customer's sheet is the source of truth; an award on it is shown to that customer. The award already has a row under the other market, so it is NOT
+        # researched twice: the new row is a MARKET SIBLING (DUP_OF = MARKET_SIBLING, same name and id) that tells the import to show the same record under this market too.
+        k, u = name_key(item["name"]), url_key(item["url"])
+        survivor = next((r for r in inp if (r.get("Market") or "").strip() != item["market"] and (r.get("DUP_OF") or "").strip() in ("", SIBLING)
+                         and ((k and name_key(r.get("CONFERENCE")) == k) or (u and u in {url_key(r.get("SUBMISSION URL")), url_key(r.get("CONFERENCE URL"))}))), None)
+        if survivor is None or (survivor.get("DUP_OF") or "").strip():
+            hold.append((item, "listed under the other market but its primary row could not be found: a person decides"))
+            continue
+        row = dict(survivor)
+        row.update({"Market": item["market"], "DUP_OF": SIBLING, "REFRESH_SKIP": "", "STATUS": "", "PRIORITY": "", "SOURCE_SHEET": f"{CLIENTS[item['client']]['label']}:{item['sheet_row']}"})
+        row = {c: row.get(c, "") for c in cols}
+        sib.setdefault(item["market"], []).append((item, row))
     out: list[tuple[dict, dict]] = []
+    for pairs in sib.values():
+        out.extend(pairs)
     for market, pairs in add.items():
         if len(pairs) > cap:
             for item, _ in pairs:

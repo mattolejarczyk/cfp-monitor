@@ -149,3 +149,17 @@ def test_every_step_of_one_week_files_under_the_same_monday():
     """Saturday intake, Sunday verify and Monday build belong to one cycle."""
     assert {qa_report.cycle_of(date(2026, 9, d)) for d in (19, 20, 21)} == {date(2026, 9, 21)}
     assert qa_report.cycle_of(date(2026, 9, 16)) == date(2026, 9, 21)
+
+
+# --- ACT-67: a non-award row the customer's awards sheet lists is kept on purpose, not flagged as a retired label ---
+def test_a_retired_label_on_a_row_the_customer_lists_is_kept_and_not_flagged():
+    from scripts import customer_awards as ca
+    idx = {"names": {ca.name_key("Clinton Global Initiative (CGI) Commitments to Action")}, "urls": set()}
+    rows = [_row("Clinton Global Initiative (CGI) Commitments to Action 2026", op="Registration"), _row("Nobody Lists This", op="Registration")]
+    res = qb.compare(rows, None, ON, "awards", idx)
+    assert [k[0] for k in res["kept_customer"]] == ["Clinton Global Initiative (CGI) Commitments to Action 2026"]
+    flags = [f for f in res["flags"] if "v2.5 retired" in f]
+    assert len(flags) == 1 and "Nobody Lists This" in flags[0]
+    # without the customer list (or on a conference page) the old behaviour stands
+    assert len([f for f in qb.compare(rows, None, ON, "awards", None)["flags"] if "v2.5 retired" in f]) == 2
+    assert len([f for f in qb.compare(rows, None, ON, "conference", idx)["flags"] if "v2.5 retired" in f]) == 2

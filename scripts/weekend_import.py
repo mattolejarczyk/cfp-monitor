@@ -238,6 +238,42 @@ def check_research(market: str, markets_dir: Path, research_exit: int | None) ->
     return None
 
 
+SIBLING = "MARKET_SIBLING"       # DUP_OF value on an Awards_input row: the SAME award, listed for the customer of ANOTHER market (ACT-67 follow-up)
+
+
+def award_siblings(input_csv: Path) -> list[dict]:
+    """The market-sibling rows of the awards input list: [{'name', 'market', 'canon'}]. One award can be on both customers' sheets (Fast Company Most Innovative Companies 2027 is on Arnica's and
+    Utility Global's). The contract already says one event stays ONE record with a row per market (R8c is unique per EVENT_ID *and* Market; award_markets is award_key + market), so the award is
+    researched ONCE (the audit skips a DUP_OF row) and this row only says 'also show it to <market>'. Its canon is its own EVENT_ID_CANON or, when blank, that of the live row with the same name."""
+    if not input_csv.exists():
+        return []
+    rows = read_csv(input_csv)[1]
+    live = {(r.get("CONFERENCE") or "").strip().lower(): (r.get("EVENT_ID_CANON") or "").strip()
+            for r in rows if not (r.get("DUP_OF") or "").strip()}
+    out = []
+    for r in rows:
+        if (r.get("DUP_OF") or "").strip() == SIBLING:
+            name = (r.get("CONFERENCE") or "").strip()
+            out.append({"name": name, "market": (r.get("Market") or "").strip(),
+                        "canon": (r.get("EVENT_ID_CANON") or "").strip() or live.get(name.lower(), "")})
+    return [x for x in out if x["market"]]
+
+
+def add_market_siblings(rows: list[dict], siblings: list[dict], lookup: dict[str, str]) -> list[dict]:
+    """`rows` plus, for each sibling whose award is in `rows` under another market and not yet under the sibling's market, a copy of that row with Market set to the sibling's. Never edits `rows`."""
+    out = list(rows)
+    have = {(to_canonical(r.get("EVENT_ID", ""), lookup), (r.get("Market") or "").strip()) for r in rows}
+    for sb in siblings:
+        if not sb["canon"] or (sb["canon"], sb["market"]) in have:
+            continue
+        src = next((r for r in rows if to_canonical(r.get("EVENT_ID", ""), lookup) == sb["canon"]), None)
+        if src is None:
+            continue
+        out.append({**src, "Market": sb["market"]})
+        have.add((sb["canon"], sb["market"]))
+    return out
+
+
 def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
                    up_to_canon: dict[str, str], log: list[str],
                    ledger: Path | None = None, first_load: dict | None = None) -> dict:
@@ -273,8 +309,12 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     prior_by_canon: dict[str, dict] = {}
     if prior_path.exists():
         pcols, prows = read_csv(prior_path)
+        sib_pairs = {(x["canon"], x["market"]) for x in award_siblings(markets_dir / f"{market}_input.csv")} if market == AWARDS else set()
         for r in prows:
-            prior_by_canon.setdefault(to_canonical(r.get("EVENT_ID", ""), up_to_canon), r)
+            c_ = to_canonical(r.get("EVENT_ID", ""), up_to_canon)
+            if (c_, (r.get("Market") or "").strip()) in sib_pairs:
+                continue                      # last week's sibling copy is rebuilt from the primary row; it must never be the fallback for the primary
+            prior_by_canon.setdefault(c_, r)
 
     # IDENTITY IS CARRIED, NOT REBUILT (2026-09-27). Each researched row lands on the permanent
     # id of the input event it answers. A row with no such id - or a stub, which holds only the
@@ -401,8 +441,12 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
 
     # 2. gate -> row rule -> gate, until ACCEPTED
     cand = work / f"{market}_audited.candidate.csv"
+    siblings = award_siblings(markets_dir / f"{market}_input.csv") if market == AWARDS else []
     for rnd in range(1, MAX_ROUNDS + 1):
-        write_csv(cand, cols, rows)
+        # ACT-67: the gate judges the file that will be imported, sibling copies included; failures are tied back to the BASE rows (a copy has the same name, so it hits the same row)
+        full = add_market_siblings(rows, siblings, lookup) if siblings else rows
+        res["market_siblings"] = [f"{(r.get('CONFERENCE') or '').strip()} -> {(r.get('Market') or '').strip()}" for r in full[len(rows):]]
+        write_csv(cand, cols, full)
         verdict, fails, js = gate(cand, work, log, network=True)
         log.append(f"[{market}] round {rnd}: {verdict}, {len(fails)} failure(s)")
         if verdict == "ACCEPTED":
@@ -411,7 +455,7 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
             res["ids_csv"] = str(ids_csv)
             res["carried_over"] = sum(1 for d in res["decisions"] if d["action"] == "carried-over")
             res.update(status="ACCEPTED", candidate=str(cand), accept_json=str(js),
-                       shipped=len(rows),
+                       shipped=len(full),
                        from_this_week=sum(1 for s in sources if s == "new"),
                        from_last_week=sum(1 for s in sources if s == "prior"),
                        rounds=rnd)
