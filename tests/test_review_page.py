@@ -338,3 +338,20 @@ def test_the_template_marks_a_dead_sponsor_link_like_the_other_dead_links():
     src = (ROOT / "scripts" / "build_review_page.py").read_text(encoding="utf-8")
     assert 'class="dl-dead">Sponsorship page (not found)</a>' in src
     assert "r.spondead" in src
+
+
+# ------------------------------------------------ the Awards page lists awards only (2026-10-12) --
+def test_awards_only_drops_rows_import_awards_would_not_load():
+    rows = [row(CONFERENCE="Real Award", OPPORTUNITY_TYPE="Awards"),
+            row(CONFERENCE="Clinton Global Initiative (CGI) Commitments to Action 2026", OPPORTUNITY_TYPE="Registration"),
+            row(CONFERENCE="World Hydrogen and Carbon Asia", OPPORTUNITY_TYPE="Speaking"),
+            row(CONFERENCE="Blank Type", OPPORTUNITY_TYPE="")]
+    kept, dropped = brp.awards_only(rows)
+    assert [r["CONFERENCE"] for r in kept] == ["Real Award"]
+    assert dropped == ["Clinton Global Initiative (CGI) Commitments to Action 2026 (Registration)",
+                       "World Hydrogen and Carbon Asia (Speaking)", "Blank Type (blank)"]
+
+
+def test_the_awards_page_build_applies_it_and_the_conference_page_does_not():
+    src = (ROOT / "scripts" / "build_review_page.py").read_text(encoding="utf-8")
+    assert "if a.kind == 'awards':\n        rows, not_awards = awards_only(rows)" in src

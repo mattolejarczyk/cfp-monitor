@@ -208,6 +208,17 @@ def sponsor_badge_label(sponsor_required, sponsor_quote):
     return SPONSOR_CONFIRMED if (sponsor_quote or '').strip() else SPONSOR_UNCONFIRMED
 
 
+def awards_only(rows):
+    """2026-10-12: the Awards page lists awards only. import_awards.py already leaves any row whose OPPORTUNITY_TYPE is not 'Awards' out of the database ("not an award": a Speaking row, or a Registration, which contract v2.5 retired), but the page is built from the approved file, which still carries them, so the 2026-10-12 page showed 'Clinton Global Initiative (CGI) Commitments to Action 2026' (Registration) and 'World Hydrogen and Carbon Asia' (Speaking). Same rule as the importer. Returns (kept, dropped_names)."""
+    kept, dropped = [], []
+    for r in rows:
+        if (r.get('OPPORTUNITY_TYPE') or '').strip() == 'Awards':
+            kept.append(r)
+        else:
+            dropped.append(f"{(r.get('CONFERENCE') or '').strip()} ({(r.get('OPPORTUNITY_TYPE') or '').strip() or 'blank'})")
+    return kept, dropped
+
+
 def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=None):
     st = edition_states(rows, today)
     _today = date.fromisoformat(today) if isinstance(today, str) else today
@@ -922,6 +933,11 @@ def main():
 
     with open(a.input, encoding='utf-8-sig', newline='') as h:
         rows = list(csv.DictReader(h))
+
+    if a.kind == 'awards':
+        rows, not_awards = awards_only(rows)
+        if not_awards:
+            print(f"awards page: left out {len(not_awards)} row(s) that are not awards (same rule as import_awards.py): " + "; ".join(not_awards))
 
     # MARKET SCOPE. Which markets the page is ABOUT. The chips still filter within it, so a
     # two-market page keeps both chips and a reader can still narrow to one - the scope decides
