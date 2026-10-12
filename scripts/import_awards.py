@@ -179,12 +179,18 @@ def plan(delivery: Path, db: str, seed: Path | None = None,
             continue
         canonical = ids.get(_g(r, "EVENT_ID")) or mint_event_id(
             name, _g(r, "EDITION"), _g(r, "CITY"), _g(r, "LOCATION"), opportunity)
+        if canonical in seen and _g(r, "Market") and _g(r, "Market") != seen[canonical][1]:
+            # ONE AWARD, TWO MARKETS (ACT-67): the contract keeps one event as one record with a row per market (R8c is unique per EVENT_ID and Market, award_markets is award_key + market). The
+            # second row adds a membership and nothing else; it never overwrites the record the first row wrote.
+            first = next(p_ for p_ in planned if p_["event_id"] == canonical)
+            first["_markets"].append(_g(r, "Market"))
+            continue
         if canonical in seen:
             problems.append(f"two rows mint the same id {canonical!r}: "
-                            f"{seen[canonical][:40]!r} and {name[:40]!r}. If they are the "
+                            f"{seen[canonical][0][:40]!r} and {name[:40]!r}. If they are the "
                             f"same award, label one DUP_OF in the seed and re-run")
             continue
-        seen[canonical] = name
+        seen[canonical] = (name, _g(r, "Market"))
 
         rec = {"event_id": canonical,
                "upstream_event_id": _g(r, "EVENT_ID"),
@@ -194,6 +200,7 @@ def plan(delivery: Path, db: str, seed: Path | None = None,
         for src, dest in COLUMN_MAP.items():
             rec[dest] = _g(r, src)
         rec["_market"] = _g(r, "Market")
+        rec["_markets"] = [rec["_market"]] if rec["_market"] else []
         planned.append(rec)
 
     con = sqlite3.connect(db)
@@ -238,12 +245,11 @@ def apply(db: str, planned: list[dict], source_list: str) -> tuple[int, int, int
     # states Market per ROW, and the row is the programme.
     members = 0
     for rec in planned:
-        if not rec["_market"]:
-            continue
-        cur = con.execute("insert or ignore into award_markets (award_key, market, "
-                          "source_list, first_seen) values (?, ?, ?, ?)",
-                          (rec["event_id"], rec["_market"], source_list, _now()))
-        members += cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
+        for market in rec["_markets"]:
+            cur = con.execute("insert or ignore into award_markets (award_key, market, "
+                              "source_list, first_seen) values (?, ?, ?, ?)",
+                              (rec["event_id"], market, source_list, _now()))
+            members += cur.rowcount if cur.rowcount and cur.rowcount > 0 else 0
     con.commit()
     con.close()
     return inserted, updated, members
@@ -254,6 +260,7 @@ def reconcile(db: str, planned: list[dict]) -> list[str]:
     con = sqlite3.connect(db)
     have = {x[0] for x in con.execute("select event_id from award_grounding_facts")}
     markets = {x[0] for x in con.execute("select award_key from award_markets")}
+    pairs = {(x[0], x[1]) for x in con.execute("select award_key, market from award_markets")}
     con.close()
     want = {r["event_id"] for r in planned}
     faults = []
@@ -265,6 +272,9 @@ def reconcile(db: str, planned: list[dict]) -> list[str]:
         faults.append(f"{len(orphan)} award_markets row(s) point at no award: {orphan[:5]}")
     expected = {r["event_id"] for r in planned if r["_market"]}
     lost = sorted(expected - markets)
+    no_pair = sorted(f"{r['event_id']}/{m}" for r in planned for m in r["_markets"] if (r["event_id"], m) not in pairs)
+    if no_pair and not lost:
+        faults.append(f"{len(no_pair)} award/market membership(s) are missing: {no_pair[:5]}")
     if lost:
         faults.append(f"{len(lost)} row(s) carry a Market but have no membership: {lost[:5]}")
     return faults
@@ -325,7 +335,8 @@ def main() -> int:
 
     by_market: dict[str, int] = {}
     for r in planned:
-        by_market[r["_market"] or "(none)"] = by_market.get(r["_market"] or "(none)", 0) + 1
+        for mk in (r["_markets"] or ["(none)"]):
+            by_market[mk] = by_market.get(mk, 0) + 1
     print("         markets: " + ", ".join(f"{k} {v}" for k, v in sorted(by_market.items())))
 
     if not a.apply:

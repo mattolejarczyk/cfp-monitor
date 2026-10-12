@@ -248,3 +248,92 @@ def test_a_failure_about_the_stale_2026_row_no_longer_takes_the_freshly_research
     assert wi.rows_for_failure("Fast Company Most Innovative Companies 2: 2031-01-01 but STATUS=Open", [stale, fresh]) == [0, 1]
     assert wi.rows_for_failure("Fast Company Most Innovative Companies 2: something without a date", [stale, fresh]) == [0, 1]
     assert wi.rows_for_failure("Fast Company World Changing Ideas: 2025-12-12 closed", [stale, fresh, other]) == [2]
+
+
+# ---------------------------------------------------------------- ACT-67 follow-up: ONE AWARD UNDER TWO MARKETS (market sibling rows)
+def sibling_world(tmp_path, db_has=True):
+    md, led, db = world(tmp_path, ledger=(), input_ids=())
+    # Alpha is a live row for Cybersecurity with an id we hold; a sibling row shows the same award to Utility; Beta is an ordinary award
+    write(md / f"{A}_input.csv", ["CONFERENCE", "Market", "DUP_OF", "EVENT_ID_CANON"],
+          [["Alpha Prize", "Cybersecurity", "", NEW1], ["Alpha Prize", "Utility", "MARKET_SIBLING", NEW1], ["Beta Prize", "Cybersecurity", "", NEW2]])
+    con = sqlite3.connect(db)
+    con.executemany("insert into award_grounding_facts (event_id, name, upstream_event_id) values (?,?,?)", [(NEW1, "Alpha Prize", "up-0"), (NEW2, "Beta Prize", "up-1")])
+    con.commit()
+    con.close()
+    return md, led, db
+
+
+def test_award_siblings_reads_the_sibling_rows_with_the_primary_rows_id(tmp_path):
+    md, led, db = sibling_world(tmp_path)
+    write(md / f"{A}_input.csv", ["CONFERENCE", "Market", "DUP_OF", "EVENT_ID_CANON"],
+          [["Alpha Prize", "Cybersecurity", "", NEW1], ["alpha prize", "Utility", "MARKET_SIBLING", ""], ["Real Duplicate", "Utility", "Alpha Prize", ""]])
+    assert wi.award_siblings(md / f"{A}_input.csv") == [{"name": "alpha prize", "market": "Utility", "canon": NEW1}], "a real DUP_OF is not a sibling; a blank id is taken from the primary row"
+
+
+def test_the_researched_award_ships_under_both_markets_and_the_gate_sees_both_rows(tmp_path, monkeypatch):
+    md, led, db = sibling_world(tmp_path)
+    seen = {}
+
+    def fake_gate(csv_path, cwd, log, network=True, db=None, market=None):
+        seen["rows"] = [(r["CONFERENCE"], r["Market"]) for r in csv.DictReader(open(csv_path, encoding="utf-8"))]
+        js = csv_path.with_name(csv_path.stem + ".gate.json")
+        js.write_text("{}", encoding="utf-8")
+        return "ACCEPTED", [], js
+    monkeypatch.setattr(wi, "gate", fake_gate)
+    monkeypatch.setattr(wi, "run", lambda *a, **k: 0)
+    work = tmp_path / "work"
+    work.mkdir()
+    res = wi.resolve_market(A, md, work, db, {}, [], None, {"ledger": led})
+    assert ("Alpha Prize", "Cybersecurity") in seen["rows"] and ("Alpha Prize", "Utility") in seen["rows"], "the gate judges the file that will be imported"
+    assert seen["rows"].count(("Alpha Prize", "Utility")) == 1 and not any(m == "Utility" and n == "Beta Prize" for n, m in seen["rows"])
+    assert res["market_siblings"] == ["Alpha Prize -> Utility"]
+    ids = Path(res["ids_csv"]).read_text(encoding="utf-8").splitlines()[1:]
+    assert len([l for l in ids if l.startswith('up-0,')]) == 1, "one id mapping for the award (rows are keyed by EVENT_ID)"
+
+
+def test_last_weeks_sibling_copy_is_never_the_fallback_for_the_primary_row(tmp_path, monkeypatch):
+    md, led, db = sibling_world(tmp_path)
+    prior = ["Market", "EVENT_ID", "CONFERENCE", "SUBMISSION URL", "STATUS DETAILS", "EDITION", "SUBMISSION DEADLINE", "STATUS", "OPPORTUNITY_TYPE"]
+    write(md / f"{A}_audited.final.csv", prior, [["Utility", "up-0", "Alpha Prize", "", "", "2027", "", "", "Awards"], ["Cybersecurity", "up-0", "Alpha Prize", "", "PRIMARY", "2027", "", "", "Awards"]])
+    monkeypatch.setattr(wi, "gate", lambda csv_path, cwd, log, network=True, db=None, market=None: ("ACCEPTED", [], csv_path.with_name("g.json")))
+    monkeypatch.setattr(wi, "run", lambda *a, **k: 0)
+    work = tmp_path / "work"
+    work.mkdir()
+    # the sibling pair is (NEW1, Utility): that prior row must not enter prior_by_canon even though it comes FIRST in the file
+    seen = {}
+    real = wi.apply_row_rule
+
+    def spy(rows, sources, bad, prior_by_canon, up, decisions):
+        seen["prior"] = dict(prior_by_canon)
+        return real(rows, sources, bad, prior_by_canon, up, decisions)
+    monkeypatch.setattr(wi, "apply_row_rule", spy)
+    monkeypatch.setattr(wi, "gate", lambda csv_path, cwd, log, network=True, db=None, market=None: ("REJECTED", [("6", "Alpha Prize: 2026-01-01 but STATUS=Open")], csv_path.with_name("g.json")))
+    try:
+        wi.resolve_market(A, md, work, db, {}, [], None, {"ledger": led})
+    except Exception:
+        pass
+    prior = seen.get("prior", {})
+    assert prior.get(NEW1, {}).get("Market") == "Cybersecurity", prior
+
+
+def test_import_awards_lands_one_record_and_two_market_memberships(tmp_path):
+    cols = ["EVENT_ID", "CONFERENCE", "CONFERENCE URL", "EDITION", "Market", "OPPORTUNITY_TYPE", "CITY", "LOCATION", "MAIN_INFO_URL", "SUBMISSION DEADLINE", "STATUS"]
+    d = tmp_path / "Awards_out.csv"
+    write(d, cols, [["up-0", "Alpha Prize", "https://a.test", "2027", "Utility", "Awards", "", "", "", "2026-10-09", "Open"],
+                    ["up-0", "Alpha Prize", "https://a.test", "2027", "Cybersecurity", "Awards", "", "", "", "2026-10-09", "Open"]])
+    db = tmp_path / "t.db"
+    Store(str(db)).db.close()
+    planned, problems, _ = ia.plan(d, str(db), None, {"up-0": NEW1})
+    assert not problems and len(planned) == 1 and sorted(planned[0]["_markets"]) == ["Cybersecurity", "Utility"]
+    ia.apply(str(db), planned, "t")
+    assert ia.reconcile(str(db), planned) == []
+    con = sqlite3.connect(db)
+    assert con.execute("select count(*) from award_grounding_facts").fetchone()[0] == 1
+    assert sorted(r[0] for r in con.execute("select market from award_markets where award_key=?", (NEW1,))) == ["Cybersecurity", "Utility"]
+    con.execute("delete from award_markets where market='Cybersecurity'")
+    con.commit()
+    con.close()
+    assert "membership" in " ".join(ia.reconcile(str(db), planned)), "a missing second membership is caught"
+    # two rows with the same id in the SAME market are still refused
+    write(d, cols, [["up-0", "Alpha Prize", "", "2027", "Utility", "Awards", "", "", "", "", ""], ["up-0", "Alpha Prize", "", "2027", "Utility", "Awards", "", "", "", "", ""]])
+    assert ia.plan(d, str(db), None, {"up-0": NEW1})[1], "same award twice in one market is still a problem"

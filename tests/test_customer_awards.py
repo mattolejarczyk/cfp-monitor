@@ -109,13 +109,24 @@ def test_the_ledger_only_excludes_for_its_own_sheet(tmp_path):
     assert props == ["Odd Summit"], "the conference ledger does not rule on an awards row; the awards ledger entry does"
 
 
-def test_an_award_listed_only_under_the_other_market_is_reported_and_held_never_added(tmp_path):
-    inp = [{"CONFERENCE": "Fast Co Innovators", "SUBMISSION URL": "https://fc.example/a", "Market": "Utility", "EVENT_ID_CANON": "2027-fc-nan-awards"}]
+def test_an_award_listed_only_under_the_other_market_is_added_as_a_market_sibling_row(tmp_path):
+    inp = [{"CONFERENCE": "Fast Co Innovators", "SUBMISSION URL": "https://fc.example/a", "Market": "Utility", "EVENT_ID_CANON": "2027-fc-nan-awards", "STATUS": "Submitted", "PRIORITY": "Low"}]
     arn = [{"AWARD": "Fast Co Innovators", "PRIORITY": "High", "SUBMISSION URL": "https://fc.example/a"}]
-    lines, md, out, _ = go(tmp_path, arnica=arn, inputs=inp, apply=True)
+    lines, md, out, _ = go(tmp_path, arnica=arn, inputs=inp)
     assert "1 only under the other market" in lines[0] and "AWARDS COVERAGE WRONG MARKET: Fast Co Innovators" in lines
-    assert any(l.startswith("AWARDS AUTOADD HELD: Fast Co Innovators") for l in lines)
-    assert len(read(md / "Awards_input.csv")) == 3, "nothing was appended"
+    assert any(l.startswith("AWARDS AUTOADD: mode=dry-run; 1 to add, 0 held") for l in lines), "no longer held: the customer's sheet is the source of truth"
+    (tmp_path / "again").mkdir()
+    lines, md, out, _ = go(tmp_path / "again", arnica=arn, inputs=inp, apply=True)
+    rows = read(md / "Awards_input.csv")
+    assert len(rows) == 4
+    sib = rows[-1]
+    assert (sib["CONFERENCE"], sib["Market"], sib["DUP_OF"], sib["EVENT_ID_CANON"]) == ("Fast Co Innovators", "Cybersecurity", "MARKET_SIBLING", "2027-fc-nan-awards")
+    assert sib["STATUS"] == "" and sib["PRIORITY"] == "" and sib["SOURCE_SHEET"] == "Arnica:2", "the other customer's status and priority are not copied"
+    assert rows[2]["Market"] == "Utility" and rows[2]["DUP_OF"] == "" and rows[2]["STATUS"] == "Submitted", "the primary row is untouched"
+    sheets = tmp_path / "again" / "sheets"
+    lines2, _ = ca.run(TODAY, sheets, md, tmp_path / "again" / "ledger.csv", tmp_path / "again" / "o2", 30, True)
+    assert lines2[0].startswith("AWARDS COVERAGE: 2 of 2") and "0 are NOT; 0 only under the other market" in lines2[0], "the sibling row now counts as the award being in the queue"
+    assert any("0 added" in l for l in lines2) and len(read(md / "Awards_input.csv")) == 4
 
 
 def test_dry_run_writes_nothing_to_the_list_and_drafts_the_request(tmp_path):
