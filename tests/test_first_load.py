@@ -200,7 +200,7 @@ def test_sandbox_never_touches_the_live_files(tmp_path, monkeypatch):
     monkeypatch.setattr(wi, "check_research", lambda *a, **k: None)
     monkeypatch.setattr(wi, "seed_map", lambda db: ({}, []))
     monkeypatch.setattr(wi, "assert_mapped", lambda *a, **k: None)
-    monkeypatch.setattr(wi, "load_markets", lambda resolved, db, root, log, on=False: called.update(db=Path(db), on=on))
+    monkeypatch.setattr(wi, "load_markets", lambda resolved, db, root, log, on=False, awards_on=False: called.update(db=Path(db), on=on))
     monkeypatch.setattr(wi, "run", lambda *a, **k: 0)
     sb = tmp_path / "sb"
     monkeypatch.setattr(sys, "argv", ["weekend_import.py", "--markets", M, "--research-exit", "0", "--markets-dir", str(md),
