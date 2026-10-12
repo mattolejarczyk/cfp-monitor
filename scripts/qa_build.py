@@ -39,6 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.cfp_monitor import qa_report                                # noqa: E402
+from scripts.customer_awards import is_listed                        # noqa: E402
 from src.cfp_monitor.grounding import parse_loose_date               # noqa: E402
 from src.cfp_monitor.lifecycle import SOON_DAYS, URGENT_DAYS         # noqa: E402
 
@@ -148,12 +149,13 @@ def same_event(gone: list[tuple], new: list[tuple], pb: dict, cb: dict) -> list[
     return pairs
 
 
-def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: str) -> dict:
+def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: str, customer: dict | None = None) -> dict:
     # `past` (operator, 2026-09-28): a deadline change where last week's date had ALREADY passed
     # cannot affect a call anyone can still act on. On the 2026-09-28 build 17 of 20 flags were
     # that, burying the 3 worth a look. They are listed separately, not dropped. A deadline that
     # moves from the future INTO the past stays a flag - someone planning to the old date misses it.
     report_rows, flags, changes, past = [], [], [], []
+    kept_customer: list[list[str]] = []
     now = shows(cur_rows, on)
     before = shows(prev_rows, on) if prev_rows is not None else {}
     for k in list(now) + [k for k in before if k not in now]:
@@ -171,7 +173,10 @@ def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: 
             flags.append(f"{label}: {r['n']} ({r['m']}) - its cited page DISPUTES the deadline")
         if r.get("s") == "Open" and _yes(r.get("urldead")):
             flags.append(f"{label}: {r['n']} ({r['m']}) is Open but its submission link is dead")
-        if (r.get("op") or "") in RETIRED_OPPORTUNITIES:
+        if (r.get("op") or "") in RETIRED_OPPORTUNITIES and kind == "awards" and customer is not None and is_listed(customer, r.get("n") or "", r.get("url") or ""):
+            # ACT-67 ruling: the customer's awards sheet lists it, so it stays on the page on purpose; shown for information, not flagged
+            kept_customer.append([r["n"], r["m"], r["op"], "listed on the customer's awards sheet - kept on purpose"])
+        elif (r.get("op") or "") in RETIRED_OPPORTUNITIES:
             flags.append(f"{label}: {r['n']} ({r['m']}) is labelled '{r['op']}', which contract "
                          f"v2.5 retired - it is not an opportunity")
 
@@ -217,7 +222,7 @@ def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: 
             for k, what in (("urldead", "submission link"), ("evdead", "evidence link")):
                 if not _yes(p.get(k)) and _yes(c.get(k)):
                     changes.append([c["n"], c["m"], f"{what} died", "", ""])
-    return {"counts": report_rows, "changes": changes, "flags": flags, "past": past}
+    return {"counts": report_rows, "changes": changes, "flags": flags, "past": past, "kept_customer": kept_customer}
 
 
 def commitment_results(on: date, markets_dir: Path | None = None) -> list[dict] | None:
@@ -260,7 +265,7 @@ def commitments_section(rep: dict, results: list[dict] | None, on: date, out_dir
 
 
 def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool | None, commitments: list[dict] | None | bool = False,
-          out_dir: Path | None = None) -> dict:
+          out_dir: Path | None = None, customer: dict | None = None) -> dict:
     """`commitments`: False = do not check (tests), None = the checker could not run, a list = its results."""
     rep = qa_report.new_report("build", on)
     rep["published"] = published
@@ -269,7 +274,7 @@ def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool 
     for kind, cur, prev in pairs:
         cur_rows = page_data(cur)
         prev_rows = page_data(prev) if prev else None
-        res = compare(cur_rows, prev_rows, page_date(cur) or on, kind)
+        res = compare(cur_rows, prev_rows, page_date(cur) or on, kind, customer)
         was = page_date(prev).isoformat() if prev else "none"
         now = (page_date(cur) or on).isoformat()
         rep["sections"].append({
@@ -282,6 +287,11 @@ def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool 
             "columns": ["Conference", "Market", "What changed", "Was", "Now"],
             "rows": sorted(res["changes"], key=lambda x: (x[2], x[1], x[0])),
             "flags": res["flags"]})
+        if res["kept_customer"]:
+            rep["sections"].append({
+                "title": f"{KINDS[kind]} - rows kept because the customer lists them",
+                "note": "Typed as something other than an award by our own research, but on the customer's awards sheet: the sheet is the source of truth, so they stay on the page.",
+                "columns": ["Row", "Market", "Our type", "Why it stays"], "rows": res["kept_customer"], "flags": []})
         rep["flags"] += res["flags"]
         rep["past"] = rep.get("past", []) + res["past"]
     if commitments is not False:
@@ -326,7 +336,8 @@ def main() -> int:
 
     on = date.fromisoformat(a.on) if a.on else (page_date(pairs[0][1]) or date.today())
     sys.path.insert(0, str(ROOT / "scripts"))
-    rep = build(pairs, on, None if a.published is None else a.published == "yes", commitments_for_main(on), Path(a.out))
+    from scripts import customer_awards as _ca
+    rep = build(pairs, on, None if a.published is None else a.published == "yes", commitments_for_main(on), Path(a.out), _ca.customer_index())
     md = qa_report.to_markdown(rep, "Build QA - what the customer will see")
     print(md)
     try:

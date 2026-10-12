@@ -208,11 +208,16 @@ def sponsor_badge_label(sponsor_required, sponsor_quote):
     return SPONSOR_CONFIRMED if (sponsor_quote or '').strip() else SPONSOR_UNCONFIRMED
 
 
-def awards_only(rows):
-    """2026-10-12: the Awards page lists awards only. import_awards.py already leaves any row whose OPPORTUNITY_TYPE is not 'Awards' out of the database ("not an award": a Speaking row, or a Registration, which contract v2.5 retired), but the page is built from the approved file, which still carries them, so the 2026-10-12 page showed 'Clinton Global Initiative (CGI) Commitments to Action 2026' (Registration) and 'World Hydrogen and Carbon Asia' (Speaking). Same rule as the importer. Returns (kept, dropped_names)."""
+def awards_only(rows, customer=None):
+    """The Awards page lists awards (2026-10-12): import_awards.py leaves any row whose OPPORTUNITY_TYPE is not 'Awards' out of the database ("not an award": a Speaking row, or a Registration,
+    which contract v2.5 retired), but the page is built from the approved file, which still carries them.
+    OPERATOR RULING 2026-10-12 (ACT-67): the customer's sheet is the source of truth. A row the customer's awards sheet LISTS stays on the page whatever its type (our own row text already explains it
+    is not an award); only a row the customers do not list is dropped. `customer` is customer_awards.customer_index(); when it is None (no snapshot could be read) EVERY row is kept rather than guess.
+    Returns (kept, dropped_names)."""
+    from scripts import customer_awards as ca
     kept, dropped = [], []
     for r in rows:
-        if (r.get('OPPORTUNITY_TYPE') or '').strip() == 'Awards':
+        if (r.get('OPPORTUNITY_TYPE') or '').strip() == 'Awards' or customer is None                 or ca.is_listed(customer, r.get('CONFERENCE') or '', r.get('SUBMISSION URL') or '', r.get('CONFERENCE URL') or '', r.get('MAIN_INFO_URL') or ''):
             kept.append(r)
         else:
             dropped.append(f"{(r.get('CONFERENCE') or '').strip()} ({(r.get('OPPORTUNITY_TYPE') or '').strip() or 'blank'})")
@@ -903,6 +908,9 @@ def main():
     ap.add_argument('--no-evidence', action='store_true',
                     help='build WITHOUT dead-links/checks. Layout testing only - the resulting '
                          'page understates the work and must never be sent.')
+    ap.add_argument('--customer-awards-dir', default=str(Path(r'C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets') / 'customer_snapshots'),
+                    help="awards page only: the snapshot store of the customers' awards sheets (<dir>/<client>/<client>_<stamp>.csv). A row the customers list stays on the page "
+                         "whatever its type; if the snapshots cannot be read every row is kept.")
     a = ap.parse_args()
 
     # A MISSING INPUT MUST NOT READ AS A FINDING. Both flags are optional and default to empty,
@@ -935,9 +943,16 @@ def main():
         rows = list(csv.DictReader(h))
 
     if a.kind == 'awards':
-        rows, not_awards = awards_only(rows)
+        from scripts import customer_awards as _ca
+        _idx = _ca.customer_index(Path(a.customer_awards_dir))
+        if _idx is None:
+            print(f"awards page: the customers' awards sheets could not be read under {a.customer_awards_dir}: every row is kept")
+        rows, not_awards = awards_only(rows, _idx)
         if not_awards:
-            print(f"awards page: left out {len(not_awards)} row(s) that are not awards (same rule as import_awards.py): " + "; ".join(not_awards))
+            print(f"awards page: left out {len(not_awards)} row(s) that are not awards and that no customer sheet lists: " + "; ".join(not_awards))
+        _kept_non = [(r.get('CONFERENCE') or '').strip() for r in rows if (r.get('OPPORTUNITY_TYPE') or '').strip() != 'Awards']
+        if _kept_non:
+            print(f"awards page: kept {len(_kept_non)} row(s) that are not typed as awards because the customer lists them: " + "; ".join(_kept_non))
 
     # MARKET SCOPE. Which markets the page is ABOUT. The chips still filter within it, so a
     # two-market page keeps both chips and a reader can still narrow to one - the scope decides

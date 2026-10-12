@@ -341,17 +341,31 @@ def test_the_template_marks_a_dead_sponsor_link_like_the_other_dead_links():
 
 
 # ------------------------------------------------ the Awards page lists awards only (2026-10-12) --
-def test_awards_only_drops_rows_import_awards_would_not_load():
+def test_awards_only_keeps_a_row_the_customer_lists_and_drops_the_rest():
+    from scripts import customer_awards as ca
     rows = [row(CONFERENCE="Real Award", OPPORTUNITY_TYPE="Awards"),
             row(CONFERENCE="Clinton Global Initiative (CGI) Commitments to Action 2026", OPPORTUNITY_TYPE="Registration"),
             row(CONFERENCE="World Hydrogen and Carbon Asia", OPPORTUNITY_TYPE="Speaking"),
             row(CONFERENCE="Blank Type", OPPORTUNITY_TYPE="")]
-    kept, dropped = brp.awards_only(rows)
-    assert [r["CONFERENCE"] for r in kept] == ["Real Award"]
-    assert dropped == ["Clinton Global Initiative (CGI) Commitments to Action 2026 (Registration)",
-                       "World Hydrogen and Carbon Asia (Speaking)", "Blank Type (blank)"]
+    idx = {"names": {ca.name_key("Clinton Global Initiative (CGI) Commitments to Action"), ca.name_key("World Hydrogen and Carbon Asia")}, "urls": set()}
+    kept, dropped = brp.awards_only(rows, idx)
+    assert [r["CONFERENCE"] for r in kept] == ["Real Award", "Clinton Global Initiative (CGI) Commitments to Action 2026", "World Hydrogen and Carbon Asia"], "the customer lists them: they stay (operator ruling 2026-10-12)"
+    assert dropped == ["Blank Type (blank)"], "a non-award nobody lists is still left out"
+
+
+def test_awards_only_keeps_every_row_when_the_customer_sheets_cannot_be_read():
+    rows = [row(CONFERENCE="Real Award", OPPORTUNITY_TYPE="Awards"), row(CONFERENCE="Blank Type", OPPORTUNITY_TYPE="")]
+    kept, dropped = brp.awards_only(rows, None)
+    assert len(kept) == 2 and dropped == []
+
+
+def test_a_row_is_kept_by_a_deep_url_the_customer_lists_too():
+    from scripts import customer_awards as ca
+    idx = {"names": set(), "urls": {ca.url_key("https://www.wh2casia.com/event/15945363")}}
+    kept, dropped = brp.awards_only([row(CONFERENCE="Renamed Event", OPPORTUNITY_TYPE="Speaking", **{"SUBMISSION URL": "https://wh2casia.com/event/15945363/"})], idx)
+    assert len(kept) == 1 and not dropped
 
 
 def test_the_awards_page_build_applies_it_and_the_conference_page_does_not():
     src = (ROOT / "scripts" / "build_review_page.py").read_text(encoding="utf-8")
-    assert "if a.kind == 'awards':\n        rows, not_awards = awards_only(rows)" in src
+    assert "if a.kind == 'awards':" in src and "rows, not_awards = awards_only(rows, _idx)" in src and "customer_index(Path(a.customer_awards_dir))" in src

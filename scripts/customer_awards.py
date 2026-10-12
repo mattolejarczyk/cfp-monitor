@@ -119,6 +119,36 @@ def load_ledger(path: Path) -> list[dict]:
     return read_csv(path) if Path(path).exists() else []
 
 
+def customer_index(sheets_dir: Path = SNAPSHOTS) -> dict | None:
+    """Every award on the customers' two awards sheets (newest snapshots), as {'names': {name key}, 'urls': {url key}}; None when a snapshot cannot be read (the caller then keeps everything).
+    Used by the page builders to decide that a row the customer LISTS stays on the page, whatever type our own research gave it (operator ruling 2026-10-12: the customer's sheet is the source of truth)."""
+    names: set[str] = set()
+    urls: set[str] = set()
+    try:
+        for client in CLIENTS:
+            p = newest_sheet(Path(sheets_dir), client)
+            if p is None:
+                return None
+            for r in sheet_rows(p, client):
+                if name_key(r["name"]):
+                    names.add(name_key(r["name"]))
+                if url_key(r["url"]):
+                    urls.add(url_key(r["url"]))
+    except Exception:                                                        # noqa: BLE001
+        return None
+    return {"names": names, "urls": urls} if names else None
+
+
+def is_listed(index: dict | None, name: str, *urls: str) -> bool:
+    """Is this page row an award the customers list? By name key, else by a deep submission/main URL. Never joins on an id."""
+    if not index:
+        return False
+    k = name_key(name)
+    if k and k in index["names"]:
+        return True
+    return any(url_key(u) and url_key(u) in index["urls"] for u in urls)
+
+
 # ============================================================================ the question
 def build_queue(inp: list[dict]) -> dict:
     """Per market: live rows (name keys, URL keys) and DUP_OF rows, from Awards_input.csv. A row with no OPPORTUNITY_TYPE 'Awards' is still a listing of that name."""
