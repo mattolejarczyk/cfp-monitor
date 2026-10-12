@@ -2,7 +2,7 @@
 
     python scripts/stamp_given_ids.py --ids-csv ids.csv [--markets-dir <dir>] [--db <db>] [--pick "<id>=<CONFERENCE of the surviving row>"] [--apply]
 
-INPUT. A CSV with columns `sheet` (Cybersecurity or Utility), `id` (upstream's EVENT_ID), `start` (their stated start, ISO, may be blank) and `url` (their main site); an optional `conference` column holds the exact name of OUR row when several of our rows share one address. Identity is upstream's (contract 5.4): we never mint
+INPUT. A CSV with columns `sheet` (Cybersecurity or Utility; with --awards the sheet is `Awards` and may be left out), `id` (upstream's EVENT_ID), `start` (their stated start, ISO, may be blank) and `url` (their main site); an optional `conference` column holds the exact name of OUR row when several of our rows share one address. Identity is upstream's (contract 5.4): we never mint
 an id, and we never join on one: a row of ours is paired with their id by the event's own URL, nothing else.
 
 WHAT IT DOES. For each id, finds OUR input rows of that market that have a BLANK EVENT_ID_CANON and the same URL (scheme, 'www.', a trailing slash and a '?...' tracking suffix ignored) and stamps the id on the row.
@@ -51,7 +51,14 @@ def iso_of(text: str) -> str:
 
 
 def words(slug: str) -> set[str]:
-    return set(re.sub(r"-speaking$", "", slug).split("-")[1:-1])
+    return set(re.sub(r"-(speaking|awards)$", "", slug).split("-")[1:-1])
+
+
+def row_url(r: dict, market: str) -> str:
+    """The URL that names a row's event. AWARDS (ACT-67): the awards list usually leaves CONFERENCE URL blank and carries the award's page in SUBMISSION URL."""
+    if market == "Awards":
+        return r.get("CONFERENCE URL") or r.get("SUBMISSION URL") or ""
+    return r["CONFERENCE URL"]
 
 
 def plan(ids: list[dict], inputs: dict[str, list[dict]], have: set[str], picks: dict[str, str], allow_held: bool = False) -> dict:
@@ -72,7 +79,7 @@ def plan(ids: list[dict], inputs: dict[str, list[dict]], have: set[str], picks: 
             out["notes"].append((i, "already stamped on an input row"))
             continue
         rows = inputs.get(market, [])
-        cand = [k for k, r in enumerate(rows) if not (r.get("EVENT_ID_CANON") or "").strip() and not (r.get("DUP_OF") or "").strip() and norm_url(r["CONFERENCE URL"]) == norm_url(u["url"])]
+        cand = [k for k, r in enumerate(rows) if not (r.get("EVENT_ID_CANON") or "").strip() and not (r.get("DUP_OF") or "").strip() and norm_url(row_url(r, market)) == norm_url(u["url"])]
         for h in have:
             hw, uw = words(h), words(i)
             if h[:4] == i[:4] and len(uw) >= 3 and len(uw & hw) / len(uw) >= 0.85:
@@ -130,6 +137,7 @@ def main() -> int:
     ap.add_argument("--pick", action="append", default=[], help="'<id>=<CONFERENCE of the surviving row>' when two blank rows share a URL")
     ap.add_argument("--source", default="upstream reply", help="who gave the ids (recorded in the ledger)")
     ap.add_argument("--ledger", default=str(LEDGER))
+    ap.add_argument("--awards", action="store_true", help="ACT-67: stamp ids on Awards_input.csv (matched by SUBMISSION URL) and record them in the ledger under market 'Awards'; the load path is weekend_import.py --new-awards")
     ap.add_argument("--allow-held", action="store_true", help="stamp an id that is already in the database (a held event whose input row has no id)")
     ap.add_argument("--apply", action="store_true")
     a = ap.parse_args()
@@ -137,12 +145,15 @@ def main() -> int:
         ids = list(csv.DictReader(fh))
     picks = dict(p.split("=", 1) for p in a.pick)
     files, inputs = {}, {}
-    for m in ("Cybersecurity", "Utility"):
+    for m in (("Awards",) if a.awards else ("Cybersecurity", "Utility")):
         p = Path(a.markets_dir) / f"{m}_input.csv"
         files[m] = (p, *read_approved(p))
         inputs[m] = files[m][2]
+    if a.awards:
+        for u in ids:
+            u["sheet"] = "Awards"
     con = sqlite3.connect(f"file:{a.db.replace(chr(92), '/')}?mode=ro", uri=True)
-    have = {r[0] for r in con.execute("select event_id from grounding_facts")}
+    have = {r[0] for r in con.execute("select event_id from " + ("award_grounding_facts" if a.awards else "grounding_facts"))}
     con.close()
     pl = plan(ids, inputs, have, picks, a.allow_held)
     print(f"{len(ids)} ids given: {len(pl['stamp'])} to stamp, {len(pl['dup'])} duplicate row(s) to mark DUP_OF, {len(pl['notes'])} note(s)")
