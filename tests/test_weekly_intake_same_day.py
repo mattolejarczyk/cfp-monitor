@@ -91,3 +91,26 @@ def test_other_clients_do_not_leak(db):
     load(db, "utility", "utility_20260919-141757.csv")
     assert wi.loaded_snapshot_file(db, "arnica") is None
     assert behind("arnica_20260919-020812.csv", db, "arnica") is True
+
+
+# --- ACT-67: the awards-sheet snapshots are reported ---
+def test_awards_snapshot_line_reports_age_and_notes_a_missing_or_old_snapshot(tmp_path):
+    from datetime import date
+    from scripts import weekly_intake as wi
+    (tmp_path / "arnica-awards").mkdir()
+    (tmp_path / "arnica-awards" / "arnica-awards_20261010-020027.csv").write_text("AWARD\n", encoding="utf-8")
+    (tmp_path / "utility-awards").mkdir()
+    (tmp_path / "utility-awards" / "utility-awards_20260920-091606.csv").write_text("AWARD\n", encoding="utf-8")
+    line, notes = wi.awards_snapshot_line(tmp_path, date(2026, 10, 12))
+    assert line == "INTAKE AWARDS: arnica-awards 2026-10-10 (2d); utility-awards 2026-09-20 (22d)"
+    assert len(notes) == 1 and "utility-awards" in notes[0] and "22 days old" in notes[0]
+    line, notes = wi.awards_snapshot_line(tmp_path / "nowhere", date(2026, 10, 12))
+    assert "arnica-awards never snapshotted" in line and len(notes) == 2
+
+
+def test_the_two_awards_clients_are_fetched_by_the_all_clients_fetch():
+    """fetch_all runs `fetch_customer_sheet.py --client all`: every client in customer_sheets.json, awards included. AWARD_CLIENTS must name the config keys."""
+    from scripts import weekly_intake as wi
+    from pathlib import Path
+    assert wi.AWARD_CLIENTS == ("arnica-awards", "utility-awards")
+    assert '"--client", "all"' in Path(wi.__file__).read_text(encoding="utf-8")

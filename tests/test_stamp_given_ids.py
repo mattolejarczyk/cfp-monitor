@@ -100,3 +100,47 @@ def test_an_optional_conference_column_tells_apart_rows_that_share_an_address():
     pl = sgi.plan(ids, inputs, set(), {})
     assert pl["stamp"] == [("Cybersecurity", 1, "2027-owasp-usa-x-speaking")] and pl["dup"] == []          # the other row is NOT marked a duplicate
     assert "name the survivor" in sgi.plan([_u("2027-owasp-usa-x-speaking", "https://shared.example/")], inputs, set(), {})["notes"][0][1]
+
+
+# --- ACT-67: awards ---
+AW_COLS = ["CONFERENCE", "CONFERENCE URL", "SUBMISSION URL", "Market", "EVENT_ID_CANON", "DUP_OF"]
+
+
+def test_awards_rows_are_matched_by_submission_url_when_the_conference_url_is_blank():
+    rows = [{"CONFERENCE": "Alpha Prize", "CONFERENCE URL": "", "SUBMISSION URL": "https://www.alpha.example/enter/", "Market": "Cybersecurity", "EVENT_ID_CANON": "", "DUP_OF": ""},
+            {"CONFERENCE": "Other", "CONFERENCE URL": "", "SUBMISSION URL": "https://other.example/x", "Market": "Utility", "EVENT_ID_CANON": "", "DUP_OF": ""}]
+    pl = sgi.plan([{"sheet": "Awards", "id": "2027-alpha-prize-nan-awards", "url": "http://alpha.example/enter", "start": ""}], {"Awards": rows}, set(), {})
+    assert pl["stamp"] == [("Awards", 0, "2027-alpha-prize-nan-awards")]
+    # a conference row with a blank CONFERENCE URL is NOT paired by its SUBMISSION URL (behaviour unchanged)
+    pl = sgi.plan([_u("2027-x-speaking", "https://alpha.example/enter")], {"Cybersecurity": [{**rows[0], "CONFERENCE URL": ""}], "Utility": []}, set(), {})
+    assert pl["stamp"] == []
+
+
+def test_awards_ids_resemble_check_understands_the_awards_suffix():
+    assert sgi.words("2027-alpha-prize-nan-awards") == {"alpha", "prize"}
+
+
+def test_awards_apply_stamps_the_awards_list_and_records_the_ledger_under_market_awards(tmp_path, monkeypatch):
+    with open(tmp_path / "Awards_input.csv", "w", encoding="utf-8-sig", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=AW_COLS, quoting=csv.QUOTE_ALL, lineterminator="\r\n")
+        w.writeheader()
+        w.writerows([{"CONFERENCE": "Alpha Prize", "CONFERENCE URL": "", "SUBMISSION URL": "https://alpha.example/enter", "Market": "Cybersecurity", "EVENT_ID_CANON": "", "DUP_OF": ""},
+                     {"CONFERENCE": "Kept", "CONFERENCE URL": "", "SUBMISSION URL": "https://k.example/x", "Market": "Utility", "EVENT_ID_CANON": "2026-kept-nan-awards", "DUP_OF": ""}])
+    db = tmp_path / "t.db"
+    con = sqlite3.connect(db)
+    con.execute("create table grounding_facts (event_id text)")
+    con.execute("create table award_grounding_facts (event_id text)")
+    con.execute("insert into award_grounding_facts values ('2026-kept-nan-awards')")
+    con.commit()
+    con.close()
+    ids = tmp_path / "ids.csv"
+    ids.write_text("id,start,url\n2027-alpha-prize-nan-awards,,https://alpha.example/enter\n", encoding="utf-8")
+    led = tmp_path / "ledger.csv"
+    monkeypatch.setattr(sys, "argv", ["x", "--awards", "--ids-csv", str(ids), "--markets-dir", str(tmp_path), "--db", str(db), "--ledger", str(led), "--apply"])
+    assert sgi.main() == 0
+    rows = list(csv.DictReader(open(tmp_path / "Awards_input.csv", encoding="utf-8-sig", newline="")))
+    assert [r["EVENT_ID_CANON"] for r in rows] == ["2027-alpha-prize-nan-awards", "2026-kept-nan-awards"]
+    assert list(tmp_path.glob("Awards_input.pre-stampids-*.bak.csv"))
+    assert list(csv.DictReader(open(led, encoding="utf-8")))[0]["market"] == "Awards"
+    from scripts import first_load as fl
+    assert fl.read_ledger(led, "Awards") == {"2027-alpha-prize-nan-awards"} and fl.read_ledger(led, "Cybersecurity") == set()

@@ -55,6 +55,7 @@ DESCRIBED = {
     "scripts/pinned_rows.py": ROOT / "scripts" / "pinned_rows.py",
     "scripts/customer_coverage.py": ROOT / "scripts" / "customer_coverage.py",
     "scripts/customer_auto_add.py": ROOT / "scripts" / "customer_auto_add.py",
+    "scripts/customer_awards.py": ROOT / "scripts" / "customer_awards.py",
     "scripts/sponsor_prefill.py": ROOT / "scripts" / "sponsor_prefill.py",
 }
 

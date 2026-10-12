@@ -121,3 +121,45 @@ def test_the_refresh_plan_lines_reach_the_recap_and_an_unknown_is_said_plainly()
     assert "Refresh policy" in text and "17 skipped" in text and "UNKNOWN" in text and "every row was researched as before" in text
     assert "Refresh policy" not in _recap(LOG_OK)[1]                       # step not switched on: the recap is unchanged
     assert "Refresh policy" not in _recap(LOG_SKIP, "friday")[1]           # Friday's recap does not carry the conference plan
+
+
+# --- ACT-67: the customers' AWARDS sheets (Friday and Saturday alike) ---
+AW_OK = ("AWARDS COVERAGE: 150 of 150 customer awards are on the research input list; 0 are NOT; 0 only under the other market; 1 excluded with a reason\n"
+         "AWARDS AUTOADD: mode=dry-run; 0 to add, 0 held for a person, 0 waiting for an id; 0 customer awards NOT in the queue after the step\n")
+AW_BAD = ("AWARDS COVERAGE: 120 of 152 customer awards are on the research input list; 30 are NOT; 1 only under the other market; 1 excluded with a reason\n"
+          "AWARDS COVERAGE WRONG MARKET: Fast Company Most Innovative Companies 2027\nAWARDS COVERAGE NOT IN QUEUE: AI Awards Summit; AI Breakthrough Awards; and 28 more\n"
+          "AWARDS AUTOADD: mode=applied; 29 added, 1 held for a person, 29 waiting for an id; 1 customer awards NOT in the queue after the step\n"
+          "AWARDS AUTOADD HELD: Fast Company Most Innovative Companies 2027\nAWARDS AUTOADD NOT PICKED UP: Odd Award\n")
+
+
+def test_awards_lines_reach_both_the_friday_and_the_saturday_recap_and_flag_the_subject():
+    from scripts.weekend_recap import parse_saturday
+    a = parse_saturday(AW_BAD)["awards_cov"]
+    assert (a["not_in"], a["wrong_market"]) == (30, 1) and a["names"].startswith("AI Awards Summit") and a["missed_names"] == "Odd Award"
+    for kind in ("friday", "saturday"):
+        subject, text, html = _recap(AW_BAD, kind)
+        assert "FLAG: 31 customer award(s) not in the research queue" in subject and "FLAG: customer award(s) added but not picked up" in subject
+        assert "AI Awards Summit" in text and "researched only under the other market" in text and "Fast Company Most Innovative Companies 2027" in text
+        assert "NOT picked up: Odd Award" in text
+
+
+def test_awards_all_in_queue_has_no_flag_and_a_missing_or_unknown_line_is_said_plainly():
+    subject, text, _ = _recap(AW_OK, "friday")
+    assert "FLAG" not in subject and "150 of 150 customer awards" in text
+    _, text, _ = _recap("nothing here\n", "friday")
+    assert "the check did not run this week (no AWARDS COVERAGE line" in text
+    subject, text, _ = _recap("AWARDS COVERAGE: UNKNOWN - no snapshot of the utility-awards sheet in x\n", "saturday")
+    assert "FLAG" not in subject and "could not be checked" in text
+
+
+def test_new_awards_the_import_held_are_named_in_the_recap_and_flag_the_subject():
+    from pathlib import Path
+    from scripts.weekend_recap import saturday_recap
+    imp = {"status": "DONE", "database": "updated", "markets": [{"market": "Awards", "status": "PROMOTED", "from_this_week": 80, "from_last_week": 47, "held_back": 2, "new_events": [],
+                                                                    "new_events_held": [{"conference": "Alpha Prize", "canonical": "", "reason": "no id"}, {"conference": "Beta Prize", "canonical": "x", "reason": "r"}]}]}
+    subject, text, _ = saturday_recap("=== run_monthly exit code: 0 ===\n", imp, Path("."), "friday", None)
+    assert "FLAG: 2 new award(s) held (no id yet)" in subject
+    assert "Awards: 2 researched new awards NOT loaded" in text and "Alpha Prize; Beta Prize" in text
+    imp["markets"][0].update(new_events_held=[], new_events=[{"canonical": "c", "conference": "Gamma"}])
+    subject, text, _ = saturday_recap("=== run_monthly exit code: 0 ===\n", imp, Path("."), "friday", None)
+    assert "held" not in subject and "1 new award(s) loaded for the first time" in text

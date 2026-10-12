@@ -91,6 +91,59 @@ def autoadd_sentence(a: dict | None) -> str:
     return out
 
 
+def awards_coverage_facts(log: str) -> dict | None:
+    """ACT-67: the `AWARDS COVERAGE:` / `AWARDS AUTOADD:` lines scripts/customer_awards.py prints before the research (Friday and Saturday). None when the log has no such line.
+    not_in is None when the check could not run (UNKNOWN)."""
+    line = first(r"^AWARDS COVERAGE: (.+)$", log, flags=re.M)
+    if line is None:
+        return None
+    m = re.search(r"; (\d+) are NOT; (\d+) only under the other market", line)
+    return {"line": line, "not_in": int(m.group(1)) if m else None, "wrong_market": int(m.group(2)) if m else 0,
+            "names": first(r"^AWARDS COVERAGE NOT IN QUEUE: (.+)$", log, flags=re.M) or "", "wrong_names": first(r"^AWARDS COVERAGE WRONG MARKET: (.+)$", log, flags=re.M) or "",
+            "autoadd": first(r"^AWARDS AUTOADD: (.+)$", log, flags=re.M), "held_names": first(r"^AWARDS AUTOADD HELD: (.+)$", log, flags=re.M) or "",
+            "missed_names": first(r"^AWARDS AUTOADD NOT PICKED UP: (.+)$", log, flags=re.M) or ""}
+
+
+def awards_coverage_sentences(a: dict | None) -> list[str]:
+    if a is None:
+        return ["Customer awards in the research queue: the check did not run this week (no AWARDS COVERAGE line in the log)."]
+    if a["not_in"] is None:
+        return [f"Customer awards in the research queue: could not be checked ({a['line']})."]
+    out = []
+    if a["not_in"] == 0 and not a["wrong_market"]:
+        out.append(f"Customer awards in the research queue: {a['line']}.")
+    else:
+        bits = []
+        if a["not_in"]:
+            bits.append(f"{a['not_in']} NOT researched this week: {a['names']}")
+        if a["wrong_market"]:
+            bits.append(f"{a['wrong_market']} researched only under the other market, so the customer's page will not show them: {a['wrong_names']}")
+        out.append(f"FLAG - customer awards: {a['line']}. " + "; ".join(bits) + ". Report: runs_out/qa/<date>/awards_coverage.md.")
+    if a["autoadd"]:
+        sent = f"Automatic add of customer awards: {a['autoadd']}."
+        if a["held_names"]:
+            sent += f" Held for a person (see awards_auto_add.json): {a['held_names']}."
+        if a["missed_names"]:
+            sent = "FLAG - customer awards added to the plan but NOT picked up: " + a["missed_names"] + ". " + sent
+        out.append(sent)
+    return out
+
+
+def held_new_lines(imp: dict | None) -> list[str]:
+    """ACT-67: researched NEW events/awards the import could not load, NAMED with the reason (never only a count). One line per market."""
+    out = []
+    for m in (imp or {}).get("markets", []):
+        held = m.get("new_events_held") or []
+        if m.get("status") in ("PROMOTED", "ACCEPTED") and held:
+            what = "awards" if m.get("market") == "Awards" else "events"
+            out.append(f"{m['market']}: {len(held)} researched new {what} NOT loaded (no permanent id that upstream gave us yet, or a guard): "
+                       + "; ".join(h["conference"][:44] for h in held[:6]) + (f"; and {len(held) - 6} more" if len(held) > 6 else "")
+                       + ". The full list with each reason is in the import report.")
+        if m.get("status") in ("PROMOTED", "ACCEPTED") and m.get("new_events"):
+            out.append(f"{m['market']}: {len(m['new_events'])} new {'award(s)' if m.get('market') == 'Awards' else 'event(s)'} loaded for the first time.")
+    return out
+
+
 def commitment_facts(markets_dir: Path, ledger: Path | None = None, db: Path | None = None) -> dict | None:
     """ACT-58: did upstream keep what it promised? Runs scripts/check_commitments.py's own `run` on the published
     files, after the load. {'kept', 'broken', 'pending', 'total', 'broken_lines'} or None if the checker could not run."""
@@ -123,6 +176,7 @@ def parse_saturday(log: str) -> dict:
     out["coverage"] = coverage_facts(log)
     out["refresh_plan"] = re.findall(r"^REFRESH-PLAN (.+)$", log, flags=re.M)        # ACT-33: one line per market (a summary, or UNKNOWN - why)
     out["autoadd"] = autoadd_facts(log)
+    out["awards_cov"] = awards_coverage_facts(log)                                           # ACT-67
     if re.search(r"CANARY PASSED", log):
         out["canary"] = "passed"
     elif re.search(r"Canary passed [\d.]+h ago - reusing it", log):
@@ -296,6 +350,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
              *([coverage_sentence(s["coverage"])] if kind != "friday" else []),      # awards have no customer sheet
              *([autoadd_sentence(s["autoadd"])] if kind != "friday" and s.get("autoadd") else []),
              *([refresh_plan_sentence(s["refresh_plan"])] if kind != "friday" and s.get("refresh_plan") else []),
+             *awards_coverage_sentences(s.get("awards_cov")),                                 # ACT-67: the customers' AWARDS sheets, Friday and Saturday alike
              f"AI requests in total: about {total_req}."]
     if s["timeouts"]:
         facts.append(f"Google was slow: {s['timeouts']} '504' timeouts (Google's server took too "
@@ -313,6 +368,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
                                  "yes" if m["status"] == "PROMOTED" else "NO"])
             else:
                 imp_lines.append(f"{m['market']}: NOT loaded - {m.get('why', m.get('status'))}")
+        imp_lines += held_new_lines(imp)                                                      # ACT-67: new events/awards held back are NAMED
         db_line = ("The database now holds this weekend's research."
                    if imp.get("database") == "updated" else
                    "The database was NOT changed - it still holds last week's information.")
@@ -348,6 +404,14 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
         status += f" - FLAG: {cov_n} customer row(s) not in the research queue"
     if kind != "friday" and (s.get("autoadd") or {}).get("missed_names"):
         status += " - FLAG: customer row(s) added but not picked up"
+    ac = s.get("awards_cov") or {}
+    if (ac.get("not_in") or 0) or ac.get("wrong_market"):
+        status += f" - FLAG: {(ac.get('not_in') or 0) + (ac.get('wrong_market') or 0)} customer award(s) not in the research queue"
+    if ac.get("missed_names"):
+        status += " - FLAG: customer award(s) added but not picked up"
+    n_held = sum(len(m.get("new_events_held") or []) for m in (imp or {}).get("markets", []) if m.get("market") == "Awards" and m.get("status") in ("PROMOTED", "ACCEPTED"))
+    if n_held:
+        status += f" - FLAG: {n_held} new award(s) held (no id yet)"
     if kind != "friday" and commitments and commitments["broken"]:
         status += f" - FLAG: {commitments['broken']} upstream promise(s) NOT kept"
     subject = f"CFP {label} {status} - {datetime.now():%a %b %d}"

@@ -60,6 +60,10 @@ CLIENTS = {
     "arnica":  {"key": "arnica",         "name": "Arnica",         "industry": "Cybersecurity"},
 }
 
+# ACT-67: the customers' AWARDS sheets (kind "awards" in customer_sheets.json). fetch_customer_sheet.py --client all already fetches and snapshots them every run; nothing used to read them. Their
+# snapshots are checked and REPORTED here (never loaded into the database); scripts/customer_awards.py compares them with Awards_input.csv.
+AWARD_CLIENTS = ("arnica-awards", "utility-awards")
+
 RETRY_DELAYS = (10, 30, 60)      # a sheet fetch is cheap; a lost research window is not
 STALE_AFTER_DAYS = 9             # one cycle plus slack: a week plus two days
 
@@ -215,6 +219,23 @@ def newest_snapshot(client: str, snapshots: Path) -> Path | None:
         return None
     files = sorted(d.glob(f"{client}_*.csv"))
     return files[-1] if files else None
+
+
+def awards_snapshot_line(snapshots: Path, today: date) -> tuple[str, list[str]]:
+    """(the INTAKE AWARDS line, notes) for the two awards-sheet snapshots. Never raises; a missing or old snapshot is a NOTE, not a failure of the intake."""
+    bits, notes = [], []
+    for client in AWARD_CLIENTS:
+        newest = newest_snapshot(client, snapshots)
+        taken = snapshot_date(newest)
+        age = age_days(taken, today)
+        if newest is None or taken is None:
+            bits.append(f"{client} never snapshotted")
+            notes.append(f"{client}: the customer's awards sheet has never been snapshotted - customer_awards.py cannot check which awards are in the research queue")
+        else:
+            bits.append(f"{client} {taken.isoformat()} ({age}d)")
+            if age > STALE_AFTER_DAYS:
+                notes.append(f"{client}: awards snapshot is {age} days old (stale after {STALE_AFTER_DAYS}) - the awards coverage check is reading old data")
+    return "INTAKE AWARDS: " + "; ".join(bits), notes
 
 
 def snapshot_date(path: Path | None) -> date | None:
@@ -410,6 +431,13 @@ def main() -> int:
         age = "never" if r["age_days"] is None else f"{r['age_days']}d"
         print(f"{r['client']:<10} {r['taken'] or '(none)':<16} {age:>6}  "
               f"{'yes' if r['new_this_run'] else 'no':<5} {'yes' if r['loaded'] else '-':<6}")
+
+    try:
+        aw_line, aw_notes = awards_snapshot_line(snapshots, today)
+        print(aw_line)
+        notes += aw_notes
+    except Exception as exc:                                         # noqa: BLE001
+        print(f"INTAKE AWARDS: could not be checked ({type(exc).__name__})")
 
     # THE VERDICT IS ABOUT THE AGE OF THE DATA, not about whether a command succeeded. A fetch
     # that failed on a week the sheet had not changed matters far less than a client layer

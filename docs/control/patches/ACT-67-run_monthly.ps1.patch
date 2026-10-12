@@ -1,0 +1,47 @@
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -269,11 +269,43 @@
+             Write-Host "AUTOADD: UNKNOWN - interpreter or script not found ($aaPy / $aaPy_)."
+         }
+     } catch {
+         Write-Host "AUTOADD: UNKNOWN - $($_.Exception.Message)"
+     }
+     Write-Host ""
+ }
+ 
++# ---------------------------------------- STEP 0a1b: CUSTOMER AWARDS (2026-10-12, ACT-67) ----
++# The customers' AWARDS sheets (Arnica, Utility Global) define the job too: every award on them is researched. Until now only the two CONFERENCE sheets were read into the queue, so 30 customer
++# awards were never researched and never reached the Awards page. Before the research (and in the Friday awards run, which does not repeat the conference intake) this step
++#   1. on an Awards run, fetches the two awards sheets (read-only service account, snapshot into customer_snapshots; a Saturday run reads the snapshots weekly_intake.py just took),
++#   2. runs scripts/customer_awards.py: prints the AWARDS COVERAGE / AWARDS AUTOADD lines that weekend_recap.py puts in the Friday and Saturday recaps (FLAG in the subject when an award is missing).
++# SWITCH: it only PROPOSES (dry run: proposal files under runs_out\qa\<date>\ and a DRAFT request to upstream for the ids, which the operator sends) unless the environment variable
++# CFP_AWARDS_AUTOADD_APPLY is 1, in which case the missing awards are appended to Awards_input.csv (backup and read-back proof, blank EVENT_ID_CANON: an id is never minted).
++# A new award loads only when upstream has given its id (stamp_given_ids.py --awards) AND weekend_import runs with --new-awards or CFP_AWARDS_NEW_EVENTS=1 (also a switch, off by default).
++# Like the intake it can never stop the research: wrapped, exit code ignored. Not run for the monthly prospect run (no customer) or -WhatIf.
++if (($liveMarkets.Count -gt 0 -or $Markets -contains 'Awards') -and -not $WhatIf) {
++    $awPy  = "C:\Users\matts\cfp-monitor\.venv\Scripts\python.exe"
++    $awPy_ = "C:\Users\matts\cfp-monitor\scripts\customer_awards.py"
++    $awFetch = "C:\Users\matts\cfp-monitor\scripts\fetch_customer_sheet.py"
++    $awArgs = @()
++    if ($env:CFP_AWARDS_AUTOADD_APPLY -eq '1') { $awArgs = @('--apply', '--live') }
++    try {
++        if ($Markets -contains 'Awards' -and (Test-Path $awPy) -and (Test-Path $awFetch)) {
++            foreach ($awClient in @('arnica-awards', 'utility-awards')) {
++                try { & $awPy $awFetch --client $awClient --out-dir "$PSScriptRoot\customer_snapshots" } catch { Write-Host "AWARDS SHEET FETCH FAILED ($awClient): $($_.Exception.Message) - the newest snapshot on disk is used." }
++            }
++        }
++        if ((Test-Path $awPy) -and (Test-Path $awPy_)) {
++            & $awPy $awPy_ @awArgs
++        } else {
++            Write-Host "AWARDS COVERAGE: UNKNOWN - interpreter or script not found ($awPy / $awPy_)."
++        }
++    } catch {
++        Write-Host "AWARDS COVERAGE: UNKNOWN - $($_.Exception.Message)"
++    }
++    Write-Host ""
++}
++
+ # ------------------------------------------------------- STEP 0a: PERMANENT IDS (2026-09-27) ----
+ # Stamp each input row with the permanent id of the event it asks about, so identity passes
+ # THROUGH the research instead of being rebuilt from a name the model may change. Exact names
+ # only; an undecidable row is left blank and held back downstream, never guessed. Like intake,

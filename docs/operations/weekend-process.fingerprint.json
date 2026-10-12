@@ -5,10 +5,10 @@
     "run_canary.ps1": "4aa1cde888b90e8da5565a3b4ad1d0d6eb6cb56cb25c1ed954a55cb0b00f7661",
     "run_overnight.ps1": "3a9695ca0707743e933272f816450710c7eb7c598b8b895cc2b0b9005dbcd2ee",
     "run_all.ps1": "e7ae4f68ff580d1551e45cd7c2fb8d121c3678180afdbd32f09ae906ade2fda1",
-    "scripts/weekly_intake.py": "c3950f4925cd61963837d03f304b3b697ea784572ba736f4c915c3424ba7710b",
+    "scripts/weekly_intake.py": "2dcf362209874c56a7e38e22de54e5b9b6f9e552e99597e1118d95e86816fc4b",
     "scripts/stamp_input_ids.py": "3cdca1c95511263051dcc2552bc070ea758f23623538f76ea737eb2b4f0f756b",
-    "scripts/weekend_import.py": "32c1e41b86092107e424cf0da83317a682bd042331d66b39a16a4841a6583b21",
-    "scripts/weekend_recap.py": "3649612a5edc77c9a0f8285e0212c15ff019088d709d2ba25c3eb2f08f95bc36",
+    "scripts/weekend_import.py": "29c631ca99d691af37d417f2078cb71d3b521f69a5898aa678fd3dadb30f4ce9",
+    "scripts/weekend_recap.py": "fef4f93b79e3bc45dcbae1cc7ed89a3dddbde5e74852ff007bb8822588ef271a",
     "scripts/shadow_finder.py": "0fb1de2942bde32bdc95b2d2cfed4a4a87046cbe5e7495ea7e18e4cf01a1799e",
     "scripts/refresh_plan.py": "9c7b49d47cce73e7be752cd4b4bec5320edc2c8e57d21f43b6a89bee9ce95730",
     "scripts/run_weekly.bat": "e34d53e10c3282e23d78d56cb9314dceff5e15db411d35e644f0a33c4d3d49de",
@@ -25,6 +25,7 @@
     "scripts/pinned_rows.py": "ce4f5d78d371985d74592fe96858e6feb1c9ddff643f956e26eea40cee707a5c",
     "scripts/customer_coverage.py": "05614213694e18211df9af3d2a1af9b1469c359541cf2d6c71acd0a528c83213",
     "scripts/customer_auto_add.py": "4f387f67e0bb34f39d0541eb449060da68cfb12902cb94b12961a62886c2e41e",
+    "scripts/customer_awards.py": "40604601c6737a0d153c94bc8017d2cb9805a247ea076bccb925d7eb50064c09",
     "scripts/sponsor_prefill.py": "e3d34e090f811d74ef00dc2a526e9d813242613ffeb01d746f2cb37f08b01a73"
   }
 }

@@ -89,3 +89,10 @@ experiments/act33_rehearsal/out_*/
 experiments/act33_rehearsal/qa_*/
 experiments/act33_rehearsal/awards_copy/
 experiments/act33_rehearsal/*.txt
+
+# 2026-10-12 (ACT-67): live customer awards sheets and rehearsal copies stay local (public repo)
+experiments/act67_rehearsal/live/
+experiments/act67_rehearsal/work*/
+experiments/act67_rehearsal/*.csv
+experiments/act67_rehearsal/*.json
+experiments/act67_rehearsal/*.log
