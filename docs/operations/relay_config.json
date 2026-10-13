@@ -1,9 +1,12 @@
 {
   "_comment": "Settings for scripts/upstream_relay.py (ACT-69). No secrets here: the Gemini key lives in the user environment variable CFP_RELAY_GEMINI_KEY. The 'models' command rewrites 'model' (and only that).",
-  "_prices_comment": "Prices are USD per 1,000,000 tokens and are ESTIMATES written by the builder from memory. THE OPERATOR VERIFIES THEM at https://ai.google.dev/gemini-api/docs/pricing (paid tier, text input and output, for the exact model id) before relying on the caps. A model with no price here is REFUSED by 'send' and 'ping' (the relay will not guess a cost).",
+  "_prices_comment": "Prices are USD per 1,000,000 tokens. 2026-10-13: the gemini-3.8-flash, 3.5-flash-lite and 3.1-flash-lite lines were read from the pricing page (paid tier, standard, text) by the reviewer; gemini-3.8-flash is entered at its 2027 price (1.50 in / 7.50 out; the page says 0.75 / 3.75 through 2026-12-31) so the caps stay conservative. The other lines are ESTIMATES from memory. THE OPERATOR VERIFIES THEM at https://ai.google.dev/gemini-api/docs/pricing (paid tier, text input and output, for the exact model id) before relying on the caps. A model with no price here is REFUSED by 'send' and 'ping' (the relay will not guess a cost).",
   "_model_comment": "The default below is the most recent Gemini flash id the builder knew. Run 'python scripts/upstream_relay.py models' to list what the key can really use; it picks the newest cheapest flash-class text model and writes it here.",
-  "model": "gemini-2.5-flash",
+  "model": "gemini-3.8-flash",
   "prices_usd_per_1m_tokens": {
+    "gemini-3.8-flash": {"input": 1.50, "output": 7.50},
+    "gemini-3.5-flash-lite": {"input": 0.30, "output": 2.50},
+    "gemini-3.1-flash-lite": {"input": 0.25, "output": 1.50},
     "gemini-2.5-flash": {"input": 0.30, "output": 2.50},
     "gemini-2.5-flash-lite": {"input": 0.10, "output": 0.40}
   },
