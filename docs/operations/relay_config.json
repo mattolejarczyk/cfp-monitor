@@ -1,0 +1,20 @@
+{
+  "_comment": "Settings for scripts/upstream_relay.py (ACT-69). No secrets here: the Gemini key lives in the user environment variable CFP_RELAY_GEMINI_KEY. The 'models' command rewrites 'model' (and only that).",
+  "_prices_comment": "Prices are USD per 1,000,000 tokens and are ESTIMATES written by the builder from memory. THE OPERATOR VERIFIES THEM at https://ai.google.dev/gemini-api/docs/pricing (paid tier, text input and output, for the exact model id) before relying on the caps. A model with no price here is REFUSED by 'send' and 'ping' (the relay will not guess a cost).",
+  "_model_comment": "The default below is the most recent Gemini flash id the builder knew. Run 'python scripts/upstream_relay.py models' to list what the key can really use; it picks the newest cheapest flash-class text model and writes it here.",
+  "model": "gemini-2.5-flash",
+  "prices_usd_per_1m_tokens": {
+    "gemini-2.5-flash": {"input": 0.30, "output": 2.50},
+    "gemini-2.5-flash-lite": {"input": 0.10, "output": 0.40}
+  },
+  "per_call_cap_usd": 0.10,
+  "weekly_cap_usd": 2.00,
+  "max_output_tokens": 2048,
+  "temperature": 0.2,
+  "thinking_budget": 0,
+  "briefing_max_chars": 60000,
+  "provenance_allowlist": ["customer_awards-request", "release-gate"],
+  "api_base": "https://generativelanguage.googleapis.com/v1beta",
+  "timeout_seconds": 90,
+  "max_retries": 2
+}
