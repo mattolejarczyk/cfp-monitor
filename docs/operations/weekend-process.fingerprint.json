@@ -29,6 +29,6 @@
     "scripts/sponsor_prefill.py": "e3d34e090f811d74ef00dc2a526e9d813242613ffeb01d746f2cb37f08b01a73",
     "scripts/release_gate.py": "56a6576356ae80cb148385ffdac2542984f96c9162c434ebde640745c8fd5afc",
     "scripts/provisional_rows.py": "c5a3eb0ae8eca77005a8cf3570c4bf2ef5ea08c1cd7f94ecf54cc19f5b6ecef8",
-    "scripts/build_review_page.py": "56686a9f52aaa53921680d69c166c5c694cf92391b38239872197ffb47ba6ad9"
+    "scripts/build_review_page.py": "81ccaa97b145b63574b2058f86c1930522ef62ad7df17688d172c7b586e6a5d7"
   }
 }

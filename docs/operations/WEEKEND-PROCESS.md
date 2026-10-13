@@ -339,6 +339,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-13** - the page build blanks a place that is only a stringified empty cell ('nan'): 39 of 125 awards had shown it as their location on 2026-10-12 (6 the week before). No step changed; the fix is in `build_review_page.py`.
 - **2026-10-12** - (ACT-68) the weekly outcome is reported, not assumed: the release gate after Monday's build (one GO / GO WITH NOTES / NO-GO email with both pages attached), the same checks as a Sunday pre-flight, and Provisional awards on the Awards page.
 - **2026-10-12** - (follow-up 3) upstream's reply with 41 award ids: reviewed file, `--reply-plan`, `--relabel`, stamping commands; a carried Speaking/Registration row is superseded by the same listing researched as an award; a non-award row is never first-loaded.
 - **2026-10-12** - (follow-up 2) `customer_awards.py --unlabel`: DUP_OF awards the customer lists as their own rows become researched awards of their own (waiting for ids); the import holds and names rows that share one output id.
