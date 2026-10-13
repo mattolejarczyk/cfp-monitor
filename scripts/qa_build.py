@@ -170,6 +170,10 @@ def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: 
     # moves from the future INTO the past stays a flag - someone planning to the old date misses it.
     report_rows, flags, changes, past = [], [], [], []
     kept_customer: list[list[str]] = []
+    # ACT-70 follow-up: 'Awaiting research' rows (customer awards nobody has researched yet) are listed on their own, never mixed into the changes
+    awaiting = [[r["n"], r["m"], r.get("s") or "", r.get("dl") or "(none)"] for r in cur_rows if r.get("aw")]
+    cur_rows = [r for r in cur_rows if not r.get("aw")]
+    prev_rows = [r for r in prev_rows if not r.get("aw")] if prev_rows is not None else None
     now = shows(cur_rows, on)
     before = shows(prev_rows, on) if prev_rows is not None else {}
     for k in list(now) + [k for k in before if k not in now]:
@@ -238,7 +242,7 @@ def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: 
                     changes.append([c["n"], c["m"], f"{what} died", "", ""])
     # ACT-68: provisional rows are listed on their own, never mixed into the changes: they are researched but not approved, and they leave this list the week they are approved
     provisional = [[r["n"], r["m"], r.get("s") or "", r.get("dl") or "(none)"] for r in cur_rows if r.get("prov")]
-    return {"counts": report_rows, "changes": changes, "flags": flags, "past": past, "kept_customer": kept_customer, "provisional": provisional}
+    return {"counts": report_rows, "changes": changes, "flags": flags, "past": past, "kept_customer": kept_customer, "provisional": provisional, "awaiting": awaiting}
 
 
 def commitment_results(on: date, markets_dir: Path | None = None) -> list[dict] | None:
@@ -303,6 +307,11 @@ def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool 
             "columns": ["Conference", "Market", "What changed", "Was", "Now"],
             "rows": sorted(res["changes"], key=lambda x: (x[2], x[1], x[0])),
             "flags": res["flags"]})
+        if res["awaiting"]:
+            rep["sections"].append({
+                "title": f"{KINDS[kind]} - Awaiting research (on the customer's sheet, not researched yet)",
+                "note": "Built from the customer's own sheet only: name, link, place and a deadline only when the cell was exactly one date. The page marks each 'Awaiting research' with no verdict and no badge. Not part of the changes above.",
+                "columns": ["Row", "Market", "Status shown", "Deadline"], "rows": res["awaiting"], "flags": []})
         if res["provisional"]:
             blanks = blank_notes(cur)
             rows_p = [[*r, blanks.get(r[0], "")] for r in res["provisional"]] if blanks else res["provisional"]

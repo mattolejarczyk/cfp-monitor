@@ -320,7 +320,7 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
             'chk': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('v', ''),
             'chku': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('u', ''),
             'chkq': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('q', ''),
-            'prov': False,
+            'prov': False, 'aw': False,
         })
         if (r.get('_PROVISIONAL') or '') == '1':
             # ACT-68: a researched row the approved file does not carry yet. Never a check verdict (no 'Deadline confirmed'), never a confidence badge.
@@ -331,6 +331,9 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
             _dl = (out[-1]['dl'] or '')[:10]
             if re.fullmatch(r'\d{4}-\d{2}-\d{2}', _dl) and _dl < _today.isoformat() and out[-1]['s'] in ('Open', 'Upcoming', ''):
                 out[-1]['s'] = 'Closed'
+        if (r.get('_AWAITING') or '') == '1':
+            # ACT-70 follow-up: a customer award nobody has researched yet, built from the customer's own sheet only. Nothing is verified, flagged or scored; the status is the one we set.
+            out[-1].update(aw=True, chk='', chku='', chkq='', c='', proj=False, dead=False, evdead=False, urldead=False, spondead=False, spon=False, s=(r.get('STATUS') or 'Needs Verification').strip())
     if corrected:
         print(f"  {corrected} row(s) shown with a DERIVED status - the file's value was "
               f"contradicted by a date")
@@ -490,6 +493,9 @@ a{color:var(--accent)}
     <label id="provbox" style="display:__PROVDISPLAY__;margin-top:6px;font-size:13px;color:var(--muted);cursor:pointer">
       <input type="checkbox" id="showprov" checked> Show <i>Provisional</i> rows (__PROVCOUNT__):
       researched this week, our final checks are still running</label>
+    <label id="awbox" style="display:__AWDISPLAY__;margin-top:6px;font-size:13px;color:var(--muted);cursor:pointer">
+      <input type="checkbox" id="showawait" checked> Show <i>awaiting-research</i> rows (__AWCOUNT__):
+      on your sheet, research is scheduled this week</label>
   </section>
 
   <section class="sec">
@@ -641,7 +647,8 @@ let showClosed = false;
 VIEWS.forEach(v=>{ if(HIDE_CLOSED_IN.indexOf(v.k)>=0){ const base=v.f;
   v.f = r => base(r) && (showClosed || r.s!=='Closed'); } });
 let showProv = true;
-VIEWS.forEach(v=>{ const base=v.f; v.f = r => base(r) && (showProv || !r.prov); });
+let showAw = true;
+VIEWS.forEach(v=>{ const base=v.f; v.f = r => base(r) && (showProv || !r.prov) && (showAw || !r.aw); });
 // "Closing this month" is the right landing view when something IS closing this month. On a
 // per-client page it often is not - Arnica had none - and the page then opened on "Nothing
 // matches those filters", which reads as a broken product rather than a quiet month.
@@ -802,7 +809,7 @@ function render(){
   $('hint').innerHTML = urg?`<span class="b b-urg">${urg} closing within ${URGENT_DAYS} days</span>`:'';
   $('tb').innerHTML = rows.map((r,i)=>`
    <tr class="r" data-i="${i}">
-    <td class="nm">${esc(r.n)}${r.prov?' <span class="b b-prov" title="Researched this week; our final checks are still running.">Provisional</span>':''}${r.op&&r.op!=='Speaking'&&r.op.toLowerCase()!==KIND?` <span class="b b-up">${r.op}</span>`:''}${
+    <td class="nm">${esc(r.n)}${r.prov?' <span class="b b-prov" title="Researched this week; our final checks are still running.">Provisional</span>':''}${r.aw?' <span class="b b-prov" title="On your sheet. Research for this award is scheduled this week; results will appear in next week&#39;s page.">Awaiting research</span>':''}${r.op&&r.op!=='Speaking'&&r.op.toLowerCase()!==KIND?` <span class="b b-up">${r.op}</span>`:''}${
       // SPONSOR REQUIRED IS A GATE ON THE OPPORTUNITY, NOT A DETAIL. It decides whether the
       // pitch happens at all, so it belongs in the list where a deadline is - not three
       // clicks down. The cost rides with it when we have one, because "sponsor required" and
@@ -816,6 +823,7 @@ function render(){
     <td><span class="b ${eB[r.st]||''}">${esc(r.st)}</span></td>
     <td>${
       r.prov ? '<span class="b b-prov">Provisional</span>' :
+      r.aw ? '<span class="b b-prov">Awaiting research</span>' :
       r.chk ? chkCell(r) :
       // PROJECTED OVERRIDES A STORED "Verified". GROUNDING_CONFIDENCE is upstream's and was
       // written when the row had a citation; withdrawing that citation sets IS_PROJECTED
@@ -828,6 +836,7 @@ function render(){
    </tr>
    <tr class="det" id="d${i}" style="display:none"><td colspan="9">
      ${r.prov?'<h4>Provisional</h4><p>Researched this week; our final checks are still running.</p>':''}
+     ${r.aw?"<h4>Awaiting research</h4><p>On your sheet. Research for this award is scheduled this week; results will appear in next week's page.</p>":''}
      ${r.det?`<h4>Status</h4><p>${esc(r.det)}</p>`:''}
      ${r.q?(r.ev
         ? `<h4>Quoted from the source page</h4><p class="quote">${esc(r.q)}</p>`
@@ -883,6 +892,7 @@ $('mk').onclick=e=>{const b=e.target.closest('[data-m]'); if(!b)return;
 ['q','fs','ff','fc','fe'].forEach(i=>$(i).oninput=render);
 $('showclosed').onchange=()=>{ showClosed = $('showclosed').checked; render(); };
 $('showprov').onchange=()=>{ showProv = $('showprov').checked; render(); };
+$('showawait').onchange=()=>{ showAw = $('showawait').checked; render(); };
 // The date box drives SINCE, so the "Updated since" count changes with it rather than being
 // fixed at build time. Falls back to the built-in default when cleared - an empty box would
 // otherwise make every row match and the view would silently become "everything".
@@ -988,6 +998,8 @@ def main():
     ap.add_argument('--provisional-dir', default='',
                     help="(ACT-68, ACT-70) the Markets folder. Researched awards or conferences that the approved file does not carry yet (held for an id, held by the gate or the row rule, new this "
                          "week) are read from the newest raw research file there and shown as Provisional; on the conference page the field a check failed on is blanked (needs --db). Off unless given.")
+    ap.add_argument('--awaiting-research', action='store_true',
+                    help="awards page only (ACT-70 follow-up): every award on the customers' awards sheets (--customer-awards-dir) that no row of the page carries is added as an 'Awaiting research' row built from the customer's own sheet")
     a = ap.parse_args()
 
     # A MISSING INPUT MUST NOT READ AS A FINDING. Both flags are optional and default to empty,
@@ -1020,6 +1032,7 @@ def main():
         rows = list(csv.DictReader(h))
 
     prov_report = []
+    aw_report = []
     rows_approved = list(rows)           # the whole approved file, before the awards page leaves anything out: a row left out on purpose is not 'missing' either
     if a.kind == 'awards':
         from scripts import customer_awards as _ca
@@ -1034,6 +1047,12 @@ def main():
             print(f"awards page: kept {len(_kept_non)} row(s) that are not typed as awards because the customer lists them: " + "; ".join(_kept_non))
         if a.provisional_dir:
             rows = rows + provisional_awards(rows_approved, Path(a.provisional_dir), a.db, a.date, _idx)
+        if a.awaiting_research:
+            from scripts import awaiting_rows as _aw
+            _aw_rows, _aw_rep, _aw_note = _aw.awaiting_rows(rows, Path(a.customer_awards_dir), date.fromisoformat(a.date))
+            print(f"awards page: {len(_aw_rows)} awaiting-research row(s)" + (f" - {_aw_note}" if _aw_note else '') + ''.join(f"; {e['name']}" for e in _aw_rep))
+            rows = rows + _aw_rows
+            aw_report = _aw_rep
     elif a.provisional_dir:
         _prov_rows, prov_report = provisional_conferences(rows_approved, Path(a.provisional_dir), a.db, a.date)
         rows = rows + _prov_rows
@@ -1166,10 +1185,14 @@ def main():
     # hard-coded here, a change to lifecycle's bands would silently disagree with this page and
     # nothing would fail; the two would just quietly mean different things by "closing soon".
     n_prov = sum(1 for d in data if d['prov'])
+    n_aw = sum(1 for d in data if d['aw'])
+    _bits = ([f'{n_prov} provisional'] if n_prov else []) + ([f'{n_aw} awaiting research'] if n_aw else [])
     if n_prov:
         print(f'{n_prov} PROVISIONAL row(s): ' + '; '.join(d['n'] for d in data if d['prov']))
     page = (PAGE.replace('__DATA__', json.dumps(data, ensure_ascii=False))
-                .replace('__PROVNOTE__', f' ({n_prov} provisional)' if n_prov else '')
+                .replace('__PROVNOTE__', f" ({', '.join(_bits)})" if _bits else '')
+                .replace('__AWDISPLAY__', 'block' if n_aw else 'none')
+                .replace('__AWCOUNT__', str(n_aw))
                 .replace('__PROVDISPLAY__', 'block' if n_prov else 'none')
                 .replace('__PROVCOUNT__', str(n_prov))
                 .replace('__DEADHOSTS__', json.dumps(dead_hosts, ensure_ascii=False))
@@ -1195,6 +1218,9 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(a.output)), exist_ok=True)
     with open(a.output, 'w', encoding='utf-8', newline='\n') as h:
         h.write(page)
+    if aw_report:
+        with open(os.path.splitext(a.output)[0] + '.awaiting.json', 'w', encoding='utf-8') as h:
+            json.dump({'date': a.date, 'rows': aw_report}, h, indent=1, ensure_ascii=True)
     if prov_report:
         # the fields blanked per held row, for the operator's QA (internal words: kept OUT of the page, written beside it)
         side = os.path.splitext(a.output)[0] + '.provisional.json'

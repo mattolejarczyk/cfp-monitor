@@ -352,7 +352,7 @@ def main() -> int:
     if awards_in and awards_in.exists():
         # ACT-68: researched awards the approved file does not carry yet (held for an id, held by the row rule, new this week) are shown, marked Provisional
         cmd = [PY, ROOT / "scripts/build_review_page.py", "-i", awards_in, "--kind", "awards",
-               "--date", stamp, "--db", a.db, "--checks", award_checks, "--provisional-dir", md, "-o", awards_page]
+               "--date", stamp, "--db", a.db, "--checks", award_checks, "--provisional-dir", md, "--awaiting-research", "-o", awards_page]
         if hosts.exists():
             cmd += ["--dead-hosts", hosts]
         step("awards page", cmd, work / "4_awards_page.log")
