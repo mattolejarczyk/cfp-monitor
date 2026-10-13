@@ -1,0 +1,42 @@
+market,award_name,action,event_id,survivor,note
+Cybersecurity,Cloud Security Awards - SaaS Awards family,RELABEL,,The Cloud Awards - Security Awards,upstream rules the same award as the survivor; its new id must NOT be used
+Cybersecurity,Computing Security Awards (computingsecurityawards.co.uk),STAMP_EXISTING,2026-computing-security-awards-tbd-awards,,upstream ruled distinct but we already hold this award under this id; upstream id 2026-computing-security-awards-uk-awards NOT used; ask upstream to confirm
+Cybersecurity,CRN Tech Innovator Awards (The Channel Company),RELABEL,,CRN Tech Innovator Awards,upstream rules the same award as the survivor; its new id must NOT be used
+Cybersecurity,Cyber Security Awards (cybersecurityawards.com),RELABEL,,The Cyber Security Awards,upstream rules the same award as the survivor; its new id must NOT be used
+Cybersecurity,Cybersecurity Excellence Awards (Cybersecurity Insiders / InfoSec Community),RELABEL,,Cybersecurity Excellence Awards,upstream rules the same award as the survivor; its new id must NOT be used
+Cybersecurity,Fortress Cybersecurity Award (Business Intelligence Group),RELABEL,,Fortress Cybersecurity Award,upstream rules the same award as the survivor; its new id must NOT be used
+Cybersecurity,Globee Awards for Cybersecurity (22nd Annual),RELABEL,,Globee Awards for Cybersecurity,upstream rules the same award as the survivor; its new id must NOT be used
+Utility,Fast Company Most Innovative Companies 2026,NEW,2026-fast-company-most-innovative-companies-awards,,"new award, id given by upstream 2026-10-12"
+Utility,World Hydrogen and Carbon Asia,STAMP_NONAWARD,2026-world-hydrogen-carbon-asia-awards,,upstream calls it an award; our research types it as not an award (excluded from the award tables); stamped so it is not waiting every week
+Utility,Clinton Global Initiative (CGI) Commitments to Action 2026,STAMP_NONAWARD,2026-cgi-commitments-to-action-awards,,upstream calls it an award; our research types it as not an award (excluded from the award tables); stamped so it is not waiting every week
+Utility,Fast Company World Changing Ideas (2025 / 2026 notifications),STAMP_EXISTING,2026-fast-company-world-changing-ideas-tbd-awards,,upstream ruled distinct but we already hold this award under this id; upstream id 2026-fast-company-world-changing-ideas-awards NOT used; ask upstream to confirm
+Cybersecurity,AI Awards Summit,NEW,2026-ai-awards-summit-entrepreneur-india-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,AI Breakthrough Awards,NEW,2026-ai-breakthrough-awards-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,AI Congress Awards,NEW,2026-ai-congress-awards-mumbai-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,AI Core Technology Awards 2026,NEW,2026-tmc-ai-core-technology-awards-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,AI Dev World,NEW,2027-ai-dev-world-devies-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,AI Excellence Award (Business Intelligence Group),NEW,2026-artificial-intelligence-excellence-award-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,AI Tech Awards,NEW,2026-ai-tech-awards-aidevsummit-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,AI World Series Artificial Intelligence Awards,NEW,2026-ai-world-series-awards-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,BIG Awards for Business,NEW,2026-big-awards-for-business-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,BIG Innovation Awards,NEW,2027-big-innovation-awards-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,Corinium Awards Gala,NEW,2026-corinium-awards-gala-fall-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,DataIQ Awards Global,NEW,2027-dataiq-awards-global-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,DataIQ Awards North America,NEW,2026-dataiq-awards-north-america-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,Fast Company Next Big Things in Tech,NEW,2026-fast-company-next-big-things-in-tech-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,Global Tech Awards AI,NEW,2026-global-tech-awards-ai-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,Globee Awards for AI,NEW,2026-globee-awards-for-ai-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,Inc. Best in Business 2026,NEW,2026-inc-best-in-business-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,MDRN Global AI Awards,NEW,2026-mdrn-global-ai-awards-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,Minsky Awards for Excellence in AI,NEW,2026-minsky-awards-excellence-ai-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,Tech Ascension CEO and Leadership Awards 2026,NEW,2026-tech-ascension-ceo-leadership-awards-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,Technology AI Awards,NEW,2026-technology-ai-awards-bizclik-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,The AI Awards,NEW,2026-the-ai-awards-uk-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,The Cloud Awards - Cloud Computing,NEW,2026-the-cloud-awards-cloud-computing-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,The National AI Awards,NEW,2026-the-national-ai-awards-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,TMCnet Cybersecurity Excellence Awards 2026,NEW,2026-tmcnet-cybersecurity-excellence-awards-awards,,"new award, id given by upstream 2026-10-12"
+Cybersecurity,World Technology Awards,NEW,2026-world-technology-awards-awards,,"new award, id given by upstream 2026-10-12"
+Utility,247th Electrochemical Society Meeting,NEW,2026-electrochemical-society-meeting-honors-awards,,"new award, id given by upstream 2026-10-12"
+Utility,Carbon Capture Global Summit,NEW,2027-carbon-capture-global-summit-awards,,"new award, id given by upstream 2026-10-12"
+Utility,TIME / Statista America's Top GreenTech Companies,NEW,2026-time-statista-top-greentech-companies-awards,,"new award, id given by upstream 2026-10-12"
+Utility,TIME Best Inventions Award,RELABEL,,TIME Best Inventions 2026,upstream rules the same award as the survivor; its new id must NOT be used

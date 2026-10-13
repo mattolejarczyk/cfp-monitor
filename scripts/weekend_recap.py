@@ -133,7 +133,10 @@ def held_new_lines(imp: dict | None) -> list[str]:
     """ACT-67: researched NEW events/awards the import could not load, NAMED with the reason (never only a count). One line per market."""
     out = []
     for m in (imp or {}).get("markets", []):
-        held = m.get("new_events_held") or []
+        held = [h for h in (m.get("new_events_held") or []) if h.get("kind") != "not_award"]
+        notaw = [h for h in (m.get("new_events_held") or []) if h.get("kind") == "not_award"]
+        if m.get("status") in ("PROMOTED", "ACCEPTED") and notaw:
+            out.append(f"{m['market']}: {len(notaw)} customer-listed row(s) typed as something other than an award are not loaded into the award tables (the page keeps them): " + "; ".join(h["conference"][:44] for h in notaw[:4]) + ".")
         if m.get("status") in ("PROMOTED", "ACCEPTED") and held:
             what = "awards" if m.get("market") == "Awards" else "events"
             out.append(f"{m['market']}: {len(held)} researched new {what} NOT loaded (no permanent id that upstream gave us yet, or a guard): "
@@ -409,7 +412,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
         status += f" - FLAG: {(ac.get('not_in') or 0) + (ac.get('wrong_market') or 0)} customer award(s) not in the research queue"
     if ac.get("missed_names"):
         status += " - FLAG: customer award(s) added but not picked up"
-    n_held = sum(len(m.get("new_events_held") or []) for m in (imp or {}).get("markets", []) if m.get("market") == "Awards" and m.get("status") in ("PROMOTED", "ACCEPTED"))
+    n_held = sum(len([h for h in (m.get("new_events_held") or []) if h.get("kind") != "not_award"]) for m in (imp or {}).get("markets", []) if m.get("market") == "Awards" and m.get("status") in ("PROMOTED", "ACCEPTED"))
     if n_held:
         status += f" - FLAG: {n_held} new award(s) held (no id yet)"
     if kind != "friday" and commitments and commitments["broken"]:
