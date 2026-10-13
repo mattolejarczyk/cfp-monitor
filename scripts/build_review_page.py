@@ -325,6 +325,12 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
         if (r.get('_PROVISIONAL') or '') == '1':
             # ACT-68: a researched row the approved file does not carry yet. Never a check verdict (no 'Deadline confirmed'), never a confidence badge.
             out[-1].update(prov=True, chk='', chku='', chkq='', c='', proj=False)
+            if (r.get('STATUS') or '').strip() == 'Needs Verification':
+                out[-1]['s'] = 'Needs Verification'      # ACT-70: a status we set because a field was blanked is not re-derived from the dates we no longer trust
+            # ACT-70: never an Open or Upcoming row past its deadline, whatever the lifecycle said
+            _dl = (out[-1]['dl'] or '')[:10]
+            if re.fullmatch(r'\d{4}-\d{2}-\d{2}', _dl) and _dl < _today.isoformat() and out[-1]['s'] in ('Open', 'Upcoming', ''):
+                out[-1]['s'] = 'Closed'
     if corrected:
         print(f"  {corrected} row(s) shown with a DERIVED status - the file's value was "
               f"contradicted by a date")
@@ -910,6 +916,37 @@ def provisional_awards(approved_rows, markets_dir, db, today, customer):
         return []
 
 
+def provisional_conferences(approved_rows, markets_dir, db, today):
+    """ACT-70. Delivery rows for the researched conferences the approved file does not carry (held by the gate or the row rule), tagged _PROVISIONAL, with the field(s) a check failed on BLANKED
+    (scripts/provisional_blank.py; docs/operations/provisional_blank_rules.json). -> (rows, report entries for the sidecar file). Never raises: on any fault the page is built without them."""
+    try:
+        from scripts import provisional_rows as pr
+        from src.cfp_monitor import identity
+        on = date.fromisoformat(today)
+        if not db or not Path(db).exists():
+            print('conference page: no provisional rows - the database (--db) is needed to tell approved rows from new ones')
+            return [], []
+        u2c = identity.seed_map(str(db))[0]
+        if not u2c:
+            print('conference page: no provisional rows - the event-id map could not be read')
+            return [], []
+        rows, report = [], []
+        for market in ('Cybersecurity', 'Utility'):
+            mine = [r for r in approved_rows if (r.get('Market') or '').strip() == market]
+            if not mine:
+                continue
+            got, rep, msg = pr.conference_page_rows(Path(markets_dir), market, mine, u2c, on, data_root=Path(db).parent)
+            if msg:
+                print(f'conference page ({market}): {msg}')
+            rows += got
+            report += rep
+        print(f'conference page: {len(rows)} provisional row(s)' + ''.join(f"; {e['name']} [blanked: {', '.join(e['blanked']) or 'nothing'}]" for e in report))
+        return rows, report
+    except Exception as e:                                                    # noqa: BLE001
+        print(f'conference page: provisional rows could not be read ({type(e).__name__}: {e}); built without them')
+        return [], []
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-i', '--input', required=True)
@@ -949,8 +986,8 @@ def main():
                     help="awards page only: the snapshot store of the customers' awards sheets (<dir>/<client>/<client>_<stamp>.csv). A row the customers list stays on the page "
                          "whatever its type; if the snapshots cannot be read every row is kept.")
     ap.add_argument('--provisional-dir', default='',
-                    help="awards page only (ACT-68): the Markets folder. Researched awards that the approved file does not carry yet (held for an id, held by the row rule, new this "
-                         "week) are read from the newest raw research file there and shown as Provisional. Off unless given. Conferences are not wired.")
+                    help="(ACT-68, ACT-70) the Markets folder. Researched awards or conferences that the approved file does not carry yet (held for an id, held by the gate or the row rule, new this "
+                         "week) are read from the newest raw research file there and shown as Provisional; on the conference page the field a check failed on is blanked (needs --db). Off unless given.")
     a = ap.parse_args()
 
     # A MISSING INPUT MUST NOT READ AS A FINDING. Both flags are optional and default to empty,
@@ -982,6 +1019,7 @@ def main():
     with open(a.input, encoding='utf-8-sig', newline='') as h:
         rows = list(csv.DictReader(h))
 
+    prov_report = []
     rows_approved = list(rows)           # the whole approved file, before the awards page leaves anything out: a row left out on purpose is not 'missing' either
     if a.kind == 'awards':
         from scripts import customer_awards as _ca
@@ -997,12 +1035,13 @@ def main():
         if a.provisional_dir:
             rows = rows + provisional_awards(rows_approved, Path(a.provisional_dir), a.db, a.date, _idx)
     elif a.provisional_dir:
-        raise SystemExit("ERROR: --provisional-dir is wired for the awards page only (conference rows held back for an id or a gate are not shown; see QA-REGISTER A63)")
+        _prov_rows, prov_report = provisional_conferences(rows_approved, Path(a.provisional_dir), a.db, a.date)
+        rows = rows + _prov_rows
 
     # MARKET SCOPE. Which markets the page is ABOUT. The chips still filter within it, so a
     # two-market page keeps both chips and a reader can still narrow to one - the scope decides
     # what exists, the chips decide what is shown.
-    scope_label = '8 markets'
+    scope_label = ' + '.join(sorted({MARKET_LABEL.get((r.get('Market') or '').strip(), (r.get('Market') or '').strip()) for r in rows if (r.get('Market') or '').strip()})) or 'all markets'
     if a.markets:
         want = {m.strip() for m in a.markets.split(',') if m.strip()}
         unknown = want - set(MARKET_LABEL) - set(MARKET_LABEL.values())
@@ -1156,6 +1195,11 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(a.output)), exist_ok=True)
     with open(a.output, 'w', encoding='utf-8', newline='\n') as h:
         h.write(page)
+    if prov_report:
+        # the fields blanked per held row, for the operator's QA (internal words: kept OUT of the page, written beside it)
+        side = os.path.splitext(a.output)[0] + '.provisional.json'
+        with open(side, 'w', encoding='utf-8') as h:
+            json.dump({'date': a.date, 'rows': prov_report}, h, indent=1, ensure_ascii=True)
     print(f"{a.output}  ({len(data)} rows, {os.path.getsize(a.output)//1024} KB)")
 
 

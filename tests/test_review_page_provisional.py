@@ -1,7 +1,7 @@
 """The Awards page shows researched-but-not-approved awards as PROVISIONAL (ACT-68) - and only those, and never as something they are not.
 
 Pinned: no 'Deadline confirmed' verdict and no confidence badge on a provisional row, even when a checks file happens to carry its upstream id; an Open row is never past its deadline; the customer
-sees one plain sentence and no internal words; the reader can hide the rows; a customer-listed row stays and a true non-award nobody lists stays out; conferences are not wired."""
+sees one plain sentence and no internal words; the reader can hide the rows; a customer-listed row stays and a true non-award nobody lists stays out. Conferences are wired since ACT-70 (tests/test_provisional_blank.py)."""
 from __future__ import annotations
 
 import csv
@@ -99,13 +99,13 @@ def test_a_fault_reading_the_research_builds_the_page_without_provisional_rows(t
     assert got == [] and "no provisional rows" in capsys.readouterr().out
 
 
-def test_conference_pages_refuse_the_provisional_flag(tmp_path, monkeypatch, capsys):
+def test_a_conference_page_without_a_database_builds_without_provisional_rows_and_says_why(tmp_path, monkeypatch, capsys):
     src = tmp_path / "in.csv"
     src.write_text(",".join(["EVENT_ID", "CONFERENCE", "Market"]) + "\nx,Y,Utility\n", encoding="utf-8")
     monkeypatch.setattr(sys, "argv", ["build_review_page.py", "-i", str(src), "-o", str(tmp_path / "o.html"), "--kind", "conference", "--no-evidence", "--provisional-dir", str(tmp_path)])
-    with pytest.raises(SystemExit) as e:
-        brp.main()
-    assert "awards page only" in str(e.value)
+    brp.main()
+    out = capsys.readouterr().out
+    assert "no provisional rows" in out and "database" in out and (tmp_path / "o.html").exists()
 
 
 def test_a_built_page_marks_the_row_and_offers_the_switch(tmp_path, monkeypatch):

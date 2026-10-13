@@ -342,9 +342,10 @@ def main() -> int:
 
     # 4 + 5. The two pages. --reconcile adds the "check against your sheet" view.
     if combined:
+        # ACT-70: researched conferences the approved file does not carry yet (held by the gate or the row rule) are shown, marked Provisional, with the field a check failed on BLANKED
         cmd = [PY, ROOT / "scripts/build_review_page.py", "-i", combined, "--kind", "conference",
                "--date", stamp, "--db", a.db, "--checks", checks, "--markets", a.markets,
-               "--reconcile", "-o", conf_page]
+               "--reconcile", "--provisional-dir", md, "-o", conf_page]
         if hosts.exists():
             cmd += ["--dead-hosts", hosts]
         step("conferences page", cmd, work / "3_conference_page.log")

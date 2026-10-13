@@ -104,3 +104,11 @@ experiments/act68_rehearsal/*.csv
 experiments/act68_rehearsal/*.json
 experiments/act68_rehearsal/*.html
 experiments/act68_rehearsal/*.log
+
+# 2026-10-13 (ACT-70): rehearsal copies stay local (public repo)
+experiments/act70_rehearsal/live/
+experiments/act70_rehearsal/work*/
+experiments/act70_rehearsal/*.csv
+experiments/act70_rehearsal/*.json
+experiments/act70_rehearsal/*.html
+experiments/act70_rehearsal/*.log
