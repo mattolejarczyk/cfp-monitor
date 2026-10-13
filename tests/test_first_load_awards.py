@@ -337,3 +337,14 @@ def test_import_awards_lands_one_record_and_two_market_memberships(tmp_path):
     # two rows with the same id in the SAME market are still refused
     write(d, cols, [["up-0", "Alpha Prize", "", "2027", "Utility", "Awards", "", "", "", "", ""], ["up-0", "Alpha Prize", "", "2027", "Utility", "Awards", "", "", "", "", ""]])
     assert ia.plan(d, str(db), None, {"up-0": NEW1})[1], "same award twice in one market is still a problem"
+
+
+def test_two_input_rows_answered_under_one_output_id_are_both_held_and_named_never_given_either_id(tmp_path, monkeypatch):
+    """ACT-67 follow-up 2: un-labelled DUP_OF awards can be named alike by the research, so two input rows share one output EVENT_ID. The {output id: permanent id} map would keep only the last."""
+    md, led, db = world(tmp_path)
+    write(md / f"{A}_audited.identity.csv", ["OUTPUT_EVENT_ID", "EVENT_ID_CANON"], [["up-0", NEW1], ["up-1", NEW2], ["up-2", NEW3], ["up-3", ""], ["up-0", ""]])
+    assert wi.ambiguous_output_ids(md, A) == {"up-0"}
+    res = resolve(tmp_path, monkeypatch, md, led, db, enabled=True)
+    assert NEW1 not in [e["canonical"] for e in res["new_events"]]
+    assert any(h["conference"] == "Alpha Prize" and "same output id" in h["reason"] for h in res["new_events_held"])
+    assert not any(r["CONFERENCE"] == "Alpha Prize" for r in csv.DictReader(open(res["candidate"], encoding="utf-8")))

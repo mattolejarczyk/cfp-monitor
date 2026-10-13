@@ -200,3 +200,68 @@ def test_the_newest_snapshot_in_the_store_is_the_one_read(tmp_path):
         d.mkdir(exist_ok=True)
         (d / f"utility-awards_{stamp}.csv").write_text("AWARD\n", encoding="utf-8")
     assert ca.newest_sheet(tmp_path, "utility-awards").name == "utility-awards_20261010-152118.csv"
+
+
+# ---------------------------------------------------------------- ACT-67 follow-up 2: UN-LABEL the DUP_OF rows the customer lists
+def unlabel_world(tmp_path):
+    inp = [{"CONFERENCE": "Fortress Award", "SUBMISSION URL": "https://bi.example/fortress", "Market": "Cybersecurity", "EVENT_ID_CANON": "2026-fortress-award-nan-awards"},
+           {"CONFERENCE": "Fortress Award (Business Intelligence Group)", "SUBMISSION URL": "https://bi.example/fortress2", "Market": "Cybersecurity", "DUP_OF": "Fortress Award",
+            "EVENT_ID_CANON": "2026-fortress-award-nan-awards"},                                    # carries the survivor's id: must be blanked
+           {"CONFERENCE": "Not Listed Award", "SUBMISSION URL": "https://nl.example/a", "Market": "Cybersecurity", "DUP_OF": "Fortress Award"},      # the customer does not list it: untouched
+           {"CONFERENCE": "Sibling Award", "SUBMISSION URL": "https://sb.example/a", "Market": "Cybersecurity", "DUP_OF": "MARKET_SIBLING", "EVENT_ID_CANON": "2027-sibling-nan-awards"},
+           {"CONFERENCE": "Twice Award 2026", "SUBMISSION URL": "https://tw.example/a", "Market": "Utility", "EVENT_ID_CANON": "2026-twice-nan-awards"},
+           {"CONFERENCE": "Twice Award 2026", "SUBMISSION URL": "https://tw.example/a", "Market": "Utility", "DUP_OF": "Utility Global:5", "EVENT_ID_CANON": "2026-twice-nan-awards"}]   # same name as a live row
+    arn = [{"AWARD": "Fortress Award", "SUBMISSION URL": "https://bi.example/fortress"}, {"AWARD": "Fortress Award (Business Intelligence Group)", "PRIORITY": "High", "SUBMISSION URL": "https://bi.example/fortress2"},
+           {"AWARD": "Sibling Award", "SUBMISSION URL": "https://sb.example/a"}]
+    util = [{"AWARD": "Twice Award", "SUBMISSION URL": "https://tw.example/a"}]
+    return world(tmp_path, arnica=arn, utility=util, inputs=inp)
+
+
+def test_unlabel_dry_run_names_what_it_would_clear_and_changes_nothing(tmp_path):
+    sheets, md, led = unlabel_world(tmp_path)
+    before = (md / "Awards_input.csv").read_bytes()
+    lines = ca.run_unlabel(TODAY, sheets, md, tmp_path / "out", False)
+    assert lines == ["AWARDS UNLABEL: mode=dry-run; 1 to clear (1 also lose a copied id); 2 left labelled (reasons in awards_unlabel.md)"]
+    assert (md / "Awards_input.csv").read_bytes() == before
+    text = (tmp_path / "out" / "awards_unlabel.md").read_text(encoding="utf-8")
+    assert "Fortress Award (Business Intelligence Group)" in text and "High" in text and "the customer's sheet for this market does not list it" in text
+    assert "Twice Award 2026" in text and "the customer lists it twice" in text, "a same-name twin is already researched and shown; un-labelling it would only collide"
+    assert "Sibling Award" not in text, "MARKET_SIBLING rows are never touched or even listed"
+
+
+def test_unlabel_apply_changes_exactly_the_dup_of_and_the_copied_id_proves_it_and_a_second_apply_changes_nothing(tmp_path):
+    sheets, md, led = unlabel_world(tmp_path)
+    old = read(md / "Awards_input.csv")
+    assert ca.run_unlabel(TODAY, sheets, md, tmp_path / "out", True)[0].startswith("AWARDS UNLABEL: mode=applied; 1 cleared (1 also lose a copied id)")
+    new = read(md / "Awards_input.csv")
+    changed = {(i, c) for i, (a, b) in enumerate(zip(old, new)) for c in a if a[c] != b[c]}
+    assert changed == {(3, "DUP_OF"), (3, "EVENT_ID_CANON")} and len(new) == len(old)
+    assert new[3]["EVENT_ID_CANON"] == "" and new[2]["EVENT_ID_CANON"] == "2026-fortress-award-nan-awards", "the survivor keeps its id; the un-labelled row waits for its OWN (nothing is minted)"
+    assert new[5]["DUP_OF"] == "MARKET_SIBLING" and new[4]["DUP_OF"] == "Fortress Award"
+    assert list(md.glob("Awards_input.pre-unlabel-*.bak.csv"))
+    assert ca.run_unlabel(TODAY, sheets, md, tmp_path / "out2", True)[0].startswith("AWARDS UNLABEL: mode=applied; 0 cleared")
+    assert read(md / "Awards_input.csv") == new
+
+
+def test_an_unlabelled_row_that_keeps_its_own_distinct_id_keeps_it(tmp_path):
+    inp = [{"CONFERENCE": "Alpha Award", "SUBMISSION URL": "https://a.example/x", "Market": "Cybersecurity", "EVENT_ID_CANON": "2026-alpha-nan-awards"},
+           {"CONFERENCE": "Alpha Award (Other Body)", "SUBMISSION URL": "https://a.example/y", "Market": "Cybersecurity", "DUP_OF": "Alpha Award", "EVENT_ID_CANON": "2026-alpha-other-nan-awards"}]
+    sheets, md, led = world(tmp_path, arnica=[{"AWARD": "Alpha Award (Other Body)", "SUBMISSION URL": "https://a.example/y"}], inputs=inp)
+    ca.run_unlabel(TODAY, sheets, md, tmp_path / "out", True)
+    assert read(md / "Awards_input.csv")[3]["EVENT_ID_CANON"] == "2026-alpha-other-nan-awards"
+
+
+def test_unlabel_on_the_live_markets_folder_needs_the_reviewers_switch(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["customer_awards.py", "--unlabel", "--apply", "--markets-dir", str(ca.MARKETS)])
+    assert ca.main() == 0
+    assert "AWARDS UNLABEL: REFUSED" in capsys.readouterr().out
+
+
+def test_the_request_draft_asks_for_the_own_id_names_the_close_award_and_is_plain_ascii(tmp_path):
+    inp = [{"CONFERENCE": "Fortress Award", "SUBMISSION URL": "https://bi.example/fortress", "Market": "Cybersecurity", "EVENT_ID_CANON": "2026-fortress-award-nan-awards"},
+           {"CONFERENCE": "Fortress Award (Business Intelligence Group)", "SUBMISSION URL": "https://bi.example/fortress2", "Market": "Cybersecurity"},
+           {"CONFERENCE": "TIME / Statista America’s Top GreenTech", "SUBMISSION URL": "https://time.example/x", "Market": "Utility"}]
+    draft = ca.request_draft(TODAY, ca.waiting_for_id(inp), inp)
+    assert "same website/award as Fortress Award?" in draft and "OWN permanent EVENT_ID" in draft and "which id" in draft
+    assert draft.isascii() and "America's Top GreenTech" in draft
+    assert ca.ascii_text("a–b “q” é") == 'a-b "q" e'
