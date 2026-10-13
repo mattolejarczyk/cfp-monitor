@@ -30,7 +30,15 @@ sends it, code sends nothing). stdout, read by scripts/weekend_recap.py:
     AWARDS AUTOADD: mode=dry-run|applied; <a> to add|added, <h> held for a person, <x> waiting for an id; <k> customer awards NOT in the queue after the step
     AWARDS AUTOADD HELD: <first five names>                     (only when h > 0)
     AWARDS AUTOADD NOT PICKED UP: <first five names>            (only when applied and k > 0)
-or `AWARDS COVERAGE: UNKNOWN - <why>` when an input cannot be read. --apply refuses the live Markets folder unless --live is given (the reviewer's switch)."""
+or `AWARDS COVERAGE: UNKNOWN - <why>` when an input cannot be read. --apply refuses the live Markets folder unless --live is given (the reviewer's switch).
+
+UNLABEL (--unlabel; operator ruling 2026-10-12: the customer's sheet is the source of truth, so every award they list is researched AND shown). A row of Awards_input.csv labelled DUP_OF (the audit skips
+it, so it is never researched and never reaches the page) whose award the customer's sheet FOR THAT ROW'S MARKET lists (name key, else a deep URL no other award of theirs uses) gets its DUP_OF cleared, so the
+audit researches it as its own award. Only those cells change: DUP_OF, and EVENT_ID_CANON when the row carries the SAME id as another row (two rows must never share an id in one market: it is blanked and the
+award waits for an id of its OWN from upstream like every other new award; nothing is minted). Never touched: DUP_OF = MARKET_SIBLING rows, and any DUP_OF row the customer does not list. Dry run by default;
+--apply (with --live on the live folder) uses approved_edit.write_approved: backup first, read-back proof that exactly those cells changed; a second apply changes nothing. Prints
+    AWARDS UNLABEL: mode=dry-run|applied; <n> to clear|cleared (<k> also lose a copied id); <h> left labelled (reasons in awards_unlabel.md)
+and writes awards_unlabel.json/.md and a DRAFT request_to_upstream_awards_<date>.md asking, for each, for its OWN id (or one line saying it is the same award and which id)."""
 from __future__ import annotations
 
 import argparse
@@ -45,6 +53,7 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from scripts import add_customer_rows as acr                              # noqa: E402
+from scripts.approved_edit import write_approved                          # noqa: E402
 from src.cfp_monitor import qa_report                                     # noqa: E402
 
 MARKETS = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
@@ -305,13 +314,129 @@ def waiting_for_id(inp: list[dict]) -> list[dict]:
             for r in inp if not (r.get("EVENT_ID_CANON") or "").strip() and not (r.get("DUP_OF") or "").strip()]
 
 
-def request_draft(today: str, waiting: list[dict]) -> str:
+def ascii_text(text: str) -> str:
+    """Plain ASCII for generated documents: curly quotes and dashes become straight ones, anything else non-ASCII is dropped (names on the input list are never altered by this)."""
+    import unicodedata
+    t = (text or "").translate({0x2018: "'", 0x2019: "'", 0x201C: '"', 0x201D: '"', 0x2013: "-", 0x2014: "-", 0x2026: "...", 0xA0: " ", 0xFFFD: "?"})
+    return unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode("ascii")
+
+
+SHARED_DOMAINS = {"bintelligence.com", "secure-platform.com", "jotform.com", "zohopublic.eu", "zohopublic.com"}      # one website, many unrelated awards
+
+
+def similar_rows(w: dict, inp: list[dict]) -> list[str]:
+    """Names of rows that already HAVE an id and look like the same award: the same website, or one name key containing the other. Only used to put the question to upstream."""
+    dom, k = registered_domain(w.get("url", "")), name_key(w["name"])
+    out = []
+    for r in inp:
+        nm = tidy(r.get("CONFERENCE"))
+        if not (r.get("EVENT_ID_CANON") or "").strip() or (r.get("DUP_OF") or "").strip() or nm == w["name"]:
+            continue
+        rk = name_key(nm)
+        if (dom and dom not in SHARED_DOMAINS and dom == registered_domain(r.get("SUBMISSION URL") or r.get("CONFERENCE URL") or "")) or (k and rk and (k in rk or rk in k)):
+            out.append(nm)
+    return out[:3]
+
+
+def request_draft(today: str, waiting: list[dict], inp: list[dict] | None = None) -> str:
     L = [f"DRAFT request to upstream (awards), {today} - the operator reads and sends it; nothing is sent by code.", "",
          "Please give us your permanent EVENT_ID for each award below. They are on the customers' own awards sheets, so we research them under their submission URL and hold them back from the "
-         "load until we have the id. If one is the same award as one you already track, tell us which id.", "",
-         f"Awards without an id ({len(waiting)}):", "", "| market | award | submission URL |", "|---|---|---|"]
-    L += [f"| {w['market']} | {w['name']} | {w['url'] or '-'} |" for w in waiting]
-    return "\n".join(L) + "\n"
+         "load until we have the id. The customers list each of them as a row of its own.", "",
+         "Where a row has a website or a name close to an award you already track, we name that award in the last column. For those, please either give the award its OWN permanent EVENT_ID, "
+         "or tell us in one line that you consider it the same award and which id. We will not guess either way.", "",
+         f"Awards without an id ({len(waiting)}):", "", "| market | award | submission URL | same website/award as ... ? |", "|---|---|---|---|"]
+    for w in waiting:
+        near = similar_rows(w, inp) if inp else []
+        L.append(f"| {w['market']} | {w['name']} | {w['url'] or '-'} | " + ("same website/award as " + "; ".join(near) + "?" if near else "-") + " |")
+    return ascii_text("\n".join(L) + "\n")
+
+
+# ============================================================================ unlabel
+def audit_slug(name: str) -> str:
+    """The name slug run_market_audit.make_slug puts in an output EVENT_ID (lower case, punctuation dropped, spaces to hyphens). Two input rows with the same slug would be answered under ONE output id."""
+    t = re.sub(r"[^a-z0-9\s-]", "", (name or "").lower())
+    return re.sub(r"-+", "-", re.sub(r"[\s_]+", "-", t)).strip("-")
+
+
+def unlabel_plan(sheets: dict[str, list[dict]], inp: list[dict]) -> tuple[list[dict], list[dict]]:
+    """-> (rows to clear, rows left labelled). A row qualifies when its DUP_OF is a real label (not MARKET_SIBLING) and the customer's sheet FOR THAT ROW'S MARKET lists the award."""
+    mine: dict[str, list[dict]] = {}
+    for c, rows in sheets.items():
+        mine.setdefault(CLIENTS[c]["market"], []).extend(rows)
+    canon_count: dict[str, int] = {}
+    for r in inp:
+        c = (r.get("EVENT_ID_CANON") or "").strip()
+        if c:
+            canon_count[c] = canon_count.get(c, 0) + 1
+    clear, keep = [], []
+    for i, r in enumerate(inp):
+        dup = (r.get("DUP_OF") or "").strip()
+        if not dup or dup == SIBLING:
+            continue
+        market = (r.get("Market") or "").strip()
+        cust = mine.get(market, [])
+        k, urls = name_key(r.get("CONFERENCE")), {url_key(r.get("SUBMISSION URL")), url_key(r.get("CONFERENCE URL"))} - {""}
+        use: dict[str, set[str]] = {}
+        for c_ in cust:
+            if url_key(c_["url"]):
+                use.setdefault(url_key(c_["url"]), set()).add(name_key(c_["name"]))
+        exact = tidy(r.get("CONFERENCE")).lower()      # EXACT name (case aside): a looser key would claim the survivor's own customer row for the label
+        hit = next((c_ for c_ in cust if exact and c_["name"].lower() == exact), None) or \
+            next((c_ for c_ in cust if url_key(c_["url"]) in urls and len(use.get(url_key(c_["url"]), set())) <= 1), None)
+        twin = next((tidy(x.get("CONFERENCE")) for j, x in enumerate(inp) if j != i and (x.get("Market") or "").strip() == market and not (x.get("DUP_OF") or "").strip()
+                     and audit_slug(x.get("CONFERENCE")) == audit_slug(r.get("CONFERENCE"))), None)
+        item = {"index": i, "name": tidy(r.get("CONFERENCE")), "market": market, "dup_of": dup, "canon": (r.get("EVENT_ID_CANON") or "").strip(), "url": tidy(r.get("SUBMISSION URL") or r.get("CONFERENCE URL"))}
+        if hit is None:
+            keep.append({**item, "why": "the customer's sheet for this market does not list it"})
+            continue
+        if twin is not None:
+            # the customer lists the same award twice under one name: the live twin is already researched and shown; the audit skips a second row with the same name and would answer both
+            # under ONE output id (same slug), so un-labelling would only break the load
+            keep.append({**item, "why": f"a live row with the same name ({twin}) already is this award: it is researched and shown; the customer lists it twice"})
+            continue
+        item.update(client=hit["client"], sheet_row=hit["sheet_row"], priority=hit["priority"], deadline=hit["deadline"],
+                    clear_canon=bool(item["canon"]) and canon_count.get(item["canon"], 0) > 1)
+        clear.append(item)
+    return clear, keep
+
+
+def run_unlabel(today: str, sheets_dir: Path, markets_dir: Path, out_dir: Path, apply: bool) -> list[str]:
+    inp_path = Path(markets_dir) / "Awards_input.csv"
+    if not inp_path.exists():
+        return [f"AWARDS UNLABEL: UNKNOWN - the awards input list was not found ({inp_path})"]
+    sheets = {}
+    for client in CLIENTS:
+        p = newest_sheet(sheets_dir, client)
+        if p is None:
+            return [f"AWARDS UNLABEL: UNKNOWN - no snapshot of the {client} sheet in {sheets_dir}"]
+        sheets[client] = sheet_rows(p, client)
+    cols, inp, bom, crlf = acr.read_input(inp_path)
+    clear, keep = unlabel_plan(sheets, inp)
+    notes = []
+    if apply and clear:
+        after = [dict(r) for r in inp]
+        cells = set()
+        for c in clear:
+            after[c["index"]]["DUP_OF"] = ""
+            cells.add((c["index"], "DUP_OF"))
+            if c["clear_canon"]:
+                after[c["index"]]["EVENT_ID_CANON"] = ""
+                cells.add((c["index"], "EVENT_ID_CANON"))
+        bak = write_approved(inp_path, cols, inp, after, bom, crlf, "unlabel", expect_cells=cells)
+        notes.append(f"{inp_path.name}: {len(clear)} DUP_OF label(s) cleared, {sum(c['clear_canon'] for c in clear)} copied id(s) blanked; proved only those cells changed; backup {bak.name}")
+        _c, inp, _b, _x = acr.read_input(inp_path)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    mode = "applied" if apply else "dry-run"
+    (out_dir / "awards_unlabel.json").write_text(json.dumps({"today": today, "mode": mode, "to_clear": clear, "left_labelled": keep, "applied": notes}, indent=1, ensure_ascii=True), encoding="utf-8")
+    md = [f"# Customer awards: un-label the DUP_OF rows the customer lists ({mode}), {today}", "", "| award | market | was DUP_OF | customer row | their priority | their deadline | copied id blanked |", "|---|---|---|---|---|---|---|"]
+    md += [ascii_text(f"| {c['name']} | {c['market']} | {c['dup_of']} | {c['client']} {c['sheet_row']} | {c['priority'] or '-'} | {c['deadline'] or '-'} | {'yes' if c['clear_canon'] else 'no'} |") for c in clear]
+    md += ["", f"Left labelled ({len(keep)}), each with its reason:"] + [ascii_text(f"- {k['name']} ({k['market']}): {k['why']}") for k in keep]
+    (out_dir / "awards_unlabel.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+    clr = {c["index"]: c for c in clear}
+    after_rows = inp if apply else [dict(r, **({"DUP_OF": "", **({"EVENT_ID_CANON": ""} if clr[j]["clear_canon"] else {})} if j in clr else {})) for j, r in enumerate(inp)]
+    waiting = waiting_for_id(after_rows)
+    (out_dir / f"request_to_upstream_awards_{today}.md").write_text(request_draft(today, waiting, after_rows), encoding="utf-8")
+    return [f"AWARDS UNLABEL: mode={mode}; {len(clear)} {'cleared' if apply else 'to clear'} ({sum(c['clear_canon'] for c in clear)} also lose a copied id); {len(keep)} left labelled (reasons in awards_unlabel.md)"]
 
 
 # ============================================================================ run
@@ -387,7 +512,7 @@ def run(today: str, sheets_dir: Path, markets_dir: Path, ledger_path: Path, out_
     (out_dir / "awards_auto_add.json").write_text(json.dumps(auto, indent=1, ensure_ascii=True), encoding="utf-8")
     (out_dir / "awards_coverage.md").write_text(markdown(res, summary, held, added_rows, mode, today) + "\n", encoding="utf-8")
     (out_dir / "awards_auto_add.md").write_text(f"# Customer awards: automatic add ({mode}), {today}\n\n- ADD {len(added_rows)}, HOLD {len(held)}, waiting for an id {len(waiting)}, NOT in queue after the step {after_k}\n", encoding="utf-8")
-    (out_dir / f"request_to_upstream_awards_{today}.md").write_text(request_draft(today, waiting + ([] if apply else [{"market": r["Market"], "name": r["CONFERENCE"], "url": r["SUBMISSION URL"]} for r in added_rows])), encoding="utf-8")
+    (out_dir / f"request_to_upstream_awards_{today}.md").write_text(request_draft(today, waiting + ([] if apply else [{"market": r["Market"], "name": r["CONFERENCE"], "url": r["SUBMISSION URL"]} for r in added_rows]), inp), encoding="utf-8")
     verb = "added" if apply else "to add"
     lines = summary + [f"AWARDS AUTOADD: mode={mode}; {len(added_rows)} {verb}, {len(held)} held for a person, {len(waiting)} waiting for an id; {after_k} customer awards NOT in the queue after the step"]
     if held:
@@ -406,14 +531,18 @@ def main() -> int:
     ap.add_argument("--ledger", default=str(NOT_RESEARCHED))
     ap.add_argument("--out-dir", default="", help="default runs_out/qa/<today>")
     ap.add_argument("--cap", type=int, default=CAP_PER_MARKET)
+    ap.add_argument("--unlabel", action="store_true", help="instead of the coverage/add step: clear DUP_OF on the labelled rows the customer lists, so they are researched as their own awards")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--live", action="store_true", help="allow --apply on the live Markets folder (the reviewer's switch)")
     a = ap.parse_args()
     try:
         if a.apply and Path(a.markets_dir).resolve() == MARKETS.resolve() and not a.live:
-            print("AWARDS AUTOADD: REFUSED - --apply on the live Markets folder needs --live (reviewer's switch); nothing written")
+            print(("AWARDS UNLABEL" if a.unlabel else "AWARDS AUTOADD") + ": REFUSED - --apply on the live Markets folder needs --live (reviewer's switch); nothing written")
             return 0
         out = Path(a.out_dir) if a.out_dir else qa_report.QA_ROOT / a.today
+        if a.unlabel:
+            print("\n".join(run_unlabel(a.today, Path(a.sheets_dir), Path(a.markets_dir), out, a.apply)))
+            return 0
         lines, _ = run(a.today, Path(a.sheets_dir), Path(a.markets_dir), Path(a.ledger), out, a.cap, a.apply)
         print("\n".join(lines))
     except Exception as e:                                                  # a step before the research must never stop the Friday or Saturday job

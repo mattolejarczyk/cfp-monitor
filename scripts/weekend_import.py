@@ -322,6 +322,7 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     # last week's version or holds it back. Nothing is ever loaded under an id derived from a
     # name the model may have changed.
     identity = load_identity(markets_dir, market, read_csv(src)[1])
+    ambiguous = ambiguous_output_ids(markets_dir, market)
     known = award_ids(db) if market == AWARDS else db_ids(db)
     canon_of: dict[str, str] = {}
     pre_bad: dict[int, list[str]] = {}
@@ -338,6 +339,11 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
         c = identity.get((r.get("EVENT_ID") or "").strip(), "")
         if "Audit Exception" in (r.get("STATUS DETAILS") or ""):
             pre_bad[i] = ["not researched this week (every search attempt failed)"]
+        elif (r.get("EVENT_ID") or "").strip() in ambiguous:
+            why = ("two input rows were answered under the same output id " + (r.get("EVENT_ID") or "").strip()[:60] + " with different permanent ids, so neither id can be used for it; "
+                   "not loaded this week (last week's row stays if there is one)")
+            pre_bad[i] = [why]
+            held_new.append({"conference": (r.get("CONFERENCE") or "").strip(), "canonical": c, "reason": why})
         elif c and c not in known and c in seen_canon:
             pre_bad[i] = [f"a second row for the same event ({c})"]
         elif not c or c not in known:
@@ -525,6 +531,23 @@ def load_identity(markets_dir: Path, market: str, out_rows: list[dict]) -> dict[
     by_name = {r["CONFERENCE"].strip(): (r.get("EVENT_ID_CANON") or "").strip()
                for r in read_csv(inp)[1]}
     return {(o.get("EVENT_ID") or "").strip(): by_name.get(n, "") for o, n in zip(out_rows, names)}
+
+
+def ambiguous_output_ids(markets_dir: Path, market: str) -> set[str]:
+    """Output EVENT_IDs that two or more INPUT rows were answered under with DIFFERENT permanent ids (ACT-67, found when un-labelling DUP_OF awards the customer lists separately): the research writes
+    the id from the name it writes back, so two input rows the model names alike share one output id, and the {output id: permanent id} map would silently keep only the last. Those rows are held
+    and NAMED (never given either id) until a person looks."""
+    ident = markets_dir / f"{market}_audited.identity.csv"
+    if not ident.exists():
+        return set()
+    seen: dict[str, str] = {}
+    amb: set[str] = set()
+    for r in read_csv(ident)[1]:
+        k, v = r["OUTPUT_EVENT_ID"].strip(), (r.get("EVENT_ID_CANON") or "").strip()
+        if k in seen and seen[k] != v:
+            amb.add(k)
+        seen[k] = v
+    return amb
 
 
 def write_ids(path: Path, rows: list[dict], lookup: dict[str, str]) -> None:
