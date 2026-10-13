@@ -1,4 +1,4 @@
-"""The weekly RELEASE GATE: is this week's delivery complete and safe to forward? One verdict, one email to the OPERATOR ONLY (ACT-68; QA-REGISTER A61). Reports, never blocks: exit code 0 always.
+"""The weekly RELEASE GATE: is this week's delivery complete and safe to forward? One verdict, one email to the OPERATOR ONLY (ACT-68; QA-REGISTER A62). Reports, never blocks: exit code 0 always.
 
     python scripts/release_gate.py [--on 2026-10-12] [--preflight] [--dry-run] [--work-dir D] [--weekly-dir D] [--markets-dir D] [--snapshots-dir D] [--db DB] [--qa-root D] [--no-attach]
 
@@ -440,7 +440,7 @@ def check_coverage(o: Opts, view: dict, approved: dict, lookup: dict, cov_conf, 
                     warns.append(f"{st['label']}: {m['name']} - {m['reason']}: {m['detail']}")
     status = "FAIL" if fails else "WARN" if warns else "PASS"
     return Check("b", "Customer coverage: every row still ahead is on the page, or has one named reason", status,
-                 ((f"{len(fails)} customer row(s) are not even in the research queue; " if fails else "") + f"{len(warns)} row(s) missing from the page or provisional") if (fails or warns) else "every customer row ahead is on the page",
+                 ((f"{len(fails)} customer row(s) are not even in the research queue; " if fails else "") + f"{len(warns)} row(s) missing from the page with a reason to look at") if (fails or warns) else "every customer row ahead is on the page",
                  [*[f"FAIL {x}" for x in fails], *[f"WARN {x}" for x in warns], *[f"INFO {x}" for x in lines]]), lines
 
 
@@ -496,7 +496,8 @@ def check_researched_not_on_page(o: Opts, view: dict, approved: dict, lookup: di
         items.append(f"Awards, {c['market']}: {c['name']} - researched, left off the page on purpose (not an award and no customer sheet lists it)")
     for market, res in conf_cands.items():
         for c in res["rows"]:
-            if tidy(c["name"]).lower()[:30] in named_in_b:
+            low = tidy(c["name"]).lower()
+            if any(len(b) >= 8 and (low.startswith(b) or b.startswith(low[:len(b)])) for b in named_in_b):
                 continue                                                         # already named, with the customer who lists it, under (b)
             why = held_reason(c["name"], c["canon"], lookup)
             tag = "no permanent id yet" if c["category"] == "waiting_for_id" else (why or "researched but not in the approved file")
@@ -534,7 +535,7 @@ def check_staleness(o: Opts, approved: dict) -> Check:
 
 
 def check_provisional(o: Opts, view: dict) -> Check:
-    names = [r.get("n") for r in (view.get("awards") or []) if r.get("prov")]
+    names = [f"{r.get('n')} ({r.get('m')})" for r in (view.get("awards") or []) if r.get("prov")]
     if view.get("awards") is None:
         return Check("e", "Provisional rows", "NA", "not judged (no awards rows)")
     note = [x for x in view.get("prov_notes", []) if x]
@@ -688,7 +689,7 @@ def evaluate(o: Opts) -> dict:
         checks.append(cb)
     except Exception as e:                                                      # noqa: BLE001
         checks.append(Check("b", "Customer coverage", "WARN", f"could not be judged: {type(e).__name__}: {e}"))
-    named_b = {tidy(m["name"]).lower()[:30] for cov in (cov_conf, cov_awards) if "error" not in cov for st in cov.values() for m in st["missing"] if not m["on_page"]}
+    named_b = {tidy(m["name"]).lower() for cov in (cov_conf, cov_awards) if "error" not in cov for st in cov.values() for m in st["missing"] if not m["on_page"]}
     checks.append(safely("c", "Researched rows that are not on the page", lambda: check_researched_not_on_page(o, view, approved, lookup, conf_cands, named_b)))
     checks.append(safely("d", "Staleness", lambda: check_staleness(o, approved)))
     checks.append(safely("e", "Provisional rows", lambda: check_provisional(o, view)))
@@ -723,7 +724,7 @@ def plain_lines(rep: dict) -> list[str]:
         L.append(f"This is the Sunday pre-flight: the approved files and the customer sheets as they stand now, pages not built yet. Monday's build would show about {n['conference'] if n['conference'] is not None else '?'} conferences and {n['awards'] if n['awards'] is not None else '?'} awards.")
     else:
         L.append(f"The pages are {'built and published' if c.get('a', {}).get('status') == 'PASS' else 'NOT ready to send'}: {n['conference'] if n['conference'] is not None else '?'} conferences and {n['awards'] if n['awards'] is not None else '?'} awards"
-                 + (f" ({n['provisional']} of the awards are Provisional)." if n["provisional"] else "."))
+                 + (f" ({n['provisional']} of the awards {'is' if n['provisional'] == 1 else 'are'} Provisional)." if n["provisional"] else "."))
     if c["a"]["status"] == "FAIL":
         L.append("Stop first: " + c["a"]["summary"] + ".")
     for sheet, label in (("conference", "conferences"), ("awards", "awards")):

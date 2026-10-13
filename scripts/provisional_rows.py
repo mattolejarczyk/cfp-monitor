@@ -1,4 +1,4 @@
-"""Researched rows that are NOT in the approved file yet: the PROVISIONAL rows (ACT-68; QA-REGISTER A61). Read-only; changes nothing.
+"""Researched rows that are NOT in the approved file yet: the PROVISIONAL rows (ACT-68; QA-REGISTER A62). Read-only; changes nothing.
 
     python scripts/provisional_rows.py --kind awards [--markets-dir <dir>] [--db <db>] [--on 2026-10-12] [--json out.json]
 
@@ -15,7 +15,7 @@ THE QUESTION, per row of the newest raw research file of a market (`Markets/<Mar
 Excluded, each counted and never silent: a stub (`Audit Exception`: not researched this week), a row with no usable name, a second row for the same award, a research file older than
 `max_age_days` (no research this cycle: the file is last cycle's and every row in it was either loaded or deliberately held then).
 
-For the Awards page only (conferences are NOT wired: see QA-REGISTER A61 for what it would take) `to_page_rows` turns the candidates into delivery rows for scripts/build_review_page.py:
+For the Awards page only (conferences are NOT wired: see QA-REGISTER A63 for what it would take) `to_page_rows` turns the candidates into delivery rows for scripts/build_review_page.py:
 the status is derived (an Open or Upcoming row whose deadline has passed is Closed), the confidence is cleared (no Verified badge), and the row is tagged `_PROVISIONAL` = 1.
 Pure functions plus thin readers; the database is opened `file:...?mode=ro` only."""
 from __future__ import annotations
@@ -121,8 +121,19 @@ def approved_index(approved: list[dict], up_to_canon: dict[str, str], kind: str)
     return {"canon": canon, "names": names, "urls": {k for k, v in urls.items() if len(v) <= 1}, "ids": ids}
 
 
-def candidates(raw: list[dict], identity: dict[str, str], approved: list[dict], up_to_canon: dict[str, str], kind: str = "awards") -> dict:
-    """-> {'rows': [{'row', 'canon', 'category', 'name', 'market'}], 'excluded': {reason: n}}. Pure."""
+SIBLING = "MARKET_SIBLING"          # DUP_OF value on an Awards_input row: the SAME award, also shown to the customer of another market (weekend_import.award_siblings)
+
+
+def awards_siblings(input_rows: list[dict]) -> list[dict]:
+    """[{'name', 'market', 'canon'}] for the MARKET_SIBLING rows of the awards input list; canon is the row's own permanent id or that of the live row with the same name (as weekend_import does)."""
+    live = {tidy(r.get("CONFERENCE")).lower(): tidy(r.get("EVENT_ID_CANON")) for r in input_rows if not tidy(r.get("DUP_OF"))}
+    return [{"name": tidy(r.get("CONFERENCE")), "market": tidy(r.get("Market")), "canon": tidy(r.get("EVENT_ID_CANON")) or live.get(tidy(r.get("CONFERENCE")).lower(), "")}
+            for r in input_rows if tidy(r.get("DUP_OF")) == SIBLING and tidy(r.get("Market"))]
+
+
+def candidates(raw: list[dict], identity: dict[str, str], approved: list[dict], up_to_canon: dict[str, str], kind: str = "awards", siblings: list[dict] | None = None) -> dict:
+    """-> {'rows': [{'row', 'canon', 'category', 'name', 'market'}], 'excluded': {reason: n}}. Pure. `siblings` (awards_siblings): a candidate whose permanent id a sibling row names is also a
+    candidate under the sibling's market, unless the approved file already carries that pair (the customer of that market lists the award too)."""
     name_key, url_key = _keys(kind)
     idx = approved_index(approved, up_to_canon, kind)
     out, seen = [], set()
@@ -156,6 +167,11 @@ def candidates(raw: list[dict], identity: dict[str, str], approved: list[dict], 
             continue
         seen.add(key)
         out.append({"row": r, "canon": canon, "category": "waiting_for_id" if not canon else "not_loaded", "name": name, "market": m})
+    for c in list(out):
+        for sb in siblings or []:
+            if c["canon"] and sb["canon"] == c["canon"] and sb["market"] != c["market"] and (c["canon"], sb["market"]) not in idx["canon"] and not any(
+                    o["canon"] == c["canon"] and o["market"] == sb["market"] for o in out):
+                out.append({**c, "row": {**c["row"], "Market": sb["market"]}, "market": sb["market"], "sibling": True})
     return {"rows": out, "excluded": excluded}
 
 
@@ -212,7 +228,9 @@ def awards_candidates(markets_dir: Path, approved: list[dict], db: Path | None, 
     if not lookup:
         return {"rows": [], "excluded": {}}, "the award id lookup could not be read (the database was unreadable or holds no upstream ids): approved rows cannot be told from new ones, so none is shown as provisional", raw_path
     raw = read_csv(raw_path)
-    return candidates(raw, read_identity(raw_path, markets_dir, "Awards"), approved, lookup, "awards"), "", raw_path
+    inp = Path(markets_dir) / "Awards_input.csv"
+    sibs = awards_siblings(read_csv(inp)) if inp.exists() else []
+    return candidates(raw, read_identity(raw_path, markets_dir, "Awards"), approved, lookup, "awards", sibs), "", raw_path
 
 
 def conference_candidates(markets_dir: Path, market: str, approved: list[dict], up_to_canon: dict[str, str], on: date,

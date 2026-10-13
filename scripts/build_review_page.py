@@ -462,7 +462,7 @@ a{color:var(--accent)}
 </style></head><body>
 <header>
   <h1>__TITLE__</h1>
-  <div class="sub">__COUNT__ __NOUN____PROVNOTE__ &middot; __SCOPE__ &middot; data as at __DATE__ &middot;
+  <div class="sub">__COUNT__ __NOUN__<span id="provnote">__PROVNOTE__</span> &middot; __SCOPE__ &middot; data as at __DATE__ &middot;
     urgency recalculated live against today's date</div>
 </header>
 <div class="wrap">
@@ -633,6 +633,8 @@ const HIDE_CLOSED_IN = ['checked','unconfirmed','broken','reconcile'];
 let showClosed = false;
 VIEWS.forEach(v=>{ if(HIDE_CLOSED_IN.indexOf(v.k)>=0){ const base=v.f;
   v.f = r => base(r) && (showClosed || r.s!=='Closed'); } });
+let showProv = true;
+VIEWS.forEach(v=>{ const base=v.f; v.f = r => base(r) && (showProv || !r.prov); });
 // "Closing this month" is the right landing view when something IS closing this month. On a
 // per-client page it often is not - Arnica had none - and the page then opened on "Nothing
 // matches those filters", which reads as a broken product rather than a quiet month.
@@ -648,8 +650,7 @@ const $=i=>document.getElementById(i);
 // four rows. The customer spotted it immediately, and it matters because his daily instruction
 // to his team is "get Need to Verify to zero" - which is unusable if the number is not the one
 // in front of them.
-let showProv = true;
-const inMkt = r => (!active.size || active.has(r.m)) && (showProv || !r.prov);
+const inMkt = r => !active.size || active.has(r.m);
 
 // Correct the landing view now that inMkt exists, and count THROUGH it for the same reason the
 // chips do. "Closing this month" is right when something is closing this month; on a
@@ -779,7 +780,7 @@ function render(){
              :  fc==='NotOnPage' ? r.chk==='no_quote'
              :  fc==='NoCheck'   ? r.chk==='unreadable'
              :  true))
-    && (!active.size||active.has(r.m)) && (showProv||!r.prov)
+    && (!active.size||active.has(r.m))
     && (!q||(r.n+' '+r.loc+' '+r.trk+' '+r.m).toLowerCase().includes(q)));
   rows.sort((a,b)=>{
     let x=a[sortK]??'', y=b[sortK]??'';
@@ -995,7 +996,7 @@ def main():
         if a.provisional_dir:
             rows = rows + provisional_awards(rows_approved, Path(a.provisional_dir), a.db, a.date, _idx)
     elif a.provisional_dir:
-        raise SystemExit("ERROR: --provisional-dir is wired for the awards page only (conference rows held back for an id or a gate are not shown; see QA-REGISTER A61)")
+        raise SystemExit("ERROR: --provisional-dir is wired for the awards page only (conference rows held back for an id or a gate are not shown; see QA-REGISTER A63)")
 
     # MARKET SCOPE. Which markets the page is ABOUT. The chips still filter within it, so a
     # two-market page keeps both chips and a reader can still narrow to one - the scope decides

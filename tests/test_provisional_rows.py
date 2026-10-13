@@ -138,3 +138,16 @@ def test_awards_candidates_end_to_end(tmp_path):
     assert [c["name"] for c in res["rows"]] == ["Held Award"], "the approved row is tied to its permanent id through the lookup; the unmatched blank-id row is provisional"
     res, note, _raw = pr.awards_candidates(tmp_path, approved, tmp_path / "no-such.db", ON)
     assert res["rows"] == [] and "lookup could not be read" in note, "no lookup: nothing is guessed, and the page is built without provisional rows"
+
+
+def test_a_market_sibling_row_shows_the_provisional_award_to_the_other_customer_too():
+    raw = [row("Fast Company MIC 2027", "2027-fc", market="Utility")]
+    sibs = pr.awards_siblings([{"CONFERENCE": "Fast Company MIC 2027", "Market": "Cybersecurity", "DUP_OF": "MARKET_SIBLING", "EVENT_ID_CANON": ""},
+                               {"CONFERENCE": "Fast Company MIC 2027", "Market": "Utility", "DUP_OF": "", "EVENT_ID_CANON": "perm-fc"}])
+    assert sibs == [{"name": "Fast Company MIC 2027", "market": "Cybersecurity", "canon": "perm-fc"}]
+    res = pr.candidates(raw, {"2027-fc": "perm-fc"}, [], {}, siblings=sibs)
+    assert sorted((c["market"], bool(c.get("sibling"))) for c in res["rows"]) == [("Cybersecurity", True), ("Utility", False)]
+    assert [c["row"]["Market"] for c in res["rows"]] == ["Utility", "Cybersecurity"], "the copy carries the sibling's market; the primary row is not edited"
+    # already approved for the sibling's market: no second provisional row
+    done = pr.candidates(raw, {"2027-fc": "perm-fc"}, [row("Fast Company MIC 2027", "2027-fc-old", market="Cybersecurity")], {"2027-fc-old": "perm-fc"}, siblings=sibs)
+    assert [c["market"] for c in done["rows"]] == ["Utility"]

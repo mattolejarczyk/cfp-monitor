@@ -53,7 +53,7 @@ def test_the_template_derives_closed_for_an_open_row_past_its_deadline_and_handl
     t = brp.PAGE
     assert "r.dd<0 && (r.s==='Open'||r.s==='Upcoming')" in t
     assert "r.prov?' <span class=\"b b-prov\"" in t and "Researched this week; our final checks are still running." in t
-    assert 'id="showprov"' in t and "showProv" in t
+    assert 'id="showprov"' in t and "showProv" in t and "base(r) && (showProv || !r.prov)" in t
 
 
 def test_the_page_says_one_plain_sentence_and_no_internal_words():
@@ -88,7 +88,7 @@ def test_provisional_awards_only_the_researched_unapproved_ones_after_the_awards
     from scripts import provisional_rows as pr
     monkeypatch.setattr(pr, "awards_lookup", lambda db: {"2027-have": "perm-have"})
     customer = {"names": {"listed speaking thing"}, "urls": set()}
-    got = brp.provisional_awards(approved, tmp_path, "unused.db", "2026-10-12", customer)
+    got = brp.provisional_awards(approved, tmp_path, str(tmp_path / "none.db"), "2026-10-12", customer)
     names = sorted(r["CONFERENCE"] for r in got)
     assert names == ["Listed Speaking Thing", "New Awards"], "a true non-award nobody lists stays out; a customer-listed one stays in; a nameless one is skipped; an approved one is not provisional"
     assert all(r["_PROVISIONAL"] == "1" for r in got)
@@ -120,12 +120,12 @@ def test_a_built_page_marks_the_row_and_offers_the_switch(tmp_path, monkeypatch)
         (snaps / f"{c}.csv").write_text("AWARD,SUBMISSION URL\nNew Awards,https://n.example/a/b\nHave Awards,https://h.example/a/b\n", encoding="utf-8")
     out = tmp_path / "Awards Review.html"
     monkeypatch.setattr(sys, "argv", ["build_review_page.py", "-i", str(tmp_path / "Awards_audited.final.csv"), "-o", str(out), "--kind", "awards", "--no-evidence", "--date", "2026-10-12",
-                                      "--customer-awards-dir", str(snaps), "--provisional-dir", str(tmp_path), "--db", "unused.db"])
+                                      "--customer-awards-dir", str(snaps), "--provisional-dir", str(tmp_path), "--db", str(tmp_path / "links.db")])
     brp.main()
     html = out.read_text(encoding="utf-8")
     data = json.JSONDecoder().raw_decode(html[html.index("const DATA = ") + len("const DATA = "):])[0]
     assert {d["n"]: d["prov"] for d in data} == {"Have Awards": False, "New Awards": True}
-    assert "2 awards (1 provisional)" in html and "Show <i>Provisional</i> rows (1)" in html and "display:block" in html
+    assert "(1 provisional)" in html and "Show <i>Provisional</i> rows (1)" in html and "display:block" in html
     assert SENTENCE in html
     out2 = tmp_path / "No prov.html"
     monkeypatch.setattr(sys, "argv", ["build_review_page.py", "-i", str(tmp_path / "Awards_audited.final.csv"), "-o", str(out2), "--kind", "awards", "--no-evidence", "--date", "2026-10-12",
