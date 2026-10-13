@@ -268,10 +268,21 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
    About 10-20 AI requests (hard cap 25 rows). *(weekly_discovery.py, apply_resolutions.py)*
 7. **[Report]** **Emails the Sunday recap** - worked or failed, the counts, every new call applied (before
    and after), and whether Monday's pages will publish. *(weekend_recap.py sunday)*
+8. **[Report]** **Emails the Sunday pre-flight** (added 2026-10-12, ACT-68) - a second email, 'CFP weekly pre-flight:
+   GO / GO WITH NOTES / NO-GO', sent to the operator only. It runs the same release-gate checks Monday will run, from
+   the approved files and the newest copies of the four customer sheets, **without building the pages**: is every
+   customer conference and award still ahead either going onto the page or listed with ONE named reason (held waiting
+   for an id, held by a check, provisional, awaiting first research, past, withdrawn, duplicate); which researched
+   rows are on neither page and why; which rows have not been researched for too long; whether a customer sheet copy
+   is old; what upstream still owes (promises overdue, ids). It only reports. Anything it names can be fixed before
+   Monday 07:00. It runs inside the Sunday recap command the Sunday task already calls, so it needed no change to the
+   scheduled task. *(weekend_recap.py sunday -> release_gate.py --preflight)*
 
 ## Monday 7:00 AM - Customer pages
 
 *Awards page rule (ACT-67, 2026-10-12): the page is built from the approved awards file. A row our research typed as something other than an award (Speaking, Registration) is left off UNLESS the customer's awards sheet lists it; then it stays, because the customer's sheet is the source of truth (World Hydrogen and Carbon Asia, Clinton Global Initiative). If the customers' sheet copies cannot be read, every row is kept. The build QA lists such kept rows for information instead of flagging them as a retired label.*
+
+*Provisional awards (ACT-68, 2026-10-12): the Awards page also shows awards our research found this week that are not in the approved file yet - held waiting for an id from upstream, held by a check, or new this week - read from the newest raw research file. Each is marked **Provisional** with one plain sentence ("Researched this week; our final checks are still running."), never carries a 'Deadline confirmed' mark or a confidence mark, is never shown Open after its deadline, and can be hidden with the 'Show Provisional rows' switch (shown by default). An award the approved file already has is never provisional; a non-award nobody lists stays off. Conference rows held the same way are NOT shown (not wired).*
 
 *Scheduled task "CFP Weekly Customer Pages" -> `cfp-monitor\scripts\weekly_deliverable.py`*
 
@@ -295,7 +306,7 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
    searched, what the customer is working on - and rebuilds the evidence matrix. Recorded for us;
    never blocks publishing. *(find_duplicate_events.py, grounding_review.py, customer_context.py,
    evidence_matrix.py)*
-9. **[Build]** **Builds the two pages** - conferences and awards. *(build_review_page.py)*
+9. **[Build]** **Builds the two pages** - conferences and awards (the awards page with its Provisional rows). *(build_review_page.py, provisional_rows.py)*
 10. **[Publish]** **Publishes, only if everything above went well.** Both pages go into today's folder under
     `handoff-files\weekly\`, with a summary file listing what is in them. Otherwise the pages stay
     in a work folder, the summary says why, and nothing is published.
@@ -303,7 +314,13 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
     "Look at" holds only what needs a person; deadline changes where the old date had already
     passed are listed separately under "no action needed". A copy named
     `INTERNAL - Build QA <date> (do not send).md` goes in the same folder as the pages; the
-    original is in `AppData\Local\CFP-Monitor\runs_out\qa\<date>\build.md`. It also has an "Upstream's promises" section listing every promise that is NOT KEPT (and malformed ledger lines) as a "look at", and files the same draft note to upstream beside the report (ACT-58). *(qa_build.py)*
+    original is in `AppData\Local\CFP-Monitor\runs_out\qa\<date>\build.md`. It also has an "Upstream's promises" section listing every promise that is NOT KEPT (and malformed ledger lines) as a "look at", and files the same draft note to upstream beside the report (ACT-58). Provisional rows are counted and listed in their own section, never mixed into the changes. *(qa_build.py)*
+12. **[Report]** **Runs the release gate and emails the operator ONE verdict** (added 2026-10-12, ACT-68) - 'CFP weekly pages: GO / GO WITH NOTES / NO-GO - Conferences n, Awards n', with **both HTML pages attached**, to the operator only
+    (never a customer). It answers in plain words whether the two pages are complete and safe to forward: pages built, fresh and published and the build healthy; for each of the four customer sheets, how many rows still ahead are on the page and, for each
+    that is not, the one reason (held waiting for an id, held by a check - with the check's own words, provisional, awaiting first research, past, withdrawn, duplicate) - **a customer row that is not even in the research queue is a NO-GO**; researched rows
+    that are on neither page; rows not researched for too long; how many Provisional awards the page carries; how old the customer sheet copies are; the build QA (an Open row past its deadline, a retired label, or a page more than 10 percent smaller than last
+    week's is a NO-GO; a disputed deadline, a dead link, a row that disappeared is a note); and what upstream still owes. The same report is written to `AppData\Local\CFP-Monitor\runs_out\qa\<date>\release_gate.md` and `.json`. It only reports: it cannot
+    change or block what step 10 published, and a fault in it prints `GATE: UNKNOWN - why` and nothing else changes. *(release_gate.py)*
 
 ## Every 4th Wednesday 2:00 AM - Monthly research (markets without a customer)
 
@@ -322,6 +339,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-12** - (ACT-68) the weekly outcome is reported, not assumed: the release gate after Monday's build (one GO / GO WITH NOTES / NO-GO email with both pages attached), the same checks as a Sunday pre-flight, and Provisional awards on the Awards page.
 - **2026-10-12** - (follow-up 3) upstream's reply with 41 award ids: reviewed file, `--reply-plan`, `--relabel`, stamping commands; a carried Speaking/Registration row is superseded by the same listing researched as an award; a non-award row is never first-loaded.
 - **2026-10-12** - (follow-up 2) `customer_awards.py --unlabel`: DUP_OF awards the customer lists as their own rows become researched awards of their own (waiting for ids); the import holds and names rows that share one output id.
 - **2026-10-12** - (follow-up) an award the customer lists but we hold only under the other market is added as a market sibling row (one research, one record, two memberships); the Awards page keeps non-award rows the customer lists.

@@ -163,3 +163,12 @@ def test_a_retired_label_on_a_row_the_customer_lists_is_kept_and_not_flagged():
     # without the customer list (or on a conference page) the old behaviour stands
     assert len([f for f in qb.compare(rows, None, ON, "awards", None)["flags"] if "v2.5 retired" in f]) == 2
     assert len([f for f in qb.compare(rows, None, ON, "conference", idx)["flags"] if "v2.5 retired" in f]) == 2
+
+
+# --- ACT-68: provisional rows are listed on their own, never as changes ---
+def test_provisional_rows_are_counted_and_listed_separately():
+    rows = [_row("Settled Award", op="Awards"), _row("Researched Award", op="Awards", prov=True, s="Closed", dl="2026-10-09")]
+    res = qb.compare(rows, [_row("Settled Award", op="Awards")], ON, "awards", None)
+    assert res["provisional"] == [["Researched Award", "Utility", "Closed", "2026-10-09"]]
+    counts = {r[0]: r[2] for r in res["counts"]}
+    assert counts["Provisional (researched, not yet approved)"] == 1 and counts["Rows"] == 2

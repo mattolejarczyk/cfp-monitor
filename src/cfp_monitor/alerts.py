@@ -103,13 +103,17 @@ def digest_markdown(alerts: list[Alert], title: str = "PR Monitor — Alerts") -
 
 
 def maybe_send_email(subject: str, body: str, config: Optional[dict] = None,
-                     html: Optional[str] = None, to_env: str = "CFP_ALERT_TO") -> bool:
+                     html: Optional[str] = None, to_env: str = "CFP_ALERT_TO",
+                     attachments: Optional[list] = None) -> bool:
     """Send the digest via SMTP IF fully configured (env CFP_SMTP_*). Returns True if sent,
     False if not configured (a no-op so scheduled runs don't fail without creds).
 
     `html` adds an HTML part beside the plain one. `to_env` names the recipient variable, so the
     weekend recaps (CFP_RECAP_TO) can be switched on without also switching on every older
-    sender that reads CFP_ALERT_TO."""
+    sender that reads CFP_ALERT_TO.
+
+    `attachments` (ACT-68): a list of file paths sent as attachments (the release gate sends the two customer pages to the operator). The message is then multipart/mixed with the text
+    (and html) as its first part. Recipient rules are unchanged: only the address named by `to_env`."""
     import os
     import smtplib
     from email.mime.multipart import MIMEMultipart
@@ -129,6 +133,20 @@ def maybe_send_email(subject: str, body: str, config: Optional[dict] = None,
         msg.attach(MIMEText(html, "html", "utf-8"))
     else:
         msg = MIMEText(body, "plain", "utf-8")
+    if attachments:
+        from email.mime.base import MIMEBase
+        from email import encoders
+        from pathlib import Path as _P
+        outer = MIMEMultipart("mixed")
+        outer.attach(msg)
+        for ap_ in attachments:
+            p_ = _P(ap_)
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(p_.read_bytes())
+            encoders.encode_base64(part)
+            part.add_header("Content-Disposition", "attachment", filename=p_.name)
+            outer.attach(part)
+        msg = outer
     msg["Subject"], msg["From"], msg["To"] = subject, c["from"], c["to"]
     with smtplib.SMTP(c["host"], c["port"]) as s:
         s.starttls()

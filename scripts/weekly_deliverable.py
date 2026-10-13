@@ -14,6 +14,8 @@ WHAT IT DOES, in the runbook's order (section 5):
     4. build_review_page.py --kind conference         the conferences page
     5. build_review_page.py --kind awards             the awards page
     6. publish both into <out-dir>/<date>/ with a MANIFEST
+    7. the RELEASE GATE (scripts/release_gate.py, ACT-68): GO / GO WITH NOTES / NO-GO emailed to the operator with both pages attached. Reports only: a fault there
+       prints `GATE: UNKNOWN - why` and can never change, block or undo the publish above.
 
 WHY IT EXISTS. Step 2 is the one that gets missed by hand: without it the audit refreshes the
 database and the page still shows last week's numbers - measured once at 43 of 96 rows reading
@@ -75,6 +77,22 @@ def step(name: str, cmd: list[str], log: Path, timeout: int = 7200) -> bool:
     return False
 
 
+def run_release_gate(stamp: str, work: Path, out_dir: str, markets_dir: str, db: str, dry_run: bool = False, runner=subprocess.run) -> str:
+    """ACT-68: the last step. Runs scripts/release_gate.py in its own process and returns its one `GATE:` line. REPORTING ONLY: nothing in here can raise, and the caller has already
+    published (or refused to) before this runs, so a fault here cannot change what was published. `runner` is injectable for tests."""
+    try:
+        cmd = [PY, ROOT / "scripts/release_gate.py", "--on", stamp, "--work-dir", work, "--weekly-dir", out_dir, "--markets-dir", markets_dir, "--db", db]
+        if dry_run:
+            cmd.append("--dry-run")
+        done = runner([str(c) for c in cmd], capture_output=True, text=True, timeout=900, env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+        line = next((ln.strip() for ln in (done.stdout or "").splitlines() if ln.startswith("GATE:")), "")
+        msg = line or f"GATE: UNKNOWN - the gate printed no verdict (exit {done.returncode})"
+    except Exception as exc:                                                 # noqa: BLE001
+        msg = f"GATE: UNKNOWN - {type(exc).__name__}: {exc}"
+    print(msg)
+    return msg
+
+
 def combine(sources: list[Path], out: Path) -> int:
     """One input file for the conferences page. Headers must match exactly - a delivery written
     to a different schema would silently drop columns the page reads."""
@@ -111,6 +129,8 @@ def main() -> int:
     ap.add_argument("--skip-links", action="store_true",
                     help="skip the dead-link re-check (it runs a browser over every link)")
     ap.add_argument("--awards-input", help="awards delivery CSV (default: newest Awards_*_out.csv)")
+    ap.add_argument("--no-gate", action="store_true", help="do not run the release gate after the build (ACT-68)")
+    ap.add_argument("--gate-dry-run", action="store_true", help="run the release gate but send no email (it writes the email text beside its report)")
     a = ap.parse_args()
 
     md, stamp = Path(a.markets_dir), a.date
@@ -329,8 +349,9 @@ def main() -> int:
             cmd += ["--dead-hosts", hosts]
         step("conferences page", cmd, work / "3_conference_page.log")
     if awards_in and awards_in.exists():
+        # ACT-68: researched awards the approved file does not carry yet (held for an id, held by the row rule, new this week) are shown, marked Provisional
         cmd = [PY, ROOT / "scripts/build_review_page.py", "-i", awards_in, "--kind", "awards",
-               "--date", stamp, "--db", a.db, "--checks", award_checks, "-o", awards_page]
+               "--date", stamp, "--db", a.db, "--checks", award_checks, "--provisional-dir", md, "-o", awards_page]
         if hosts.exists():
             cmd += ["--dead-hosts", hosts]
         step("awards page", cmd, work / "4_awards_page.log")
@@ -397,6 +418,16 @@ def main() -> int:
     (work / "MANIFEST.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
     print(f"\nwork folder: {work}")
+    # 7. THE RELEASE GATE: last, reporting only. The manifest and the publish are already final; the gate's one line is appended to the manifest for the record.
+    if not a.no_gate:
+        gate_line = run_release_gate(stamp, work, a.out_dir, a.markets_dir, a.db, a.gate_dry_run)
+        try:
+            with open(work / "MANIFEST.md", "a", encoding="utf-8") as fh:
+                fh.write(f"\n## Release gate\n\n    {gate_line}\n")
+            if status == "HEALTHY" and (published / "MANIFEST.md").exists():
+                shutil.copy2(work / "MANIFEST.md", published / "MANIFEST.md")
+        except OSError:
+            pass
     if status != "HEALTHY":
         return 2
     return 0 if HEALTH.failures("weekly_step") == 0 else 1

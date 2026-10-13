@@ -57,6 +57,9 @@ DESCRIBED = {
     "scripts/customer_auto_add.py": ROOT / "scripts" / "customer_auto_add.py",
     "scripts/customer_awards.py": ROOT / "scripts" / "customer_awards.py",
     "scripts/sponsor_prefill.py": ROOT / "scripts" / "sponsor_prefill.py",
+    "scripts/release_gate.py": ROOT / "scripts" / "release_gate.py",
+    "scripts/provisional_rows.py": ROOT / "scripts" / "provisional_rows.py",
+    "scripts/build_review_page.py": ROOT / "scripts" / "build_review_page.py",
 }
 
 

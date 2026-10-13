@@ -96,3 +96,11 @@ experiments/act67_rehearsal/work*/
 experiments/act67_rehearsal/*.csv
 experiments/act67_rehearsal/*.json
 experiments/act67_rehearsal/*.log
+
+# 2026-10-12 (ACT-68): rehearsal copies of live customer data stay local (public repo)
+experiments/act68_rehearsal/live/
+experiments/act68_rehearsal/work*/
+experiments/act68_rehearsal/*.csv
+experiments/act68_rehearsal/*.json
+experiments/act68_rehearsal/*.html
+experiments/act68_rehearsal/*.log

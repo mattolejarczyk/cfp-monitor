@@ -319,7 +319,11 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
             'chk': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('v', ''),
             'chku': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('u', ''),
             'chkq': (checks or {}).get((r.get('EVENT_ID') or '').strip(), {}).get('q', ''),
+            'prov': False,
         })
+        if (r.get('_PROVISIONAL') or '') == '1':
+            # ACT-68: a researched row the approved file does not carry yet. Never a check verdict (no 'Deadline confirmed'), never a confidence badge.
+            out[-1].update(prov=True, chk='', chku='', chkq='', c='', proj=False)
     if corrected:
         print(f"  {corrected} row(s) shown with a DERIVED status - the file's value was "
               f"contradicted by a date")
@@ -418,6 +422,7 @@ a.chklink{text-decoration:none}
 a.chklink:hover .b{outline:2px solid var(--accent);outline-offset:1px}
 a.dl-dead{color:var(--urgent);text-decoration:line-through}
 .b-urg{background:var(--urgentbg);color:var(--urgent)}
+.b-prov{background:var(--accentbg);color:var(--accent);border:1px dashed var(--accent)}
 .b-soon{background:var(--soonbg);color:var(--soon)}
 .dl{font-variant-numeric:tabular-nums;white-space:nowrap}
 .days{font-size:11px;font-weight:700;margin-left:6px}
@@ -457,7 +462,7 @@ a{color:var(--accent)}
 </style></head><body>
 <header>
   <h1>__TITLE__</h1>
-  <div class="sub">__COUNT__ __NOUN__ &middot; __SCOPE__ &middot; data as at __DATE__ &middot;
+  <div class="sub">__COUNT__ __NOUN__<span id="provnote">__PROVNOTE__</span> &middot; __SCOPE__ &middot; data as at __DATE__ &middot;
     urgency recalculated live against today's date</div>
 </header>
 <div class="wrap">
@@ -475,6 +480,9 @@ a{color:var(--accent)}
       <input type="checkbox" id="showclosed"> Show closed rows in <i>Deadline confirmed</i>,
       <i>Need to Verify</i>, <i>Submit Link Missing</i> and <i>Check against your sheet</i>
       (hidden by default - a closed call cannot be acted on)</label>
+    <label id="provbox" style="display:__PROVDISPLAY__;margin-top:6px;font-size:13px;color:var(--muted);cursor:pointer">
+      <input type="checkbox" id="showprov" checked> Show <i>Provisional</i> rows (__PROVCOUNT__):
+      researched this week, our final checks are still running</label>
   </section>
 
   <section class="sec">
@@ -625,6 +633,8 @@ const HIDE_CLOSED_IN = ['checked','unconfirmed','broken','reconcile'];
 let showClosed = false;
 VIEWS.forEach(v=>{ if(HIDE_CLOSED_IN.indexOf(v.k)>=0){ const base=v.f;
   v.f = r => base(r) && (showClosed || r.s!=='Closed'); } });
+let showProv = true;
+VIEWS.forEach(v=>{ const base=v.f; v.f = r => base(r) && (showProv || !r.prov); });
 // "Closing this month" is the right landing view when something IS closing this month. On a
 // per-client page it often is not - Arnica had none - and the page then opened on "Nothing
 // matches those filters", which reads as a broken product rather than a quiet month.
@@ -785,7 +795,7 @@ function render(){
   $('hint').innerHTML = urg?`<span class="b b-urg">${urg} closing within ${URGENT_DAYS} days</span>`:'';
   $('tb').innerHTML = rows.map((r,i)=>`
    <tr class="r" data-i="${i}">
-    <td class="nm">${esc(r.n)}${r.op&&r.op!=='Speaking'&&r.op.toLowerCase()!==KIND?` <span class="b b-up">${r.op}</span>`:''}${
+    <td class="nm">${esc(r.n)}${r.prov?' <span class="b b-prov" title="Researched this week; our final checks are still running.">Provisional</span>':''}${r.op&&r.op!=='Speaking'&&r.op.toLowerCase()!==KIND?` <span class="b b-up">${r.op}</span>`:''}${
       // SPONSOR REQUIRED IS A GATE ON THE OPPORTUNITY, NOT A DETAIL. It decides whether the
       // pitch happens at all, so it belongs in the list where a deadline is - not three
       // clicks down. The cost rides with it when we have one, because "sponsor required" and
@@ -798,6 +808,7 @@ function render(){
     <td><span class="b ${sB[r.s]||''}"${r.sderived?' title="The deadline has passed. Shown as closed based on the date, whatever the source last said."':''}>${esc(r.s)}</span></td>
     <td><span class="b ${eB[r.st]||''}">${esc(r.st)}</span></td>
     <td>${
+      r.prov ? '<span class="b b-prov">Provisional</span>' :
       r.chk ? chkCell(r) :
       // PROJECTED OVERRIDES A STORED "Verified". GROUNDING_CONFIDENCE is upstream's and was
       // written when the row had a citation; withdrawing that citation sets IS_PROJECTED
@@ -809,6 +820,7 @@ function render(){
       r.c                   ? '<span class="b b-nv">Projected</span>' : '&mdash;'}</td>
    </tr>
    <tr class="det" id="d${i}" style="display:none"><td colspan="9">
+     ${r.prov?'<h4>Provisional</h4><p>Researched this week; our final checks are still running.</p>':''}
      ${r.det?`<h4>Status</h4><p>${esc(r.det)}</p>`:''}
      ${r.q?(r.ev
         ? `<h4>Quoted from the source page</h4><p class="quote">${esc(r.q)}</p>`
@@ -863,6 +875,7 @@ $('mk').onclick=e=>{const b=e.target.closest('[data-m]'); if(!b)return;
   b.classList.toggle('on'); render();};
 ['q','fs','ff','fc','fe'].forEach(i=>$(i).oninput=render);
 $('showclosed').onchange=()=>{ showClosed = $('showclosed').checked; render(); };
+$('showprov').onchange=()=>{ showProv = $('showprov').checked; render(); };
 // The date box drives SINCE, so the "Updated since" count changes with it rather than being
 // fixed at build time. Falls back to the built-in default when cleared - an empty box would
 // otherwise make every row match and the view would silently become "everything".
@@ -871,6 +884,29 @@ document.querySelectorAll('th').forEach(th=>th.onclick=()=>{
   const k=th.dataset.k; sortDir = (k===sortK)? -sortDir : 1; sortK=k; render();});
 render();
 </script></body></html>"""
+
+
+def provisional_awards(approved_rows, markets_dir, db, today, customer):
+    """ACT-68. Delivery rows for the researched awards the approved file does not carry (scripts/provisional_rows.py), tagged _PROVISIONAL, after the awards-page rule: a row that is not
+    typed as an award and that no customer sheet lists stays out, a customer-listed row stays in. Never raises: on any fault the page is built without them and says why."""
+    try:
+        from scripts import provisional_rows as pr
+        on = date.fromisoformat(today)
+        res, note, raw = pr.awards_candidates(Path(markets_dir), approved_rows, Path(db) if db else None, on)
+        if note:
+            print(f'awards page: no provisional rows - {note}')
+            return []
+        rows = pr.to_page_rows(res['rows'], on)
+        rows, dropped = awards_only(rows, customer)
+        if dropped:
+            print(f'awards page: provisional candidates left out (not awards, not listed by a customer): ' + '; '.join(dropped))
+        for why, n in res['excluded'].items():
+            print(f'awards page: provisional candidates excluded {n}: {why}')
+        print(f'awards page: {len(rows)} provisional row(s) from {raw}')
+        return rows
+    except Exception as e:                                                    # noqa: BLE001
+        print(f'awards page: provisional rows could not be read ({type(e).__name__}: {e}); built without them')
+        return []
 
 
 def main():
@@ -911,6 +947,9 @@ def main():
     ap.add_argument('--customer-awards-dir', default=str(Path(r'C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets') / 'customer_snapshots'),
                     help="awards page only: the snapshot store of the customers' awards sheets (<dir>/<client>/<client>_<stamp>.csv). A row the customers list stays on the page "
                          "whatever its type; if the snapshots cannot be read every row is kept.")
+    ap.add_argument('--provisional-dir', default='',
+                    help="awards page only (ACT-68): the Markets folder. Researched awards that the approved file does not carry yet (held for an id, held by the row rule, new this "
+                         "week) are read from the newest raw research file there and shown as Provisional. Off unless given. Conferences are not wired.")
     a = ap.parse_args()
 
     # A MISSING INPUT MUST NOT READ AS A FINDING. Both flags are optional and default to empty,
@@ -942,6 +981,7 @@ def main():
     with open(a.input, encoding='utf-8-sig', newline='') as h:
         rows = list(csv.DictReader(h))
 
+    rows_approved = list(rows)           # the whole approved file, before the awards page leaves anything out: a row left out on purpose is not 'missing' either
     if a.kind == 'awards':
         from scripts import customer_awards as _ca
         _idx = _ca.customer_index(Path(a.customer_awards_dir))
@@ -953,6 +993,10 @@ def main():
         _kept_non = [(r.get('CONFERENCE') or '').strip() for r in rows if (r.get('OPPORTUNITY_TYPE') or '').strip() != 'Awards']
         if _kept_non:
             print(f"awards page: kept {len(_kept_non)} row(s) that are not typed as awards because the customer lists them: " + "; ".join(_kept_non))
+        if a.provisional_dir:
+            rows = rows + provisional_awards(rows_approved, Path(a.provisional_dir), a.db, a.date, _idx)
+    elif a.provisional_dir:
+        raise SystemExit("ERROR: --provisional-dir is wired for the awards page only (conference rows held back for an id or a gate are not shown; see QA-REGISTER A63)")
 
     # MARKET SCOPE. Which markets the page is ABOUT. The chips still filter within it, so a
     # two-market page keeps both chips and a reader can still narrow to one - the scope decides
@@ -1081,7 +1125,13 @@ def main():
     # whoever built the file - but the THRESHOLDS are policy and belong in one place. Left
     # hard-coded here, a change to lifecycle's bands would silently disagree with this page and
     # nothing would fail; the two would just quietly mean different things by "closing soon".
+    n_prov = sum(1 for d in data if d['prov'])
+    if n_prov:
+        print(f'{n_prov} PROVISIONAL row(s): ' + '; '.join(d['n'] for d in data if d['prov']))
     page = (PAGE.replace('__DATA__', json.dumps(data, ensure_ascii=False))
+                .replace('__PROVNOTE__', f' ({n_prov} provisional)' if n_prov else '')
+                .replace('__PROVDISPLAY__', 'block' if n_prov else 'none')
+                .replace('__PROVCOUNT__', str(n_prov))
                 .replace('__DEADHOSTS__', json.dumps(dead_hosts, ensure_ascii=False))
                 .replace('__KIND__', a.kind)
                 .replace('__NO_EVIDENCE__', 'true' if a.no_evidence else 'false')
