@@ -185,8 +185,10 @@ def build_view(o: Opts, approved: dict, pages: dict) -> dict:
             view["prov"] = [c for c in view["prov"] if c not in view["prov_not_on_page"]]
         if view["awards"] is None:
             kept, _ = brp.awards_only(approved["Awards"], cust)
+            from scripts import awaiting_rows as aw
+            aw_rows, _aw_rep, _aw_note = aw.awaiting_rows(kept + shown_rows, o.awards_sheets_dir, o.on)
             with contextlib.redirect_stdout(quiet):
-                view["awards"] = brp.build(kept + shown_rows, o.on.isoformat())
+                view["awards"] = brp.build(kept + shown_rows + aw_rows, o.on.isoformat())
             view["source"]["awards"] = "approved"
     return view
 
@@ -324,6 +326,10 @@ def coverage_awards(o: Opts, rows_page: list[dict], approved_awards, lookup: dic
                     hit = cands[0]
             if hit is not None:
                 st["on_page"] += 1
+                if hit.get("aw"):                       # ACT-70 follow-up: shown as 'Awaiting research' - on the page; the reason is information, not a gap
+                    st["reasons"][R_QUEUED] = st["reasons"].get(R_QUEUED, 0) + 1
+                    st["missing"].append({"name": r["name"], "reason": R_QUEUED, "detail": "shown on the page as Awaiting research", "row": r["sheet_row"], "on_page": True})
+                    continue
                 if hit.get("prov"):
                     st["provisional"] += 1
                     st["reasons"][R_PROV] = st["reasons"].get(R_PROV, 0) + 1
@@ -754,6 +760,7 @@ def evaluate(o: Opts) -> dict:
     counts = {"conference": len(view["conference"]) if view.get("conference") is not None else None,
               "awards": len(view["awards"]) if view.get("awards") is not None else None,
               "provisional": len([r for r in (view.get("awards") or []) if r.get("prov")]),
+              "awaiting": len([r for r in (view.get("awards") or []) if r.get("aw")]),
               "provisional_conference": len([r for r in (view.get("conference") or []) if r.get("prov")])}
     return {"checks": checks, "verdict": verdict, "counts": counts, "coverage": {"conference": cov_conf, "awards": cov_awards}, "coverage_lines": cov_lines, "pages": pages,
             "preflight": o.preflight, "on": o.on.isoformat()}
@@ -1037,6 +1044,8 @@ def plain_lines(rep: dict) -> list[str]:
     else:
         L.append(f"The pages are {'built and published' if c.get('a', {}).get('status') == 'PASS' else 'NOT ready to send'}: {n['conference'] if n['conference'] is not None else '?'} conferences and {n['awards'] if n['awards'] is not None else '?'} awards"
                  + (f" ({n['provisional']} of the awards {'is' if n['provisional'] == 1 else 'are'} Provisional)." if n["provisional"] else "."))
+    if n.get("awaiting"):
+        L.append(f"{n['awaiting']} customer award(s) are shown as Awaiting research: on the customer's sheet, not researched yet (the page says so; they count as on the page).")
     if n.get("provisional_conference"):
         L.append(f"{n['provisional_conference']} conference row(s) are shown as Provisional: researched, held by a check, with the failing field left blank (named below).")
     if c["a"]["status"] == "FAIL":

@@ -337,7 +337,9 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
    conference page the field a check failed on is **left blank** and never shown (a venue typed into the city, "To Be Announced", active-call
    wording we could not prove, a submit link that is a 404, a deadline whose quote is not on the page), and the row reads Needs Verification when
    the deadline or its wording was blanked; the choice of field for each check is in `docs\operations\provisional_blank_rules.json`. A Provisional
-   row never shows a "Deadline confirmed" mark, and never shows Open after its deadline. *(build_review_page.py, provisional_rows.py, provisional_blank.py)*
+   row never shows a "Deadline confirmed" mark, and never shows Open after its deadline. The awards page also shows **Awaiting research** rows (2026-10-13): every award on the
+   customers' awards sheets that no other row of the page carries, built from the customer's own sheet only (name, link, place, and the deadline only when the cell is exactly one date;
+   otherwise the customer's own words appear in the detail panel), marked with one plain sentence and no verdict. They count as on the page in the release gate. *(build_review_page.py, provisional_rows.py, provisional_blank.py, awaiting_rows.py)*
 10. **[Publish]** **Publishes, only if everything above went well.** Both pages go into today's folder under
     `handoff-files\weekly\`, with a summary file listing what is in them. Otherwise the pages stay
     in a work folder, the summary says why, and nothing is published.
