@@ -5,6 +5,17 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-12 - Monday: customer awards enter the queue, 41 award ids, release gate, self-healing redesign agreed
+
+- ROOT CAUSE of the missing awards: ACT-51 was built for the two CONFERENCE sheets only; the awards sheets (config customer_sheets.json, snapshotted weekly) were never read into the queue. 153 customer awards, 127 on the page, 33 missing. ACT-67 fixes it: scripts/customer_awards.py (coverage, auto-add, --unlabel, --relabel, --reply-plan), awards first-load path (switch CFP_AWARDS_NEW_EVENTS=1 now set at user level), MARKET_SIBLING rows (one award in two markets), recap lines, run_monthly.ps1 step 0a1b live (dry run unless CFP_AWARDS_AUTOADD_APPLY=1; backup run_monthly.ps1.pre-customerawards-20261012). Awards_input.csv 168 rows, 152 live, 0 waiting for an id; every change has a backup beside the file.
+- Upstream's 41 award ids triaged and applied by one command (experiments/act67_rehearsal/apply_award_ids.py): 32 new, 2 existing, 7 SAME rulings keep our existing -tbd- ids; ledger given_ids.csv +34. Upstream's reply to note 51 agreed. Draft note 51 (unsent): experiments/purpose_audit/NOTE-TO-UPSTREAM-51.md.
+- ACT-66 cause corrected: the gate cuts names at 38-40 characters, so a failure on the stale 2026 Fast Company row also matched the fresh 2027 row (not an old DB deadline). Fixed in weekend_import.rows_for_failure.
+- ACT-68 merged (repo code only): scripts/release_gate.py (emails the operator only, both pages attached; last step of weekly_deliverable.py; Sunday pre-flight at the end of weekend_recap.py sunday), scripts/provisional_rows.py (Awards page shows researched-but-not-loaded awards as Provisional).
+- Bug fixed: 39 of 125 awards on the 2026-10-12 page showed 'nan' as location; blanked in build_review_page (94d757d).
+- Pages for 2026-10-12: Conference page good to send (138 of 138 customer conferences ahead are in the queue). Awards page ON HOLD by the operator until the missing awards are researched (Friday 10-16 02:00 research, load with the switch on).
+- Operator rulings: customer sheets are the source of truth, every row researched and shown; the page must always ship complete (no GO/NO-GO; exceptions become a to-do list); every change documented and exactly undoable; direct Gemini line wanted (needs a scoped yes and an API key the operator sets; the operator's Gemini subscription is not API access); weekly allowance for fixing missed rows 40 USD max, 20 target, 5 mature goal (CONFIRM the meaning in the morning); provisional awards YES, conference provisional undecided.
+- NOT applied live: ACT-64 sponsor prefill, ACT-63 new-events patch, ACT-33 conference refresh policy.
+
 ## 2026-10-11 - Sunday: sponsor prefill, sponsor links in the sweep, conference refresh policy (ACT-64, 65, 33)
 
 - ACT-64 sponsor_prefill.py merged: carries last week's settled sponsor answer (8-week rotation). Patch for Markets/run_overnight.ps1 NOT applied: operator runs the apply script before Sat 2026-10-17 02:00, then it is verified. Est. saving about 35 USD a week.
