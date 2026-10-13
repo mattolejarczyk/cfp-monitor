@@ -247,7 +247,8 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
             d['STATUS'] = a.customer_status
             corrected += 1
         d['Market'] = MARKET_LABEL.get(d['Market'], d['Market'])
-        loc = ', '.join(x for x in (d['CITY'], d['STATE_PROVINCE'], d['COUNTRY']) if x)
+        # 2026-10-12: a 'nan' (a stringified empty cell in upstream's research file) is not a place. 39 of 125 awards on that day's page read 'nan' as their location (6 the week before).
+        loc = ', '.join(x for x in (d['CITY'], d['STATE_PROVINCE'], d['COUNTRY']) if x and x.strip().lower() not in ('nan', 'none', 'null'))
         conf = d['GROUNDING_CONFIDENCE'].split(' (')[0] or ''
         out.append({
             'n': d['CONFERENCE'], 'm': d['Market'], 'loc': loc, 'f': d['FORMAT'],

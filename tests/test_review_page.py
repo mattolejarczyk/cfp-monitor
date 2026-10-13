@@ -369,3 +369,12 @@ def test_a_row_is_kept_by_a_deep_url_the_customer_lists_too():
 def test_the_awards_page_build_applies_it_and_the_conference_page_does_not():
     src = (ROOT / "scripts" / "build_review_page.py").read_text(encoding="utf-8")
     assert "if a.kind == 'awards':" in src and "rows, not_awards = awards_only(rows, _idx)" in src and "customer_index(Path(a.customer_awards_dir))" in src
+
+
+# ------------------------------------------------ a stringified empty cell is not a place (2026-10-12) --
+def test_a_nan_place_is_blanked_not_shown_to_the_customer():
+    out = brp.build([row(CONFERENCE="Some Award", CITY="nan", STATE_PROVINCE="None", COUNTRY="null"),
+                     row(CONFERENCE="Real Place", CITY="Austin", STATE_PROVINCE="nan", COUNTRY="USA")], today="2026-10-12")
+    by = {r["n"]: r for r in out}
+    assert by["Some Award"]["loc"] == ""
+    assert by["Real Place"]["loc"] == "Austin, USA"
