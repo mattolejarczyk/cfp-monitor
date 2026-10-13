@@ -16,6 +16,7 @@ what it means for the next run.
 
 | When | Job | Costs AI requests? |
 |---|---|---|
+| Thursday 6:00 PM | Pre-flight for Friday and Saturday: reads files, emails one verdict (task registered once by the operator, 2026-10-13, ACT-70) | No |
 | Friday 2:00 AM | Weekly awards research + automatic load (Arnica, Utility Global) | Yes, about 130-300 |
 | Saturday 2:00 AM | Weekly research + automatic load (Arnica, Utility Global) | Yes, about 120-290 |
 | Sunday 1:00 AM | Weekly link and deadline check (all markets) | A few (about 10-20) |
@@ -51,6 +52,31 @@ The sections below describe what each job does WHEN it is enabled. To turn one b
 
 Most **[Safety check]** steps sit straight after a **[Load]** or **[Update]**, or at the handoff between two
 jobs: each job checks what the previous one left instead of trusting it.
+
+---
+
+## Thursday 6:00 PM - Pre-flight for Friday and Saturday (added 2026-10-13, ACT-70)
+
+*Scheduled task "CFP Thursday Pre-flight" -> the dev repo's `scripts\release_gate.py --thursday`, registered once by the
+operator with `experiments\act70_rehearsal\register_thursday_preflight.ps1` (add `-WhatIf` to see it first)*
+
+Three of the gaps that cost the last three weeks were decided *before* the research ran and were invisible until
+the pages came out. This job looks the evening before, while there is still time to fix them. It reads files, changes
+nothing, spends nothing, and emails the operator only.
+
+1. **[Review]** **Which approved patches are really in the weekend script** - each patch under `docs\control\patches` is looked for in
+   `Markets\run_monthly.ps1`; one whose text is not there is named (the step it adds will not run until it is applied).
+2. **[Review]** **Awards waiting for a permanent id** - awards on `Awards_input.csv` that upstream has not given an id, and the
+   draft request to upstream if there is one (send it before Friday).
+3. **[Review]** **The switches** - `CFP_AWARDS_NEW_EVENTS` (a new award with an id loads on Friday), `CFP_AWARDS_AUTOADD_APPLY` (Friday adds
+   the customer awards the research queue is missing), `CFP_AUTOADD_APPLY` (Saturday does the same for conferences) and
+   `CFP_REFRESH_APPLY` (Saturday skips closed events under the refresh policy), each ON / OFF / not set with what that means for
+   Friday or Saturday, and whether the email settings are present (the values are never shown).
+4. **[Review]** **The customer sheets** - how old the four snapshots are (normally about 5 days on Thursday: the intake that
+   refreshes them runs Saturday 2:00 AM; Friday's awards run fetches a fresh copy of the two awards sheets itself at its start, step 0a1b, ACT-67, but only ADDS a missing award when CFP_AWARDS_AUTOADD_APPLY is 1) and, as a dry run, how many
+   customer rows are in the research queue. **A customer conference or award that is not in the queue and whose add switch is OFF
+   will not be researched: that is FIX BEFORE 02:00.**
+5. **[Report]** **Emails ONE verdict** - READY, READY WITH NOTES or FIX BEFORE 02:00 - with the plain lines above and the detail. *(release_gate.py --thursday)*
 
 ---
 
@@ -306,7 +332,12 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
    searched, what the customer is working on - and rebuilds the evidence matrix. Recorded for us;
    never blocks publishing. *(find_duplicate_events.py, grounding_review.py, customer_context.py,
    evidence_matrix.py)*
-9. **[Build]** **Builds the two pages** - conferences and awards (the awards page with its Provisional rows). *(build_review_page.py, provisional_rows.py)*
+9. **[Build]** **Builds the two pages** - conferences and awards. Both carry **Provisional** rows (ACT-68, ACT-70): a researched row the approved
+   file does not hold yet (held by a check, by the row rule, or waiting for an id), so the customer sees every event their sheet tracks. On the
+   conference page the field a check failed on is **left blank** and never shown (a venue typed into the city, "To Be Announced", active-call
+   wording we could not prove, a submit link that is a 404, a deadline whose quote is not on the page), and the row reads Needs Verification when
+   the deadline or its wording was blanked; the choice of field for each check is in `docs\operations\provisional_blank_rules.json`. A Provisional
+   row never shows a "Deadline confirmed" mark, and never shows Open after its deadline. *(build_review_page.py, provisional_rows.py, provisional_blank.py)*
 10. **[Publish]** **Publishes, only if everything above went well.** Both pages go into today's folder under
     `handoff-files\weekly\`, with a summary file listing what is in them. Otherwise the pages stay
     in a work folder, the summary says why, and nothing is published.
@@ -318,7 +349,7 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
 12. **[Report]** **Runs the release gate and emails the operator ONE verdict** (added 2026-10-12, ACT-68) - 'CFP weekly pages: GO / GO WITH NOTES / NO-GO - Conferences n, Awards n', with **both HTML pages attached**, to the operator only
     (never a customer). It answers in plain words whether the two pages are complete and safe to forward: pages built, fresh and published and the build healthy; for each of the four customer sheets, how many rows still ahead are on the page and, for each
     that is not, the one reason (held waiting for an id, held by a check - with the check's own words, provisional, awaiting first research, past, withdrawn, duplicate) - **a customer row that is not even in the research queue is a NO-GO**; researched rows
-    that are on neither page; rows not researched for too long; how many Provisional awards the page carries; how old the customer sheet copies are; the build QA (an Open row past its deadline, a retired label, or a page more than 10 percent smaller than last
+    that are on neither page; rows not researched for too long; how many Provisional awards and conferences the pages carry (a conference's blank fields are named); how old the customer sheet copies are; the build QA (an Open row past its deadline, a retired label, or a page more than 10 percent smaller than last
     week's is a NO-GO; a disputed deadline, a dead link, a row that disappeared is a note); and what upstream still owes. The same report is written to `AppData\Local\CFP-Monitor\runs_out\qa\<date>\release_gate.md` and `.json`. It only reports: it cannot
     change or block what step 10 published, and a fault in it prints `GATE: UNKNOWN - why` and nothing else changes. *(release_gate.py)*
 
@@ -339,6 +370,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-13** - (ACT-70) a Thursday 6:00 PM pre-flight (patches applied, awards waiting for ids, switches, customer sheets and coverage; READY / READY WITH NOTES / FIX BEFORE 02:00), and held conference rows shown as Provisional with the failing field blank.
 - **2026-10-13** - the page build blanks a place that is only a stringified empty cell ('nan'): 39 of 125 awards had shown it as their location on 2026-10-12 (6 the week before). No step changed; the fix is in `build_review_page.py`.
 - **2026-10-12** - (ACT-68) the weekly outcome is reported, not assumed: the release gate after Monday's build (one GO / GO WITH NOTES / NO-GO email with both pages attached), the same checks as a Sunday pre-flight, and Provisional awards on the Awards page.
 - **2026-10-12** - (follow-up 3) upstream's reply with 41 award ids: reviewed file, `--reply-plan`, `--relabel`, stamping commands; a carried Speaking/Registration row is superseded by the same listing researched as an award; a non-award row is never first-loaded.

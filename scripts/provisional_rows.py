@@ -15,7 +15,7 @@ THE QUESTION, per row of the newest raw research file of a market (`Markets/<Mar
 Excluded, each counted and never silent: a stub (`Audit Exception`: not researched this week), a row with no usable name, a second row for the same award, a research file older than
 `max_age_days` (no research this cycle: the file is last cycle's and every row in it was either loaded or deliberately held then).
 
-For the Awards page only (conferences are NOT wired: see QA-REGISTER A63 for what it would take) `to_page_rows` turns the candidates into delivery rows for scripts/build_review_page.py:
+`to_page_rows` turns the candidates into delivery rows for scripts/build_review_page.py (Awards page since ACT-68; the Conference page since ACT-70 through `conference_page_rows`, which BLANKS the field a gate check failed on: scripts/provisional_blank.py):
 the status is derived (an Open or Upcoming row whose deadline has passed is Closed), the confidence is cleared (no Verified badge), and the row is tagged `_PROVISIONAL` = 1.
 Pure functions plus thin readers; the database is opened `file:...?mode=ro` only."""
 from __future__ import annotations
@@ -242,6 +242,53 @@ def conference_candidates(markets_dir: Path, market: str, approved: list[dict], 
     return candidates(read_csv(raw_path), read_identity(raw_path, markets_dir, market), approved, up_to_canon, "conference"), "", raw_path
 
 
+def conference_page_rows(markets_dir: Path, market: str, approved: list[dict], up_to_canon: dict[str, str], on: date, rules: dict | None = None,
+                         data_root: Path | None = None, max_age_days: int = MAX_AGE_DAYS) -> tuple[list[dict], list[dict], str]:
+    """ACT-70. The held conference rows of one market as page rows: -> (rows tagged _PROVISIONAL with the failing field(s) BLANKED and `_BLANKED` naming them, a report entry per row
+    {name, market, category, blanked, why, status, checked}, a note). The failing field comes from the acceptance gate's own words (scripts/provisional_blank.py, docs/operations/
+    provisional_blank_rules.json). A candidate whose name an approved row of the same market already carries (an edition renamed under a new id) is left out and counted in the note."""
+    from scripts import provisional_blank as pb
+    raw_path, note = find_raw(markets_dir, market, on, max_age_days)
+    if raw_path is None:
+        return [], [], note
+    rules = rules or pb.load_rules()
+    raw = read_csv(raw_path)
+    ident = read_identity(raw_path, markets_dir, market)
+    res = candidates(raw, ident, approved, up_to_canon, "conference")
+    have = {(tidy(r.get("Market")) or market, _keys("conference")[0](r.get("CONFERENCE") or "")) for r in approved}
+    nk = _keys("conference")[0]
+    kept = [c for c in res["rows"] if (c["market"] or market, nk(c["name"])) not in have]
+    skipped = len(res["rows"]) - len(kept)
+    failures, notes = pb.collect_failures(Path(markets_dir), market, raw_path, data_root)
+
+    def canon_of(r):
+        eid = (r.get("EVENT_ID") or "").strip()
+        return ident.get(eid, "") or to_canonical(eid, up_to_canon)
+
+    by_row: dict[int, list] = {}
+    for f in failures:
+        for i in pb.match_rows(f, raw, canon_of):
+            by_row.setdefault(i, []).append(f)
+    out_cands, report = [], []
+    for c in kept:
+        i = next((k for k, r in enumerate(raw) if r is c["row"]), -1)
+        fl, seen_f = [], set()
+        for f in by_row.get(i, []):
+            k = (f["check"], f["text"].split(":", 1)[-1].strip())
+            if k not in seen_f:
+                seen_f.add(k)
+                fl.append(f)
+        newrow, done, why = pb.apply_blanks(c["row"], fl, rules, checked=bool(fl))
+        newrow["_BLANKED"] = "; ".join(done)
+        out_cands.append({**c, "row": newrow})
+        report.append({"name": c["name"], "market": market, "category": c["category"], "blanked": done, "why": why, "checked": bool(fl), "status": ""})
+    rows = to_page_rows(out_cands, on)
+    for r, rep in zip(rows, report):
+        rep["status"] = r.get("STATUS", "")
+    msg = "; ".join(x for x in (note, f"{skipped} candidate(s) left out: an approved row of this market has the same name" if skipped else "", *notes) if x)
+    return rows, report, msg
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -268,6 +315,12 @@ def main() -> int:
     print(f"PROVISIONAL: {len(res['rows'])} researched row(s) not in the approved file (raw research: {raw})")
     for c in res["rows"]:
         print(f"  [{c['category']}] {c['market']}: {c['name']}")
+    if a.kind != "awards" and res["rows"]:
+        from src.cfp_monitor import identity as _id
+        _rows, rep, msg = conference_page_rows(md, a.kind, approved, _id.seed_map(a.db)[0], on)
+        print(f"PROVISIONAL PAGE ROWS: {len(_rows)} (blanked fields below)" + (f" - {msg}" if msg else ""))
+        for e in rep:
+            print(f"  {e['name']}: status {e['status'] or '-'}; blanked: {', '.join(e['blanked']) or 'nothing'}" + ("" if e["checked"] else " (no gate result found: default)") + "; " + " | ".join(e["why"]))
     for why, n in res["excluded"].items():
         print(f"  excluded {n}: {why}")
     if a.json:

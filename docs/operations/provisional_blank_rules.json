@@ -1,0 +1,45 @@
+{
+  "about": "ACT-70 (QA-REGISTER A64). A conference row that was researched but is NOT in the approved file (the gate or the row rule held it) is shown to the customer as Provisional, with the field(s) that failed BLANKED, so the customer sees every event they track and we never show a detail we know is wrong. This file maps each acceptance-gate check (id and title exactly as accept_delivery.py prints them in weekend_import.log and writes into <Market>_audited.candidate.gate.json) to the field(s) to blank. Read by scripts/provisional_blank.py; tests/test_provisional_blank.py pins every mapping and the default. Plain ASCII.",
+  "tokens": {
+    "@named": "blank the field NAMED in the failure text, e.g. CITY='Expo City Dubai' -> CITY",
+    "@url": "blank every link field of the row whose value is the URL named in the failure text; if none equals it, blank SUBMISSION URL, CFP_SUBMISSION_URL and DEADLINE_EVIDENCE_URL"
+  },
+  "status_rule": "A check that blanks the deadline also blanks STATUS DETAILS, because that prose restates the deadline claim (the India Energy Week row's prose said the deadline had moved from 30 September to 15 October). Whenever SUBMISSION DEADLINE or STATUS DETAILS is blanked the status shown is Needs Verification (the customer is told we could not confirm it, never a guess). A rule may also set status explicitly.",
+  "default": {
+    "why": "a check with no mapping, or no gate result found for the row",
+    "blank": ["SUBMISSION DEADLINE", "DEADLINE_QUOTE", "DEADLINE_EVIDENCE_URL", "STATUS DETAILS", "SUBMISSION URL", "CFP_SUBMISSION_URL"],
+    "status": "Needs Verification",
+    "keeps": "name, dates, location and website"
+  },
+  "gate_checks": {
+    "1":   {"title": "RFC 4180 - every row parses to the header's N fields", "use_default": true},
+    "2":   {"title": "Cited pages resolve (404/410 = fail, 403 allowed unless a browser gets 404)", "blank": ["@url"]},
+    "3":   {"title": "Cited page contains its quote verbatim (403 exempt)", "blank": ["SUBMISSION DEADLINE", "DEADLINE_QUOTE", "STATUS DETAILS", "DEADLINE_EVIDENCE_URL"], "status": "Needs Verification"},
+    "4":   {"title": "No active-call prose on an IS_PROJECTED=true row (defunct rows exempt)", "blank": ["STATUS DETAILS"], "status": "Needs Verification"},
+    "5":   {"title": "No Exhibiting/Registration row carrying a deadline", "blank": ["SUBMISSION DEADLINE", "DEADLINE_QUOTE"]},
+    "5b":  {"title": "OPPORTUNITY_TYPE is one of the four enum values", "blank": ["OPPORTUNITY_TYPE"]},
+    "6":   {"title": "No past deadline presented as open (as of D; rolling forms exempt)", "blank": [], "status": "@derive"},
+    "R8a": {"title": "GATED_STATUS and ISSUES left blank upstream", "blank": ["GATED_STATUS", "ISSUES"]},
+    "R8b": {"title": "CITY holds a city, not a venue", "blank": ["@named"]},
+    "R8c": {"title": "EVENT_ID unique per row within a market", "use_default": true},
+    "R11": {"title": "GROUNDING_CONFIDENCE bound to IS_PROJECTED", "blank": ["GROUNDING_CONFIDENCE"]},
+    "R2":  {"title": "Future date marked verified only with a citation", "blank": ["SUBMISSION DEADLINE", "DEADLINE_QUOTE", "STATUS DETAILS"], "status": "Needs Verification"},
+    "2.6": {"title": "No placeholder values where a real value belongs", "blank": ["@named"]},
+    "5.4": {"title": "No row representing a SERIES rather than one event", "use_default": true},
+    "6b":  {"title": "Submission deadline precedes the event it feeds (Awards exempt)", "blank": ["SUBMISSION DEADLINE", "DEADLINE_QUOTE", "STATUS DETAILS"], "status": "Needs Verification"},
+    "2.1b": {"title": "No discontinued event claiming a verified edition", "blank": ["STATUS DETAILS", "EDITION"], "status": "Needs Verification"},
+    "R8d": {"title": "EDITION is a plain 4-digit year", "blank": ["EDITION"]},
+    "R12": {"title": "FORMAT is In-Person, Virtual, Hybrid or blank", "blank": ["FORMAT"]},
+    "R16": {"title": "An ASSERTED discontinuation carries its own evidence", "blank": ["STATUS DETAILS", "LIFECYCLE_QUOTE", "LIFECYCLE_EVIDENCE_URL"], "status": "Needs Verification"},
+    "R18a": {"title": "SPONSOR_REQUIRED is Yes, No, Unknown or blank", "blank": ["SPONSOR_REQUIRED"]},
+    "R18b": {"title": "A sponsorship requirement carries its own evidence", "blank": ["SPONSOR_REQUIRED", "SPONSOR_COST", "SPONSOR_URL", "SPONSOR_QUOTE"]},
+    "R22":  {"title": "Citations come from an admissible source", "blank": ["SUBMISSION DEADLINE", "DEADLINE_QUOTE", "STATUS DETAILS", "DEADLINE_EVIDENCE_URL"], "status": "Needs Verification"},
+    "R22b": {"title": "URLs point at a page, not a form endpoint or an API", "blank": ["@url"]}
+  },
+  "row_rule_reasons": [
+    {"match": "year check", "why": "the row rule's year check: the edition year disagrees with the dates", "blank": ["START DATE", "CONFERENCE DATES"], "status": "Needs Verification"},
+    {"match": "no permanent id", "why": "waiting for a permanent id: nothing on the row is known to be wrong", "blank": []},
+    {"match": "already uses its id", "why": "another row of the week carries the same id: nothing on this row is known to be wrong", "blank": []},
+    {"match": "NEW EVENT", "why": "a new event not loaded yet (first load is guarded): nothing on the row is known to be wrong", "blank": []}
+  ]
+}

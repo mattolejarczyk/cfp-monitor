@@ -59,6 +59,19 @@ def page_data(path: Path) -> list[dict]:
     return rows
 
 
+def blank_notes(page: Path) -> dict:
+    """{row name: 'fields left blank - why'} from the sidecar build_review_page.py writes beside a Conference page (<page>.provisional.json); {} when there is none."""
+    side = Path(page).with_suffix(".provisional.json")
+    try:
+        data = json.loads(side.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for e in data.get("rows", []):
+        out[e.get("name", "")] = (", ".join(e.get("blanked") or []) or "nothing") + ((" - " + " | ".join(e.get("why") or [])[:160]) if e.get("why") else "")
+    return out
+
+
 def page_date(path: Path) -> date | None:
     m = re.search(r"(\d{4}-\d{2}-\d{2})", Path(path).name)
     return date.fromisoformat(m.group(1)) if m else None
@@ -291,10 +304,13 @@ def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool 
             "rows": sorted(res["changes"], key=lambda x: (x[2], x[1], x[0])),
             "flags": res["flags"]})
         if res["provisional"]:
+            blanks = blank_notes(cur)
+            rows_p = [[*r, blanks.get(r[0], "")] for r in res["provisional"]] if blanks else res["provisional"]
             rep["sections"].append({
                 "title": f"{KINDS[kind]} - Provisional rows (shown, not yet approved)",
-                "note": "Researched this week but not in the approved file (held for an id, held by the row rule, or new). The page marks each Provisional with no Deadline-confirmed badge. Not part of the changes above.",
-                "columns": ["Row", "Market", "Status shown", "Deadline"], "rows": res["provisional"], "flags": []})
+                "note": "Researched this week but not in the approved file (held for an id, held by the gate or the row rule, or new). The page marks each Provisional with no Deadline-confirmed badge; "
+                        "on the Conference page the field a check failed on is left BLANK (last column). Not part of the changes above.",
+                "columns": ["Row", "Market", "Status shown", "Deadline"] + (["Left blank, and why"] if blanks else []), "rows": rows_p, "flags": []})
         if res["kept_customer"]:
             rep["sections"].append({
                 "title": f"{KINDS[kind]} - rows kept because the customer lists them",

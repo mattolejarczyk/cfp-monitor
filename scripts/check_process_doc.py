@@ -59,6 +59,7 @@ DESCRIBED = {
     "scripts/sponsor_prefill.py": ROOT / "scripts" / "sponsor_prefill.py",
     "scripts/release_gate.py": ROOT / "scripts" / "release_gate.py",
     "scripts/provisional_rows.py": ROOT / "scripts" / "provisional_rows.py",
+    "scripts/provisional_blank.py": ROOT / "scripts" / "provisional_blank.py",
     "scripts/build_review_page.py": ROOT / "scripts" / "build_review_page.py",
 }
 

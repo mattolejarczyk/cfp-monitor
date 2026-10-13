@@ -40,9 +40,9 @@ def test_a_gate_fault_is_reported_not_raised():
     assert wd.run_release_gate("2026-10-19", Path("."), "w", "m", "d", runner=lambda c, **k: Done("", 3)).startswith("GATE: UNKNOWN - the gate printed no verdict (exit 3)")
 
 
-def test_the_gate_runs_after_the_publish_and_the_awards_page_asks_for_provisional_rows():
+def test_the_gate_runs_after_the_publish_and_both_pages_ask_for_provisional_rows():
     src = (ROOT / "scripts" / "weekly_deliverable.py").read_text(encoding="utf-8")
     assert src.index("shutil.copy2(page, published / page.name)") < src.index("run_release_gate(stamp, work")
     assert '"--provisional-dir", md' in src
     conf = src[src.index('cmd = [PY, ROOT / "scripts/build_review_page.py", "-i", combined'):src.index('step("conferences page"')]
-    assert "--provisional-dir" not in conf, "conferences are not wired"
+    assert '"--provisional-dir", md' in conf, "ACT-70: the conference page shows held rows as Provisional, with the failing field blanked"
