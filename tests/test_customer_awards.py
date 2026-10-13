@@ -260,8 +260,8 @@ def test_unlabel_on_the_live_markets_folder_needs_the_reviewers_switch(tmp_path,
 def test_the_request_draft_asks_for_the_own_id_names_the_close_award_and_is_plain_ascii(tmp_path):
     inp = [{"CONFERENCE": "Fortress Award", "SUBMISSION URL": "https://bi.example/fortress", "Market": "Cybersecurity", "EVENT_ID_CANON": "2026-fortress-award-nan-awards"},
            {"CONFERENCE": "Fortress Award (Business Intelligence Group)", "SUBMISSION URL": "https://bi.example/fortress2", "Market": "Cybersecurity"},
-           {"CONFERENCE": "TIME / Statista America’s Top GreenTech", "SUBMISSION URL": "https://time.example/x", "Market": "Utility"}]
+           {"CONFERENCE": "TIME / Statista America\u2019s Top GreenTech", "SUBMISSION URL": "https://time.example/x", "Market": "Utility"}]
     draft = ca.request_draft(TODAY, ca.waiting_for_id(inp), inp)
     assert "same website/award as Fortress Award?" in draft and "OWN permanent EVENT_ID" in draft and "which id" in draft
     assert draft.isascii() and "America's Top GreenTech" in draft
-    assert ca.ascii_text("a–b “q” é") == 'a-b "q" e'
+    assert ca.ascii_text("a\u2013b \u201cq\u201d \u00e9") == 'a-b "q" e'
