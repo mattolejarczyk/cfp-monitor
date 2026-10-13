@@ -353,6 +353,16 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
                                 known=known, up_to_canon=up_to_canon, to_canonical=to_canonical,
                                 taken=len(new_ids), cap=fl_cfg["cap"],
                                 edition=r.get("EDITION") or "")
+            opp = (r.get("OPPORTUNITY_TYPE") or "").strip()
+            if market == AWARDS and opp != "Awards":
+                # ACT-67: the customer lists it and upstream gave it an id, but our research types it as something else; import_awards leaves such a row out of the award tables on purpose, so a first
+                # load would be "expected but absent" and undo the whole Friday load. It is not loaded as an award (the page keeps the customer-listed row) and it is named as such, not as waiting for an id.
+                ok, why = False, f"typed '{opp or 'blank'}' by the research, not an award: never loaded into the award tables (the Awards page keeps the row because the customer lists it)"
+                held_new.append({"conference": (r.get("CONFERENCE") or "").strip(), "canonical": c, "reason": why, "kind": "not_award"})
+                pre_bad[i] = [why]
+                canon_of[(r.get("EVENT_ID") or "").strip()] = c
+                seen_canon.add(c)
+                continue
             if ok:
                 new_ids.add(c)
             else:
@@ -425,6 +435,14 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
             res["decisions"].append({"conference": pr.get("CONFERENCE", ""), "canonical": c,
                                      "reasons": ["another row in this week's file already uses its id"],
                                      "action": "held-back", "why_no_prior": "id collision"})
+            continue
+        if c not in claimed and market == AWARDS and (pr.get("OPPORTUNITY_TYPE") or "").strip() != "Awards" and any(
+                (r_.get("OPPORTUNITY_TYPE") or "").strip() == "Awards" and (r_.get("Market") or "").strip() == (pr.get("Market") or "").strip()
+                and (r_.get("CONFERENCE") or "").strip().lower() == (pr.get("CONFERENCE") or "").strip().lower() for r_ in rows):
+            # ACT-67: last week's file still carries a row typed Speaking/Registration for an award (World Hydrogen and Carbon Asia, Clinton Global Initiative) that this week's research returns as an
+            # award under the id upstream gave. The old row is the same listing under its old type and has no id that maps to the new one; shipping both would show the customer two rows. Exact name, same market.
+            res["decisions"].append({"conference": pr.get("CONFERENCE", ""), "canonical": c, "reasons": ["superseded: this week's research returns the same listing as an award under its own id"],
+                                     "action": "superseded"})
             continue
         if c not in claimed:
             taken.add(slot)

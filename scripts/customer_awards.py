@@ -439,6 +439,137 @@ def run_unlabel(today: str, sheets_dir: Path, markets_dir: Path, out_dir: Path, 
     return [f"AWARDS UNLABEL: mode={mode}; {len(clear)} {'cleared' if apply else 'to clear'} ({sum(c['clear_canon'] for c in clear)} also lose a copied id); {len(keep)} left labelled (reasons in awards_unlabel.md)"]
 
 
+# ============================================================================ upstream's reply with award ids (ACT-67 follow-up 3)
+REPLY_ACTIONS = ("NEW", "STAMP_EXISTING", "STAMP_NONAWARD", "RELABEL")
+
+
+def find_input_row(inp: list[dict], name: str, market: str) -> tuple[int | None, str]:
+    """(index of the ONE input row of this market that is this award, '') or (None, why). Exact name (case aside) first, then the name key when it picks exactly one row."""
+    pool = [(i, r) for i, r in enumerate(inp) if (r.get("Market") or "").strip() == market]
+    exact = [i for i, r in pool if tidy(r.get("CONFERENCE")).lower() == tidy(name).lower()]
+    if len(exact) == 1:
+        return exact[0], ""
+    if len(exact) > 1:
+        return None, "several input rows have exactly this name"
+    keyed = [i for i, r in pool if name_key(r.get("CONFERENCE")) == name_key(name)]
+    return (keyed[0], "") if len(keyed) == 1 else (None, "no input row has this name" if not keyed else "several input rows share this name key")
+
+
+def reply_plan(reply: list[dict], inp: list[dict], db_ids: set[str] | None = None) -> dict:
+    """Check upstream's reply (the reviewed file docs/operations/award_ids_reply_*.csv) against the awards list. Returns {'stamp_new': [...], 'stamp_existing': [...], 'relabel': [...], 'done': [...],
+    'problems': [...]}; nothing is changed. Rules: a NEW or STAMP_NONAWARD id must be unknown (not on any input row, not in the database); a STAMP_EXISTING id must be carried by NO input row yet (a second row
+    with one id is the collision this prevents) and, when the database is given, must be in it; a RELABEL row must be live, carry no id of its own, and name a live survivor of its market that has an id;
+    a row that is still labelled DUP_OF cannot be stamped (run --unlabel first)."""
+    out: dict = {"stamp_new": [], "stamp_existing": [], "relabel": [], "done": [], "problems": []}
+    carried = {(r.get("EVENT_ID_CANON") or "").strip(): tidy(r.get("CONFERENCE")) for r in inp if (r.get("EVENT_ID_CANON") or "").strip()}
+    seen_ids: set[str] = set()
+    for q in reply:
+        name, market, act, eid, surv = tidy(q["award_name"]), q["market"].strip(), q["action"].strip(), q["event_id"].strip(), tidy(q.get("survivor"))
+        if act not in REPLY_ACTIONS:
+            out["problems"].append(f"{name}: unknown action {act!r}")
+            continue
+        i, why = find_input_row(inp, name, market)
+        if i is None:
+            out["problems"].append(f"{name}: {why}")
+            continue
+        r = inp[i]
+        have, dup = (r.get("EVENT_ID_CANON") or "").strip(), (r.get("DUP_OF") or "").strip()
+        item = {"index": i, "name": tidy(r.get("CONFERENCE")), "market": market, "id": eid, "survivor": surv, "action": act, "url": tidy(r.get("SUBMISSION URL") or r.get("CONFERENCE URL"))}
+        if act == "RELABEL":
+            if dup == surv:
+                out["done"].append(f"{name}: already labelled DUP_OF {surv}")
+                continue
+            if dup or have:
+                out["problems"].append(f"{name}: expected a live row without an id, found DUP_OF={dup!r} id={have!r}")
+                continue
+            sv = [x for x in inp if tidy(x.get("CONFERENCE")) == surv and (x.get("Market") or "").strip() == market and not (x.get("DUP_OF") or "").strip()]
+            if len(sv) != 1 or not (sv[0].get("EVENT_ID_CANON") or "").strip():
+                out["problems"].append(f"{name}: the survivor {surv!r} is not exactly one live row with an id in {market}")
+                continue
+            item["survivor_id"] = (sv[0].get("EVENT_ID_CANON") or "").strip()
+            out["relabel"].append(item)
+            continue
+        if have == eid:
+            out["done"].append(f"{name}: already stamped {eid}")
+            continue
+        if dup:
+            out["problems"].append(f"{name}: still labelled DUP_OF {dup!r}; run --unlabel first")
+            continue
+        if have:
+            out["problems"].append(f"{name}: already carries a different id {have}")
+            continue
+        if eid in seen_ids:
+            out["problems"].append(f"{name}: the id {eid} appears twice in the reply file")
+            continue
+        seen_ids.add(eid)
+        if act == "STAMP_EXISTING":
+            if eid in carried:
+                out["problems"].append(f"{name}: the existing id {eid} is already carried by {carried[eid]!r}: a second row with one id would collide")
+                continue
+            if db_ids is not None and eid not in db_ids:
+                out["problems"].append(f"{name}: {eid} is not in the database")
+                continue
+            out["stamp_existing"].append(item)
+        else:
+            if eid in carried or (db_ids is not None and eid in db_ids):
+                out["problems"].append(f"{name}: the id {eid} is already held (input list or database): not new")
+                continue
+            out["stamp_new"].append(item)
+    return out
+
+
+def run_reply_plan(reply_path: Path, markets_dir: Path, out_dir: Path, db: Path | None) -> list[str]:
+    """Dry only: checks the reply and writes the two ids files stamp_given_ids.py --awards reads (the URL of each row comes from OUR list, the row is pinned by its exact name) plus a report."""
+    inp_path = Path(markets_dir) / "Awards_input.csv"
+    if not inp_path.exists():
+        return [f"AWARDS REPLY: UNKNOWN - the awards input list was not found ({inp_path})"]
+    _c, inp, _b, _x = acr.read_input(inp_path)
+    db_ids = None
+    if db and Path(db).exists():
+        import sqlite3
+        con = sqlite3.connect(f"file:{str(db).replace(chr(92), '/')}?mode=ro", uri=True)
+        try:
+            db_ids = {x[0] for x in con.execute("select event_id from award_grounding_facts")}
+        finally:
+            con.close()
+    plan = reply_plan(read_csv(reply_path), inp, db_ids)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for fname, key in (("ids_new.csv", "stamp_new"), ("ids_existing.csv", "stamp_existing")):
+        with open(out_dir / fname, "w", encoding="utf-8", newline="") as fh:
+            w = csv.writer(fh, lineterminator="\n")
+            w.writerow(["sheet", "id", "start", "url", "conference"])
+            for it in plan[key]:
+                w.writerow(["Awards", it["id"], "", it["url"], it["name"]])
+    md = ["# Upstream's award ids: what would be done", "", f"- stamp as NEW awards: {len(plan['stamp_new'])}", f"- stamp the EXISTING id: {len(plan['stamp_existing'])}",
+          f"- relabel DUP_OF to the survivor: {len(plan['relabel'])}", f"- already done: {len(plan['done'])}", f"- PROBLEMS: {len(plan['problems'])}", ""]
+    md += [ascii_text(f"- PROBLEM {p}") for p in plan["problems"]] + [ascii_text(f"- done {d}") for d in plan["done"]]
+    md += ["", "## RELABEL"] + [ascii_text(f"- {it['name']} -> DUP_OF {it['survivor']} (survivor id {it['survivor_id']})") for it in plan["relabel"]]
+    (out_dir / "awards_reply_plan.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+    return [f"AWARDS REPLY: {len(plan['stamp_new'])} new ids to stamp, {len(plan['stamp_existing'])} existing ids to stamp, {len(plan['relabel'])} to relabel, {len(plan['done'])} already done, {len(plan['problems'])} problems"
+            + ("" if not plan["problems"] else ": " + ascii_text("; ".join(plan["problems"][:4])))]
+
+
+def run_relabel(reply_path: Path, markets_dir: Path, out_dir: Path, apply: bool) -> list[str]:
+    """The inverse of --unlabel for the rows upstream rules are the SAME award as one we hold: DUP_OF goes back to the survivor's name (the audit skips the row, the award is researched once). Backup first,
+    proof that exactly the DUP_OF cells changed, a second apply changes 0. MARKET_SIBLING rows and every row not named in the reviewed reply are never touched."""
+    inp_path = Path(markets_dir) / "Awards_input.csv"
+    if not inp_path.exists():
+        return [f"AWARDS RELABEL: UNKNOWN - the awards input list was not found ({inp_path})"]
+    cols, inp, bom, crlf = acr.read_input(inp_path)
+    plan = reply_plan([q for q in read_csv(reply_path) if q["action"].strip() == "RELABEL"], inp)
+    todo = plan["relabel"]
+    notes = []
+    if apply and todo:
+        after = [dict(r) for r in inp]
+        for it in todo:
+            after[it["index"]]["DUP_OF"] = it["survivor"]
+        bak = write_approved(inp_path, cols, inp, after, bom, crlf, "relabel", expect_cells={(it["index"], "DUP_OF") for it in todo})
+        notes.append(f"{inp_path.name}: {len(todo)} DUP_OF label(s) set; proved only those cells changed; backup {bak.name}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "awards_relabel.md").write_text(ascii_text("\n".join([f"# Relabel ({'applied' if apply else 'dry-run'})", ""] + [f"- {it['name']} -> DUP_OF {it['survivor']}" for it in todo] + notes + ["", "Not relabelled:"] + [f"- {p}" for p in plan["problems"]] + [f"- done: {d}" for d in plan["done"]])) + "\n", encoding="utf-8")
+    return [f"AWARDS RELABEL: mode={'applied' if apply else 'dry-run'}; {len(todo)} {'relabelled' if apply else 'to relabel'}; {len(plan['done'])} already done; {len(plan['problems'])} not relabelled"]
+
+
 # ============================================================================ run
 def markdown(res: dict, summary: list[str], held: list[tuple[dict, str]], added: list[dict], mode: str, today: str) -> str:
     L = [f"# Customer awards: coverage and automatic add ({mode}), {today}", "", "Read from the newest snapshot of each customer awards sheet (scripts/customer_awards.py).", ""]
@@ -532,14 +663,26 @@ def main() -> int:
     ap.add_argument("--out-dir", default="", help="default runs_out/qa/<today>")
     ap.add_argument("--cap", type=int, default=CAP_PER_MARKET)
     ap.add_argument("--unlabel", action="store_true", help="instead of the coverage/add step: clear DUP_OF on the labelled rows the customer lists, so they are researched as their own awards")
+    ap.add_argument("--reply", default="", help="the reviewed file of upstream's award ids (docs/operations/award_ids_reply_*.csv) for --reply-plan and --relabel")
+    ap.add_argument("--reply-plan", action="store_true", help="check the reply against the awards list and write ids_new.csv / ids_existing.csv for stamp_given_ids.py --awards (changes nothing)")
+    ap.add_argument("--relabel", action="store_true", help="set DUP_OF back to the survivor on the rows upstream rules are the SAME award as one we hold (inverse of --unlabel)")
+    ap.add_argument("--db", default="", help="optional, read-only: the database, so an id to stamp as EXISTING is checked to be in it")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--live", action="store_true", help="allow --apply on the live Markets folder (the reviewer's switch)")
     a = ap.parse_args()
     try:
         if a.apply and Path(a.markets_dir).resolve() == MARKETS.resolve() and not a.live:
-            print(("AWARDS UNLABEL" if a.unlabel else "AWARDS AUTOADD") + ": REFUSED - --apply on the live Markets folder needs --live (reviewer's switch); nothing written")
+            print(("AWARDS RELABEL" if a.relabel else "AWARDS UNLABEL" if a.unlabel else "AWARDS AUTOADD") + ": REFUSED - --apply on the live Markets folder needs --live (reviewer's switch); nothing written")
             return 0
         out = Path(a.out_dir) if a.out_dir else qa_report.QA_ROOT / a.today
+        if a.reply_plan or a.relabel:
+            if not a.reply:
+                print("AWARDS REPLY: UNKNOWN - give the reviewed file with --reply")
+            elif a.reply_plan:
+                print("\n".join(run_reply_plan(Path(a.reply), Path(a.markets_dir), out, Path(a.db) if a.db else None)))
+            else:
+                print("\n".join(run_relabel(Path(a.reply), Path(a.markets_dir), out, a.apply)))
+            return 0
         if a.unlabel:
             print("\n".join(run_unlabel(a.today, Path(a.sheets_dir), Path(a.markets_dir), out, a.apply)))
             return 0
