@@ -1,6 +1,6 @@
 id,promised_on,note,market,event_id,column,op,expected,due,what
-C01,2026-10-06,33,Utility,2027-afpm-summit-san-antonio-speaking,GROUNDING_CONFIDENCE,equals,Projected (2027),2026-10-10,AFPM row: IS_PROJECTED true must read Projected (2027) (rule R11)
-C02,2026-10-06,32,Utility,2027-afpm-summit-san-antonio-speaking,START DATE,blank,,2026-10-10,AFPM: no 2027 date is published so START DATE stays blank
+C01,2026-10-06,33,Utility,2027-afpm-summit-san-antonio-speaking,GROUNDING_CONFIDENCE,equals,Verified (2027),2026-10-10,"AFPM: CORRECTED 2026-10-13 on evidence. The row has a verified 2027 date and no deadline to project, so Verified (2027) is right (original promise: Projected (2027))"
+C02,2026-10-06,32,Utility,2027-afpm-summit-san-antonio-speaking,START DATE,equals,2027-08-30,2026-10-10,"AFPM: CORRECTED 2026-10-13 on evidence. The official calendar https://www.afpm.org/events lists the 2027 AFPM Summit Aug 30 - Sep 2, 2027, Gaylord Texan, Grapevine TX (original promise: START DATE blank because no 2027 date is published)"
 C03,2026-10-06,33,Utility,2026-industrial-net-zero-conference-sydney-speaking,CONFERENCE URL,contains,industrialnetzeroconference.com.au,2026-10-10,Industrial Net Zero 2026 uses the live site address
 C04,2026-10-06,33,Utility,2026-industrial-net-zero-conference-sydney,STATUS,equals,Needs Verification,2026-10-10,Industrial Net Zero 2027 survivor: no dates published so Needs Verification
 C05,2026-10-06,33,Utility,2026-industrial-net-zero-conference-sydney,START DATE,blank,,2026-10-10,Industrial Net Zero 2027 survivor: START DATE blank

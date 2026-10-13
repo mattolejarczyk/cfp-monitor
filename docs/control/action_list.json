@@ -1449,6 +1449,27 @@
       "title": "Thursday 18:00 pre-flight, and held conference rows shown as Provisional with the failing field blanked",
       "detail": "BUILD, copies and tests only, no live change. (A) THURSDAY PRE-FLIGHT per docs/control/patches/ACT-68-thursday-preflight-PROPOSAL.md: release_gate.py --thursday (patches applied by STEP marker in Markets/run_monthly.ps1 read-only, awards waiting for ids, user-level switches ON/OFF with what each means for Friday, customer sheet snapshot ages and coverage before the research runs, verdict READY / READY WITH NOTES / FIX BEFORE 02:00), operator-only email with the same mailer; plus an operator-run registration script for the scheduled task 'CFP Thursday Pre-flight' (Thursday 18:00, dev repo script, dev interpreter, exactly like the Sunday recap), tested on a copy/WhatIf, refuses a second registration. (B) CONFERENCE PROVISIONAL ROWS: wire provisional_rows.conference_candidates into the conference page build (build_review_page.py --provisional-dir for the conference kind, weekly_deliverable.py, qa_build, release_gate counts). Each held conference row (researched, not in the approved file, gate failed) is shown with the same Provisional marker and sentence as awards, but with the FAILING FIELD BLANKED: map the gate check that failed to the field(s) it names (config docs/operations/provisional_blank_rules.json; e.g. CITY holds a venue -> blank CITY; placeholder LOCATION -> blank LOCATION; active-call prose on a projected row -> blank STATUS DETAILS and show status Needs Verification; 404 submit link -> blank the link; quote and date absent or paraphrase -> blank the deadline and show Needs Verification). A check with no mapping blanks the deadline, status details and submission link and keeps name, dates, location and website. Never an Open row past its deadline, no Deadline-confirmed badge, customer-facing wording only (no internal words). Failure reasons come from the weekend import logs/gate JSON per row (Markets/weekend/<stamp>/). Also fix two cosmetic bugs: the release-gate email line 'Customer sheet snapshots are fresh: a customer sheet snapshot is old' (contradictory), and the Awards page header '8 markets' when the awards build passes no --markets. DO NOT touch live data, Markets or scheduled tasks; send no email; weaken no gate.",
       "acceptance": "Rehearsal on copies of the 2026-10-10 Saturday files: the Conference page rebuilt shows each held conference row as Provisional with the named field blank and nothing known-bad visible; no Open row past deadline; tests for each mapping and for the default; the Thursday pre-flight dry run on copies names patches applied, awaiting ids, switches and sheet ages with a verdict; registration script tested; full suite green; docs updated; no live change."
+    },
+    {
+      "needs_you": "",
+      "closes": [],
+      "depends": [
+        "ACT-70"
+      ],
+      "evidence": [
+        "2026-10-13: four candidate pins (ODSC West CITY; three STATUS DETAILS cleanups for promise C21) were prepared and then NOT committed: pins are person-verified facts that also feed the accuracy answer key (tests/test_pinned_rows.py requires by=operator; tests/test_answer_key_tiers.py ties the key to the pins), so a text-cleanup rule does not belong there. AFPM promises C01/C02 corrected in the ledger on evidence: https://www.afpm.org/events lists the 2027 AFPM Summit Aug 30 - Sep 2, 2027 (Gaylord Texan, Grapevine TX), so the research was right and the promise was wrong. Open: promise C21 (the word 'typically' in STATUS DETAILS on 4 rows) and C18 (ODSC CITY holds a venue) are still not kept in the published files."
+      ],
+      "updated": "2026-10-13",
+      "on_verify": "",
+      "id": "ACT-71",
+      "wave": "W5",
+      "step": "E",
+      "owner": "builder",
+      "state": "todo",
+      "cost": "Code only, no AI calls",
+      "title": "A rule, not a pin: remove inference sentences ('typically') from STATUS DETAILS and keep a venue out of CITY at the repair step",
+      "detail": "The inference policy (note 34, operator-approved) says no status or call is inferred from a typical schedule; research still writes 'typically ...' sentences and a venue into CITY (Hyatt Regency SFO for ODSC West). Add two mechanical repairs to the existing repair step (scripts/mechanical_repairs.py, applied by weekend_import before the gate, like the other repair classes): (a) drop a sentence in STATUS DETAILS that contains 'typically' / 'typical schedule' / 'usually runs' and states an inference about a call or a date (keep the rest of the text unchanged; log each removal in the repair report with the old text); (b) when CITY holds a venue (the gate's R8b test) and the same row's LOCATION or the page-verified name gives a city, move the venue to LOCATION and set CITY to the city only when that city appears in the row's own LOCATION or MAIN_INFO text; otherwise blank CITY (never invent). Tests; rehearse on the 2026-10-10 Saturday research copies (expect the 4 'typically' rows and ODSC West to repair, the gate to accept them); no live change; reviewer applies by merge only (repo code the Saturday import already runs).",
+      "acceptance": "A test for each repair, including that a sentence without an inference is untouched; a rehearsal on copies of the 2026-10-10 files shows promise C21 kept (check_commitments --file on the repaired file) and the ODSC row passing the gate; repair report lists every removal; full suite green; no live change."
     }
   ]
 }
