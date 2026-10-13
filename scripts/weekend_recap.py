@@ -506,6 +506,28 @@ def sunday_recap(log: str, digest: str, markets_dir: Path,
     return subject, text, html_
 
 
+# ============================================================================ the Sunday pre-flight (ACT-68)
+def run_preflight(markets_dir: Path, dry_run: bool, gate=None) -> str:
+    """After the Sunday recap: the release gate in pre-flight mode (scripts/release_gate.py --preflight): the same checks from the approved files and the newest customer snapshots, no pages built,
+    emailed to the operator as 'CFP weekly pre-flight: ...'. Reporting only and fully contained: whatever happens here, the Sunday run's own exit code and recap are untouched. Returns the GATE line.
+    `gate` is injectable (tests): a callable taking the argument list."""
+    try:
+        if gate is None:
+            from scripts import release_gate
+            gate = release_gate.main
+        args = ["--preflight", "--markets-dir", str(markets_dir)] + (["--dry-run"] if dry_run else [])
+        import contextlib
+        import io
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            gate(args)
+        line = next((ln for ln in buf.getvalue().splitlines() if ln.startswith("GATE:")), "GATE: UNKNOWN - the pre-flight printed no verdict")
+    except BaseException as e:                                              # noqa: BLE001  (SystemExit included: nothing here may stop the Sunday job)
+        line = f"GATE: UNKNOWN - {type(e).__name__}: {e}"
+    print("PRE-FLIGHT " + line)
+    return line
+
+
 # ============================================================================ main
 def main() -> int:
     ap = argparse.ArgumentParser(description="Email a plain-English weekend run recap.")
@@ -516,6 +538,7 @@ def main() -> int:
     ap.add_argument("--exit-code", help="the run's exit code, when its log does not record it")
     ap.add_argument("--markets-dir", default=str(MARKETS_DIR))
     ap.add_argument("--dry-run", action="store_true", help="write the recap to disk, send nothing")
+    ap.add_argument("--no-preflight", action="store_true", help="sunday: do not run the release-gate pre-flight after the recap (ACT-68)")
     a = ap.parse_args()
     md = Path(a.markets_dir)
     try:
@@ -555,12 +578,16 @@ def main() -> int:
     print(text)
     if a.dry_run:
         print(f"\n(dry run - recap written to {out}, not sent)")
+        if a.kind == "sunday" and not a.no_preflight:
+            run_preflight(md, True)
         return 0
     try:
         sent = maybe_send_email(subject, text, html=html_, to_env="CFP_RECAP_TO")
         print("recap emailed" if sent else "recap NOT emailed - CFP_RECAP_TO or CFP_SMTP_* not set")
     except Exception as e:
         print(f"recap NOT emailed - {type(e).__name__}: {e}")
+    if a.kind == "sunday" and not a.no_preflight:
+        run_preflight(md, False)
     return 0
 
 

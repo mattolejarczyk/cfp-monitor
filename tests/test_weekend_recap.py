@@ -163,3 +163,31 @@ def test_new_awards_the_import_held_are_named_in_the_recap_and_flag_the_subject(
     imp["markets"][0].update(new_events_held=[], new_events=[{"canonical": "c", "conference": "Gamma"}])
     subject, text, _ = saturday_recap("=== run_monthly exit code: 0 ===\n", imp, Path("."), "friday", None)
     assert "held" not in subject and "1 new award(s) loaded for the first time" in text
+
+
+# --- ACT-68: the Sunday pre-flight rides on the recap the Sunday task already calls, and can never break it ---
+def test_the_preflight_runs_the_gate_in_preflight_mode_and_returns_its_line(tmp_path):
+    from scripts.weekend_recap import run_preflight
+    seen = []
+
+    def gate(args):
+        seen.append(args)
+        print("GATE: GO WITH NOTES - CFP weekly pre-flight: GO WITH NOTES - Conferences 204, Awards 128")
+        return 0
+    line = run_preflight(tmp_path, True, gate=gate)
+    assert line.startswith("GATE: GO WITH NOTES") and seen == [["--preflight", "--markets-dir", str(tmp_path), "--dry-run"]]
+    run_preflight(tmp_path, False, gate=gate)
+    assert "--dry-run" not in seen[-1]
+
+
+def test_a_preflight_fault_or_exit_never_escapes(tmp_path):
+    from scripts.weekend_recap import run_preflight
+
+    def boom(args):
+        raise RuntimeError("disk on fire")
+
+    def quits(args):
+        raise SystemExit(2)
+    assert run_preflight(tmp_path, True, gate=boom).startswith("GATE: UNKNOWN - RuntimeError")
+    assert run_preflight(tmp_path, True, gate=quits).startswith("GATE: UNKNOWN - SystemExit")
+    assert run_preflight(tmp_path, True, gate=lambda a: 0).startswith("GATE: UNKNOWN - the pre-flight printed no verdict")

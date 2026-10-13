@@ -105,6 +105,7 @@ def shows(rows: list[dict], on: date) -> dict[str, int]:
     c["Any dead link"] = sum(1 for r in rows if any(_yes(r.get(k)) for k in ("dead", "evdead", "urldead")))
     c["With sponsorship info"] = sum(1 for r in rows if _yes(r.get("spon")))
     c["With lifecycle evidence"] = sum(1 for r in rows if (r.get("lq") or "").strip())
+    c["Provisional (researched, not yet approved)"] = sum(1 for r in rows if r.get("prov"))
     return c
 
 
@@ -222,7 +223,9 @@ def compare(cur_rows: list[dict], prev_rows: list[dict] | None, on: date, kind: 
             for k, what in (("urldead", "submission link"), ("evdead", "evidence link")):
                 if not _yes(p.get(k)) and _yes(c.get(k)):
                     changes.append([c["n"], c["m"], f"{what} died", "", ""])
-    return {"counts": report_rows, "changes": changes, "flags": flags, "past": past, "kept_customer": kept_customer}
+    # ACT-68: provisional rows are listed on their own, never mixed into the changes: they are researched but not approved, and they leave this list the week they are approved
+    provisional = [[r["n"], r["m"], r.get("s") or "", r.get("dl") or "(none)"] for r in cur_rows if r.get("prov")]
+    return {"counts": report_rows, "changes": changes, "flags": flags, "past": past, "kept_customer": kept_customer, "provisional": provisional}
 
 
 def commitment_results(on: date, markets_dir: Path | None = None) -> list[dict] | None:
@@ -287,6 +290,11 @@ def build(pairs: list[tuple[str, Path, Path | None]], on: date, published: bool 
             "columns": ["Conference", "Market", "What changed", "Was", "Now"],
             "rows": sorted(res["changes"], key=lambda x: (x[2], x[1], x[0])),
             "flags": res["flags"]})
+        if res["provisional"]:
+            rep["sections"].append({
+                "title": f"{KINDS[kind]} - Provisional rows (shown, not yet approved)",
+                "note": "Researched this week but not in the approved file (held for an id, held by the row rule, or new). The page marks each Provisional with no Deadline-confirmed badge. Not part of the changes above.",
+                "columns": ["Row", "Market", "Status shown", "Deadline"], "rows": res["provisional"], "flags": []})
         if res["kept_customer"]:
             rep["sections"].append({
                 "title": f"{KINDS[kind]} - rows kept because the customer lists them",
