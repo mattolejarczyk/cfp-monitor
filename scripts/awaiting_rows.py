@@ -1,4 +1,4 @@
-"""'Awaiting research' rows: customer awards that no row of the page carries yet (ACT-70 follow-up; QA-REGISTER A66). Read-only.
+"""'Awaiting research' rows: customer awards that no row of the page carries yet (ACT-70 follow-up; QA-REGISTER A67). Read-only.
 
     python scripts/awaiting_rows.py [--sheets-dir <dir>] [--page-csv <approved.csv>] [--on 2026-10-13]
 
@@ -12,7 +12,7 @@ No confidence, no verdict, no dead-link flag: nothing about it is researched.
 only one page name carries it; never an upstream id) and only within the same market. Pure functions plus a thin reader.
 
 Conferences: the same function would serve the Conference page given the conference sheets' snapshots (customer_sheets.json kind 'conference'; their columns differ: CONFERENCE, CONFERENCE URL,
-EVENT START DATE) - see QA-REGISTER A66 for what it takes."""
+EVENT START DATE) - see QA-REGISTER A67 for what it takes."""
 from __future__ import annotations
 
 import argparse
