@@ -5,6 +5,18 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-13 - Tuesday: both customer pages sent, Gemini relay live, Saturday patches on a timer
+
+- DELIVERED: the operator sent both pages to Nicolia: Awards Review 2026-10-13 (159 rows; every one of the 153 customer awards is on it: 123 researched, 2 Provisional, 30 'Awaiting research' built from the customer's own sheet) and Conference Review 2026-10-13 (226 rows = 204 + 22 Provisional with the failing field blanked), in handoff-files/weekly/2026-10-13/.
+- ACT-69 upstream relay merged and proven: scripts/upstream_relay.py (key only in user env CFP_RELAY_GEMINI_KEY, never printed; model gemini-3.8-flash; 0.10 USD per call and 2.00 USD per week caps; append-only journal in runs_out/relay; replies are data only). First message approved and sent (experiments/purpose_audit/RELAY-MSG-001-promises.md): upstream says corrections are in its research inputs for the 2026-10-17 export (unverified; check_commitments after Saturday).
+- ACT-70 merged: Thursday 18:00 pre-flight (task registered by the operator, first run 2026-10-15), Provisional conference rows with the failing field blanked, Awaiting-research rows for awards, cosmetic fixes. ACT-71 logged: a repair RULE (not pins) for 'typically' sentences and venue-in-CITY. Pins rejected: they hold person-verified facts and feed the accuracy answer key.
+- Ledger: AFPM promises C01/C02 corrected on evidence (official calendar lists the 2027 Summit Aug 30 - Sep 2, 2027). 25 kept, 8 not kept.
+- Bug fixed: 39 of 125 awards showed 'nan' as location on the 10-12 page; blanked in build_review_page.
+- Switches (user env): CFP_AWARDS_NEW_EVENTS=1, CFP_AWARDS_AUTOADD_APPLY=1, CFP_AUTOADD_APPLY=1; CFP_REFRESH_APPLY unset.
+- ONE-TIME task 'CFP Saturday Patch Apply (one-time)': Fri 2026-10-16 10:00 to Sat 01:05 every 30 minutes, applies ACT-64 (run_overnight.ps1) and ACT-63 (run_monthly.ps1) only when no CFP task is running, with backups, parse check, read-back and auto-restore; e-mails the operator; manual route experiments/saturday_apply/apply_saturday_patches.py. ACT-33 still waits until after the Saturday run (dry run first).
+- Operator rulings: spend 40 USD max / 20 target / 5 mature goal is TOTAL weekly research spend; customer sheets are the source of truth; the page always ships complete; every change undoable; YES to Thursday pre-flight, Provisional conference rows, the relay. Self-healing redesign agreed in principle, not built (baseline snapshot, row journey, journal + undo, deploy tool).
+- Repos: all level with GitHub; yt-transcripts now has a PRIVATE repo (13 commits; the other session's uncommitted shared-pacer work left alone).
+
 ## 2026-10-12 - Monday: customer awards enter the queue, 41 award ids, release gate, self-healing redesign agreed
 
 - ROOT CAUSE of the missing awards: ACT-51 was built for the two CONFERENCE sheets only; the awards sheets (config customer_sheets.json, snapshotted weekly) were never read into the queue. 153 customer awards, 127 on the page, 33 missing. ACT-67 fixes it: scripts/customer_awards.py (coverage, auto-add, --unlabel, --relabel, --reply-plan), awards first-load path (switch CFP_AWARDS_NEW_EVENTS=1 now set at user level), MARKET_SIBLING rows (one award in two markets), recap lines, run_monthly.ps1 step 0a1b live (dry run unless CFP_AWARDS_AUTOADD_APPLY=1; backup run_monthly.ps1.pre-customerawards-20261012). Awards_input.csv 168 rows, 152 live, 0 waiting for an id; every change has a backup beside the file.
