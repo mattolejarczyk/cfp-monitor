@@ -5,6 +5,14 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-16 - Friday: first awards run with the customer awards in the queue; one stub row blocked the load, fixed
+
+- Friday 02:00 awards research ran 02:00 to 03:07: 95 rows, 105 requests, 94 grounded, 1 stub (The Climate Awards (2026): a Google 504 deadline error, then three answers with no search). Exit 1. The import read exit 1 as failed research and refused the whole market: nothing loaded, the database untouched, Monday's awards page would have been stale (final.csv last promoted 10-09).
+- ROOT CAUSE: `weekend_import.check_research` blocked on any non-zero exit although the audit's exit 1 only means stubs or rows that did not land (routine, per run_overnight.ps1), and the row rule already handles a stub (last week's version, else held back). FIX: exit 1 passes; 3, 4, 130, unknown codes and a missing, stale or short output still stop the load. Test added; WEEKEND-PROCESS.md corrected (step 1 of the automatic load, change history) and its fingerprint re-confirmed; QA-REGISTER A68.
+- Mistake worth recording: the first doc edit failed on a backslash in the search text and the --confirm that followed still ran, re-stamping the fingerprints before the document was corrected. Caught at once; the doc was then corrected and confirmed again. Never chain --confirm after an edit that can fail.
+- Recovery by hand: -RedoStubs (4 requests, the stub failed the same way), then a sandbox rehearsal of the import (about 21 minutes), then the live import 05:13 to 05:34 with a database backup first: 146 rows shipped, 19 new awards loaded (awards 121 to 140), the stub kept last week's version, 11 new awards held for a person, 2 failed the gate. Invariants hold; post_load_qa flags are conference-only and expected before Saturday.
+- Open from this: 11 awards held for a person and 2 that failed the gate need a look (names in `Markets/logs/manual_awards_20261016.import.json`); the Climate Awards (2026) search failure is persistent for that row, not transient; the recap email wording still reads "out of quota" for exit 1 in older runs.
+
 ## 2026-10-15 - Thursday: pre-flight no longer warns about patches held on purpose; ACT-22 joins the Friday apply
 
 - The 18:00 Thursday pre-flight said READY WITH NOTES with four patch WARNs (ACT-22, ACT-33, ACT-63, ACT-64). Checked: all four were deliberate holds, the pre-flight just could not know. ACT-63 and ACT-64 are applied by the one-time task 'CFP Saturday Patch Apply (one-time)' on Fri 2026-10-16 from 10:00 (retries every 30 minutes until Sat 01:05, waits while a CFP task runs); ACT-33 waits until after Saturday 10-17's run so that run is measured alone.

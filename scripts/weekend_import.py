@@ -218,8 +218,13 @@ def apply_row_rule(rows: list[dict], sources: list[str], bad: dict[int, list[str
 # ============================================================================ per market
 def check_research(market: str, markets_dir: Path, research_exit: int | None) -> str | None:
     """Why this market's research cannot be used, or None if it can."""
-    if research_exit not in (None, 0):
-        return f"the research run exited {research_exit} (3 = out of quota, 4 = search collapsed)"
+    # The audit's exit codes (run_market_audit.py): 0 complete; 1 = finished, but with stub rows (the API failed every retry for a row) or rows that did not land; 3 = quota exhausted;
+    # 4 = grounded search collapsed; 130 = interrupted. Only 3, 4, 130 (and anything unknown) mean the output cannot be used. Exit 1 is routine (run_overnight.ps1: "Stubs are routine,
+    # a handful of transient API failures per run") and used to block the WHOLE market: on 2026-10-16 one stub row (The Climate Awards, three answers without a search) held back
+    # 94 good awards. A stub is handled per row below (resolve_market: last week's accepted version, else held back, never loaded), and a run that stopped short is still caught by
+    # the row count further down, so exit 1 is allowed through.
+    if research_exit not in (None, 0, 1):
+        return f"the research run exited {research_exit} (3 = out of quota, 4 = search collapsed, 130 = interrupted)"
     out = markets_dir / f"{market}_audited.csv"
     inp = markets_dir / f"{market}_input.csv"
     if not out.exists():

@@ -65,7 +65,7 @@ the pages came out. This job looks the evening before, while there is still time
 nothing, spends nothing, and emails the operator only.
 
 1. **[Review]** **Which approved patches are really in the weekend script** - each patch under `docs\control\patches` is looked for in
-   `Markets\run_monthly.ps1`; one whose text is not there is named (the step it adds will not run until it is applied).
+   `Markets\run_monthly.ps1`; one whose text is not there is named (the step it adds will not run until it is applied). A patch that is NOT in on purpose is listed in `docs/control/patches/HELD.json` with an `until` date and a reason: it is shown as information while the date holds and becomes a warning again after it (2026-10-15), so a hold cannot hide a forgotten patch.
 2. **[Review]** **Awards waiting for a permanent id** - awards on `Awards_input.csv` that upstream has not given an id, and the
    draft request to upstream if there is one (send it before Friday).
 3. **[Review]** **The switches** - `CFP_AWARDS_NEW_EVENTS` (a new award with an id loads on Friday), `CFP_AWARDS_AUTOADD_APPLY` (Friday adds
@@ -213,7 +213,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 
 *Same scheduled task; `run_monthly.ps1` calls `weekend_import.py`, then `post_load_qa.py` (conference markets), then `weekend_recap.py`. The steps are built by one function, and `run_monthly.ps1 -ListPostSteps` (added 2026-10-05) prints every post-research step it would run, with its whole arguments and whether its script exists, without researching, loading or emailing anything; a test runs it. Each step is skipped with a logged line if its script is missing, and runs with empty input, so a stray interactive prompt exits instead of waiting for a person (the 2026-10-03 hang).*
 
-1. **[Safety check]** **Stops if research failed.** Nothing is loaded and the database stays exactly as it was.
+1. **[Safety check]** **Stops if research failed.** Nothing is loaded and the database stays exactly as it was. "Failed" means the research run stopped on quota (exit 3), grounded search collapsed (exit 4), was interrupted (130) or exited with an unknown code, or the output is missing, stale or short of rows. **Exit 1 does NOT stop the load (changed 2026-10-16):** it only means a few rows were written as stubs because the search service failed every retry for them (routine). A stub is handled row by row in the steps below: that event keeps last week's accepted version, or is held back if there is none, and is never loaded as a guess. Before this change one stub row held back a whole market (94 good awards on Friday 2026-10-16).
 2. **[Update]** **Fixes wording-only problems** - for example a quote copied slightly wrong from the cited
    page. It never changes a date, a status or which page is cited. *(mechanical_repairs.py)*
    Then, for sponsorship only: if this week's research comes back "Unknown" or blank for an event whose sponsorship
@@ -372,6 +372,8 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-16** - the automatic load no longer refuses a whole market because the research exited 1 (stub rows). Only exit 3, 4, 130, an unknown code, or a missing, stale or short output stops it; stubs are handled per row. Found when one stubbed award held back 94 good awards on the first Friday run after the customer awards joined the queue.
+- **2026-10-15** - the Thursday pre-flight reads `docs/control/patches/HELD.json`: a patch held on purpose is information until its `until` date, then a warning again.
 - **2026-10-13** - (ACT-70) a Thursday 6:00 PM pre-flight (patches applied, awards waiting for ids, switches, customer sheets and coverage; READY / READY WITH NOTES / FIX BEFORE 02:00), and held conference rows shown as Provisional with the failing field blank.
 - **2026-10-13** - the page build blanks a place that is only a stringified empty cell ('nan'): 39 of 125 awards had shown it as their location on 2026-10-12 (6 the week before). No step changed; the fix is in `build_review_page.py`.
 - **2026-10-12** - (ACT-68) the weekly outcome is reported, not assumed: the release gate after Monday's build (one GO / GO WITH NOTES / NO-GO email with both pages attached), the same checks as a Sunday pre-flight, and Provisional awards on the Awards page.

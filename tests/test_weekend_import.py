@@ -193,3 +193,27 @@ def test_rows_the_refresh_policy_skipped_are_not_counted_as_missing_but_a_short_
         w.writerow(["CONFERENCE"])
         w.writerows([["A"]])
     assert "stopped short" in check_research("Awards", tmp_path, 0)  # one due row missing is still a short run
+
+
+def test_exit_1_stub_rows_do_not_block_the_market_but_a_halt_or_a_short_run_still_does(tmp_path):
+    """2026-10-16: one stub row (exit 1) held back 94 good awards. Exit 1 now passes check_research (the row rule handles the stub); 3, 4, 130 and unknown codes still block; a short run is
+    still caught by the row count whatever the exit code."""
+    import csv as _csv
+    from scripts.weekend_import import check_research
+    with open(tmp_path / "Awards_input.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["CONFERENCE", "DUP_OF"])
+        w.writerows([["A", ""], ["B", ""]])
+    with open(tmp_path / "Awards_audited.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["CONFERENCE"])
+        w.writerows([["A"], ["B"]])
+    assert check_research("Awards", tmp_path, 1) is None, "stubs are routine: the file is usable"
+    for code in (3, 4, 130, 2):
+        why = check_research("Awards", tmp_path, code)
+        assert why and f"exited {code}" in why, code
+    with open(tmp_path / "Awards_audited.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["CONFERENCE"])
+        w.writerows([["A"]])
+    assert "stopped short" in check_research("Awards", tmp_path, 1), "exit 1 does not hide a run that stopped short"
