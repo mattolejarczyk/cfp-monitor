@@ -340,6 +340,20 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
     fl_input = fl.input_canons(markets_dir / f"{market}_input.csv")
     held_new: list[dict] = []
     new_ids: set[str] = set()
+    # An award that is the SAME LISTING as one already held is not loaded as a second award (2026-10-16: the customer's Utility sheet lists last cycle's Fast Company Most Innovative Companies
+    # row under a 2026 id; research read the same page as the 2027 row, same URL, edition and deadline, and would have loaded a twin). Same = same name key (case, '&', brackets and years
+    # ignored), same edition and the same non-blank deadline, in the database or already let through this run. Awards only; a different name, edition or deadline is never touched.
+    award_listings: dict = {}
+    if market == AWARDS:
+        from scripts.customer_awards import name_key as _name_key
+        import sqlite3 as _sq
+        _con = _sq.connect(str(db))
+        try:
+            for _id, _nm, _ed, _dl in _con.execute("select event_id, name, edition, deadline from award_grounding_facts"):
+                if (_dl or "").strip():
+                    award_listings.setdefault((_name_key(_nm or ""), str(_ed or "").strip()[:4], (_dl or "").strip()), _id)
+        finally:
+            _con.close()
     for i, r in enumerate(rows):
         c = identity.get((r.get("EVENT_ID") or "").strip(), "")
         if "Audit Exception" in (r.get("STATUS DETAILS") or ""):
@@ -357,7 +371,7 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
             ok, why = fl.decide(c, enabled=fl_cfg["enabled"], ledger=fl_ledger, input_ids=fl_input,
                                 known=known, up_to_canon=up_to_canon, to_canonical=to_canonical,
                                 taken=len(new_ids), cap=fl_cfg["cap"],
-                                edition=r.get("EDITION") or "")
+                                edition=r.get("EDITION") or "", edition_must_match_id=(market != AWARDS))
             opp = (r.get("OPPORTUNITY_TYPE") or "").strip()
             if market == AWARDS and opp != "Awards":
                 # ACT-67: the customer lists it and upstream gave it an id, but our research types it as something else; import_awards leaves such a row out of the award tables on purpose, so a first
@@ -368,6 +382,19 @@ def resolve_market(market: str, markets_dir: Path, work: Path, db: Path,
                 canon_of[(r.get("EVENT_ID") or "").strip()] = c
                 seen_canon.add(c)
                 continue
+            if ok and market == AWARDS:
+                _key = (_name_key(r.get("CONFERENCE") or ""), (r.get("EDITION") or "").strip()[:4], (r.get("SUBMISSION DEADLINE") or "").strip())
+                _twin = award_listings.get(_key) if _key[2] else None
+                if _twin and _twin != c:
+                    ok, why = False, (f"the same listing as {_twin} (same name, edition {_key[1] or 'blank'} and deadline {_key[2]}), which is already in the database or loaded this run; "
+                                      "not loaded as a second award")
+                    held_new.append({"conference": (r.get("CONFERENCE") or "").strip(), "canonical": c, "reason": why, "kind": "duplicate"})
+                    pre_bad[i] = [why]
+                    canon_of[(r.get("EVENT_ID") or "").strip()] = c
+                    seen_canon.add(c)
+                    continue
+                if _key[2]:
+                    award_listings.setdefault(_key, c)
             if ok:
                 new_ids.add(c)
             else:

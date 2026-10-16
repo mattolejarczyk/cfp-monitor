@@ -5,6 +5,14 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-16 (later) - awards edition rule relaxed, twin guard, 7 awards loaded
+
+- The 11 awards held at first load were held only by `first_load.decide` requiring the researched edition to equal the year in the id. That rule is right for conferences (invariant 7 reads key_year) and wrong for awards (no key_year in the award table; 15 live awards already have an edition different from their id year, e.g. Globee Awards for Cybersecurity id 2026 edition 2027). Awards are now exempt (`edition_must_match_id=False` from weekend_import for the Awards market).
+- With the rule gone, a twin listing would have loaded (the customer's Utility sheet lists last cycle's Fast Company Most Innovative Companies row under a 2026 id; research read the same page as the 2027 row). New guard in weekend_import: a new award with the same name key (case, '&', brackets, years ignored), the same edition and the same non-blank deadline as an award already held, or already let through this run, is held with that reason (`kind: duplicate`). Tests added; 49 first-load and import tests pass.
+- Live import by hand 07:22 to 07:44 after a sandbox rehearsal and a database backup: 7 awards loaded (AI World Series, AI Excellence Award, Globee Awards for AI, MDRN Global AI Awards, TMCnet Cybersecurity Excellence Awards 2026, AI Dev World, Carbon Capture Global Summit), 1 twin held (Fast Company 2026), 5 failed the gate (see HANDOFF). Awards 140 to 147. Invariants hold.
+- The `--confirm` of the process-doc fingerprint was run only after the doc edit was verified this time (diff checked first).
+- Customer facts found on the way, for the team: Fast Company Most Innovative Companies final deadline is 2026-10-16 23:59 PT per fastcompany.com (the sheets say 2026-07-24 and early October); DataIQ 100 North America nominations close 2026-10-23.
+
 ## 2026-10-16 - Friday: first awards run with the customer awards in the queue; one stub row blocked the load, fixed
 
 - Friday 02:00 awards research ran 02:00 to 03:07: 95 rows, 105 requests, 94 grounded, 1 stub (The Climate Awards (2026): a Google 504 deadline error, then three answers with no search). Exit 1. The import read exit 1 as failed research and refused the whole market: nothing loaded, the database untouched, Monday's awards page would have been stale (final.csv last promoted 10-09).

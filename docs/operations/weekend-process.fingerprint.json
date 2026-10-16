@@ -7,7 +7,7 @@
     "run_all.ps1": "e7ae4f68ff580d1551e45cd7c2fb8d121c3678180afdbd32f09ae906ade2fda1",
     "scripts/weekly_intake.py": "2dcf362209874c56a7e38e22de54e5b9b6f9e552e99597e1118d95e86816fc4b",
     "scripts/stamp_input_ids.py": "3cdca1c95511263051dcc2552bc070ea758f23623538f76ea737eb2b4f0f756b",
-    "scripts/weekend_import.py": "51e1903af014f32d6ffb2e0d7b74d34213f68129b8beec0cf74ab03ca3630da0",
+    "scripts/weekend_import.py": "d46a0163f3e0636901d1c03f36ec211ae793495b0e4f680e98d2855a668353ea",
     "scripts/weekend_recap.py": "125c10c8bac102116fa84a4108c9115b09e811167ba27ac8f39570e9bafdbb8b",
     "scripts/shadow_finder.py": "0fb1de2942bde32bdc95b2d2cfed4a4a87046cbe5e7495ea7e18e4cf01a1799e",
     "scripts/refresh_plan.py": "9c7b49d47cce73e7be752cd4b4bec5320edc2c8e57d21f43b6a89bee9ce95730",

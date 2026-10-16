@@ -108,11 +108,44 @@ def test_the_conference_ledger_does_not_count_for_an_award(tmp_path, monkeypatch
     assert res["new_events"] == []
 
 
-def test_an_edition_that_disagrees_with_the_id_year_is_held_for_a_person(tmp_path, monkeypatch):
+def test_an_award_whose_edition_differs_from_the_id_year_still_loads(tmp_path, monkeypatch):
+    """Changed 2026-10-16: for an AWARD the id year is only a label (no key_year in the award table, invariant 7 reads the conference table, 15 live awards already differ), so the cycle year
+    the research found does not hold it back. Conferences keep the rule (tests/test_first_load.py)."""
     md, led, db = world(tmp_path, edition="2026")
     res = resolve(tmp_path, monkeypatch, md, led, db, enabled=True)
-    assert res["new_events"] == [] and res["new_events_held_for_person"] == 3
-    assert "carries 2027" in held(res)[NEW1]
+    assert len(res["new_events"]) == 3 and res["new_events_held_for_person"] == 0
+
+
+def test_a_new_award_that_is_the_same_listing_as_one_already_held_is_not_loaded_as_a_twin(tmp_path, monkeypatch):
+    """2026-10-16: Fast Company Most Innovative Companies 2026 (the customer's last-cycle row) read the same page as the 2027 row already in the database: same name once years and brackets are
+    ignored, same edition, same deadline. It must not become a second award. A different deadline or name is left alone."""
+    md, led, db = world(tmp_path)
+    rows = list(csv.reader(open(md / f"{A}_audited.csv", encoding="utf-8")))
+    for r in rows[1:]:
+        r[6] = "2027-01-01"                                                      # every researched row has a deadline
+    write(md / f"{A}_audited.csv", rows[0], rows[1:])
+    con = sqlite3.connect(db)
+    con.execute("insert into award_grounding_facts (event_id, name, edition, deadline, upstream_event_id) values (?,?,?,?,?)",
+                ("2027-alpha-prize-anticipated-cycle-nan-awards", "Alpha Prize 2027 (anticipated cycle)", "2027", "2027-01-01", "up-twin"))
+    con.execute("insert into award_grounding_facts (event_id, name, edition, deadline, upstream_event_id) values (?,?,?,?,?)",
+                ("2027-beta-prize-nan-awards-other", "Beta Prize", "2027", "2027-02-02", "up-other"))      # same name, DIFFERENT deadline: not a twin
+    con.commit()
+    con.close()
+    res = resolve(tmp_path, monkeypatch, md, led, db, enabled=True)
+    assert [e["canonical"] for e in res["new_events"]] == [NEW2, NEW3]
+    assert "the same listing as 2027-alpha-prize-anticipated-cycle-nan-awards" in held(res)[NEW1] and "not loaded as a second award" in held(res)[NEW1]
+    assert any(h.get("kind") == "duplicate" for h in res["new_events_held"])
+
+
+def test_two_new_awards_that_are_the_same_listing_load_only_the_first(tmp_path, monkeypatch):
+    md, led, db = world(tmp_path)
+    rows = list(csv.reader(open(md / f"{A}_audited.csv", encoding="utf-8")))
+    for r in rows[1:]:
+        r[2], r[6] = "Alpha Prize", "2027-01-01"                                 # Alpha, Beta, Gamma and Delta all read the same listing
+    write(md / f"{A}_audited.csv", rows[0], rows[1:])
+    res = resolve(tmp_path, monkeypatch, md, led, db, enabled=True)
+    assert [e["canonical"] for e in res["new_events"]] == [NEW1]
+    assert "the same listing as" in held(res)[NEW2] and "the same listing as" in held(res)[NEW3]
 
 
 def test_the_cap_is_respected(tmp_path, monkeypatch):

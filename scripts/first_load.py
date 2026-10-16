@@ -45,8 +45,8 @@ def input_canons(input_csv: Path) -> set[str]:
 
 
 def decide(canon: str, *, enabled: bool, ledger: set[str], input_ids: set[str], known: set[str],
-           up_to_canon: dict, to_canonical, taken: int, cap: int, edition: str = "") -> tuple[bool, str]:
-    """(load it as a new event?, the plain reason it is held when not)."""
+           up_to_canon: dict, to_canonical, taken: int, cap: int, edition: str = "", edition_must_match_id: bool = True) -> tuple[bool, str]:
+    """(load it as a new event?, the plain reason it is held when not). `edition_must_match_id` is True for conferences and False for awards (see below)."""
     if not canon:
         return False, ("no permanent id on our input row (EVENT_ID_CANON is blank), so it is not "
                        "loaded - we never derive an id from a name; upstream must give one")
@@ -64,8 +64,11 @@ def decide(canon: str, *, enabled: bool, ledger: set[str], input_ids: set[str], 
         return False, held + "it is an alias of an event we already hold; not loaded as new"
     # The id is frozen with the year it carries (invariant 7: key_year = the edition at creation). A row researched for another
     # edition than the id's year would fail reconciliation and undo the whole load, so it is held for a person instead.
+    # AWARDS ARE EXEMPT (2026-10-16). The award table has no key_year and invariant 7 reads only the conference table, so an award whose cycle year differs from the year in its id fails
+    # nothing (15 awards already in the database do exactly that: the id keeps the year it was minted with, EDITION moves with the cycle, Contract v2.3). Holding them left 11 customer
+    # awards off the Awards page for a mismatch that harms nothing. Conferences keep the rule: their key_year IS checked.
     ed = (edition or "").strip()[:4]
-    if ed != canon[:4]:
+    if edition_must_match_id and ed != canon[:4]:
         return False, held + (f"the researched row is for edition '{(edition or '').strip() or 'blank'}' but the id carries {canon[:4]}; "
                               "a person must say which edition this is; not loaded")
     if not enabled:

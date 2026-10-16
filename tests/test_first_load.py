@@ -145,6 +145,15 @@ def test_edition_that_disagrees_with_the_id_year_stays_held(tmp_path, monkeypatc
     assert res["new_events_held_for_person"] == 1 and res["new_events_waiting"] == 0
 
 
+def test_the_edition_must_match_the_id_year_for_a_conference_but_not_for_an_award():
+    """2026-10-16: awards have no key_year (invariant 7 reads the conference table), so only conferences keep the rule."""
+    kw = dict(enabled=True, ledger={NEW1}, input_ids={NEW1}, known=set(), up_to_canon={}, to_canonical=lambda e, m: m.get(e, e), taken=0, cap=100, edition="2026")
+    ok, why = fl.decide(NEW1, **kw)
+    assert not ok and "carries 2027" in why, "a conference researched for another edition than its id stays held"
+    ok, why = fl.decide(NEW1, edition_must_match_id=False, **kw)
+    assert ok and why == "", "an award is not held for it"
+
+
 def test_blank_id_is_never_loaded():
     ok, why = fl.decide("", enabled=True, ledger={""}, input_ids=set(), known=set(), up_to_canon={},
                         to_canonical=lambda e, m: e, taken=0, cap=100)
