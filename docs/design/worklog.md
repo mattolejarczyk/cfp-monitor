@@ -5,6 +5,14 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-15 - Thursday: pre-flight no longer warns about patches held on purpose; ACT-22 joins the Friday apply
+
+- The 18:00 Thursday pre-flight said READY WITH NOTES with four patch WARNs (ACT-22, ACT-33, ACT-63, ACT-64). Checked: all four were deliberate holds, the pre-flight just could not know. ACT-63 and ACT-64 are applied by the one-time task 'CFP Saturday Patch Apply (one-time)' on Fri 2026-10-16 from 10:00 (retries every 30 minutes until Sat 01:05, waits while a CFP task runs); ACT-33 waits until after Saturday 10-17's run so that run is measured alone.
+- NEW `docs/control/patches/HELD.json`: patch name, `until` date, reason. `scripts/release_gate.py --thursday` shows a held patch as INFO while the date holds and as WARN again after it, so a hold cannot hide a forgotten patch; a broken or missing file holds nothing. Tests in tests/test_release_gate_thursday.py.
+- `experiments/saturday_apply/apply_saturday_patches.py` now carries ACT-22 (read-only Friday awards shadow step, 45 minutes and 0.30 USD cap, never fails the run; first runs Fri 2026-10-23) and applies two patches for one file in memory with a single write, so the second cannot overwrite the first (the old per-patch write would have). Rehearsed on a copy of the scripts: both land, the backup is the pre-patch script, a second run is a no-op; tests/test_saturday_apply_wrapper.py. The unattended task's e-mail wording now names ACT-22.
+- Nothing was applied to the live scripts. The one-time task needs the PC on and signed in from Fri 10:00 to Sat 01:00 (it does not wake the PC); if missed, Saturday runs the old way and the task e-mails NOT applied.
+- Living docs: no rule, schema or runbook step changed, so docs/operations is unchanged; HANDOFF.md carries the state.
+
 ## 2026-10-13 - Tuesday: both customer pages sent, Gemini relay live, Saturday patches on a timer
 
 - DELIVERED: the operator sent both pages to Nicolia: Awards Review 2026-10-13 (159 rows; every one of the 153 customer awards is on it: 123 researched, 2 Provisional, 30 'Awaiting research' built from the customer's own sheet) and Conference Review 2026-10-13 (226 rows = 204 + 22 Provisional with the failing field blanked), in handoff-files/weekly/2026-10-13/.
