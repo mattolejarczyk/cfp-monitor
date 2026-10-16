@@ -46,7 +46,7 @@ def test_waiting_reminds_every_fourth_wait_only(tmp_path):
 def test_applies_once_and_goes_quiet(tmp_path):
     b = Box(out="ACT-64 ... written\nDONE. Tell Claude;", code=0)
     go(b, tmp_path)
-    assert b.mails == ["CFP Saturday patches APPLIED: ACT-64 and ACT-63 are in"]
+    assert b.mails == ["CFP Saturday patches APPLIED: ACT-64, ACT-63 and ACT-22 are in"]
     b.applied = True
     go(b, tmp_path)
     go(b, tmp_path)

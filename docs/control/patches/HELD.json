@@ -1,0 +1,18 @@
+{
+ "ACT-63-run_monthly.ps1.patch": {
+  "until": "2026-10-17",
+  "why": "applied automatically on Friday 2026-10-16 from 10:00 by the one-time task 'CFP Saturday Patch Apply (one-time)', after Friday's awards run; if it is not in by Saturday this becomes a warning again"
+ },
+ "ACT-64-run_overnight.ps1.patch": {
+  "until": "2026-10-17",
+  "why": "applied automatically on Friday 2026-10-16 from 10:00 by the one-time task 'CFP Saturday Patch Apply (one-time)', after Friday's awards run; if it is not in by Saturday this becomes a warning again"
+ },
+ "ACT-22-run_monthly.ps1.patch": {
+  "until": "2026-10-17",
+  "why": "read-only Friday awards shadow step, applied with the other two by the one-time task after Friday's awards run; it first runs Friday 2026-10-23"
+ },
+ "ACT-33-run_monthly.ps1.patch": {
+  "until": "2026-10-18",
+  "why": "applied after Saturday 2026-10-17's research run so that run is measured alone (HANDOFF), then CFP_REFRESH_APPLY is set after a dry run"
+ }
+}

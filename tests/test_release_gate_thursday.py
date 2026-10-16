@@ -80,6 +80,29 @@ def test_the_repo_patch_missing_from_the_live_script_is_named_not_applied_and_th
     assert rep["verdict"] == "READY WITH NOTES"
 
 
+def test_a_patch_held_on_purpose_is_information_not_a_warning_until_its_date_has_passed(tmp_path):
+    w = thursday_world(tmp_path, patches=(("ACT-33-run_monthly.ps1.patch", PATCH_MARKER),))
+    (w.patches / "HELD.json").write_text(json.dumps({"ACT-33-run_monthly.ps1.patch": {"until": "2026-10-18", "why": "after Saturday's run"}}), encoding="utf-8")
+    rep = thursday(w)
+    c = chk(rep, "t1")
+    assert c["status"] == "PASS" and rep["verdict"] == "READY"
+    assert any(r.startswith("INFO ACT-33") and "ON PURPOSE until 2026-10-18" in r and "after Saturday's run" in r for r in c["rows"])
+    assert not any(r.startswith("WARN") for r in c["rows"]) and "1 held on purpose" in c["summary"]
+    assert rep["facts"]["patches_held"] == ["ACT-33-run_monthly.ps1.patch"]
+    o = rg.Opts(date(2026, 10, 19), datetime(2026, 10, 19, 18, 0), True, w.md, w.db, w.snaps, None, w.weekly, None, w.qa, w.commit, w.given, w.ledger)
+    late = next(c for c in rg.thursday_checks(o, ENV_ALL, w.patches)[0] if c["id"] == "t1")
+    assert late["status"] == "WARN" and any(r.startswith("WARN ACT-33") for r in late["rows"]), "a hold never outlives its date"
+
+
+def test_a_hold_does_not_hide_a_patch_that_is_not_named_or_whose_hold_file_is_broken(tmp_path):
+    w = thursday_world(tmp_path, patches=(("ACT-33-run_monthly.ps1.patch", PATCH_MARKER), ("ACT-35-run_monthly.ps1.patch", PATCH_MARKER.replace("0a3", "0a4"))))
+    (w.patches / "HELD.json").write_text(json.dumps({"ACT-33-run_monthly.ps1.patch": {"until": "2026-10-18", "why": "x"}}), encoding="utf-8")
+    c = chk(thursday(w), "t1")
+    assert c["status"] == "WARN" and any(r.startswith("WARN ACT-35") for r in c["rows"]) and any(r.startswith("INFO ACT-33") for r in c["rows"])
+    (w.patches / "HELD.json").write_text("{not json", encoding="utf-8")
+    assert chk(thursday(w), "t1")["status"] == "WARN" and rg.held_patches(w.patches) == {}
+
+
 def test_a_patch_for_another_script_is_judged_against_that_script(tmp_path):
     w = thursday_world(tmp_path, patches=(("ACT-64-run_overnight.ps1.patch", PATCH_OTHER),))
     c = chk(thursday(w), "t1")

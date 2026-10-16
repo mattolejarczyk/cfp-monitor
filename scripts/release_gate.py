@@ -858,6 +858,24 @@ def patches_status(markets_dir: Path, patches_dir: Path = PATCHES) -> dict:
     return out
 
 
+def held_patches(patches_dir: Path = PATCHES) -> dict:
+    """Patches that are NOT in the live script on purpose, from docs/control/patches/HELD.json: {patch file name: {"until": "YYYY-MM-DD", "why": text}}. A hold covers the pre-flight dates up to and
+    including `until`; after that the patch is a WARN again, so a hold can never hide a forgotten patch. A missing or unreadable file means nothing is held."""
+    try:
+        raw = json.loads((Path(patches_dir) / "HELD.json").read_text(encoding="utf-8"))
+        return {k: v for k, v in raw.items() if isinstance(v, dict) and v.get("until") and v.get("why")}
+    except (OSError, ValueError):
+        return {}
+
+
+def hold_active(held: dict, name: str, on) -> bool:
+    h = held.get(name)
+    try:
+        return bool(h) and on <= date.fromisoformat(h["until"])
+    except (ValueError, TypeError):
+        return False
+
+
 def thursday_awards_waiting(o: Opts) -> list[str]:
     return [x for x in ids_owed(o) if x.startswith("Awards:")]
 
@@ -877,15 +895,20 @@ def thursday_checks(o: Opts, env: dict | None = None, patches_dir: Path = PATCHE
         facts["patches"] = ps
         if not ps["readable"]:
             return Check("t1", "Patches applied to the weekend script", "FAIL", f"{ps['script']} could not be read: nothing can be said about which steps will run")
-        miss = [p for p in ps["patches"] if p["applied"] is False]
+        held = held_patches(patches_dir)
+        held_now = [p for p in ps["patches"] if p["applied"] is False and hold_active(held, p["name"], o.on)]
+        miss = [p for p in ps["patches"] if p["applied"] is False and p not in held_now]
         unk = [p for p in ps["patches"] if p["applied"] is None]
+        facts["patches_held"] = [p["name"] for p in held_now]
         rows = [f"WARN {p['name']}: patch in the repo; its text is NOT in the live script ({p['how']} is not there): not applied, or applied in different words - if not applied that step will not run" for p in miss]
+        rows += [f"INFO {p['name']}: NOT in the live script ON PURPOSE until {held[p['name']]['until']}: {held[p['name']]['why']}" for p in held_now]
         rows += [f"WARN {p['name']}: {p['how']}" for p in unk]
         rows += [f"INFO {p['name']}: applied ({p['how']})" for p in ps["patches"] if p["applied"]]
         rows += [f"INFO STEP {m}: {'present' if ok else 'ABSENT'} in the live script" for m, ok in ps["markers"].items()]
         n_ok = sum(1 for p in ps["patches"] if p["applied"])
         return Check("t1", "Patches applied to the weekend script", "WARN" if (miss or unk) else "PASS",
-                     f"{n_ok} of {len(ps['patches'])} patches are in the live script; {len(miss)} approved but not applied" if (miss or unk) else f"all {len(ps['patches'])} patches are in the live script", rows)
+                     f"{n_ok} of {len(ps['patches'])} patches are in the live script; {len(miss)} approved but not applied" + (f"; {len(held_now)} held on purpose" if held_now else "") if (miss or unk)
+                     else (f"{n_ok} of {len(ps['patches'])} patches are in the live script; {len(held_now)} held on purpose (listed below)" if held_now else f"all {len(ps['patches'])} patches are in the live script"), rows)
     checks.append(safely("t1", "Patches applied to the weekend script", c1))
 
     def c2():
