@@ -5,6 +5,12 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-16 (evening) - Saturday patches applied; DataIQ resolved; awards 151
+
+- DataIQ: the operator read DataIQ's pages (2026 Awards closed, 2027 not open, Awards Americas page dead, the DataIQ 100 is a people list). The DataIQ Awards North America row was rewritten by cell (11 cells, backup, logged in OPERATOR-EDITS-LOG.md) and loaded: Upcoming, no deadline, customer note with marketing@dataiq.global as the contact to ask. The DataIQ 100 Summit North America 2027 was added to Cybersecurity_input.csv with a blank id (upstream must give one). Three other awards (The AI Awards, Global Tech Awards AI, World Technology Awards) loaded after three research cells were corrected from the pages. Awards 140 to 151 across four live loads today; Technology AI Awards (dead cited page) and the Fast Company 2026 twin stay out on purpose.
+- The one-time apply task did nothing from 10:00 to 18:30 (18 waits): its own task name matched the wrapper's running-CFP-task check. Fixed with a runner exclusion and a test; the 19:00 tick applied ACT-64, ACT-63 and ACT-22 (rehearsed byte sizes matched). WEEKEND-PROCESS.md now says the patches are live, awards no longer need edition equal to the id year, and has step 13 for ACT-22; fingerprint re-confirmed after the doc edit.
+- Lesson: a rehearsal on a copy skips the 'is a task running' check, so it cannot find a bug in that check. A wrapper that runs under a scheduled task needs one real run under that task.
+
 ## 2026-10-16 (later) - awards edition rule relaxed, twin guard, 7 awards loaded
 
 - The 11 awards held at first load were held only by `first_load.decide` requiring the researched edition to equal the year in the id. That rule is right for conferences (invariant 7 reads key_year) and wrong for awards (no key_year in the award table; 15 live awards already have an edition different from their id year, e.g. Globee Awards for Cybersecurity id 2026 edition 2027). Awards are now exempt (`edition_must_match_id=False` from weekend_import for the Awards market).

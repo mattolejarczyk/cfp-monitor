@@ -119,10 +119,10 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 9. **[Load]** **Backs up the database, then loads each award onto its permanent ID.** *(import_awards.py --ids)*
    **A brand-new award (ACT-67, built 2026-10-12; the switch is OFF: `weekend_import.py --new-awards` or the environment variable `CFP_AWARDS_NEW_EVENTS=1`, which needs no change to `run_monthly.ps1`):** the same guarded first load as Saturday's new events.
    A researched award that is not in the database yet loads as a NEW award only when upstream GAVE us its id (listed under market `Awards` in `docs/operations/given_ids.csv` and stamped on our `Awards_input.csv` row), the id is not an alias of an award we
-   already hold, the researched edition is the year the id carries, and this run has not yet added 100. It still passes the approval check of step 8. After the import the load reads back that exactly those ids, and no others, were added to the awards
+   already hold, the id is not an alias of an award we hold, the award is not the same listing as one we already hold (same name, edition and deadline; changed 2026-10-16), and this run has not yet added 100. The researched edition does NOT have to equal the year in the id for an award (changed 2026-10-16: the id year is only a label). It still passes the approval check of step 8. After the import the load reads back that exactly those ids, and no others, were added to the awards
    table, each with the researched name and on a market list; any mismatch undoes the whole load from the backup. We never mint an award id here: an award with no id from upstream is NOT loaded. Every such award is NAMED, with the reason, in the
    import report (`NEW AWARDS HELD Awards: n researched but not loaded: ...`), in the log (one `NEW EVENT HELD` line each) and in the Friday recap (a line naming them, and "FLAG: n new award(s) held (no id yet)" in the subject): upstream gave the id but the
-   path is off or capped (it waits), the id is not in the ledger, our input row has no id or a different one, or the edition differs from the id's year (held for a person). To get an id: the operator sends the DRAFT request of step 2b, puts the ids upstream
+   path is off or capped (it waits), the id is not in the ledger, our input row has no id or a different one, or it is the same listing as an award already held. (Until 2026-10-16 an edition that differed from the id's year was also held for a person; awards are exempt now.) To get an id: the operator sends the DRAFT request of step 2b, puts the ids upstream
    replies with in a small file and runs `stamp_given_ids.py --awards --ids-csv <file> --apply`; the award then loads on the next Friday run once the switch is on. *(weekend_import.py, first_load.py, import_awards.py)*
 10. **[Safety check]** **Runs the database health check** (its awards half); anything wrong and
     everything is undone from the backup. *(check_invariants.py)*
@@ -132,6 +132,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 11. **[Publish]** **Approves the awards file for Monday.** *(promote_delivery.py)*
 12. **[Report]** **Emails the Friday recap.** A failed Friday never stops Monday's conferences page;
     Monday's summary says loudly if the awards page is not this week's. *(weekend_recap.py friday)*
+13. **[Experiment, changes nothing]** **Shadow run of the awards finder (ACT-22; live since 2026-10-16 19:00, first runs Friday 2026-10-23).** Last, after the load and the recap, so it can delay neither: the live awards go through the finder (the entry or nomination deadline; a nomination or entry page is the main call) and are set against what we ship. Read-only, capped at 45 minutes and 0.30 USD, skips itself when the job has used 14 of its 16 hours, and never fails the run. *(shadow_finder.py --markets Awards)*
 
 ## Saturday 2:00 AM - Weekly research (Arnica + Utility Global)
 
@@ -197,7 +198,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 7a. **[Research]** **Asks the sponsorship question, one event at a time, for Arnica and Utility Global only** (right after each market's research, inside the same overnight run; this is the part that cost
    about 235 requests and about $44 on 2026-10-10, half of all searches that week). The existing pass asks only events whose sponsorship cell is blank or Unknown and passes a Yes or No through for free,
    but the new research file always starts with those cells blank, so until now every event was asked again every week even though 104 of 219 repeated last week's answer.
-   **ACT-64, built 2026-10-11, NOT LIVE until the reviewer applies `docs/control/patches/ACT-64-run_overnight.ps1.patch`:** one line, right before the pass, first copies last week's Yes or No answer
+   **ACT-64, built 2026-10-11, LIVE since 2026-10-16 19:00 (applied by the one-time apply task, backup `run_overnight.ps1.pre-act64-20261013`):** one line, right before the pass, first copies last week's Yes or No answer
    (with its sponsor page and cost) into the new file for an event when ALL of these hold: it is the same permanent ID (never matched by name) and the same edition; last week's answer was Yes or No
    (an Unknown is never copied); for a Yes, it has a sponsor page that is not recorded as dead in the link checks (a dead page, or no page at all, means ask again; a page the link checks have not recorded yet is carried, because the Sunday link check does not cover sponsor pages today, and the re-check below is the safety net); and the event is not due for its
    re-check. Every settled answer is asked again about every 8 weeks, spread evenly so about one eighth of them come due each Saturday (a fixed rule on the event's ID, so the same events come up on the same
@@ -244,7 +245,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 4. **[Load]** **Backs up the database** before touching it.
 5. **[Load]** **Loads each row onto its permanent ID**, so a renamed event updates its name instead of
    becoming a duplicate. *(import_grounding.py --ids)*
-   **A brand-new event (added 2026-10-10, ACT-63; the switch `--new-events` is OFF in the code and the reviewer switches it on in `run_monthly.ps1`):** a researched row for an event that is not in the database yet
+   **A brand-new event (added 2026-10-10, ACT-63; LIVE since 2026-10-16 19:00: `run_monthly.ps1` now passes `--new-events` on Saturday only, backup `run_monthly.ps1.pre-act63-20261013`; the switch stays OFF in the code and on Friday):** a researched row for an event that is not in the database yet
    loads as a NEW event only when upstream GAVE us its id (listed for that market in `docs/operations/given_ids.csv` and stamped on our input row), the id is not an alias of an event we already hold, and this run has not
    yet added 100 new events (`--new-events-cap`). The row still passes the approval check of step 3 like every other row. After the import the load reads back that exactly those ids, and no others, were added, that each
    has the researched name, and that its row is in the market's seed sheet; any mismatch undoes the whole load from the backup (step 4). The log has one `NEW EVENT` line per event and the summary prints
@@ -372,6 +373,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-16** - the Saturday patches are LIVE (applied 19:00 by the one-time apply task): ACT-64 sponsor prefill (run_overnight.ps1), ACT-63 first load of a new event on Saturday and ACT-22 the Friday awards shadow step (run_monthly.ps1). ACT-33 is still held until after Saturday's run. The apply task had waited 18 times from 10:00 because its own name matched the wrapper's running CFP task check; fixed.
 - **2026-10-16** - first load of an AWARD no longer waits for a person when its researched edition differs from the year in its id (the award table has no key_year; 15 live awards already differ), and a new award that exactly duplicates an award already held is not loaded as a twin. Found when 11 customer awards were held for a year mismatch that harmed nothing.
 - **2026-10-16** - the automatic load no longer refuses a whole market because the research exited 1 (stub rows). Only exit 3, 4, 130, an unknown code, or a missing, stale or short output stops it; stubs are handled per row. Found when one stubbed award held back 94 good awards on the first Friday run after the customer awards joined the queue.
 - **2026-10-15** - the Thursday pre-flight reads `docs/control/patches/HELD.json`: a patch held on purpose is information until its `until` date, then a warning again.

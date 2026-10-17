@@ -53,3 +53,22 @@ def test_all_three_patches_land_both_in_one_file_and_a_second_run_is_a_no_op(tmp
     assert backup == live_now, "the backup is the script as it was before any patch"
     code2, out2 = run(d, True)
     assert code2 == 0 and "Nothing to apply" in out2
+
+
+def test_the_apply_task_does_not_count_itself_as_a_running_cfp_task(monkeypatch):
+    """2026-10-16: the one-time task that runs the wrapper is named 'CFP Saturday Patch Apply (one-time)'; the wrapper's 'is a CFP task running?' check saw that task (itself) Running and waited 18 times
+    without ever applying. The check must leave the runner out and keep blocking on every other CFP task."""
+    sys.path.insert(0, str(WRAPPER.parent))
+    import apply_saturday_patches as w
+    seen = []
+
+    class R:
+        stdout = "CFP Weekly Awards Research\n"
+
+    def fake_run(cmd, **kw):
+        seen.append(cmd[-1])
+        return R()
+
+    monkeypatch.setattr(w.subprocess, "run", fake_run)
+    assert w.running_tasks() == ["CFP Weekly Awards Research"], "another running CFP task still blocks"
+    assert "-notlike 'CFP Saturday Patch Apply*'" in seen[0] and "-like 'CFP*'" in seen[0]

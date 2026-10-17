@@ -45,8 +45,13 @@ def parse_errors(text: str) -> int:
         return int((r.stdout or "999").strip().splitlines()[-1])
 
 
+# The one-time task that RUNS this wrapper is itself named 'CFP Saturday Patch Apply (one-time)'. Without this exclusion the wrapper always found a running CFP task (itself) and waited for ever:
+# on 2026-10-16 it waited 18 times, 10:00 to 18:30, and applied nothing. Every other CFP task still blocks the apply.
+RUNNER_TASK = "CFP Saturday Patch Apply*"
+
+
 def running_tasks() -> list[str]:
-    cmd = "Get-ScheduledTask | Where-Object { $_.TaskName -like 'CFP*' -and $_.State -eq 'Running' } | ForEach-Object { $_.TaskName }"
+    cmd = ("Get-ScheduledTask | Where-Object { $_.TaskName -like 'CFP*' -and $_.TaskName -notlike '%s' -and $_.State -eq 'Running' } | ForEach-Object { $_.TaskName }" % RUNNER_TASK)
     r = subprocess.run(["powershell", "-NoProfile", "-Command", cmd], capture_output=True, text=True)
     return [x.strip() for x in (r.stdout or "").splitlines() if x.strip()]
 
