@@ -358,6 +358,24 @@
         "CITY": "Rotterdam",
         "COUNTRY": "Netherlands"
       }
+    },
+    {
+      "canonical": "2027-india-energy-week-kolkata",
+      "event": "India Energy Week 2027 (IEW 2027)",
+      "ruled_on": "2026-10-17",
+      "by": "operator",
+      "why": "The research cited .../conference/technical-conference/submit-technical-paper, which now returns 404, so the import withdrew the evidence and dropped the row to Projected. The live page https://indiaenergyweek.com/conference/call-for-abstracts states '31 Oct 2026 Abstract Submission Deadline' and '30 Nov 2026 Full Paper & Presentation Submission'. Only the link moved; the deadline is verified.",
+      "until": "2026-11-01",
+      "links": [
+        "https://indiaenergyweek.com/conference/call-for-abstracts"
+      ],
+      "set": {
+        "SUBMISSION DEADLINE": "2026-10-31",
+        "DEADLINE_EVIDENCE_URL": "https://indiaenergyweek.com/conference/call-for-abstracts",
+        "DEADLINE_QUOTE": "31 Oct 2026 Abstract Submission Deadline",
+        "IS_PROJECTED": "false",
+        "CFP_SUBMISSION_URL": "https://indiaenergyweek.com/conference/call-for-abstracts"
+      }
     }
   ]
 }
