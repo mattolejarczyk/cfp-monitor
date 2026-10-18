@@ -128,11 +128,21 @@ inside the live build — it creates a stray `.venv\` there that shadows nothing
 gigabyte and has to be deleted. **Always `cd` explicitly before running anything**; the shell's
 working directory persists between commands and this has bitten twice.
 
-Code changes go in the dev repo, get tested, get committed, and are then copied across:
+Code changes go in the dev repo, get tested, get committed, and are then released to the live build
+with ONE command (since 2026-10-18; the old one-file `cp` let the two drift to 84 files):
 
 ```bash
-cp src/cfp_monitor/<file>.py "/c/Users/matts/AppData/Local/CFP-Monitor/src/cfp_monitor/"
+cd /c/Users/matts/cfp-monitor
+python scripts/live_build.py status            # how far behind is live? (also on the Thursday pre-flight)
+python scripts/live_build.py rehearse          # the release into a scratch copy, tested with the LIVE Python
+python scripts/live_build.py release --apply   # backs up, copies, tests, logs; rolls back by itself on failure
+python scripts/live_build.py rollback <stamp>  # undo a release by hand
 ```
+
+It moves whole sets of files together, never one (JUDGEMENT.md section 13: a new script on an old
+live build dies at import at 01:00). It refuses uncommitted files and a running CFP task. After a
+release, clone the registered Sunday task with a one-time trigger and read its log: a rehearsal cannot
+find a bug in how the task itself runs. `.bat` entry points are never copied; `status` lists any that differ.
 
 ---
 

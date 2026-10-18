@@ -19,7 +19,7 @@ what it means for the next run.
 | Thursday 6:00 PM | Pre-flight for Friday and Saturday: reads files, emails one verdict (task registered once by the operator, 2026-10-13, ACT-70) | No |
 | Friday 2:00 AM | Weekly awards research + automatic load (Arnica, Utility Global) | Yes, about 130-300 |
 | Saturday 2:00 AM | Weekly research + automatic load (Arnica, Utility Global) | Yes, about 120-290 |
-| Sunday 1:00 AM | Weekly link and deadline check (all markets) | A few (about 10-20) |
+| Sunday 1:00 AM | Weekly link and deadline check (the two customer markets in the report) | A few (about 10-20) |
 | Monday 7:00 AM | Customer pages | No |
 | Every 4th Wednesday 2:00 AM | Monthly research (the six markets without a customer) | Yes, about 280 |
 
@@ -269,13 +269,13 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 egistry.jsonl`. After four Saturdays the registry gives a written recommendation (adopt, keep as second reader, drop). *(luna_shadow.py --markets ...)*
 11. **[Experiment, changes nothing]** **Shadow run of the real-URL deadline finder (added 2026-10-04).** Last, after the load and the recap, so it can delay neither. For every live row (Open or Upcoming, about 40) it reads the event's own home page, sitemap and menu, picks the pages that look like the call, reads each with a cheap model and accepts a deadline only if a verbatim sentence on the page states it. It sets that next to what we ship and emails a short note: how many agree, and every place the pages state a different date (look at these) or a date where we ship none. It writes nothing to the database or the approved files, takes about 2 to 3 minutes per event (about 40 events, so roughly 100 minutes), stops at 120 minutes or 0.60 USD, skips itself if the job has already run 4.25 hours, and never fails the run. Files: `runs_out\shadow\shadow_<stamp>.md/.csv/.json`. Purpose: collect Saturday-by-Saturday evidence on whether it should become a second opinion or a fallback. *(shadow_finder.py)*
 
-## Sunday 1:00 AM - Weekly link and deadline check (all markets)
+## Sunday 1:00 AM - Weekly link and deadline check (the two customer markets)
 
 *Scheduled task "CFP Weekly Verification" -> `AppData\Local\CFP-Monitor\scripts\run_weekly.bat`*
 
 1. **[Setup]** **Opens a real browser** in the background, for websites that block automated checks. Closes
    it afterwards - only if it opened it. *(cdp_ctl.py)*
-2. **[Update]** **Re-checks every deadline we hold** against its cited page - a quick read first, moving up to
+2. **[Update]** **Re-checks every deadline we hold for Cybersecurity and Utility** (the only markets with a customer; since 2026-10-18 the other markets are no longer re-checked or counted in the digest, and one line at its end says how many dead links on them were left out) against its cited page - a quick read first, moving up to
    the real browser when a site resists. No AI requests. *(weekly_verify.py -> verify_grounding.py)*
 3. **[Update]** **Re-checks every link the customer can click** - submit page, evidence page, event site and,
    since 2026-10-11, the sponsorship page of every event whose sponsorship answer is Yes. A link is only called
@@ -304,6 +304,8 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
    is old; what upstream still owes (promises overdue, ids). It only reports. Anything it names can be fixed before
    Monday 07:00. It runs inside the Sunday recap command the Sunday task already calls, so it needed no change to the
    scheduled task. *(weekend_recap.py sunday -> release_gate.py --preflight)*
+
+5. **[Review]** **Live build against the repo** (2026-10-18, information only, never changes the verdict) - the Sunday job and the customer app run from the live build (`AppData\Local\CFP-Monitor`), not from the repo. This line says how many code files differ (`python scripts/live_build.py status`). Code reaches the live build only through `python scripts/live_build.py release --apply`, which refuses uncommitted files and a running CFP task, backs up what it overwrites and writes `RELEASE-LOG.md` there. Nothing else should be copied by hand.
 
 ## Monday 7:00 AM - Customer pages
 
@@ -373,6 +375,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-18** - the Sunday check and its digest cover only Cybersecurity and Utility (the two customer markets); invariant 8 is scoped the same way. New `scripts/live_build.py` (status and release) and a Thursday pre-flight line for how far the live build is behind the repo (84 files that day).
 - **2026-10-16** - the Saturday patches are LIVE (applied 19:00 by the one-time apply task): ACT-64 sponsor prefill (run_overnight.ps1), ACT-63 first load of a new event on Saturday and ACT-22 the Friday awards shadow step (run_monthly.ps1). ACT-33 is still held until after Saturday's run. The apply task had waited 18 times from 10:00 because its own name matched the wrapper's running CFP task check; fixed.
 - **2026-10-16** - first load of an AWARD no longer waits for a person when its researched edition differs from the year in its id (the award table has no key_year; 15 live awards already differ), and a new award that exactly duplicates an award already held is not loaded as a twin. Found when 11 customer awards were held for a year mismatch that harmed nothing.
 - **2026-10-16** - the automatic load no longer refuses a whole market because the research exited 1 (stub rows). Only exit 3, 4, 130, an unknown code, or a missing, stale or short output stops it; stubs are handled per row. Found when one stubbed award held back 94 good awards on the first Friday run after the customer awards joined the queue.

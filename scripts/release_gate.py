@@ -992,6 +992,18 @@ def thursday_checks(o: Opts, env: dict | None = None, patches_dir: Path = PATCHE
         return Check("t4", "Customer sheets: snapshot ages and coverage of the research queue", status,
                      f"{len(fails)} problem(s) to fix before 02:00" if fails else f"{len(warns)} note(s)" if warns else "every customer row ahead is in the research queue (or will be added)", body)
     checks.append(safely("t4", "Customer sheets", c4))
+
+    def c5():
+        # Information only, so it never changes the verdict: the repo and the live build (where the
+        # Sunday job and the customer app run) drift apart unless someone looks. 2026-10-18: 84 files.
+        from scripts import live_build as lbd
+        cmp = lbd.compare()
+        n = lbd.drift_count(cmp)
+        facts["live_build_drift"] = n
+        rows = [f"INFO {k}" for k in (cmp["differ"] + cmp["only_repo"])[:40]]
+        return Check("t5", "Live build against the repo", "PASS",
+                     f"{n} file(s) differ (python scripts/live_build.py status; release --apply brings them across)" if n else "the live build matches the repo", rows)
+    checks.append(safely("t5", "Live build against the repo", c5))
     return checks, facts
 
 
@@ -1013,6 +1025,8 @@ def thursday_lines(rep: dict) -> list[str]:
         L.append("Switches: " + "; ".join(f"{n.replace('CFP_', '')} {s}" for n, s in sw.items()) + " (what each means is listed below).")
     L.append("Mail: " + ("all settings present." if c["t3"]["status"] == "PASS" else c["t3"]["summary"].split(";")[0] + "."))
     L.append("Customer sheets: " + c["t4"]["summary"] + ".")
+    if "t5" in c:
+        L.append("Live build: " + c["t5"]["summary"] + ".")
     L.append({"READY": "Nothing stands in the way of Friday's and Saturday's research.", "READY WITH NOTES": "Friday and Saturday can run; the notes below say what will not happen unless you act first.",
               "FIX BEFORE 02:00": "Fix the FAIL items below before Friday 02:00: the weekly outcome would be incomplete otherwise."}[rep["verdict"]])
     return L

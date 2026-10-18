@@ -46,7 +46,8 @@ Six invariants holding and 286 tests passing means you are back.
 ## What is NOT covered
 
 - The **live build's** `src/` and `scripts/` are copies. Restoring the repo does not restore
-  them; re-copy per the runbook.
+  them; run `python scripts/live_build.py release --apply` (runbook section 0). Every release keeps a
+  `_pre-release-<stamp>` backup folder in the live build and a line in its `RELEASE-LOG.md`.
 - `runs_out/` digests accumulate and are not restored. They are history, not state.
 - Scheduled tasks are registered in Windows, not in git. `schtasks /query /tn "CFP Weekly
   Verification"` to confirm they survive.

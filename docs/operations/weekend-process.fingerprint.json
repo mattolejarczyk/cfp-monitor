@@ -12,7 +12,7 @@
     "scripts/shadow_finder.py": "0fb1de2942bde32bdc95b2d2cfed4a4a87046cbe5e7495ea7e18e4cf01a1799e",
     "scripts/refresh_plan.py": "9c7b49d47cce73e7be752cd4b4bec5320edc2c8e57d21f43b6a89bee9ce95730",
     "scripts/run_weekly.bat": "e34d53e10c3282e23d78d56cb9314dceff5e15db411d35e644f0a33c4d3d49de",
-    "scripts/weekly_verify.py": "cc5e4ba792fea67b6eaa872172068ba5da18dcdd2f8b3e7b059b9cb1a4e96223",
+    "scripts/weekly_verify.py": "71cc27d128d957fbdac992809015f1fcf887dd6c13db3766779befca4b1eb625",
     "scripts/weekly_discovery.py": "28e7247f63c4b85782117dfd1f3f154989b32853ed2cce7cc5014a7724c3d811",
     "scripts/apply_resolutions.py": "8eaf056e98153a4c743e3d86794196629ba18158a543649dac4f673f77f98370",
     "scripts/weekly_deliverable.py": "0632ffd88083e4e251e03fa86b4424071de2e4cb4ec64c35452baa6a913bc955",
@@ -27,7 +27,7 @@
     "scripts/customer_auto_add.py": "4f387f67e0bb34f39d0541eb449060da68cfb12902cb94b12961a62886c2e41e",
     "scripts/customer_awards.py": "fb31508d3b7b5b282a11868ba4e5646ef583f10c493b4198ff64782cbcc7e9e9",
     "scripts/sponsor_prefill.py": "e3d34e090f811d74ef00dc2a526e9d813242613ffeb01d746f2cb37f08b01a73",
-    "scripts/release_gate.py": "373bed8650d0763d3c9440aaad1c21e36607bf3951aad6721e7604afb1d557d4",
+    "scripts/release_gate.py": "9db53056e7400cbd1b00a2471feb939347543cdcf3b187decb5b8deca4da179d",
     "scripts/provisional_rows.py": "dce8962db71fc4dcfa1ff25efe5aeefca2e7091a3a66ef2ff54d0e036d51a85d",
     "scripts/provisional_blank.py": "9f0f59679ce76a23b334270c0f94232b12471141ea7863e99a116b1f96818b42",
     "scripts/build_review_page.py": "a57f1e5b5ed02df5943d01c516eae20d2ce47ffa8610dc645c74851129b864ee"
