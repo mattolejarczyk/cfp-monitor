@@ -38,6 +38,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.cfp_monitor.alerts import maybe_send_email                  # noqa: E402
+from scripts.check_invariants import CUSTOMER_MARKETS, delivered_ids                   # noqa: E402
 
 # A verify_detail containing this is layer 1 reporting a dead SUBMISSION link, as opposed to
 # a contradicted date. The two need different responses, so the digest separates them.
@@ -546,7 +547,7 @@ def main() -> int:
         print(f"ERROR: no database at {db_path.resolve()}")
         return 2
 
-    markets = discover_markets(Path(a.seed_dir))
+    markets = [m for m in discover_markets(Path(a.seed_dir)) if m[0] in CUSTOMER_MARKETS]
     if not markets:
         print(f"ERROR: no single-market *_seed.csv found in {a.seed_dir}")
         return 2
@@ -557,6 +558,9 @@ def main() -> int:
     print(f"  markets  {', '.join(m for m, _ in markets)}\n")
 
     before, label = snapshot(a.db), names(a.db)
+    # The digest is about the customer markets only (2026-10-18): the rows in a seed file. The
+    # database still holds the prospect markets, which nobody is researching or paying for.
+    scope, _n = delivered_ids(Path(a.seed_dir), CUSTOMER_MARKETS)
 
     py = sys.executable
     for market, seed in markets:
@@ -597,9 +601,18 @@ def main() -> int:
     warnings = parse_invariant_warnings(inv.stdout)
     if warnings:
         print(f"  {len(warnings)} invariant WATCH item(s) - these now reach the digest")
-    digest, changed = build_digest(before, after, label, today, still_cited=cited(a.db),
+    outside = (len([x for x in new_dead if x[0] not in scope]),
+               len([x for x in standing_dead if x[0] not in scope]))
+    new_dead = [x for x in new_dead if x[0] in scope]
+    standing_dead = [x for x in standing_dead if x[0] in scope]
+    after = {k: v for k, v in after.items() if k in scope}
+    before = {k: v for k, v in before.items() if k in scope}
+    digest, changed = build_digest(before, after, label, today,
+                                   still_cited=cited(a.db) & scope,
                                    new_dead=new_dead, standing_dead=standing_dead,
                                    invariant_warnings=warnings)
+    digest += (f"\nNot counted above: {sum(outside)} dead link(s) on rows outside the two customer "
+               f"markets ({outside[0]} new, {outside[1]} standing). For information only.\n")
     if not invariants_ok:
         head = ["> **DATABASE INVARIANTS VIOLATED - read this before trusting anything below.**",
                 "> The figures in this digest are computed over a database that failed its",

@@ -145,7 +145,10 @@ def citation_drift(db: str, delivery: Path) -> list[str]:
     return out
 
 
-def delivered_ids(seed_dir: Path) -> tuple[set[str], int]:
+CUSTOMER_MARKETS = ("Cybersecurity", "Utility")
+
+
+def delivered_ids(seed_dir: Path, markets=None) -> tuple[set[str], int]:
     """Canonical ids across every per-market seed. The stale combined grounding_seed.csv is
     skipped - it holds several markets and predates one-market-per-file imports."""
     ids: set[str] = set()
@@ -156,6 +159,8 @@ def delivered_ids(seed_dir: Path) -> tuple[set[str], int]:
         files += 1
         with open(seed, encoding="utf-8-sig", newline="") as fh:
             for r in csv.DictReader(fh):
+                if markets and (r.get("Market") or "").strip() not in markets:
+                    continue
                 eid = (r.get("EVENT_ID_CANON") or "").strip()
                 if eid:
                     ids.add(eid)
@@ -284,8 +289,13 @@ def main() -> int:
     #    event's own name. 67 of 392 on 2026-08-12; the fix is scripted (fix_edition.py) and
     #    sequenced behind the live-build sync. Visible and counted beats quietly wrong - but
     #    failing the gate on it would only teach us to stop running the gate.
+    #    Scoped to the customer markets (2026-10-18): the rows in a seed file. The prospect markets
+    #    are not researched and no customer has them, so their name-year drift is not ours to chase.
+    customer_ids, _ = delivered_ids(seed_dir, CUSTOMER_MARKETS)
     odd = []
     for r in rows:
+        if r["event_id"] not in customer_ids:
+            continue
         m = re.search(r"\b(20\d\d)\b", r["name"] or "")
         ed = str(r["edition"] or "").strip()
         if m and ed.isdigit() and m.group(1) != ed:
