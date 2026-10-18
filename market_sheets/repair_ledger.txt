@@ -787,3 +787,12 @@
 2026-10-17	Cybersecurity	Chief AI Officer Summit UK	IS_PROJECTED	D	false	true	Cybersecurity_audited.csv
 2026-10-17	Cybersecurity	Chief AI Officer Summit UK	GROUNDING_CONFIDENCE	D	Verified (2027)	Projected (2027)	Cybersecurity_audited.csv
 2026-10-17	Cybersecurity	SANS AI Cybersecurity Summit	VENUE_EVIDENCE_URL	D	https://www.sans.org/cyber-security-training-events/ai-cybersecurity-summit-spring-2027/		Cybersecurity_audited.csv
+2026-10-18	Utility	All-Energy Australia 2026	SOURCE_AS_OF	D	2026-10-17	2026-10-18	Utility_audited.csv
+2026-10-18	Utility	Gastech	SOURCE_AS_OF	D	2026-10-17	2026-10-18	Utility_audited.csv
+2026-10-18	Cybersecurity	AI World Congress	SOURCE_AS_OF	D	2026-10-17	2026-10-18	Cybersecurity_audited.csv
+2026-10-18	Cybersecurity	OWASP BeNeLux	SOURCE_AS_OF	D	2026-10-17	2026-10-18	Cybersecurity_audited.csv
+2026-10-18	Cybersecurity	AI Summit New York	SOURCE_AS_OF	D	2026-10-17	2026-10-18	Cybersecurity_audited.csv
+2026-10-18	Cybersecurity	SANS ICS Security Summit & Training	SOURCE_AS_OF	D	2026-10-17	2026-10-18	Cybersecurity_audited.csv
+2026-10-18	Cybersecurity	The AI Summit London	SOURCE_AS_OF	D	2026-10-17	2026-10-18	Cybersecurity_audited.csv
+2026-10-18	Cybersecurity	Chief AI Officer Summit UK	SOURCE_AS_OF	D	2026-10-17	2026-10-18	Cybersecurity_audited.csv
+2026-10-18	Cybersecurity	FIRST Annual Conference 2027 (39th - Bangkok)	SOURCE_AS_OF	D	2026-10-17	2026-10-18	Cybersecurity_audited.csv
