@@ -376,6 +376,114 @@
         "IS_PROJECTED": "false",
         "CFP_SUBMISSION_URL": "https://indiaenergyweek.com/conference/call-for-abstracts"
       }
+    },
+    {
+      "canonical": "2027-afpm-summit-san-antonio-speaking",
+      "event": "AFPM Summit 2027",
+      "ruled_on": "2026-10-17",
+      "by": "operator",
+      "until": "2027-09-03",
+      "why": "https://www.afpm.org/events lists the AFPM Summit on Aug 30 - Sep 2, 2027 at the Gaylord Texan Resort & Convention Center, Grapevine, TX. Upstream's promise C01 (Verified (2027)) is right; our row was Projected with no evidence.",
+      "links": [
+        "https://www.afpm.org/events"
+      ],
+      "set": {
+        "START DATE": "2027-08-30",
+        "DEADLINE_EVIDENCE_URL": "https://www.afpm.org/events",
+        "DEADLINE_QUOTE": "AFPM Summit Aug 30 - Sep 2, 2027",
+        "IS_PROJECTED": "false"
+      }
+    },
+    {
+      "canonical": "2026-industrial-net-zero-conference-sydney",
+      "event": "Industrial Net Zero Conference 2027",
+      "ruled_on": "2026-10-17",
+      "by": "operator",
+      "until": "2027-06-30",
+      "why": "https://www.industrialnetzeroconference.com.au/ shows only the 2026 edition (13 - 14 October 2026, Greenhouse, Sydney) and no 2027 dates. Upstream's promises C04 and C05 (status Needs Verification, start date blank) are right; our row held a guessed start date of 2027-10-12.",
+      "links": [
+        "https://www.industrialnetzeroconference.com.au/"
+      ],
+      "set": {
+        "START DATE": ""
+      }
+    },
+    {
+      "canonical": "2027-sans-ai-cybersecurity-summit-tbd-speaking",
+      "event": "SANS AI Cybersecurity Summit",
+      "ruled_on": "2026-10-17",
+      "by": "operator",
+      "until": "2027-04-29",
+      "why": "The official SANS page https://www.sans.org/cyber-security-training-events/ai-summit-spring-2027 lists the Spring 2027 summit on Apr 27–28 (training Apr 21–26) at the Hilton Denver City Center & Virtual, 1701 California Street, Denver, CO. Upstream's 2026-10-06 promises C11 and C12 (no dates published) are out of date; our location 'Arlington, VA' was the earlier baseline.",
+      "links": [
+        "https://www.sans.org/cyber-security-training-events/ai-summit-spring-2027"
+      ],
+      "set": {
+        "START DATE": "2027-04-27",
+        "CITY": "Denver",
+        "LOCATION": "Hilton Denver City Center & Virtual, 1701 California Street, Denver, CO, USA",
+        "DEADLINE_EVIDENCE_URL": "https://www.sans.org/cyber-security-training-events/ai-summit-spring-2027",
+        "DEADLINE_QUOTE": "Summit: Apr 27–28 Training: Apr 21–26",
+        "IS_PROJECTED": "false",
+        "STATUS DETAILS": "The SANS AI Cybersecurity Summit Spring 2027 is listed on the official SANS event page for April 27 to 28, 2027 (training April 21 to 26) at the Hilton Denver City Center and online. This replaces the earlier Arlington, VA location. A call for presentations has not been published yet."
+      }
+    },
+    {
+      "canonical": "2026-odsc-west-burlingame-speaking",
+      "event": "ODSC West 2026",
+      "ruled_on": "2026-10-17",
+      "by": "operator",
+      "until": "2026-11-30",
+      "why": "The venue is the Hyatt Regency SFO, 1333 Old Bayshore Hwy, Burlingame, CA (customer sheet and upstream's own id agree). Upstream promised CITY San Francisco (promise C18); the operator asked for the best judgement and a question to the team in the notes: city shown as Burlingame.",
+      "links": [
+        "https://odsc.com/california/"
+      ],
+      "set": {
+        "CITY": "Burlingame",
+        "STATUS DETAILS": "The Call for Speakers for the ODSC West 2026 edition (scheduled for October 27-29, 2026) is closed, and the full conference schedule has been published. While the 2027 edition is projected for October 26-28, 2027, the official call for papers for that edition has not yet been released. Note for the team: ODSC markets this event as San Francisco, but the venue, the Hyatt Regency SFO at 1333 Old Bayshore Hwy, is in Burlingame, so the city is shown as Burlingame. Tell us if you prefer San Francisco."
+      }
+    },
+    {
+      "canonical": "2026-cdao-fall-boston-speaking",
+      "event": "CDAO Fall 2026",
+      "ruled_on": "2026-10-17",
+      "by": "operator",
+      "until": "2026-12-31",
+      "why": "Upstream promise C21: no status or wording from a typical schedule. The sentence that said the Request to Speak form is typically for future editions is an inference and was removed; the status Closed rests on the published agenda.",
+      "links": [
+        "https://cdao-fall.coriniumintelligence.com/agenda"
+      ],
+      "set": {
+        "STATUS DETAILS": "The CDAO Fall 2026 conference is scheduled for October 26-27, 2026. As of October 17, 2026, the full agenda has been published and the speaker lineup is finalized, indicating that the call for speakers is closed. The official website still hosts a 'Request to Speak' form."
+      }
+    },
+    {
+      "canonical": "2026-aws-reinvent-las-vegas-speaking",
+      "event": "AWS re:Invent 2026",
+      "ruled_on": "2026-10-17",
+      "by": "operator",
+      "until": "2026-12-31",
+      "why": "Upstream promise C21: no wording from a typical schedule. The clause about the general session deadline typically falling in May or June was removed; the status Closed rests on the page's own statement that the call for speakers is closed.",
+      "links": [
+        "https://aws.amazon.com/events/reinvent/"
+      ],
+      "set": {
+        "STATUS DETAILS": "The Call for Speakers for AWS re:Invent 2026 is closed as of October 17, 2026. The event is confirmed to take place from November 30 to December 4, 2026, in Las Vegas. Specific sponsor activity requests were due by October 16, 2026. The session catalog is currently live for registered attendees."
+      }
+    },
+    {
+      "canonical": "2027-gartner-security-risk-management-summit-london-speaking",
+      "event": "Gartner Security & Risk Management Summit (London) 2027",
+      "ruled_on": "2026-10-17",
+      "by": "operator",
+      "until": "2027-09-30",
+      "why": "Upstream promise C21: no wording from a typical schedule. The clause saying Gartner typically uses internal analysts and invited speakers was removed.",
+      "links": [
+        "https://www.gartner.com/en/conferences/emea/security-risk-management-uk"
+      ],
+      "set": {
+        "STATUS DETAILS": "The 2026 edition of the summit concluded on September 24, 2026. The 2027 edition is confirmed for September 21–23, 2027, at ExCeL London. As of October 17, 2026, no public call for speakers or submission deadline has been published for the 2027 event."
+      }
     }
   ]
 }
