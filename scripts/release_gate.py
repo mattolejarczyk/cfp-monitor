@@ -1185,7 +1185,10 @@ def send(rep: dict, mailer=None) -> bool:
 
 
 def main(argv=None) -> int:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    # weekend_recap.py calls main() with stdout redirected to a StringIO, which has no reconfigure.
+    # Unguarded, the Sunday pre-flight verdict read UNKNOWN every week from 2026-10-12 to 2026-10-18.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--on", default=date.today().isoformat())
     ap.add_argument("--now", default="", help="the moment to age the snapshots against (default: now); for rehearsals")

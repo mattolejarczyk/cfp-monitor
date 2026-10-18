@@ -375,6 +375,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-18** - fix: the Sunday pre-flight email (Sunday step 8) now actually runs. From 2026-10-12 it read 'PRE-FLIGHT GATE: UNKNOWN' every week because the gate assumed a real console while the recap captures its output; found by the first real run of the Sunday task after the live build release.
 - **2026-10-18** - the Sunday check and its digest cover only Cybersecurity and Utility (the two customer markets); invariant 8 is scoped the same way. New `scripts/live_build.py` (status and release) and a Thursday pre-flight line for how far the live build is behind the repo (84 files that day).
 - **2026-10-16** - the Saturday patches are LIVE (applied 19:00 by the one-time apply task): ACT-64 sponsor prefill (run_overnight.ps1), ACT-63 first load of a new event on Saturday and ACT-22 the Friday awards shadow step (run_monthly.ps1). ACT-33 is still held until after Saturday's run. The apply task had waited 18 times from 10:00 because its own name matched the wrapper's running CFP task check; fixed.
 - **2026-10-16** - first load of an AWARD no longer waits for a person when its researched edition differs from the year in its id (the award table has no key_year; 15 live awards already differ), and a new award that exactly duplicates an award already held is not loaded as a twin. Found when 11 customer awards were held for a year mismatch that harmed nothing.

@@ -27,7 +27,7 @@
     "scripts/customer_auto_add.py": "4f387f67e0bb34f39d0541eb449060da68cfb12902cb94b12961a62886c2e41e",
     "scripts/customer_awards.py": "fb31508d3b7b5b282a11868ba4e5646ef583f10c493b4198ff64782cbcc7e9e9",
     "scripts/sponsor_prefill.py": "e3d34e090f811d74ef00dc2a526e9d813242613ffeb01d746f2cb37f08b01a73",
-    "scripts/release_gate.py": "9db53056e7400cbd1b00a2471feb939347543cdcf3b187decb5b8deca4da179d",
+    "scripts/release_gate.py": "7dd0a8351a76ff1a5345b83f1664ecd2740d4e25d33fce6d49859f1a2111e7ea",
     "scripts/provisional_rows.py": "dce8962db71fc4dcfa1ff25efe5aeefca2e7091a3a66ef2ff54d0e036d51a85d",
     "scripts/provisional_blank.py": "9f0f59679ce76a23b334270c0f94232b12471141ea7863e99a116b1f96818b42",
     "scripts/build_review_page.py": "a57f1e5b5ed02df5943d01c516eae20d2ce47ffa8610dc645c74851129b864ee"

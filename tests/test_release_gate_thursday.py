@@ -287,3 +287,18 @@ def test_the_snapshot_line_is_no_longer_self_contradictory(tmp_path):
     assert "older than 2 days" in c["summary"] and "of the four" in c["summary"]
     ok = next(c for c in rg.evaluate(opts(world(tmp_path / "ok", snapshot_age_days=0.5)))["checks"] if c["id"] == "f")
     assert ok["status"] == "PASS" and ok["summary"] == "all four snapshots are under 2 days old"
+
+
+def test_main_runs_with_stdout_redirected_to_a_stringio():
+    """weekend_recap.py captures the gate's output in a StringIO; main() must not need a real console.
+    Unguarded, the Sunday pre-flight verdict read UNKNOWN (AttributeError: reconfigure) 2026-10-12 to 2026-10-18."""
+    import contextlib
+    import io
+
+    import pytest
+
+    import scripts.release_gate as rg
+    with contextlib.redirect_stdout(io.StringIO()):
+        with pytest.raises(SystemExit) as e:
+            rg.main(["--help"])
+    assert e.value.code == 0
