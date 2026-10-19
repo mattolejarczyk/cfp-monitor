@@ -499,6 +499,42 @@
         "DEADLINE_EVIDENCE_URL": "https://defcon.org/html/defcon-34/dc-34-cfp.html",
         "DEADLINE_QUOTE": "The deadline for submissions is May 1, 2026 at Midnight UTC"
       }
+    },
+    {
+      "canonical": "2027-sans-cyber-threat-intelligence-osint-summit-alexandria",
+      "event": "SANS Cyber Threat Intelligence Summit and OSINT Summit",
+      "ruled_on": "2026-10-19",
+      "by": "operator",
+      "until": "2026-10-27",
+      "why": "The operator read SANS's own Speak at a Summit page in a browser on 2026-10-19. The open call for the Cyber Threat Intelligence Summit and the OSINT Summit (Alexandria VA, February 1 and 2, 2027) states 'Deadline for submissions: Monday, October 26, 2026, 5:00pm EDT'. The approved row carried 2026-10-19, so the call looked like it closed on 19 October and a note to the customer said so; it closes on 26 October. Found by the free reader (shadow run); the SANS CDI, ICS and AI Summit rows are NOT covered by this deadline (the page lists only these two summits).",
+      "links": [
+        "https://www.sans.org/cyber-security-summit/speak-at-a-summit"
+      ],
+      "set": {
+        "SUBMISSION DEADLINE": "2026-10-26",
+        "DEADLINE_EVIDENCE_URL": "https://www.sans.org/cyber-security-summit/speak-at-a-summit",
+        "DEADLINE_QUOTE": "Deadline for submissions: Monday, October 26, 2026, 5:00pm EDT.",
+        "IS_PROJECTED": "false",
+        "STATUS DETAILS": "The SANS Cyber Threat Intelligence Summit and the SANS Open-Source Intelligence Summit take place together in Alexandria, VA on February 1 and 2, 2027. The call for presentations is open. SANS states the deadline for submissions: Monday, October 26, 2026, 5:00pm EDT."
+      }
+    },
+    {
+      "canonical": "2027-odsc-east-boston-speaking",
+      "event": "ODSC East 2027 (Open Data Science Conference)",
+      "ruled_on": "2026-10-19",
+      "by": "operator",
+      "until": "2027-03-27",
+      "why": "The operator read https://odsc.ai/east/call-for-speakers/ in a browser on 2026-10-19 (page heading ODSC AI EAST 2027). The call opens 2 November 2026; Round One proposals are due 8 January 2027 and Round Two on 26 March 2027. The approved row carried no deadline. Found by the free reader (shadow run).",
+      "links": [
+        "https://odsc.ai/east/call-for-speakers/"
+      ],
+      "set": {
+        "SUBMISSION DEADLINE": "2027-01-08",
+        "DEADLINE_EVIDENCE_URL": "https://odsc.ai/east/call-for-speakers/",
+        "DEADLINE_QUOTE": "Deadline for Round One Speaker Proposals – January 8, 2027",
+        "IS_PROJECTED": "false",
+        "STATUS DETAILS": "ODSC AI East 2027 publishes its call for speakers: the call opens November 2, 2026, the Round One deadline for speaker proposals is January 8, 2027 (acceptance February 15, 2027), and Round Two proposals close March 26, 2027."
+      }
     }
   ]
 }
