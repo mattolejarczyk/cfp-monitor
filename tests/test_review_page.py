@@ -300,11 +300,13 @@ def test_a_pre_v15_row_has_no_sponsor_flag():
     assert out["spon"] is False and out["org"] == "" and out["sponq"] == ""
 
 
-def test_a_sponsor_requirement_with_no_quote_says_so_rather_than_going_quiet():
-    """R18.3 - the cost is the most consequential number on the page. If we have not proved it
-    yet the page must SAY that, not present the figure as though it were sourced."""
-    assert "unverified until we have" in brp.PAGE
-    assert "not yet read a sentence" in brp.PAGE
+def test_a_sponsor_figure_with_no_proof_says_what_it_is_rather_than_claiming_a_requirement():
+    """R18.3 - the cost is the most consequential number on the page. Changed 2026-10-19 (operator): the row used to say 'speaking at this event requires sponsorship' and 'we have not yet
+    read a sentence confirming this' on EVERY Yes row, but Yes only meant 'sponsorship packages exist'. Now an unconfirmed row says it is sponsorship information from our research and points to the
+    sponsorship page; the requirement claim is made only for a confirmed row, and how to speak comes from speaking_route.py."""
+    assert "sponsorship and exhibitor information from our research" in brp.PAGE
+    assert "r.sponlabel?'speaking at this event requires sponsorship.'" in brp.PAGE
+    assert "unverified until we have" not in brp.PAGE and "not yet read a sentence" not in brp.PAGE
 
 
 # ------------------------------------------------ the sponsorship page (ACT-65) --

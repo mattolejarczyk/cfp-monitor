@@ -105,6 +105,7 @@ record.
 | `Contract_v1.5_Amendment_Organizer_And_Sponsorship.md` | 2026-08-14 | **Header still says DRAFT - CONFIRM.** Its 43-column schema is live and gated, and v1.7 treats it as standing, so it was evidently agreed; no document records the agreement |
 | `Contract_v1.6_Amendment_Deadline_Rounds_And_Sources.md` | 2026-08-31 | Specifies R22 and R23; both implemented and enforced both sides |
 | `Contract_v1.7_Amendment_Additive_Sponsorship.md` | 2026-08-31 | **Agreed in principle by upstream 2026-08-31**; implementation deliberately blocked on the 43-column export |
+| `Contract_v1.8_Amendment_Sponsor_Required_Definition.md` | 2026-10-19 | **Agreed by upstream 2026-10-19 (relay)**: SPONSOR_REQUIRED Yes only on a stated requirement; the dedicated sponsor-only pass stops; downstream establishes the speaking route itself (R21) |
 
 **Not included:** `Contract_v1.8_Amendment_Awards_Window.md` (2026-09-03), not yet agreed.
 

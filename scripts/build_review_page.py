@@ -218,13 +218,40 @@ def customer_says_sponsor_required(client_row):
     return False
 
 
-def sponsor_badge_label(sponsor_required, sponsor_quote, customer_confirmed=False):
+def sponsor_badge_label(sponsor_required, sponsor_quote, customer_confirmed=False, route=''):
     """The list badge for a sponsorship gate. CHANGED 2026-10-19 (operator): the badge appears ONLY when sponsorship is confirmed, that is when the row is a 'Yes' AND either we hold a
     SPONSOR_QUOTE (a verbatim sentence from the organizer's page) or the customer's own sheet says it is required. An unconfirmed 'Yes' used to read 'Sponsor required (unconfirmed)' on
     nearly every row, which only told the reader that we did not know yet; it now shows no badge. The detail text in the open row is built separately and is unchanged."""
-    if (sponsor_required or '').strip().lower() != 'yes':
+    sr_ = (sponsor_required or '').strip().lower()
+    if route == 'MUST_SPONSOR' and sr_ in ('yes', 'unknown', ''):          # speaking_route.py: a quote on the event's own pages says vendors must sponsor to speak (never against an upstream No)
+        return SPONSOR_CONFIRMED
+    if sr_ != 'yes':
         return ''
     return SPONSOR_CONFIRMED if ((sponsor_quote or '').strip() or customer_confirmed) else ''
+
+
+def _route_of(routes, r):
+    x = (routes or {}).get((r.get('EVENT_ID') or '').strip())
+    return x['route'] if x and x.get('route') in ROUTE_LABELS else ''
+
+
+def _route_fields(routes, r):
+    x = (routes or {}).get((r.get('EVENT_ID') or '').strip())
+    if not x or x.get('route') not in ROUTE_LABELS:
+        return {'route': '', 'routecq': '', 'routecu': '', 'routepq': '', 'routepu': '', 'routemq': '', 'routemu': ''}
+    g = lambda k: (x.get(k) or '')                                          # noqa: E731
+    return {'route': x['route'], 'routecq': g('call_quote'), 'routecu': g('call_url'), 'routepq': g('paid_quote'), 'routepu': g('paid_url'),
+            'routemq': g('must_quote'), 'routemu': g('must_url')}
+
+
+# What the page says for each route (the plain words a customer reads). UNCLEAR is not in the list: nothing is shown.
+ROUTE_LABELS = {
+    'OPEN_CALL': 'There is a public call for speakers.',
+    'OPEN_CALL_AND_PAID_SLOTS': 'There is a public call for speakers, and speaking slots are also offered with sponsor packages.',
+    'PAID_SLOTS_NO_CALL_SEEN': 'Speaking slots are offered with sponsor packages. We did not find a public call for speakers.',
+    'MUST_SPONSOR': 'Sponsorship is required to speak.',
+    'INVITE_ONLY': 'Speakers are invited or chosen by the organizer.',
+}
 
 
 def awards_only(rows, customer=None):
@@ -243,7 +270,7 @@ def awards_only(rows, customer=None):
     return kept, dropped
 
 
-def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=None, sponsor_cust=None):
+def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=None, sponsor_cust=None, routes=None):
     st = edition_states(rows, today)
     _today = date.fromisoformat(today) if isinstance(today, str) else today
     out = []
@@ -306,7 +333,9 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
             'sponcost': d['SPONSOR_COST'], 'sponurl': d['SPONSOR_URL'],
             'sponq': d['SPONSOR_QUOTE'],
             'sponlabel': sponsor_badge_label(d['SPONSOR_REQUIRED'], d['SPONSOR_QUOTE'],
-                                             (r.get('EVENT_ID') or '').strip() in (sponsor_cust or ())),
+                                             (r.get('EVENT_ID') or '').strip() in (sponsor_cust or ()), _route_of(routes, r)),
+            # HOW A COMPANY GETS A SPEAKING SLOT (scripts/speaking_route.py, 2026-10-19): the route and the page's own words behind it. Blank when the route is UNCLEAR or was never judged.
+            **_route_fields(routes, r),
             'st': st.get((r.get('EVENT_ID') or '').strip(), 'Active'),
             # When WE last inspected this row at source. Drives the 'Updated since' view -
             # the answer to 'what has moved since I last looked', which is the question a
@@ -596,6 +625,7 @@ const KIND = '__KIND__';
 // True when the page was built with --no-evidence, so the deadline-verification and
 // dead-link inputs were never produced. The three views below depend entirely on them.
 const NO_EVIDENCE = __NO_EVIDENCE__;
+const ROUTE_TEXT = __ROUTE_TEXT__;           // the plain words for each way of getting a speaking slot (speaking_route.py)
 const EVIDENCE_VIEWS = ['checked','unconfirmed','broken'];
 // A window that opens inside two months is worth preparing for now. Wider than the closing
 // chips on purpose: the point is lead time, not urgency.
@@ -873,9 +903,9 @@ function render(){
          ${x.ours_wrong?'<br><b>Ours looks like the wrong one here</b> &mdash; we will correct it.':''}</p>`).join('')}`:''}
      ${r.lq?`<h4>Why this is no longer running${r.lev?` &mdash; <a href="${esc(r.lev)}" target="_blank" rel="noopener">from the organiser</a>`:' <span style="font-weight:400;color:var(--muted)">&mdash; no source page recorded</span>'}</h4><p class="quote">${esc(r.lq)}</p>`:''}
      ${r.chkq?`<h4>What we found when we checked</h4><p class="quote">${esc(r.chkq)}</p>`:''}
-     ${r.spon?`<h4>Sponsorship</h4><p>${r.sponcost?'<b>'+esc(r.sponcost)+'</b> &mdash; ':''}speaking at this event requires sponsorship.</p>${
-        r.sponq?`<p class="quote">${esc(r.sponq)}</p>`
-               :`<p style="color:var(--muted)">We have not yet read a sentence on their page confirming this. Treat the figure as unverified until we have.</p>`}`:''}
+     ${r.route?`<h4>How to speak</h4><p>${esc(ROUTE_TEXT[r.route]||'')}</p>${[[r.routecq,r.routecu],[r.routepq,r.routepu],[r.routemq,r.routemu]].filter(x=>x[0]).map(x=>`<p class="quote">${esc(x[0])}${clickable(x[1])?` <a href="${esc(x[1])}" target="_blank" rel="noopener">source</a>`:''}</p>`).join('')}`:''}
+     ${r.spon?`<h4>Sponsorship</h4><p>${r.sponcost?'<b>'+esc(r.sponcost)+'</b> &mdash; ':''}${r.sponlabel?'speaking at this event requires sponsorship.':'sponsorship and exhibitor information from our research. Check the sponsorship page for what it includes.'}</p>${
+        r.sponq?`<p class="quote">${esc(r.sponq)}</p>`:''}`:''}
      ${r.org?`<h4>Organized by</h4><p>${esc(r.org)}</p>`:''}
      ${r.trk?`<h4>Tracks</h4><p>${esc(r.trk)}</p>`:''}
      <div class="links">
@@ -1166,6 +1196,7 @@ def main():
     # anyone opening view-source read our internal reasoning about which rows we had got wrong.
     # Python comments do not reach the page; template comments do.
     recon = {}
+    routes_by_eid = {}            # delivery EVENT_ID -> the speaking_route row (scripts/speaking_route.py), decided routes only
     sponsor_cust = set()          # delivery EVENT_IDs whose row on the CUSTOMER's sheet says sponsorship is required (badge rule, 2026-10-19)
     if a.reconcile:
         if not a.db:
@@ -1181,6 +1212,14 @@ def main():
         con = sqlite3.connect(a.db)
         con.row_factory = sqlite3.Row
         client_rows = [dict(x) for x in con.execute('select * from client_conferences')]
+        try:
+            from scripts.speaking_route import load_routes                           # noqa: PLC0415
+            for canon, rr in load_routes(a.db).items():
+                hit = by_canon.get(canon)
+                if hit and rr.get('route') in ROUTE_LABELS:
+                    routes_by_eid[(hit.get('EVENT_ID') or '').strip()] = rr
+        except Exception as e:                                                       # noqa: BLE001  the page never depends on this
+            print(f'speaking routes: not read ({type(e).__name__}: {e})')
         for cr in client_rows:
             if int(cr.get('withdrawn_by_customer') or 0) or not customer_says_sponsor_required(cr):
                 continue
@@ -1199,9 +1238,10 @@ def main():
         print(f'reconciled against {len(client_rows)} customer row(s): {n_conf} disagreement(s) '
               f'on {len(recon)} row(s); {n_cov} of their rows not joined to ours')
 
-    data = build(rows, a.date, dead, checks, recon, sponsor_cust)
+    data = build(rows, a.date, dead, checks, recon, sponsor_cust, routes_by_eid)
     print(f'sponsorship badge: {sum(1 for d in data if d["sponlabel"])} row(s) confirmed '
-          f'({len(sponsor_cust)} by the customer\'s own sheet); {sum(1 for d in data if d["spon"] and not d["sponlabel"])} unconfirmed row(s) carry no badge')
+          f'({len(sponsor_cust)} by the customer\'s own sheet); {sum(1 for d in data if d["spon"] and not d["sponlabel"])} unconfirmed row(s) carry no badge; '
+          f'{sum(1 for d in data if d["route"])} row(s) show how to speak')
     n_dead = sum(1 for d in data if d['dead'])
     n_chk = sum(1 for d in data if d['chk'] == 'verified')
     print('{} row(s); {} dead link(s); {} deadline(s) confirmed on the cited page'.format(
@@ -1227,6 +1267,7 @@ def main():
                 .replace('__DEADHOSTS__', json.dumps(dead_hosts, ensure_ascii=False))
                 .replace('__KIND__', a.kind)
                 .replace('__NO_EVIDENCE__', 'true' if a.no_evidence else 'false')
+                .replace('__ROUTE_TEXT__', json.dumps(ROUTE_LABELS))
                 .replace('__TITLE__', VOCAB[a.kind]['title'])
                 .replace('__DOCTITLE__', VOCAB[a.kind]['doctitle'])
                 .replace('__NOUN__', VOCAB[a.kind]['noun'])

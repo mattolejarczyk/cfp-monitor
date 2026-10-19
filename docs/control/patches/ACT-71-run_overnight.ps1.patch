@@ -1,0 +1,24 @@
+--- a/Markets/run_overnight.ps1
++++ b/Markets/run_overnight.ps1
+@@ -93,6 +93,13 @@
+             # 2026-10-11 (ACT-64): BEFORE the sponsor pass, copy last week's settled Yes/No answer (same permanent id and edition, sponsor link alive, not due for the 8-week re-check) into the new file so the pass skips it
+             # (scripts/sponsor_prefill.py; docs/design/sponsor-check-cost-plan.md). Failure-isolated: the try/catch and the script's own exit 0 mean an error here can never stop the run, it only means every row is asked, as before.
+             try { & py "C:\Users\matts\cfp-monitor\scripts\sponsor_prefill.py" --market $m --markets-dir (Get-Location).Path --apply } catch { Write-Host "SPONSOR-PREFILL: UNKNOWN - $($_.Exception.Message)" }
++            # 2026-10-19 (ACT-71, operator and upstream agreed): the DEDICATED sponsorship pass is OFF unless CFP_SPONSOR_PASS=1. SPONSOR_REQUIRED had come to mean "sponsorship packages exist" (211 of 220 rows), the pass was about
++            # half of the grounded searches, and its answer cannot be verified. Last week's settled answers are still carried by the prefill above and a new event stays Unknown (R19.2); how a company gets a speaking slot is now
++            # established downstream from the event's own pages (scripts/speaking_route.py). Turn it back on only by an explicit decision.
++            if ($env:CFP_SPONSOR_PASS -ne '1') {
++                Write-Host ""
++                Write-Host "SPONSORSHIP: the dedicated pass is OFF for $m (CFP_SPONSOR_PASS is not 1): carried answers stay, new events stay Unknown (R19.2)." -ForegroundColor Cyan
++            } else {
+             Write-Host ""
+             Write-Host "SPONSORSHIP: checking rows still Unknown for $m (R19.3)" -ForegroundColor Cyan
+             $sponsorTemp = "${auditedFile}.sponsor-tmp.csv"
+@@ -107,6 +114,7 @@
+             } else {
+                 Write-Host "Sponsorship check failed (exit $sponsorExit) - $auditedFile left unchanged." -ForegroundColor Yellow
+                 if (Test-Path $sponsorTemp) { Remove-Item $sponsorTemp -Force }
++            }
+             }
+         }
+     }

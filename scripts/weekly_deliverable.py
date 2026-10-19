@@ -130,6 +130,7 @@ def main() -> int:
                     help="skip the dead-link re-check (it runs a browser over every link)")
     ap.add_argument("--awards-input", help="awards delivery CSV (default: newest Awards_*_out.csv)")
     ap.add_argument("--no-gate", action="store_true", help="do not run the release gate after the build (ACT-68)")
+    ap.add_argument("--no-routes", action="store_true", help="do not run the speaking route check after the pages are published (2026-10-19)")
     ap.add_argument("--gate-dry-run", action="store_true", help="run the release gate but send no email (it writes the email text beside its report)")
     a = ap.parse_args()
 
@@ -429,6 +430,17 @@ def main() -> int:
                 shutil.copy2(work / "MANIFEST.md", published / "MANIFEST.md")
         except OSError:
             pass
+    # 8. SPEAKING ROUTES, LAST (2026-10-19, operator direction): how a company gets a speaking slot at each event and whether it must pay (scripts/speaking_route.py). It runs AFTER the pages are published and the gate has
+    # spoken, so it can never delay or change this week's pages; what it learns is on NEXT Monday's page. At most 40 events and 25 minutes a week (never-judged first, then the oldest), the cheap model, cents.
+    # Advisory like the shadow runs: not counted in the run health, never changes the exit code, any fault is one printed line.
+    if not a.no_routes:
+        try:
+            rr = subprocess.run([PY, ROOT / "scripts/speaking_route.py", "--db", a.db, "--apply", "--limit", "40", "--max-minutes", "25"], capture_output=True, text=True, timeout=45 * 60,
+                                env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+            (work / "5_speaking_routes.log").write_text(rr.stdout + rr.stderr, encoding="utf-8")
+            print("speaking routes ->", ((rr.stdout or "").strip().splitlines() or ["(no output)"])[-1][:200])
+        except Exception as exc:                                     # noqa: BLE001
+            print(f"speaking routes: not run ({type(exc).__name__})")
     if status != "HEALTHY":
         return 2
     return 0 if HEALTH.failures("weekly_step") == 0 else 1

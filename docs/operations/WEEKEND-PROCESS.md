@@ -207,7 +207,9 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    itself cannot skip an Unknown, so for now it is asked every week (about 11 events). Last week's answer is taken from the approved file first, then from the newest archived research file, so an event that
    never shipped keeps its answer. Anything unclear means nothing is copied for that event; any fault means nothing is copied at all and the pass runs exactly as before. The log prints
    `SPONSOR-PREFILL: <n> carried, <m> to ask (<a> new, <b> unknown, <c> due for re-check, <d> link dead/edition changed)` and a per-event report is filed under `runs_out\qa\<date>\sponsor_prefill_<market>.md/.csv`.
-   Nothing else about the check changes; the quote step and the badge read the cells as before. *(sponsor_prefill.py -> then run_market_audit.py --sponsor-only)*
+   **Since 2026-10-19 (ACT-71, agreed with upstream) the dedicated sponsorship pass itself is OFF** unless the switch `CFP_SPONSOR_PASS=1` is set: `run_overnight.ps1` still carries last week's settled answers (the prefill above), skips the paid
+   `run_market_audit.py --sponsor-only` call and says so in the log (`SPONSORSHIP: the dedicated pass is OFF`); a new event stays Unknown (R19.2). Why: SPONSOR_REQUIRED had come to mean 'sponsorship packages exist' (211 of 220 rows), the pass was about half of the grounded searches and its
+   answer cannot be verified. How a company gets a speaking slot is established downstream instead (Monday step 13). *(sponsor_prefill.py; run_market_audit.py --sponsor-only is no longer run)*
 8. **[Safety check]** **Checks the output's format** against the agreed structure before anything else uses it.
    *(validate_market_output.py)*
 
@@ -360,6 +362,12 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
     that are on neither page; rows not researched for too long; how many Provisional awards and conferences the pages carry (a conference's blank fields are named); how old the customer sheet copies are; the build QA (an Open row past its deadline, a retired label, or a page more than 10 percent smaller than last
     week's is a NO-GO; a disputed deadline, a dead link, a row that disappeared is a note); and what upstream still owes. The same report is written to `AppData\Local\CFP-Monitor\runs_out\qa\<date>\release_gate.md` and `.json`. It only reports: it cannot
     change or block what step 10 published, and a fault in it prints `GATE: UNKNOWN - why` and nothing else changes. *(release_gate.py)*
+13. **[Learn]** **Works out how a company gets a speaking slot at each event, and whether it must pay** (added 2026-10-19, operator direction; `scripts/speaking_route.py`, contract R19.1, R19.2, R21). LAST, after the pages are published and the gate has spoken, so it can never delay or
+    change the week's pages; what it learns is on NEXT Monday's page. Per event (never judged first, then the oldest; 40 events and 25 minutes a week, the two customer markets only) it reads the event's own home page, the sponsorship page upstream cited, up to three sponsorship pages and up to three
+    call-for-speakers pages (chosen from its sitemap and menu), and the cheap model gets them ALL TOGETHER with four questions: is there a public call anyone can submit to; are speaking slots part of sponsor packages; does a page say vendors MUST sponsor to speak; one plain sentence. Every answer needs a word for
+    word quote; CODE checks the quote is on the pages, that it says what is claimed, and that a call is not dated before the edition, then derives the route: OPEN_CALL, OPEN_CALL_AND_PAID_SLOTS, PAID_SLOTS_NO_CALL_SEEN, INVITE_ONLY, MUST_SPONSOR, or UNCLEAR (Unknown, a complete answer). It writes only the table
+    `speaking_route` in the database (who, when, which page) and never touches an upstream value (R21.1). The open row of the conference page shows 'How to speak' with the quote and a source link; the 'Sponsor required' badge appears only for a stated requirement (MUST_SPONSOR) or when the customer's own sheet says it.
+    Advisory: not counted in the run health, switchable with `--no-routes`, any fault is one printed line. Cost about 0.002 USD an event. *(speaking_route.py -> table speaking_route -> build_review_page.py)*
 
 ## Every 4th Wednesday 2:00 AM - Monthly research (markets without a customer)
 
@@ -378,6 +386,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-19** - SPEAKING ROUTE: Monday step 13 judges how a company gets a speaking slot from the event's own pages (public call, paid slots, invitation only, or a stated requirement) with word for word quotes checked by code; the conference page's open row shows 'How to speak' and no longer says 'requires sponsorship' unless that is proven. The dedicated sponsorship pass is OFF (ACT-71; `CFP_SPONSOR_PASS=1` turns it back on); upstream agreed to redefine SPONSOR_REQUIRED (Yes only on a stated requirement) and to stop that pass.
 - **2026-10-19** - the conference refresh policy (ACT-33) is LIVE: patch applied to run_monthly.ps1 (step 0a3) and `CFP_REFRESH_APPLY=1` set. Saturday 2026-10-24 is a LEAN WEEK (`lean_until` 20261024 in refresh_policy.json): only new events, deadlines within 14 days, live rows with a dead link and named rows are researched, because the Google spend cap leaves no room for the full research; it expires by itself.
 - **2026-10-19** - the sponsorship badge on the conference page shows only when confirmed (a held quote, or the customer's own sheet): the '(unconfirmed)' badge on 215 of 224 rows is gone.
 - **2026-10-18** - fix: the Sunday pre-flight email (Sunday step 8) now actually runs. From 2026-10-12 it read 'PRE-FLIGHT GATE: UNKNOWN' every week because the gate assumed a real console while the recap captures its output; found by the first real run of the Sunday task after the live build release.
