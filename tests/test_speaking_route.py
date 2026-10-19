@@ -162,3 +162,57 @@ def test_the_prompt_names_the_edition_and_asks_for_quotes():
     u = sr.build_user("Conf X", "2027", pages(CALL, kinds=["call"]))
     assert "EDITION: 2027" in u and "kind=call" in u
     assert "never reword" in sr.SYSTEM and "\"no\" ONLY if" in sr.SYSTEM
+
+
+# ------------------------------------------------------------------ a failed read is not an answer (2026-10-19: a browser dialog crashed the driver and 117 events were recorded as UNCLEAR)
+def test_an_unclear_event_where_no_page_could_be_read_is_retried_much_sooner(tmp_path):
+    db = make_db(tmp_path, [row(1), row(2), row(3)])
+    con = sqlite3.connect(db)
+    nothing = sr.route({}, [{"kind": "home", "url": "u", "text": ""}])
+    sr.store(con, "id1", nothing, [{"kind": "home", "url": "u", "text": ""}], "2026", (0, 0), datetime(2026, 10, 1, 9, 0))      # read nothing, 18 days ago: due (14)
+    read = sr.route({}, pages("some text with nothing useful"))
+    sr.store(con, "id2", read, pages("some text with nothing useful"), "2026", (0, 0), datetime(2026, 10, 1, 9, 0))              # read pages, found nothing, 18 days ago: not due (28)
+    sr.store(con, "id3", nothing, [{"kind": "home", "url": "u", "text": ""}], "2026", (0, 0), datetime(2026, 10, 15, 9, 0))      # read nothing, 4 days ago: not due
+    con.close()
+    out = [r["event_id"] for r in sr.candidates(db, {"id1", "id2", "id3"}, date(2026, 10, 19))]
+    assert out == ["id1"]
+
+
+def test_the_run_stops_when_the_browser_layer_is_down_and_records_nothing_for_it():
+    s = (sr.__file__ and open(sr.__file__, encoding="utf-8").read())
+    assert "MAX_UNREADABLE_IN_A_ROW" in s and "the browser layer looks down" in s
+    block = s[s.index('elif not any((p["text"] or "").strip() for p in pages):'):s.index('                else:\n                    state["consecutive_unreadable"] = 0')]
+    assert 'if state["abort"]:' in block and "return" in block.split('if state["abort"]:')[1].split("res, toks")[0]      # an aborted run returns before store()
+    assert "hard anti-bot host and no real Chrome reachable: not read" in s                                           # a skipped site is recorded, never left at the front of the queue
+
+
+def test_the_page_renderer_swallows_a_javascript_dialog_instead_of_crashing_the_driver():
+    f = open(sr.ROOT / "src" / "cfp_monitor" / "fetch.py", encoding="utf-8").read()
+    assert 'page.on("dialog"' in f and "async def _dismiss_dialog" in f and "import asyncio" in f
+
+
+def test_a_hard_anti_bot_host_is_read_through_the_real_chrome_when_it_is_reachable_and_never_with_plain_requests():
+    src = open(sr.__file__, encoding="utf-8").read()
+    body = src[src.index("async def collect("):src.index("async def ask(")]
+    assert "ctx._f.cdp_reachable(" in body and "if hard and not" in body            # skipped only when there is no real Chrome
+    assert "if not hard:" in body.split("urls, labels = [], {}")[1].split("cache:")[0]   # the plain-HTTP sitemap request is never made to such a host
+    assert "prefer_cdp=True" in src                                                    # pages are rendered through the real browser first
+
+
+def test_a_url_naming_an_earlier_year_is_an_old_edition_but_the_bare_page_is_evergreen():
+    assert sr.old_edition_url("https://x.org/call-for-papers-2025", 2027)
+    assert sr.old_edition_url("https://x.org/2026/cfp", 2027)
+    assert not sr.old_edition_url("https://x.org/call-for-papers", 2027)
+    assert not sr.old_edition_url("https://x.org/call-for-papers-2027", 2027)
+
+
+def test_an_event_that_already_happened_is_not_a_candidate():
+    src = open(sr.__file__, encoding="utf-8").read()
+    assert 'str(r["start_date"])[:10] < today.isoformat()' in src
+
+
+def test_the_floor_is_the_current_calendar_year_so_next_years_announcements_on_this_years_page_survive():
+    src = open(sr.__file__, encoding="utf-8").read()
+    assert "floor = date.today().year" in src
+    assert sr.old_edition_url("https://x.org/2025/cfp", 2026) and not sr.old_edition_url("https://x.org/2026/cfp", 2026)
+    assert sr.old_edition_url("https://x.org/2026/cfp", 2027)               # from 1 Jan 2027

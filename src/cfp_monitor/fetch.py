@@ -9,6 +9,7 @@ the anti-bot check) for markdown. Links are classified in Python (unit-testable)
 """
 from __future__ import annotations
 
+import asyncio
 import socket
 from dataclasses import dataclass, field
 from typing import Optional
@@ -235,6 +236,14 @@ def _will_use_cdp(url: str, settings) -> bool:
     return cdp_reachable(getattr(settings, "cdp_url", None)) and _force_fallback_domain(url)
 
 
+
+async def _dismiss_dialog(dialog) -> None:
+    """Dismiss a page's JavaScript dialog; never raise (see _render_with_consent)."""
+    try:
+        await dialog.dismiss()
+    except Exception:                                                  # noqa: BLE001
+        pass
+
 async def _render_with_consent(url: str, settings, tracer, prefer_cdp: bool = False):
     """Render `url` in the shared fallback browser, dismiss consent, return
     (html, anchors, status, body_text, use_cdp). Under CDP, reuse the real signed-in context."""
@@ -257,6 +266,10 @@ async def _render_with_consent(url: str, settings, tracer, prefer_cdp: bool = Fa
         browser = await _get_launched_browser(settings.fallback_headless)
         ctx, own_ctx = await browser.new_context(), True
     page = await ctx.new_page()
+    # 2026-10-19: a page that raises a JavaScript dialog (alert, beforeunload) made Playwright's own driver auto-dismiss it twice over a CDP connection and die with an uncaught
+    # "Page.handleJavaScriptDialog: No dialog is showing"; every read after that failed instantly (the speaking route pass lost 117 events to it). With a listener the driver no longer
+    # auto-dismisses, and a failed dismiss is ours to swallow.
+    page.on("dialog", lambda d: asyncio.ensure_future(_dismiss_dialog(d)))
     try:
         resp = await page.goto(url, wait_until="domcontentloaded",
                                timeout=int(settings.fallback_render_timeout_s * 1000))

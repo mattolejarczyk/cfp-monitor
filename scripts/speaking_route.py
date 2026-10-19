@@ -207,11 +207,13 @@ def load_routes(db) -> dict[str, dict]:
         return {}
 
 
-def candidates(db, scope_ids: set[str], today: date, stale_days: int = 56, unclear_days: int = 28, limit: int | None = None, only: list[str] | None = None) -> list[dict]:
-    """Events to judge: in scope, with a home page; never judged first (live statuses before closed), then the oldest. A decided route is refreshed after stale_days, an UNCLEAR one after unclear_days."""
+def candidates(db, scope_ids: set[str], today: date, stale_days: int = 56, unclear_days: int = 28, limit: int | None = None, only: list[str] | None = None, unreadable_days: int = 14) -> list[dict]:
+    """Events to judge: in scope, with a home page; never judged first (live statuses before closed), then the oldest. A decided route is refreshed after stale_days, an UNCLEAR one after unclear_days,
+    and an UNCLEAR one where NO page could be read after unreadable_days (nothing was learned: that is a failed read, not an answer)."""
     con = sqlite3.connect(f"file:{Path(db).as_posix()}?mode=ro", uri=True)
     con.row_factory = sqlite3.Row
-    rows = [dict(r) for r in con.execute("select event_id, name, url, main_info_url, sponsor_url, sponsor_cost, edition, status from grounding_facts")]
+    has_start = any(c[1] == "start_date" for c in con.execute("pragma table_info(grounding_facts)"))
+    rows = [dict(r) for r in con.execute("select event_id, name, url, main_info_url, sponsor_url, sponsor_cost, edition, status, " + ("start_date" if has_start else "'' as start_date") + " from grounding_facts")]
     done = load_routes(db)
     con.close()
     out = []
@@ -220,10 +222,13 @@ def candidates(db, scope_ids: set[str], today: date, stale_days: int = 56, uncle
             continue
         if only and r["event_id"] not in only:
             continue
+        if not only and str(r.get("start_date") or "")[:10] and str(r["start_date"])[:10] < today.isoformat():
+            continue                                                   # the event has already happened: how to speak at it is moot (by its start date, never by the year in its name or URL)
         prev = done.get(r["event_id"])
         if prev and not only:
             age = (today - date.fromisoformat((prev.get("judged_at") or "1970-01-01")[:10])).days
-            if age < (unclear_days if prev["route"] == "UNCLEAR" else stale_days):
+            wait = (unreadable_days if int(prev.get("pages_read") or 0) == 0 else unclear_days) if prev["route"] == "UNCLEAR" else stale_days
+            if age < wait:
                 continue
         live = str(r["status"] or "").strip().lower() not in ("closed",)
         out.append({**r, "_prev": prev["judged_at"] if prev else "", "_key": (1 if prev else 0, 0 if live else 1, prev["judged_at"] if prev else "")})
@@ -250,17 +255,27 @@ async def render(url: str, ctx):
         return "", []
 
 
+def old_edition_url(u: str, floor: int) -> bool:
+    """True when the URL PATH names a year before `floor` (/call-for-papers-2025): an old edition's page. A bare /call-for-papers is evergreen and stays."""
+    years = [int(y) for y in re.findall(r"(?<!\d)(20\d\d)(?!\d)", urlparse(u).path)]
+    return bool(years) and max(years) < floor
+
+
 async def collect(r: dict, ctx) -> list[dict]:
     home = r["main_info_url"] or r["url"]
     hosts = {host(home), host(r["sponsor_url"] or "")} - {""}
-    if hasattr(ctx._f, "_force_fallback_domain") and ctx._f._force_fallback_domain(home):
+    # HARD ANTI-BOT HOSTS (the fetch layer's own list). They are read through the operator's REAL Chrome (CDP, his own IP and browser fingerprint), the top rung of the fetch ladder, and only when that Chrome is
+    # reachable; otherwise they are skipped rather than hammered with plain requests (a flagged residential IP costs more than a missed event). No plain-HTTP sitemap request is made to such a host.
+    hard = hasattr(ctx._f, "_force_fallback_domain") and ctx._f._force_fallback_domain(home)
+    if hard and not ctx._f.cdp_reachable(getattr(ctx.settings, "cdp_url", None)):
         return []
     urls, labels = [], {}
-    try:
-        pages, _how, _cap, _n, _r = await ctx.cs.collect(ctx.sitewalk.origin(home))
-        urls += [u for u, _lm in pages]
-    except Exception:                                                  # noqa: BLE001
-        pass
+    if not hard:
+        try:
+            pages, _how, _cap, _n, _r = await ctx.cs.collect(ctx.sitewalk.origin(home))
+            urls += [u for u, _lm in pages]
+        except Exception:                                              # noqa: BLE001
+            pass
     cache: dict[str, str] = {}
     body, anchors = await render(home, ctx)
     cache[home] = body
@@ -270,7 +285,8 @@ async def collect(r: dict, ctx) -> list[dict]:
             urls.append(u)
             if text:
                 labels[u] = text
-    urls = list(dict.fromkeys(urls))
+    floor = date.today().year          # a link naming a year BEFORE this calendar year is a past edition's page (/2025/ now, /2026/ from 1 Jan 2027). The current year stays: next year's event is often announced on it.
+    urls = [u for u in dict.fromkeys(urls) if u in (home, r["sponsor_url"]) or not old_edition_url(u, floor)]   # the home page and the cited sponsor page are always read (the outliers)
     cited = r["sponsor_url"] or ""
     spons = pick(urls, labels, SPONSOR_WORDS, {home, cited}, 3)
     calls = pick(urls, labels, CALL_WORDS, {home, cited, *spons}, 3)
@@ -313,19 +329,32 @@ async def run(a) -> int:
         out.mkdir(parents=True, exist_ok=True)
     ctx = build_ctx((out or Path(a.db).parent) / "speaking_route_reader_log.jsonl", 1.0)
     t0, sem, results, tot_in, tot_out = time.time(), asyncio.Semaphore(a.concurrency), [], 0, 0
+    state = {"consecutive_unreadable": 0, "abort": False}
+    MAX_UNREADABLE_IN_A_ROW = 8              # eight events in a row with no readable page at all means the browser layer is down (2026-10-19: a dialog crashed the driver), not that eight sites are empty
 
     async def work(i, r):
         nonlocal tot_in, tot_out
         async with sem:
-            if (time.time() - t0) / 60 > a.max_minutes:
+            if (time.time() - t0) / 60 > a.max_minutes or state["abort"]:
                 return
             try:
                 pages = await collect(r, ctx)
                 edition = str(r.get("edition") or "")
-                if not any((p["text"] or "").strip() for p in pages):
+                if not pages:                                                   # a hard anti-bot host and no real Chrome to read it with: collect() skips it. Recorded (retried later), not a browser failure
+                    res, toks = route({}, pages, edition), (0, 0)
+                    res["summary"] = "hard anti-bot host and no real Chrome reachable: not read"
+                elif not any((p["text"] or "").strip() for p in pages):
+                    state["consecutive_unreadable"] += 1
+                    if state["consecutive_unreadable"] >= MAX_UNREADABLE_IN_A_ROW and not state["abort"]:
+                        state["abort"] = True
+                        print(f"STOPPED: {MAX_UNREADABLE_IN_A_ROW} events in a row had no readable page; the browser layer looks down. Nothing is recorded for them; run again when it is back.", flush=True)
+                    if state["abort"]:
+                        print(f"[{i + 1}/{len(todo)}] {r['name'][:46]:46} not read (browser layer down)", flush=True)
+                        return
                     res, toks = route({}, pages, edition), (0, 0)
                     res["summary"] = "no readable page"
                 else:
+                    state["consecutive_unreadable"] = 0
                     ans, toks = await ask(build_user(r["name"], edition, pages), ctx.settings)
                     res = route(ans, pages, edition)
                 tot_in += toks[0]

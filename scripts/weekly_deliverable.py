@@ -117,6 +117,23 @@ def newest(pattern: str, where: Path) -> Path | None:
     return hits[0] if hits else None
 
 
+def start_cdp_chrome() -> bool:
+    """Make sure the operator's real Chrome is reachable on the debug port (the top rung of the fetch ladder; it is what reads the hard anti-bot sites). Returns True only when WE started it, so the caller
+    closes only what it opened (scripts/cdp_ctl.py stop matches the dedicated profile, never a window a person is using). Same pattern as the Sunday job's run_weekly.bat. Never raises."""
+    try:
+        ctl = [PY, str(ROOT / "scripts/cdp_ctl.py")]
+        if subprocess.run(ctl + ["check"], capture_output=True, timeout=30).returncode == 0:
+            return False                                              # already up: not ours to close
+        chrome = next((c for c in (r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe") if Path(c).exists()), None)
+        if not chrome:
+            return False
+        subprocess.Popen([chrome, "--remote-debugging-port=9222", "--remote-allow-origins=*", f"--user-data-dir={Path.home() / 'cfp-cdp-profile'}", "--no-first-run",
+                          "--no-default-browser-check", "about:blank"])
+        return subprocess.run(ctl + ["wait"], capture_output=True, timeout=60).returncode == 0
+    except Exception:                                                 # noqa: BLE001
+        return False
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--db", default=str(LIVE_DB))
@@ -434,13 +451,21 @@ def main() -> int:
     # spoken, so it can never delay or change this week's pages; what it learns is on NEXT Monday's page. At most 40 events and 25 minutes a week (never-judged first, then the oldest), the cheap model, cents.
     # Advisory like the shadow runs: not counted in the run health, never changes the exit code, any fault is one printed line.
     if not a.no_routes:
+        started_chrome = False
         try:
+            started_chrome = start_cdp_chrome()                      # the real Chrome reads the hard anti-bot sites; without it they are skipped, not hammered
             rr = subprocess.run([PY, ROOT / "scripts/speaking_route.py", "--db", a.db, "--apply", "--limit", "40", "--max-minutes", "25"], capture_output=True, text=True, timeout=45 * 60,
-                                env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+                                env={**os.environ, "PYTHONIOENCODING": "utf-8", "CFP_CDP_URL": "http://localhost:9222"})
             (work / "5_speaking_routes.log").write_text(rr.stdout + rr.stderr, encoding="utf-8")
             print("speaking routes ->", ((rr.stdout or "").strip().splitlines() or ["(no output)"])[-1][:200])
         except Exception as exc:                                     # noqa: BLE001
             print(f"speaking routes: not run ({type(exc).__name__})")
+        finally:
+            if started_chrome:
+                try:
+                    subprocess.run([PY, str(ROOT / "scripts/cdp_ctl.py"), "stop"], capture_output=True, timeout=60)
+                except Exception:                                    # noqa: BLE001
+                    pass
     if status != "HEALTHY":
         return 2
     return 0 if HEALTH.failures("weekly_step") == 0 else 1
