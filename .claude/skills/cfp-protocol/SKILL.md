@@ -35,6 +35,10 @@ Read these three, in order, before writing any code or touching any data:
    spent hunting calls for conferences that had already taken place. It is executable
    (`src/cfp_monitor/lifecycle.py`) - if the two disagree, the document wins.
 
+5. **`docs/operations/TROUBLESHOOTING.md`** - read it the moment you start poking at something by hand
+   (a dead link, an odd number, a failed fetch). It is the checklist of our repeat mistakes, including
+   the real-Chrome CDP rung that manual checks keep skipping.
+
 Then state, in one line, which stage you are working in and which existing tool covers it.
 If none does, say so explicitly before writing anything new.
 

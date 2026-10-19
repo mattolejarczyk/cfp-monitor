@@ -94,6 +94,8 @@ moment (runbook section in brackets). **Report** = where the result lands.
 
 ## C. When something arrives or you change something (manual procedures: runbook section 7)
 
+Hand-troubleshooting anything (a dead link, an odd number, a failed read)? Follow `TROUBLESHOOTING.md` first: existing tool before new code, the full fetch ladder including the real-Chrome CDP rung, and verify the claim against the data before stating it.
+
 | # | Moment | Command | What it answers | Born from |
 |---|---|---|---|---|
 | C1 | A delivery arrives from upstream | `python scripts/check_delivery_ids.py <csv> --market <Market>` | do their ids exist HERE, and is each event on the input list? A sparse patch cannot apply on an unknown id (5.4): since ACT-16 it exits 1 without --strict, and prints the table 'your id -> the id we hold (city, name, status)' for the reply. `accept_delivery.py --db <db>` runs the same check as check 9 (a sparse patch with an unknown id fails; a full delivery only gets a note) | three false "it is in the file" claims, 2026-10-02/03 |
