@@ -15,7 +15,7 @@
     "scripts/weekly_verify.py": "71cc27d128d957fbdac992809015f1fcf887dd6c13db3766779befca4b1eb625",
     "scripts/weekly_discovery.py": "28e7247f63c4b85782117dfd1f3f154989b32853ed2cce7cc5014a7724c3d811",
     "scripts/apply_resolutions.py": "8eaf056e98153a4c743e3d86794196629ba18158a543649dac4f673f77f98370",
-    "scripts/weekly_deliverable.py": "742232a284d14a6ae5dafecd4516fbfec58e53bc9cbc1f13fc183aff70c3a1b0",
+    "scripts/weekly_deliverable.py": "9df7562e4f1ee0cf29e3d3e68c16be741812da38e33779cd1882acf4d89b43ca",
     "scripts/qa_build.py": "4cf2d24385a745c8fb3519abe5622449d7d6bc4e0c2c60ce5c9b5c77d64c3bb0",
     "scripts/import_awards.py": "7c0eec181367a13a604229ddba6ecfdfc51f3d926d41792d8321f2b3d7ddfe49",
     "scripts/export_checks.py": "03248b087d91de83b4fdab76e0c1116d279a084adbc52822b707bf82c93e3d30",
