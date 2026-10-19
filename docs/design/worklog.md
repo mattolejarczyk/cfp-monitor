@@ -5,6 +5,12 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-19 (night) - speaking route rerun finished and released; troubleshooting protocol
+- Rerun of 121 events done: UNCLEAR 64, OPEN_CALL 43, PAID_SLOTS_NO_CALL_SEEN 10, OPEN_CALL_AND_PAID_SLOTS 4, about 0.18 USD; only 2 events had zero readable pages; 34 UNCLEAR were events already over.
+- Operator rules: skip events with start_date before today; skip discovered links whose path year is before the current calendar year (a bare /call-for-papers is evergreen; home and cited sponsor page always read). 29 tests in test_speaking_route and hook.
+- Released commit 69fbde6 to the live build (dialog fix in fetch.py, CDP for anti-bot hosts, Monday starts Chrome only if down). WEEKEND-PROCESS step 13 updated, fingerprint confirmed.
+- New docs/operations/TROUBLESHOOTING.md after the repeated skipping of the CDP step and the regular verification process; linked from the skill, QA-REGISTER C and the home CLAUDE.md.
+
 ## 2026-10-19 (afternoon and evening) - lean Saturday, free re-check validated, speaking route built
 - LEAN WEEK for Saturday 2026-10-24 (operator, Option 2; the Google cap leaves 11.30 USD of 130): `refresh_plan.py` gained a self-expiring `lean_until` (20261024) and `lean_deadline_days` 14; ACT-33 patch applied to run_monthly.ps1 (wrapper, backup, read-back) and CFP_REFRESH_APPLY=1 set; 33 rows researched instead of 223 (about 4 USD instead of 23). Rehearsed on a copy (`experiments/act33_rehearsal/prepare_lean.py` + `weekend_import --sandbox`): all carried rows byte-identical.
 - FREE RE-CHECK VALIDATION (shadow finder over the 103 live events, 217 minutes, 0.22 USD, read-only): the cheap reader agrees with what we ship on 13 of the 26 events where we ship a deadline, differs on 3, cannot prove 10; found a deadline on the pages where we ship none for 4; 73 events have no deadline either way. Reading it: SANS CTI Summit page says deadline Oct 26 (we shipped Oct 19; a note to Nicolia said it closed today): pinned. ODSC East 2027 (call opens Nov 2, Round One Jan 8, 2027): pinned. The 3 other SANS 'real-only' rows are false (the generic SANS page lists only the CTI and OSINT summits). Wild West Hackin' Fest Oct 30 vs Oct 31 (11 PM PDT) and CODASPY (two tracks, already pinned) need no action.
