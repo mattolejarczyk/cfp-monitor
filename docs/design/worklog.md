@@ -5,6 +5,11 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-19 - Monday pages sent; sponsorship badge rule changed
+- Matt sent both pages to Nicolia the same day (the conference page is the REBUILT one without the '(unconfirmed)' badge: 2 confirmed badges, ESF MENA and Energy LIVE, from the customer's own sheet notes; the Monday original is kept as 'Conference Review 2026-10-19 - Live Markets.pre-sponsorbadge.html' in handoff-files/weekly/work_2026-10-19). Cover note: 2 conference calls closing today (SANS Cyber Threat Intelligence and OSINT Summit; International Conference on Climate Change) and 1 tomorrow (Black Hat Asia 2027 Call for Briefings); checked against the page, all Open and verified on the cited page, no award closing.
+- New rule (operator, QA-REGISTER A44): the sponsorship badge shows only when confirmed (a held verbatim quote, or the customer's own sheet says it is required). 211 of the page's sponsor Yes rows have no quote anywhere because extract_sponsor_quotes.py has never been part of the weekly run; the Oct 5 trial proved a sentence on only 6 of 62 readable pages, so many Yes claims are not supported by the page upstream cited. Decision pending: run the confirmation step weekly (about 0.15 USD first pass, cents after) and what to do with unsupported Yes rows.
+
+
 ## 2026-10-19 - Monday build, seven disputed deadlines read, CCUS 2027 added
 - Monday build ran 07:00 to 08:57 (exit 0, 9 of 9 steps, HEALTHY), published to handoff-files/weekly/2026-10-19: 224 conference rows, 160 awards rows, gate GO WITH NOTES (12 build QA flags, 4 Provisional conferences, 2 Provisional awards, customer sheet snapshots 2.3 days old).
 - Of the 7 disputed deadlines, 6 were right as held (RSAC, DEF CON, AAIML, ICRAI, RAAI, ACT Expo); the 7th (CCUS Event 2026) is a closed 2026 row while the same series has a NEW edition (CCUS 2027, Houston) whose call is open until Oct 27. DEF CON pinned to its own CFP page (was a Google redirect link). Upstream gave the CCUS 2027 id through the relay; input row added and id stamped; loads Saturday 10-24.
