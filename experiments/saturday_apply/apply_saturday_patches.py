@@ -1,4 +1,4 @@
-"""One command for the Saturday patches (ACT-64 sponsor prefill, ACT-63 new events, ACT-22 Friday awards shadow step): checks, backs up, applies, proves the result, restores on any doubt.
+"""One command for the Saturday patches (ACT-64 sponsor prefill, ACT-63 new events, ACT-22 Friday awards shadow step, ACT-33 conference refresh plan): checks, backs up, applies, proves the result, restores on any doubt.
 
     python experiments\\saturday_apply\\apply_saturday_patches.py            DRY RUN: does every check on the live files in memory, writes nothing
     python experiments\\saturday_apply\\apply_saturday_patches.py --apply    does it
@@ -32,6 +32,8 @@ TARGETS = [
      "backup": "run_monthly.ps1.pre-act63-20261013"},
     {"name": "ACT-22", "file": "run_monthly.ps1", "patch": "ACT-22-run_monthly.ps1.patch", "marker": "# 2026-10-05 (ACT-22): AWARDS SHADOW RUN", "present": "(ACT-22): AWARDS SHADOW RUN", "delta": 6,
      "backup": "run_monthly.ps1.pre-act22-20261016"},
+    {"name": "ACT-33", "file": "run_monthly.ps1", "patch": "ACT-33-run_monthly.ps1.patch", "marker": "STEP 0a3: CONFERENCE REFRESH PLAN", "present": "STEP 0a3", "delta": 46,
+     "backup": "run_monthly.ps1.pre-act33-20261019"},
 ]
 
 
@@ -92,7 +94,7 @@ def main():
     a = ap.parse_args()
     markets = Path(a.markets_dir)
     live_run = markets == LIVE_MARKETS
-    print(f"== Saturday patches (ACT-64, ACT-63, ACT-22): {'APPLY' if a.apply else 'DRY RUN (writes nothing)'} on {markets}")
+    print(f"== Saturday patches (ACT-64, ACT-63, ACT-22, ACT-33): {'APPLY' if a.apply else 'DRY RUN (writes nothing)'} on {markets}")
     if live_run:
         busy = running_tasks()
         if busy:

@@ -166,8 +166,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    permanent ID, so a renamed event cannot turn into a duplicate. An event that cannot be matched
    with certainty is left untagged and held back later - never guessed. An id that UPSTREAM GAVE US for a brand-new event (recorded in `docs/operations/given_ids.csv` when we stamped it,
    `stamp_given_ids.py`) is kept even though the event is not in the database yet; without that record the stamp on a new event was cleared here. *(stamp_input_ids.py)*
-4a. **[Update]** **Marks the closed events that are not worth researching this week** *(ACT-33, BUILT 2026-10-11, operator-approved policy; NOT LIVE until the reviewer applies `docs/control/patches/ACT-33-run_monthly.ps1.patch`;
-   once applied it runs as a DRY RUN every Saturday until the switch `CFP_REFRESH_APPLY=1` is set)*. Saturday only (the Friday awards run has its own step 3b above). Before the 5-row test and the research, for
+4a. **[Update]** **Marks the closed events that are not worth researching this week** *(ACT-33, operator-approved policy; LIVE since 2026-10-19: the patch is in `run_monthly.ps1` and the switch `CFP_REFRESH_APPLY=1` is set for the user account the Saturday task runs as; unset it and the step is a dry run again)*. Saturday only (the Friday awards run has its own step 3b above). Before the 5-row test and the research, for
    Arnica and Utility Global, it decides row by row from the LAST APPROVED row of each event (the one the load would carry) and writes the reason into the `REFRESH_SKIP` column of `<Market>_input.csv`;
    the research skips a marked row like a duplicate and the load carries last week's approved row for it, so nothing leaves the page. The numbers live in `docs/operations/refresh_policy.json` (change a number, no code):
    - **Group 1 - not Closed** (Open, Upcoming, Needs Verification): researched every week, never skipped.
@@ -178,6 +177,8 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
      `docs/operations/refresh_overrides.txt` (one ID per line: a customer-sheet flag or an upstream note; the file is empty to start); an event with no approved row yet (a new event); an event whose dates
      cannot be read or disagree (doubt means research); and EVERY event on the first Saturday of January (year rollover).
    "The event ended" uses the end of the CONFERENCE DATES text when it can be read, else the start date. A **guard** skips nothing if the plan would skip more than half of the rows (something is off with the data).
+**LEAN WEEK (a one-off for Saturday 2026-10-24, operator ruling 2026-10-19):** while `lean_until` in `docs/operations/refresh_policy.json` (a date, YYYYMMDD, 20261024) has not passed, Saturday researches ONLY a new event, a row whose stored deadline falls within `lean_deadline_days` (14) days, a live row with a customer-facing link recorded dead, and a row named in `refresh_overrides.txt`; every other row carries last week's accepted row (the same machinery as the normal skips, rehearsed 2026-10-19 on a copy: 119 and 83 carried rows byte-identical to the approved files). It exists because the Google spend cap left no room for the full research (about 33 rows researched instead of 223, about 4 USD instead of 23). It expires by itself the day after `lean_until`; no one has to switch it off. *(refresh_plan.py `lean_active`)*
+
    **Dry run by default:** unless `CFP_REFRESH_APPLY=1` the step only REPORTS (`runs_out\qa\<date>\refresh_plan_<Market>.md` and `.csv`, with the group, the reason and the next Saturday each event is due) and marks
    nothing, so the first live Saturday researches everything as before. Any fault prints `REFRESH-PLAN <market>: UNKNOWN - why` and researches every row. The log line is
    `REFRESH-PLAN Cybersecurity: n rows, k researched (g1 a, g2 b, g3 c, g4 d, overrides e), s skipped (saving about X USD, an estimate)` (0.12 USD a researched row is an estimate: about 8-9 searches at 14 USD per 1,000);
@@ -377,6 +378,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-19** - the conference refresh policy (ACT-33) is LIVE: patch applied to run_monthly.ps1 (step 0a3) and `CFP_REFRESH_APPLY=1` set. Saturday 2026-10-24 is a LEAN WEEK (`lean_until` 20261024 in refresh_policy.json): only new events, deadlines within 14 days, live rows with a dead link and named rows are researched, because the Google spend cap leaves no room for the full research; it expires by itself.
 - **2026-10-19** - the sponsorship badge on the conference page shows only when confirmed (a held quote, or the customer's own sheet): the '(unconfirmed)' badge on 215 of 224 rows is gone.
 - **2026-10-18** - fix: the Sunday pre-flight email (Sunday step 8) now actually runs. From 2026-10-12 it read 'PRE-FLIGHT GATE: UNKNOWN' every week because the gate assumed a real console while the recap captures its output; found by the first real run of the Sunday task after the live build release.
 - **2026-10-18** - the Sunday check and its digest cover only Cybersecurity and Utility (the two customer markets); invariant 8 is scoped the same way. New `scripts/live_build.py` (status and release) and a Thursday pre-flight line for how far the live build is behind the repo (84 files that day).

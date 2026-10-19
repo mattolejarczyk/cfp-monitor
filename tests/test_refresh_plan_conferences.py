@@ -43,11 +43,13 @@ def id_with(parity_mod: int, slot: int) -> str:
 # ------------------------------------------------------------------ the policy and its numbers
 def test_defaults_are_the_approved_numbers():
     assert POL == {"group2_after_days": 60, "group2_every_weeks": 2, "group3_check_from_days": 14, "group3_check_to_days": 21, "group4_near_days": 30, "group4_mid_days": 90,
-                   "group4_mid_every_weeks": 2, "group4_far_every_weeks": 4, "guard_max_skip_share": 0.5, "cost_per_row_usd": 0.12}
+                   "group4_mid_every_weeks": 2, "group4_far_every_weeks": 4, "guard_max_skip_share": 0.5, "cost_per_row_usd": 0.12,
+                   "lean_until": 0, "lean_deadline_days": 14}
 
 
 def test_the_shipped_policy_file_equals_the_defaults_and_parses():
-    assert rp.load_policy() == POL                                   # docs/operations/refresh_policy.json
+    strip = lambda d: {k: v for k, v in d.items() if not k.startswith("lean")}      # the one-off lean week setting may be present in the file; the approved numbers may not change
+    assert strip(rp.load_policy()) == strip(POL)                     # docs/operations/refresh_policy.json
 
 
 def test_policy_file_changes_a_number_without_code(tmp_path):
@@ -304,6 +306,11 @@ def make_world(tmp_path, n_dormant=6, n_live=10):
 
 
 def run_main(mk, db, tmp_path, *extra, today="2026-10-17", market="Utility"):
+    # These tests exercise the NORMAL policy. The shipped docs/operations/refresh_policy.json may carry a one-off lean week (lean_until), so unless a test passes its own policy,
+    # it gets an empty one (all built-in defaults, lean off).
+    if "--policy" not in extra:
+        (tmp_path / "policy_defaults.json").write_text("{}", encoding="utf-8")
+        extra = (*extra, "--policy", str(tmp_path / "policy_defaults.json"))
     return rp.main(["--market", market, "--markets-dir", str(mk), "--db", str(db), "--today", today, "--out-dir", str(tmp_path / "out"), "--min-mapped", "1", *extra])
 
 
@@ -454,3 +461,65 @@ def test_awards_mode_is_unchanged(tmp_path, capsys):
     out = capsys.readouterr().out
     assert out.startswith("refresh_plan Awards 2026-10-09: 1 awards, research 1, skip 0 (0%); researched because: live 1") and "report only: nothing written" in out
     assert "REFRESH-PLAN" not in out and inp.read_text(encoding="utf-8") == '"CONFERENCE","EVENT_ID_CANON"\n"A","a"\n'
+
+
+# ------------------------------------------------------------------ LEAN WEEK (operator, 2026-10-19): a one-off that researches only what cannot wait
+LEAN = {**POL, "lean_until": 20261024, "_lean": True, "guard_max_skip_share": 0.5}
+
+
+def live_prior(i, deadline_in_days=None, status="Open", today=SAT):
+    p = {"STATUS": status, "CONFERENCE DATES": fmt(today + timedelta(days=120)), "START DATE": (today + timedelta(days=120)).isoformat(),
+         "CONFERENCE URL": f"https://l{i}.example/", "SUBMISSION URL": "", "SUBMISSION DEADLINE": ""}
+    if deadline_in_days is not None:
+        p["SUBMISSION DEADLINE"] = (today + timedelta(days=deadline_in_days)).isoformat()
+    return p
+
+
+def test_lean_week_is_in_force_until_its_date_and_then_expires_by_itself():
+    pol = {**POL, "lean_until": 20261024}
+    assert rp.lean_active(pol, date(2026, 10, 24)) and rp.lean_active(pol, date(2026, 10, 17))
+    assert not rp.lean_active(pol, date(2026, 10, 25)) and not rp.lean_active(pol, date(2026, 10, 31))
+    assert not rp.lean_active(POL, SAT)                                      # off by default (lean_until = 0)
+    assert isinstance(rp.load_policy()["lean_until"], int)                   # the shipped file loads with the new numeric keys
+
+
+def test_normal_weeks_are_unchanged_by_the_lean_code():
+    pl = plan_for(conf_rows(2), {"r0": live_prior(0, 100), "r1": dormant_prior(1)})
+    assert 0 not in pl["skip"] and 1 in pl["skip"]
+
+
+def test_lean_researches_only_a_deadline_within_the_window_a_new_event_a_live_dead_link_and_named_rows():
+    rows = conf_rows(8)
+    priors = {"r0": live_prior(0, 3), "r1": live_prior(1, 14), "r2": live_prior(2, 15), "r3": live_prior(3, 90), "r4": live_prior(4, None),
+              "r5": live_prior(5, 90) | {"CONFERENCE URL": "https://dead.example/"}, "r6": dormant_prior(6) | {"CONFERENCE URL": "https://dead2.example/"}}
+    pl = plan_for(rows, priors, states={"https://dead.example/": "dead", "https://dead2.example/": "dead"}, overrides={"r4"}, pol=LEAN)
+    researched = {d["canonical"] for d in pl["decisions"] if d["research"]}
+    assert researched == {"r0", "r1", "r5", "r4", "r7"}, researched      # r0 r1 deadline in window; r5 live+dead link; r4 named; r7 new (no prior)
+    assert {"r2", "r3", "r6"} <= {d["canonical"] for d in pl["decisions"] if not d["research"]}
+    assert pl["decisions"][6]["reason"].startswith("LEAN WEEK")
+
+
+def test_lean_week_skips_a_row_with_unreadable_dates_that_the_normal_schedule_would_research():
+    odd = {"STATUS": "Closed", "CONFERENCE DATES": "", "START DATE": "", "SUBMISSION DEADLINE": ""}
+    assert plan_for(conf_rows(1), {"r0": odd}, pol={**LEAN, "guard_max_skip_share": 1.0})["skip"].get(0)
+    assert plan_for(conf_rows(1), {"r0": odd})["skip"] == {}                                   # normal week: doubt means research
+
+
+def test_lean_week_relaxes_the_guard_but_still_has_one():
+    rows = conf_rows(40)
+    priors = {f"r{i}": live_prior(i, 90) for i in range(40)}
+    pl0 = plan_for(rows, priors, pol=LEAN)
+    assert pl0["skip"] == {} and "GUARD" in pl0["fuse"]                                         # 100 percent skipped is over even the lean guard: nothing skipped
+    rows2 = conf_rows(100)
+    priors2 = {f"r{i}": live_prior(i, 90) for i in range(97)} | {f"r{i}": live_prior(i, 3) for i in range(97, 100)}
+    pl = plan_for(rows2, priors2, pol=LEAN)
+    assert len(pl["skip"]) == 97 and pl["fuse"] == ""                                           # 97 percent skipped: allowed in a lean week
+
+
+def test_next_due_ignores_the_lean_flag():
+    assert rp.next_due(closed_ended(1), "x", SAT, {**POL, "_lean": True}) == (SAT + timedelta(days=14)).isoformat()
+
+
+def test_the_summary_line_says_it_is_a_lean_week():
+    pl = plan_for(conf_rows(2), {"r0": live_prior(0, 90), "r1": live_prior(1, 3)}, pol={**LEAN, "guard_max_skip_share": 1.0})
+    assert "LEAN WEEK" in rp.summary_line("Cybersecurity", pl, LEAN)

@@ -1,7 +1,7 @@
 {
   "document": "WEEKEND-PROCESS.md",
   "scripts": {
-    "run_monthly.ps1": "d1dda79325e941fd77dddaa0bc76fdb2a1b0ded7ca5b81e5689dd85152a57f24",
+    "run_monthly.ps1": "5a651a3a920606be86411b6a0f4407123669933b6bd846fbd4410908cb695b80",
     "run_canary.ps1": "4aa1cde888b90e8da5565a3b4ad1d0d6eb6cb56cb25c1ed954a55cb0b00f7661",
     "run_overnight.ps1": "b905999276ae06a93b1a6d04fd7ca213623e8df53f3b542595c3345bce2e197e",
     "run_all.ps1": "e7ae4f68ff580d1551e45cd7c2fb8d121c3678180afdbd32f09ae906ade2fda1",
@@ -10,7 +10,7 @@
     "scripts/weekend_import.py": "d46a0163f3e0636901d1c03f36ec211ae793495b0e4f680e98d2855a668353ea",
     "scripts/weekend_recap.py": "125c10c8bac102116fa84a4108c9115b09e811167ba27ac8f39570e9bafdbb8b",
     "scripts/shadow_finder.py": "0fb1de2942bde32bdc95b2d2cfed4a4a87046cbe5e7495ea7e18e4cf01a1799e",
-    "scripts/refresh_plan.py": "9c7b49d47cce73e7be752cd4b4bec5320edc2c8e57d21f43b6a89bee9ce95730",
+    "scripts/refresh_plan.py": "9bf6a5e752b0ffdf883e13411652e6ae5a9dd2218ac92d37c81702501f8a4f19",
     "scripts/run_weekly.bat": "e34d53e10c3282e23d78d56cb9314dceff5e15db411d35e644f0a33c4d3d49de",
     "scripts/weekly_verify.py": "71cc27d128d957fbdac992809015f1fcf887dd6c13db3766779befca4b1eb625",
     "scripts/weekly_discovery.py": "28e7247f63c4b85782117dfd1f3f154989b32853ed2cce7cc5014a7724c3d811",

@@ -9,5 +9,8 @@
   "group4_mid_every_weeks": 2,
   "group4_far_every_weeks": 4,
   "guard_max_skip_share": 0.5,
-  "cost_per_row_usd": 0.12
+  "cost_per_row_usd": 0.12,
+  "lean_until": 20261024,
+  "lean_deadline_days": 14,
+  "_lean_comment": "LEAN WEEK, one-off (operator 2026-10-19): the Google spend cap leaves no room for the full Saturday research on 2026-10-24. Until the date in lean_until (YYYYMMDD, inclusive) only new events, deadlines within lean_deadline_days, live rows with a dead link and named rows are researched; the rest carry last week's row. It expires by itself after that date."
 }

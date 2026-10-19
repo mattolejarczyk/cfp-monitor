@@ -176,6 +176,11 @@ DEFAULT_POLICY = {
     "group4_near_days": 30, "group4_mid_days": 90, "group4_mid_every_weeks": 2, "group4_far_every_weeks": 4,
     "guard_max_skip_share": 0.5,
     "cost_per_row_usd": 0.12,           # an ESTIMATE: about 8-9 grounded searches per row at 14 USD per 1,000
+    # LEAN WEEK (operator, 2026-10-19; a one-off for a week when the Google spend cap leaves no room for the full research). A date written as YYYYMMDD, inclusive; 0 = never. While today is
+    # on or before it, a conference row is researched ONLY if it is new, or its stored deadline falls within `lean_deadline_days` days, or it is not Closed and one of its customer-facing
+    # links is recorded dead, or it is named in refresh_overrides.txt (or it is the first Saturday of January). Everything else carries last week's accepted row. The setting EXPIRES BY ITSELF
+    # on that date, so it can never be left on by mistake.
+    "lean_until": 0, "lean_deadline_days": 14,
 }
 LINK_COLUMNS = ("CONFERENCE URL", "SUBMISSION URL", "MAIN_INFO_URL", "CFP_SUBMISSION_URL", "SPONSOR_URL")
 
@@ -264,8 +269,29 @@ def _slot(canon: str, every: int, today: date) -> bool:
     return stable_hash(canon) % every == week_index(today) % every
 
 
+def lean_active(pol: dict, today: date) -> bool:
+    """True while a lean week is in force: the policy has lean_until (YYYYMMDD) and today is on or before it."""
+    u = int(pol.get("lean_until") or 0)
+    return bool(u) and int(today.strftime("%Y%m%d")) <= u
+
+
 def classify_conference(rec: dict, canon: str, today: date, pol: dict) -> dict:
-    """The schedule alone (no overrides): {'group': 'G1'..'G4' or '', 'research': bool, 'reason': str, 'start', 'end'}. `rec` is the row's last accepted row."""
+    """The schedule alone (no overrides): {'group': 'G1'..'G4' or '', 'research': bool, 'reason': str, 'start', 'end'}. `rec` is the row's last accepted row.
+    In a LEAN WEEK (pol['_lean'], set by the caller from lean_active) a row is researched only when its stored deadline is within lean_deadline_days; the schedule is otherwise ignored."""
+    out = _classify_schedule(rec, canon, today, pol)
+    if pol.get("_lean"):
+        dl = _d(rec.get("SUBMISSION DEADLINE"))
+        days = int(pol.get("lean_deadline_days", 14))
+        if dl is not None and today <= dl <= today + timedelta(days=days):
+            out.update(group=out["group"] or "G1", research=True, reason=f"LEAN WEEK: stored deadline {dl.isoformat()} is within {days} days")
+            out.pop("doubt", None)
+        else:
+            out.update(research=False, reason="LEAN WEEK (one-off): " + out["reason"])
+            out.pop("doubt", None)
+    return out
+
+
+def _classify_schedule(rec: dict, canon: str, today: date, pol: dict) -> dict:
     status = (rec.get("STATUS") or "").strip()
     out = {"group": "", "research": True, "reason": "", "start": None, "end": None}
     start, end, why = event_dates(rec)
@@ -307,6 +333,7 @@ def classify_conference(rec: dict, canon: str, today: date, pol: dict) -> dict:
 
 def next_due(rec: dict, canon: str, today: date, pol: dict, horizon_weeks: int = 110) -> str:
     """The first Saturday AFTER today on which the schedule alone researches this row ('' when none within the horizon)."""
+    pol = {**pol, "_lean": False}                              # the schedule beyond a lean week is the normal one
     d = today + timedelta(days=(5 - today.weekday()) % 7 or 7)             # the coming Saturday
     for _ in range(horizon_weeks):
         if classify_conference(rec, canon, d, pol)["research"]:
@@ -352,6 +379,8 @@ def conference_plan(rows: list[dict], prior_by_canon: dict[str, dict], states: d
                 if canon in overrides:
                     forced.append(("named", "named in refresh_overrides.txt (a customer-sheet flag or an upstream note)"))
                 dead = dead_links(prior, states)
+                if dead and pol.get("_lean") and (prior.get("STATUS") or "").strip().lower() == "closed":
+                    dead = []                                    # a lean week does not chase links on Closed rows
                 if dead:
                     forced.append(("dead-link", "customer-facing link recorded dead: " + dead[0]))
                 if forced:
@@ -362,8 +391,9 @@ def conference_plan(rows: list[dict], prior_by_canon: dict[str, dict], states: d
     n = len(decisions)
     skipped = [d for d in decisions if not d["research"]]
     fuse = ""
-    if n and len(skipped) / n > pol["guard_max_skip_share"]:
-        fuse = (f"GUARD: the plan would skip {len(skipped)} of {n} rows ({100 * len(skipped) // n}%, over the {int(pol['guard_max_skip_share'] * 100)}% limit): "
+    guard = max(pol["guard_max_skip_share"], 0.97) if pol.get("_lean") else pol["guard_max_skip_share"]      # a lean week deliberately skips most rows
+    if n and len(skipped) / n > guard:
+        fuse = (f"GUARD: the plan would skip {len(skipped)} of {n} rows ({100 * len(skipped) // n}%, over the {int(guard * 100)}% limit): "
                 f"skipping nothing, something is off with the data")
         for d in skipped:
             d["research"], d["kind"], d["reason"] = True, "group", d["reason"] + " (plan voided by the guard)"
@@ -384,6 +414,8 @@ def summary_line(market: str, pl: dict, pol: dict, dry: bool = False) -> str:
     c, n, k, s = pl["counts"], pl["rows"], pl["researched"], len(pl["skip"])
     line = (f"REFRESH-PLAN {market}: {n} rows, {k} researched (g1 {c['g1']}, g2 {c['g2']}, g3 {c['g3']}, g4 {c['g4']}, overrides {c['overrides']}), "
             f"{s} skipped (saving about {s * pol['cost_per_row_usd']:.2f} USD, an estimate)")
+    if pol.get("_lean"):
+        line += " [LEAN WEEK: only new events, deadlines within " + str(int(pol.get("lean_deadline_days", 14))) + " days, live rows with a dead link, and named rows are researched]"
     return line + (f" [{pl['fuse']}]" if pl["fuse"] else "") + (" [DRY RUN: nothing was marked, so every row is researched this week]" if dry else "")
 
 
@@ -471,6 +503,7 @@ def conference_main(a) -> int:
             print(f"REFRESH-PLAN {market}: cleared every REFRESH_SKIP mark (backup {inp.stem}.pre-refresh.csv); every row will be researched")
             return 0
         pol = load_policy(Path(a.policy) if a.policy else None)
+        pol["_lean"] = lean_active(pol, today)
         with open(inp, encoding="utf-8-sig", newline="") as fh:
             rows = list(csv.DictReader(fh))
         stale = sum(1 for r in rows if (r.get(COLUMN) or "").strip())
