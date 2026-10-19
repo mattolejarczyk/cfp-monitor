@@ -484,6 +484,21 @@
       "set": {
         "STATUS DETAILS": "The 2026 edition of the summit concluded on September 24, 2026. The 2027 edition is confirmed for September 21–23, 2027, at ExCeL London. As of October 17, 2026, no public call for speakers or submission deadline has been published for the 2027 event."
       }
+    },
+    {
+      "canonical": "2026-def-con-34-las-vegas",
+      "event": "DEF CON 34",
+      "ruled_on": "2026-10-19",
+      "by": "operator",
+      "until": "2026-12-31",
+      "why": "The deadline and its closure are right (May 1, 2026; Call for Papers now closed) but the research cited a Google grounding redirect address, not a page a customer can open. The operator read DEF CON's own call for papers page in a browser on 2026-10-19 and it states the deadline.",
+      "links": [
+        "https://defcon.org/html/defcon-34/dc-34-cfp.html"
+      ],
+      "set": {
+        "DEADLINE_EVIDENCE_URL": "https://defcon.org/html/defcon-34/dc-34-cfp.html",
+        "DEADLINE_QUOTE": "The deadline for submissions is May 1, 2026 at Midnight UTC"
+      }
     }
   ]
 }

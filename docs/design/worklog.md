@@ -5,6 +5,11 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-19 - Monday build, seven disputed deadlines read, CCUS 2027 added
+- Monday build ran 07:00 to 08:57 (exit 0, 9 of 9 steps, HEALTHY), published to handoff-files/weekly/2026-10-19: 224 conference rows, 160 awards rows, gate GO WITH NOTES (12 build QA flags, 4 Provisional conferences, 2 Provisional awards, customer sheet snapshots 2.3 days old).
+- Of the 7 disputed deadlines, 6 were right as held (RSAC, DEF CON, AAIML, ICRAI, RAAI, ACT Expo); the 7th (CCUS Event 2026) is a closed 2026 row while the same series has a NEW edition (CCUS 2027, Houston) whose call is open until Oct 27. DEF CON pinned to its own CFP page (was a Google redirect link). Upstream gave the CCUS 2027 id through the relay; input row added and id stamped; loads Saturday 10-24.
+
+
 ## 2026-10-18 - Sunday: live build released, pre-flight bug fixed, 14 dead sponsor pages resolved with upstream
 - Digest and invariant 8 scoped to the two customer markets (Cybersecurity, Utility): `weekly_verify.py` + `check_invariants.CUSTOMER_MARKETS`; the Sunday sweep no longer visits the six prospect markets (free, but noise). Friday awards confirmed to serve only Arnica and Utility Global: no leak. Monthly prospect job stays Disabled.
 - NEW `scripts/live_build.py` (status / rehearse / release / rollback): the live build (AppData\Local\CFP-Monitor, holds the database and the customer app and Sunday's job) was 84 files behind the repo. Released 84 files at 08:18 (commit 0ef07cd) and 1 more later (e495d66); each release is tested with the live build's own Python (parse, import the Sunday modules, check_invariants) and rolls back by itself on failure; backups `_pre-release-<stamp>`, log `RELEASE-LOG.md`. Thursday pre-flight shows the drift (t5, information only). One real run of the Sunday task (one-time clone, deleted after) passed under the scheduled task: exit 0, recap emailed.
