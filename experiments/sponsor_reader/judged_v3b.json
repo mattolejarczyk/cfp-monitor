@@ -1,0 +1,794 @@
+{
+ "000": {
+  "name": "Nullcon Berlin",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "no",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "CALL FOR PAPERS OPENS ON 30th April 2026",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "no",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting original security research through the public call for papers."
+  },
+  "tokens": [
+   9308,
+   96
+  ]
+ },
+ "001": {
+  "name": "AppWorld InCyber Forum",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Call for Speakers: Share Your Expertise in 2027\nThe INCYBER Europe Forum is opening its call for speakers to all experts, practitioners, researchers, decision-makers, and stakeholders in the cyber and digital ecosystem.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by applying through the public call for speakers."
+  },
+  "tokens": [
+   4916,
+   122
+  ]
+ },
+ "002": {
+  "name": "Biofuels Internatinal Conference & Expo",
+  "ours": "Yes",
+  "route": "OPEN_CALL_AND_PAID_SLOTS",
+  "open_call": "yes",
+  "paid_slots": "yes",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "If you would like to be considered as a speaker, please email peter@woodcotemedia.com with a short synopsis of your proposed presentation.",
+   "paid_slots": "yes",
+   "paid_slots_quote": "Demonstrate Thought Leadership\nPosition your company as an industry leader with opportunities to speak, moderate, or sponsor sessions that put your expertise front and centre.",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by either submitting a proposal to the organizers or by purchasing a sponsorship package that includes speaking opportunities."
+  },
+  "tokens": [
+   4335,
+   149
+  ]
+ },
+ "003": {
+  "name": "Asia Pacific Hydrogen Summit & Exhibition",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The process for a company to get a speaking slot at the Asia Pacific Hydrogen Summit & Exhibition 2027 is unclear based on the provided pages."
+  },
+  "tokens": [
+   7366,
+   93
+  ]
+ },
+ "004": {
+  "name": "World Hydrogen Energy Conference 2026 (WHEC 2026 - 24th Edition)",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The method for a company to get a speaking slot at WHEC 2026 is unclear based on the provided pages."
+  },
+  "tokens": [
+   3776,
+   88
+  ]
+ },
+ "005": {
+  "name": "Planet Cyber Sec Conference",
+  "ours": "Yes",
+  "route": "PAID_SLOTS_NO_CALL_SEEN",
+  "open_call": "unclear",
+  "paid_slots": "yes",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "no",
+   "open_call_quote": "We distinguish ourselves from typical trade shows and conferences by carefully selecting speakers based on merit. Our speakers are chosen for their expertise and contributions to the field, ensuring high-quality, relevant content.",
+   "paid_slots": "yes",
+   "paid_slots_quote": "Several of our packages even allow your representative to speak directly to attendees, with opportunities for speaking sessions, joining a panel, or leading a roundtable discussion.",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by sponsoring the conference, as some sponsorship packages include speaking opportunities."
+  },
+  "tokens": [
+   2198,
+   151
+  ]
+ },
+ "006": {
+  "name": "CarbonZero Global Conference & Exhibition 2026",
+  "ours": "Yes",
+  "route": "PAID_SLOTS_NO_CALL_SEEN",
+  "open_call": "unclear",
+  "paid_slots": "yes",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "We welcome presentation suggestions and topics as well as reputed professionals who should be leading the panel discussions on site.",
+   "paid_slots": "yes",
+   "paid_slots_quote": "Speaking opportunities for suppliers are limited to 6 slots and are selected and tailored to fit the program.",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "Companies can get a speaking slot by submitting presentation suggestions or topics, or by securing a sponsorship package which includes limited speaking opportunities."
+  },
+  "tokens": [
+   6491,
+   129
+  ]
+ },
+ "007": {
+  "name": "Enterprise AI Singapore (Corinium)",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "If you are interested in taking part in Enterprise AI Singapore as an industry or guest speaker, please complete the form opposite and a member of the team will be in touch with you shortly.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "Companies can request to speak by completing a form or contacting the organizers directly, but it's unclear if sponsorship is required."
+  },
+  "tokens": [
+   5791,
+   124
+  ]
+ },
+ "008": {
+  "name": "AI Native DevCon NYC 2026",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Submit a talk\nRolling review. Closes 1st Oct 2026.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting a talk proposal before the deadline of October 1, 2026."
+  },
+  "tokens": [
+   10798,
+   105
+  ]
+ },
+ "009": {
+  "name": "LNG Americas Energy Summit",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "The Call for Papers attracted hundreds of abstract submissions for the 21st edition of the event in 2025. Below is a selection of standout submissions from last year to help guide your thinking as you prepare your own abstract.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting a technical abstract for review by the conference's Steering Committee of senior LNG specialists."
+  },
+  "tokens": [
+   7384,
+   133
+  ]
+ },
+ "010": {
+  "name": "CERAWeek 2027 (by S&P Global)",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company gets a speaking slot by being invited or selected by the organizers, potentially through partnership or sponsorship opportunities."
+  },
+  "tokens": [
+   10814,
+   77
+  ]
+ },
+ "011": {
+  "name": "Global Syngas Technologies Conferences (GSTC)",
+  "ours": "Yes",
+  "route": "OPEN_CALL_AND_PAID_SLOTS",
+  "open_call": "yes",
+  "paid_slots": "yes",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Please submit to wepreston@globalsyngas.org or bphillips@globalsyngas.org no later than June 1.",
+   "paid_slots": "yes",
+   "paid_slots_quote": "Speak: Reserved placement on the first day in the morning",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting an abstract or by purchasing a sponsorship package."
+  },
+  "tokens": [
+   4959,
+   116
+  ]
+ },
+ "012": {
+  "name": "Decarb Connect Canada 2026",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "PROPOSE A SPEAKER",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "Companies can propose a speaker for consideration at Decarb Connect Canada 2026."
+  },
+  "tokens": [
+   5845,
+   77
+  ]
+ },
+ "013": {
+  "name": "VulnCon 2027 (FIRST)",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Call for Program Committee! Interest due by October 6, 2026",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting a proposal through the public call for speakers."
+  },
+  "tokens": [
+   3367,
+   88
+  ]
+ },
+ "014": {
+  "name": "Sustainable Aviation Futures (MENA)",
+  "ours": "Yes",
+  "route": "OPEN_CALL_AND_PAID_SLOTS",
+  "open_call": "yes",
+  "paid_slots": "yes",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Interested in speaking in 2027? If you would like to find out more about the speaking opportunities at the Sustainable Aviation Futures MENA Congress or would like to recommend a speaker to join our lineup, please get in touch:",
+   "paid_slots": "yes",
+   "paid_slots_quote": "Secure a coveted speaking position and place your company at the forefront of the sustainable aviation conversation.",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by either submitting a proposal or by sponsoring the event to secure a speaking position."
+  },
+  "tokens": [
+   7942,
+   141
+  ]
+ },
+ "015": {
+  "name": "SecureWorld St. Louis 2026",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The process for a company to get a speaking slot at SecureWorld St. Louis 2026 is unclear based on the provided pages."
+  },
+  "tokens": [
+   3308,
+   82
+  ]
+ },
+ "016": {
+  "name": "Gartner Security & Risk Management Summit 2026 (National Harbor / NA)",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The process for a company to get a speaking slot at Gartner Security & Risk Management Summit 2026 is unclear based on the provided pages."
+  },
+  "tokens": [
+   4269,
+   93
+  ]
+ },
+ "017": {
+  "name": "Gartner Security & Risk Management Summit (Tokyo)",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The process for a company to secure a speaking slot at the Gartner Security & Risk Management Summit 2027 is unclear based on the provided pages."
+  },
+  "tokens": [
+   3668,
+   85
+  ]
+ },
+ "018": {
+  "name": "SANS Cyber Threat Intelligence Summit and OSINT Summit",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "If you have original content to share with the community, we encourage you to submit a talk proposal.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting a talk proposal through the public call for presentations."
+  },
+  "tokens": [
+   8924,
+   93
+  ]
+ },
+ "019": {
+  "name": "IEEE Symposium on Security & Privacy",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Call for Papers",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting a paper or proposal through the public call for papers."
+  },
+  "tokens": [
+   2757,
+   78
+  ]
+ },
+ "020": {
+  "name": "Hydrogen Innovation and Technology Conference 2026 (IChemE Hydrogen 2026)",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The process for obtaining a speaking slot at the Hydrogen Innovation and Technology Conference 2026 is unclear based on the provided pages."
+  },
+  "tokens": [
+   5633,
+   80
+  ]
+ },
+ "021": {
+  "name": "World Future Energy Summit 2027 (WFES 2027)",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Submit your profile to be considered as a speaker, panelist, or moderator and join the worlds leading energy minds shaping the future.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting their profile to be considered as a speaker, panelist, or moderator."
+  },
+  "tokens": [
+   7845,
+   113
+  ]
+ },
+ "022": {
+  "name": "World of Concrete 2028",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "no",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "We invite you to submit a proposal and join a distinguished group of experts committed to elevating professional excellence across the concrete industry.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "no",
+   "must_pay_quote": "Non-commercial Education Policy: To ensure the educational integrity of the WOC Education Program, only unbiased, non-proprietary presentations will be considered. Using the education program as a platform for promotion of products and services is not allowed.",
+   "summary": "A company can get a speaking slot by submitting a proposal for unbiased, non-proprietary presentations, which will be reviewed by an Education Advisory Committee."
+  },
+  "tokens": [
+   3647,
+   154
+  ]
+ },
+ "023": {
+  "name": "Horizons Clean Energy Expansion Week 2026 (HCEE Week 2026)",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by being selected through S&P Global Energy's research and outreach to outstanding influencers in the low-carbon industry."
+  },
+  "tokens": [
+   2924,
+   92
+  ]
+ },
+ "024": {
+  "name": "Sustainable Aviation Futures (APAC)",
+  "ours": "Yes",
+  "route": "OPEN_CALL_AND_PAID_SLOTS",
+  "open_call": "yes",
+  "paid_slots": "yes",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Share your expertise with 400+ senior leaders across the APAC region. We welcome submissions from policymakers, fuel producers, airlines, financiers and technology innovators driving the SAF agenda forward.",
+   "paid_slots": "yes",
+   "paid_slots_quote": "Secure a speaking position at the forefront of the sustainable aviation conversation. Share your latest innovations alongside senior airline, fuel, and energy leaders — amplifying your brand and driving meaningful action on decarbonisation.",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by either submitting a speaking enquiry or by securing a sponsorship package that includes speaking opportunities."
+  },
+  "tokens": [
+   8308,
+   161
+  ]
+ },
+ "025": {
+  "name": "World Hydrogen 2027 Summit & Exhibition",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": ""
+  },
+  "tokens": [
+   6412,
+   55
+  ]
+ },
+ "026": {
+  "name": "SANS ICS Security Summit & Training",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "If you have original content to share with the community, we encourage you to submit a talk proposal.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting a talk proposal with original content to share with the community."
+  },
+  "tokens": [
+   10284,
+   95
+  ]
+ },
+ "027": {
+  "name": "Black Hat Asia 2026",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Call for Briefings Opened: 4 September 2026 (00:00 Singapore Time GMT/UTC +8h)",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting a proposal during the open call for briefings."
+  },
+  "tokens": [
+   7765,
+   108
+  ]
+ },
+ "028": {
+  "name": "Alternative Fuels & Chemicals Coalition",
+  "ours": "Yes",
+  "route": "OPEN_CALL_AND_PAID_SLOTS",
+  "open_call": "yes",
+  "paid_slots": "yes",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Call for Abstracts - Due July 30, 2021",
+   "paid_slots": "yes",
+   "paid_slots_quote": "Presentations within a specific breakout session or plenary program",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting an abstract or by becoming a sponsor, which includes presentation opportunities."
+  },
+  "tokens": [
+   6550,
+   109
+  ]
+ },
+ "029": {
+  "name": "Hydrogen Americas 2026 Summit & Exhibition",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The process for a company to get a speaking slot at the Hydrogen Americas 2026 Summit & Exhibition is unclear based on the provided pages."
+  },
+  "tokens": [
+   6991,
+   92
+  ]
+ },
+ "030": {
+  "name": "SANS Cyber Defense Initiative 2026 (CDI 2026)",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "Speaking at a SANS Summit gives you the opportunity to engage with thousands of cybersecurity professionals, to share your expertise, and expand your network. If you have original content to share with the community, we encourage you to submit a talk proposal.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting a talk proposal to the SANS Summit."
+  },
+  "tokens": [
+   9187,
+   120
+  ]
+ },
+ "031": {
+  "name": "Gartner Identity & Access Management Summit 2026",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "no",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "Speaking slots are primarily reserved for Gartner analysts and selected guest speakers, with no clear public call for submissions or explicit mention of sponsorship-linked speaking opportunities."
+  },
+  "tokens": [
+   5260,
+   93
+  ]
+ },
+ "032": {
+  "name": "All-Energy Australia 2026",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The process for a company to get a speaking slot at All-Energy Australia 2026 is unclear based on the provided pages."
+  },
+  "tokens": [
+   7152,
+   90
+  ]
+ },
+ "033": {
+  "name": "AppSec Israel 2026 (OWASP AppSec Israel)",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "no",
+   "open_call_quote": "Call for Papers has now closed!",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The call for papers is currently closed, and it is unclear if companies can secure speaking slots through sponsorship."
+  },
+  "tokens": [
+   1909,
+   92
+  ]
+ },
+ "034": {
+  "name": "Singapore International Energy Week 2026 (SIEW 2026)",
+  "ours": "Yes",
+  "route": "UNCLEAR",
+  "open_call": "unclear",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "unclear",
+   "open_call_quote": "",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "The process for a company to secure a speaking slot at SIEW 2026 is unclear based on the provided pages."
+  },
+  "tokens": [
+   4410,
+   79
+  ]
+ },
+ "035": {
+  "name": "ACT Expo 2027 (Advanced Clean Transportation Expo)",
+  "ours": "Yes",
+  "route": "OPEN_CALL",
+  "open_call": "yes",
+  "paid_slots": "unclear",
+  "must_pay": "unclear",
+  "unproven_quotes": [],
+  "answer": {
+   "open_call": "yes",
+   "open_call_quote": "The 2027 Call for Speakers is now closed.",
+   "paid_slots": "unclear",
+   "paid_slots_quote": "",
+   "must_pay": "unclear",
+   "must_pay_quote": "",
+   "summary": "A company can get a speaking slot by submitting a proposal through the public call for speakers, with the selection process focusing on real-world deployments and operational experience."
+  },
+  "tokens": [
+   7251,
+   105
+  ]
+ }
+}
