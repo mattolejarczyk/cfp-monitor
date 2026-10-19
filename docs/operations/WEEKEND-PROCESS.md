@@ -313,6 +313,8 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
 
 *Provisional awards (ACT-68, 2026-10-12): the Awards page also shows awards our research found this week that are not in the approved file yet - held waiting for an id from upstream, held by a check, or new this week - read from the newest raw research file. Each is marked **Provisional** with one plain sentence ("Researched this week; our final checks are still running."), never carries a 'Deadline confirmed' mark or a confidence mark, is never shown Open after its deadline, and can be hidden with the 'Show Provisional rows' switch (shown by default). An award the approved file already has is never provisional; a non-award nobody lists stays off. Conference rows held the same way are NOT shown (not wired).*
 
+*Sponsorship badge (operator ruling 2026-10-19): the conference list shows 'Sponsor required' ONLY when sponsorship is confirmed, that is when research says Yes AND either we hold a verbatim sentence from the organizer's page or the customer's own sheet says it is required. An unconfirmed Yes shows no badge (it used to read 'Sponsor required (unconfirmed)' on nearly every row); the open row's detail text still says we have not yet read a sentence confirming it. (build_review_page.py)*
+
 *Scheduled task "CFP Weekly Customer Pages" -> `cfp-monitor\scripts\weekly_deliverable.py`*
 
 1. **[Safety check]** **Records the starting point** - what Saturday's automatic load left in the database, so any
@@ -375,6 +377,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-10-19** - the sponsorship badge on the conference page shows only when confirmed (a held quote, or the customer's own sheet): the '(unconfirmed)' badge on 215 of 224 rows is gone.
 - **2026-10-18** - fix: the Sunday pre-flight email (Sunday step 8) now actually runs. From 2026-10-12 it read 'PRE-FLIGHT GATE: UNKNOWN' every week because the gate assumed a real console while the recap captures its output; found by the first real run of the Sunday task after the live build release.
 - **2026-10-18** - the Sunday check and its digest cover only Cybersecurity and Utility (the two customer markets); invariant 8 is scoped the same way. New `scripts/live_build.py` (status and release) and a Thursday pre-flight line for how far the live build is behind the repo (84 files that day).
 - **2026-10-16** - the Saturday patches are LIVE (applied 19:00 by the one-time apply task): ACT-64 sponsor prefill (run_overnight.ps1), ACT-63 first load of a new event on Saturday and ACT-22 the Friday awards shadow step (run_monthly.ps1). ACT-33 is still held until after Saturday's run. The apply task had waited 18 times from 10:00 because its own name matched the wrapper's running CFP task check; fixed.

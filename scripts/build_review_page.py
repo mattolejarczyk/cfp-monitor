@@ -197,15 +197,34 @@ def load_checks(path):
 
 
 SPONSOR_CONFIRMED = 'Sponsor required'
-SPONSOR_UNCONFIRMED = 'Sponsor required (unconfirmed)'
+
+# What the CUSTOMER's own sheet says (2026-10-19, operator ruling). The sheets have no sponsorship column, so this reads the free text in the cells a person types a fact into
+# (their deadline cell, status details, notes). Deliberately narrow: it must say sponsorship (or being an exhibitor) is REQUIRED, and a negation cancels it.
+_SPONSOR_FIELDS = ('their_deadline', 'status_details', 'notes')
+_SPONSOR_YES = re.compile(
+    r"(sponsor\w*|exhibitor)\W+(?:\w+\W+){0,2}?(required|mandatory|needed|necessary)"
+    r"|(requires?|required|must\s+be|need(?:s|ed)?)\W+(?:\w+\W+){0,2}?(sponsor\w*|exhibitor)"
+    r"|pay[- ]to[- ](play|speak)", re.I)
+_SPONSOR_NO = re.compile(r"(not|n't|no)\W+(?:\w+\W+){0,2}?(sponsor\w*|exhibitor)|(sponsor\w*|exhibitor)\W+(?:\w+\W+){0,2}?(not|never|n't|optional)\b"
+                         r"|without\W+(?:\w+\W+){0,2}?sponsor|disconnected\W+from\W+sponsor", re.I)
 
 
-def sponsor_badge_label(sponsor_required, sponsor_quote):
-    """R-002 (2026-10-06): the list badge for a sponsorship gate. A 'Yes' that carries a SPONSOR_QUOTE keeps 'Sponsor required'; a 'Yes' with no quote (the delivery gate is link-only, R18b/R20a)
-    reads 'Sponsor required (unconfirmed)'. Anything that is not a Yes has no badge (''). The detail text is built separately and is unchanged."""
+def customer_says_sponsor_required(client_row):
+    """True when a customer sheet row states, in its own words, that sponsorship (or exhibiting) is required to speak."""
+    for f in _SPONSOR_FIELDS:
+        t = str((client_row or {}).get(f) or '')
+        if t and _SPONSOR_YES.search(t) and not _SPONSOR_NO.search(t):
+            return True
+    return False
+
+
+def sponsor_badge_label(sponsor_required, sponsor_quote, customer_confirmed=False):
+    """The list badge for a sponsorship gate. CHANGED 2026-10-19 (operator): the badge appears ONLY when sponsorship is confirmed, that is when the row is a 'Yes' AND either we hold a
+    SPONSOR_QUOTE (a verbatim sentence from the organizer's page) or the customer's own sheet says it is required. An unconfirmed 'Yes' used to read 'Sponsor required (unconfirmed)' on
+    nearly every row, which only told the reader that we did not know yet; it now shows no badge. The detail text in the open row is built separately and is unchanged."""
     if (sponsor_required or '').strip().lower() != 'yes':
         return ''
-    return SPONSOR_CONFIRMED if (sponsor_quote or '').strip() else SPONSOR_UNCONFIRMED
+    return SPONSOR_CONFIRMED if ((sponsor_quote or '').strip() or customer_confirmed) else ''
 
 
 def awards_only(rows, customer=None):
@@ -224,7 +243,7 @@ def awards_only(rows, customer=None):
     return kept, dropped
 
 
-def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=None):
+def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=None, sponsor_cust=None):
     st = edition_states(rows, today)
     _today = date.fromisoformat(today) if isinstance(today, str) else today
     out = []
@@ -286,7 +305,8 @@ def build(rows, today='2026-08-07', dead_links=frozenset(), checks=None, recon=N
             'spon': d['SPONSOR_REQUIRED'].strip().lower() == 'yes',
             'sponcost': d['SPONSOR_COST'], 'sponurl': d['SPONSOR_URL'],
             'sponq': d['SPONSOR_QUOTE'],
-            'sponlabel': sponsor_badge_label(d['SPONSOR_REQUIRED'], d['SPONSOR_QUOTE']),
+            'sponlabel': sponsor_badge_label(d['SPONSOR_REQUIRED'], d['SPONSOR_QUOTE'],
+                                             (r.get('EVENT_ID') or '').strip() in (sponsor_cust or ())),
             'st': st.get((r.get('EVENT_ID') or '').strip(), 'Active'),
             # When WE last inspected this row at source. Drives the 'Updated since' view -
             # the answer to 'what has moved since I last looked', which is the question a
@@ -814,7 +834,7 @@ function render(){
       // pitch happens at all, so it belongs in the list where a deadline is - not three
       // clicks down. The cost rides with it when we have one, because "sponsor required" and
       // "sponsor required, $25,000" are different decisions.
-      r.spon?` <span class="b b-nv" title="Speaking at this event requires sponsorship. Open the row for the source.">${esc(r.sponlabel)}${r.sponcost?' &middot; '+esc(r.sponcost):''}</span>`:''}${
+      (r.spon&&r.sponlabel)?` <span class="b b-nv" title="Speaking at this event requires sponsorship. Open the row for the source.">${esc(r.sponlabel)}${r.sponcost?' &middot; '+esc(r.sponcost):''}</span>`:''}${
       r.dead?' <span class="b b-dead" title="The submission page returns not-found - confirmed in a real browser">Submit Link Missing</span>':''}</td>
     <td class="mk">${esc(r.m)}</td><td class="mk">${esc(r.loc)||'&mdash;'}</td>
     <td class="mk">${esc(r.f)||'&mdash;'}</td><td class="mk">${esc(r.dates)||'&mdash;'}</td>
@@ -1146,6 +1166,7 @@ def main():
     # anyone opening view-source read our internal reasoning about which rows we had got wrong.
     # Python comments do not reach the page; template comments do.
     recon = {}
+    sponsor_cust = set()          # delivery EVENT_IDs whose row on the CUSTOMER's sheet says sponsorship is required (badge rule, 2026-10-19)
     if a.reconcile:
         if not a.db:
             raise SystemExit('ERROR: --reconcile needs --db - the client layer lives there.')
@@ -1160,6 +1181,12 @@ def main():
         con = sqlite3.connect(a.db)
         con.row_factory = sqlite3.Row
         client_rows = [dict(x) for x in con.execute('select * from client_conferences')]
+        for cr in client_rows:
+            if int(cr.get('withdrawn_by_customer') or 0) or not customer_says_sponsor_required(cr):
+                continue
+            hit = by_canon.get(identity.to_canonical((cr.get('event_id') or '').strip(), up_to_canon))
+            if hit:
+                sponsor_cust.add((hit.get('EVENT_ID') or '').strip())
         items = sheet_reconcile.reconcile(client_rows, by_canon, date.fromisoformat(a.date))
         n_cov = 0
         for it in items:
@@ -1172,7 +1199,9 @@ def main():
         print(f'reconciled against {len(client_rows)} customer row(s): {n_conf} disagreement(s) '
               f'on {len(recon)} row(s); {n_cov} of their rows not joined to ours')
 
-    data = build(rows, a.date, dead, checks, recon)
+    data = build(rows, a.date, dead, checks, recon, sponsor_cust)
+    print(f'sponsorship badge: {sum(1 for d in data if d["sponlabel"])} row(s) confirmed '
+          f'({len(sponsor_cust)} by the customer\'s own sheet); {sum(1 for d in data if d["spon"] and not d["sponlabel"])} unconfirmed row(s) carry no badge')
     n_dead = sum(1 for d in data if d['dead'])
     n_chk = sum(1 for d in data if d['chk'] == 'verified')
     print('{} row(s); {} dead link(s); {} deadline(s) confirmed on the cited page'.format(

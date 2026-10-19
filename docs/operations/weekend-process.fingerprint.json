@@ -30,6 +30,6 @@
     "scripts/release_gate.py": "7dd0a8351a76ff1a5345b83f1664ecd2740d4e25d33fce6d49859f1a2111e7ea",
     "scripts/provisional_rows.py": "dce8962db71fc4dcfa1ff25efe5aeefca2e7091a3a66ef2ff54d0e036d51a85d",
     "scripts/provisional_blank.py": "9f0f59679ce76a23b334270c0f94232b12471141ea7863e99a116b1f96818b42",
-    "scripts/build_review_page.py": "a57f1e5b5ed02df5943d01c516eae20d2ce47ffa8610dc645c74851129b864ee"
+    "scripts/build_review_page.py": "5e8fccdc72499235449f4f2aa4207d3b406db1107671675a4ab52be60ffa18c9"
   }
 }
