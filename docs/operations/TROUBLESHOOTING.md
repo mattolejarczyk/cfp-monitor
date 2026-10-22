@@ -88,6 +88,9 @@ Climb the whole ladder, in order, and write down which rung gave the answer:
 
 ## 7. Before saying "done"
 
+- Created, changed or disabled a scheduled task? Its entry in `agentos/tools/scheduled-tasks.manifest.json`
+  (purpose, criticality, what depends on it, whether the PC must be on) is part of the change, not a follow-up.
+
 - State what was verified, how, and what was NOT verified.
 - Anything left running (Chrome on 9222 that you opened, background jobs) is closed or named.
 - Uncommitted fixes are committed, or listed as uncommitted.
