@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-10-22 (evening) - weekend of 2026-10-23 skipped by the operator; four tasks disabled
+- Operator decision: no CFP or awards research this weekend, and no Monday customer pages build. Nothing specific and critical was found that needed this week's run (SANS CTI Summit's Oct 26 deadline is already pinned; the DataIQ 100 is a different program).
+- Disabled in Task Scheduler (Disable-ScheduledTask): CFP Weekly Awards Research (Fri 02:00), CFP Weekly Verification (Sun 01:00), CFP Weekly Customer Pages (Mon 07:00). CFP Weekly Re-Research (live markets) (Sat 02:00) was refused with Access is denied from a normal window, so it needs an elevated PowerShell: `Disable-ScheduledTask -TaskName 'CFP Weekly Re-Research (live markets)'`. Until that is done it would catch up when the PC next starts (Start when available is on).
+- Customers keep the pages sent 2026-10-19. The Thursday pre-flight stays enabled.
+- Manifest updated (agentos tools/scheduled-tasks.manifest.json, commit 6ab74da).
+- RE-ENABLE by Wednesday 2026-10-28, each in an elevated window: `Enable-ScheduledTask -TaskName '<name>'` for the four names above, so Thursday's pre-flight and Friday 2026-10-30's run work.
+
 ## 2026-10-19 (night) - speaking route rerun finished and released; troubleshooting protocol
 - Rerun of 121 events done: UNCLEAR 64, OPEN_CALL 43, PAID_SLOTS_NO_CALL_SEEN 10, OPEN_CALL_AND_PAID_SLOTS 4, about 0.18 USD; only 2 events had zero readable pages; 34 UNCLEAR were events already over.
 - Operator rules: skip events with start_date before today; skip discovered links whose path year is before the current calendar year (a bare /call-for-papers is evergreen; home and cited sponsor page always read). 29 tests in test_speaking_route and hook.
