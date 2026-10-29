@@ -1,0 +1,5 @@
+# gitleaks findings reviewed by hand and confirmed NOT real secrets (2026-10-29). One fingerprint per line.
+# Only add a line after checking the value is a test fixture or placeholder; a real key is rotated, never ignored.
+# tests/test_upstream_relay.py: sample values that the content-guard test feeds in to prove they are blocked.
+c85a1563ab94a9578ec83f85d5771b395edea67f:tests/test_upstream_relay.py:gcp-api-key:170
+c85a1563ab94a9578ec83f85d5771b395edea67f:tests/test_upstream_relay.py:generic-api-key:177
