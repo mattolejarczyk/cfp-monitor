@@ -117,3 +117,6 @@ experiments/act33_rehearsal/lean_live/
 experiments/act33_rehearsal/sbx_lean/
 experiments/act33_rehearsal/reports_lean_*/
 experiments/act33_rehearsal/import_lean.json
+
+# Local plan status for Mission Control (repo is public; never commit)
+plan-status.json
