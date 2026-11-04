@@ -5,6 +5,11 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-11-03 - weekend of 2026-10-30 was also skipped, by the operator; four tasks back on
+- Asked directly on 2026-11-03 whether skipping the 2026-10-30 weekend was intended, the operator answered: Yes. So nothing ran 10-23 to 11-02 by decision, and customers keep the pages sent 2026-10-19 until the next build. The worklog's plan to re-enable by 10-28 did not happen; this entry is the record of why.
+- The operator re-enabled the four tasks himself in an elevated window. Read back 2026-11-03 as Ready with enabled weekly triggers. Next runs: Thu 11-05 pre-flight, Fri 11-06 awards, Sat 11-07 re-research, Sun 11-08 verification, Mon 11-09 pages.
+- Mission Control shows these as FAILED / MISSED until those runs. Those are old last-run results (10-16 and 10-17 were resolved the same days) and the deliberate skips, not a live fault.
+
 ## 2026-10-22 (evening) - weekend of 2026-10-23 skipped by the operator; four tasks disabled
 - Operator decision: no CFP or awards research this weekend, and no Monday customer pages build. Nothing specific and critical was found that needed this week's run (SANS CTI Summit's Oct 26 deadline is already pinned; the DataIQ 100 is a different program).
 - Disabled in Task Scheduler (Disable-ScheduledTask): CFP Weekly Awards Research (Fri 02:00), CFP Weekly Verification (Sun 01:00), CFP Weekly Customer Pages (Mon 07:00). CFP Weekly Re-Research (live markets) (Sat 02:00) was refused with Access is denied from a normal window, so it needs an elevated PowerShell: `Disable-ScheduledTask -TaskName 'CFP Weekly Re-Research (live markets)'`. Until that is done it would catch up when the PC next starts (Start when available is on).
