@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-11-04 - reliability list now shows on Mission Control; no pipeline change
+- The ACT control list is loaded into a local plan file (git-ignored here, this repo is public) and shows on the Mission Control Projects card at rank 1: 36 of 58 done, 18 in progress, 4 not started. Counted from the file on 2026-11-04.
+- How the count was made: 28 items already verified on the control list plus 8 that later records show finished (ACT-30, 58, 63, 65, 67, 68, 69, 70). Codex read-checked the 30 unverified items; Claude read its evidence and changed its answer on 8. Anything not clearly shown stays open, so the figure is on the cautious side. It measures the reliability list, not whether the weekly service is healthy.
+- Mission Control's Scheduled tasks card gained an Acknowledge button for deliberate-skip flags. It never touches a task, and any new run brings the flag back.
+- No code, data or customer page changed. Next: Thu 2026-11-05 pre-flight, then the weekend research runs, then Monday pages 2026-11-09. These are the first runs since the skipped weekends, so they are the real test.
+- Left uncommitted on purpose: experiments/model_bakeoff/codex_usage.jsonl and registry.jsonl (changed 2026-10-17) and experiments/finder_reader_test/pages.json (2026-10-04). They predate today and nobody has decided whether they belong in this public repo.
+
 ## 2026-11-03 - weekend of 2026-10-30 was also skipped, by the operator; four tasks back on
 - Asked directly on 2026-11-03 whether skipping the 2026-10-30 weekend was intended, the operator answered: Yes. So nothing ran 10-23 to 11-02 by decision, and customers keep the pages sent 2026-10-19 until the next build. The worklog's plan to re-enable by 10-28 did not happen; this entry is the record of why.
 - The operator re-enabled the four tasks himself in an elevated window. Read back 2026-11-03 as Ready with enabled weekly triggers. Next runs: Thu 11-05 pre-flight, Fri 11-06 awards, Sat 11-07 re-research, Sun 11-08 verification, Mon 11-09 pages.

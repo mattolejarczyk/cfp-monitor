@@ -4,6 +4,8 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **2026-11-04 - RELIABILITY LIST ON MISSION CONTROL; NO PIPELINE CHANGE.** 36 of 58 ACT items done, 18 in progress, 4 not started (local git-ignored plan file). NEXT: Thu 11-05 pre-flight, then the weekend runs and Monday pages 11-09, the first since the skipped weekends. Detail in the worklog.
+>
 > **2026-11-03 - WEEKENDS OF 10-23 AND 10-30 BOTH SKIPPED BY THE OPERATOR; FOUR TASKS RE-ENABLED.** Nothing ran 10-23 to 11-02 by decision. Customers hold the 10-19 pages until the next build. Next: pre-flight Thu 11-05, awards Fri 11-06, re-research Sat 11-07, verification Sun 11-08, pages Mon 11-09. See the worklog.
 >
 > **2026-10-19 (EVENING WRAP) - SPEAKING ROUTE RERUN DONE AND RELEASED; TROUBLESHOOTING PROTOCOL ADDED.** Rerun of 121 events finished (64 UNCLEAR, 43 OPEN_CALL, 10 PAID_SLOTS_NO_CALL_SEEN, 4 OPEN_CALL_AND_PAID_SLOTS, about 0.18 USD; 34 of the UNCLEAR are events already over). New skip rules: start date before today, and discovered links whose path year is before the current calendar year (home and cited sponsor page always read). Real Chrome (CDP) now reads anti-bot hosts; Monday starts it only if down. Released to live build 69fbde6 (0 behind). New docs/operations/TROUBLESHOOTING.md (read it before any hand check; linked from the cfp-protocol skill, QA-REGISTER C and the home CLAUDE.md). NEXT: Saturday 10-24 read the recap, retire the mixed CCUS Event 2026 row (survivor WCCUS), check upstream promises C37-C45 (due 10-25). OPEN for Matt: +10 USD cap margin for Friday and Saturday (11.30 left of 130); tell Nicolia the SANS CTI/OSINT Summit CFP closes Oct 26.
