@@ -4,6 +4,8 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **2026-11-06 - FRIDAY AWARDS LOADED BY HAND AFTER A REBOOT.** Research 03:29 HEALTHY; the load was cut by a 06:23 reboot during the gate and resumed with the same weekend_import.py step: DONE 12:46, ACCEPTED, promoted, 155 rows (90 this week, 64 last week, 4 held back, 1 new award). Invariants hold; recap emailed. Row 27 (IEEE award, mailto in CFP_SUBMISSION_URL) left as researched by operator ruling; send to upstream as a format finding. OPEN: recap says FAILED on research exit 1 while the import accepts it; a gate pass can hang past its 2 h timeout. NEXT: Sat 11-07 02:00 re-research, Sun verification, Mon 11-09 pages. Detail in the worklog.
+>
 > **2026-11-04 - RELIABILITY LIST ON MISSION CONTROL; NO PIPELINE CHANGE.** 36 of 58 ACT items done, 18 in progress, 4 not started (local git-ignored plan file). NEXT: Thu 11-05 pre-flight, then the weekend runs and Monday pages 11-09, the first since the skipped weekends. Detail in the worklog.
 >
 > **2026-11-03 - WEEKENDS OF 10-23 AND 10-30 BOTH SKIPPED BY THE OPERATOR; FOUR TASKS RE-ENABLED.** Nothing ran 10-23 to 11-02 by decision. Customers hold the 10-19 pages until the next build. Next: pre-flight Thu 11-05, awards Fri 11-06, re-research Sat 11-07, verification Sun 11-08, pages Mon 11-09. See the worklog.
