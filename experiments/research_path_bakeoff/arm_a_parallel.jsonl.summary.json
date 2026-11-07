@@ -1,0 +1,21 @@
+{
+ "rows": 40,
+ "done": 40,
+ "skipped": 0,
+ "wall_secs": 294.7,
+ "workers": 4,
+ "delay": 0.0,
+ "timeout": 60.0,
+ "attempts": 41,
+ "http_504": 1,
+ "http_429": 0,
+ "timeouts": 0,
+ "searches": 300,
+ "usd_search": 4.2,
+ "usd_tokens_est": 0.544,
+ "stubs": 0,
+ "stop": "",
+ "health": "RUN HEALTH: HEALTHY\n  calls: 41 (40 ok, 1 http_504); ungrounded answers: 0",
+ "trail": "GROUNDING TRAIL: 40 rows | 40 grounded, 0 no-search | 19 citation-host-not-in-sources (AI Summit New York, CarbonZero Global Conference & E, Carbon Capture Technology Expo M, OWASP German Chapter Conference , Future Fuels MENA Summit 2026)",
+ "finished": "2026-11-07T09:12:21"
+}

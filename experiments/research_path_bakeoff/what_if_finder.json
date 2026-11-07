@@ -1,0 +1,168 @@
+[
+ {
+  "n": 4,
+  "event": "CarbonZero Global Conference & Exhibition 2026",
+  "key": "2026-09-10",
+  "tried": [],
+  "proven": "",
+  "equals_key": false
+ },
+ {
+  "n": 6,
+  "event": "OWASP German Chapter Conference (AppSec Karlsruhe 2026)",
+  "key": "2026-06-21",
+  "tried": [
+   {
+    "url": "https://god.owasp.de/2026/en/cfp.html",
+    "chars": 6601,
+    "accepted": "",
+    "why": "date is long past",
+    "usd": 0.00051799
+   }
+  ],
+  "proven": "",
+  "equals_key": false
+ },
+ {
+  "n": 13,
+  "event": "CES 2027 (Consumer Electronics Show - Smart Energy & Clean Tech)",
+  "key": "2026-10-02",
+  "tried": [
+   {
+    "url": "https://www.ces.tech/conference-program/thought-leadership-opportunities/c-space-storyteller/",
+    "chars": 1848,
+    "accepted": "",
+    "why": "blank",
+    "usd": 0.00019707
+   }
+  ],
+  "proven": "",
+  "equals_key": false
+ },
+ {
+  "n": 17,
+  "event": "Global Energy Show Canada 2027",
+  "key": "2026-12-04",
+  "tried": [
+   {
+    "url": "https://www.globalenergyshow.com/conferences/2027-call-for-submissions/",
+    "chars": 6093,
+    "accepted": "2026-12-04",
+    "why": "ok",
+    "usd": 0.00055412
+   }
+  ],
+  "proven": "2026-12-04",
+  "equals_key": true
+ },
+ {
+  "n": 20,
+  "event": "Zero Trust World (ZTW by Threatlocker)",
+  "key": "2026-11-09",
+  "tried": [
+   {
+    "url": "https://ztw.com/",
+    "chars": 24230,
+    "accepted": "",
+    "why": "blank",
+    "usd": 0.00095522
+   }
+  ],
+  "proven": "",
+  "equals_key": false
+ },
+ {
+  "n": 24,
+  "event": "IEEE Symposium on Security & Privacy",
+  "key": "2026-11-17",
+  "tried": [
+   {
+    "url": "https://sp2027.ieee-security.org/cfpapers.html",
+    "chars": 50064,
+    "accepted": "",
+    "why": "date is long past",
+    "usd": 0.00081217
+   },
+   {
+    "url": "https://cycle2.sp2027.ieee-security.org/",
+    "chars": 573,
+    "accepted": "",
+    "why": "blank",
+    "usd": 0.00011202
+   }
+  ],
+  "proven": "",
+  "equals_key": false
+ },
+ {
+  "n": 26,
+  "event": "Clean Tech Forum",
+  "key": "2026-12-01",
+  "tried": [
+   {
+    "url": "https://www.cleantech.com/event/cleantech-forum-na/",
+    "chars": 7214,
+    "accepted": "",
+    "why": "blank",
+    "usd": 0.00050651
+   }
+  ],
+  "proven": "",
+  "equals_key": false
+ },
+ {
+  "n": 27,
+  "event": "American Fuel & Petrochemical Manufacturers (AFPM) Summit",
+  "key": "2026-12-11",
+  "tried": [
+   {
+    "url": "https://afpm.secure-platform.com/site",
+    "chars": 751,
+    "accepted": "",
+    "why": "blank",
+    "usd": 0.00011611
+   }
+  ],
+  "proven": "",
+  "equals_key": false
+ },
+ {
+  "n": 31,
+  "event": "Fuel Ethanol Workshop and Expo & Sustainable Fuels Summit",
+  "key": "2027-02-12",
+  "tried": [
+   {
+    "url": "https://few.bbiconferences.com/ema/DisplayPage.aspx?pageId=Submit_Presentation_Ideas",
+    "chars": 4249,
+    "accepted": "",
+    "why": "quote is not on the page",
+    "usd": 0.00035562
+   },
+   {
+    "url": "https://2027-few.bbiconferences.com/ema/DisplayPage.aspx?pageId=Sustainable_Fuels_Summit__SAF__Renewable_Diesel__Biodiesel",
+    "chars": 10279,
+    "accepted": "",
+    "why": "quote is not on the page",
+    "usd": 0.00076039
+   }
+  ],
+  "proven": "",
+  "equals_key": false
+ },
+ {
+  "n": 32,
+  "event": "31st Annual Green Chemistry & Engineering Conference (GC&E)",
+  "key": "2027-02-15",
+  "tried": [
+   {
+    "url": "https://www.gcande.org/",
+    "chars": 10729,
+    "accepted": "",
+    "why": "the quote does not state that day, month and year",
+    "usd": 0.00072545
+   }
+  ],
+  "proven": "",
+  "equals_key": false
+ }
+]

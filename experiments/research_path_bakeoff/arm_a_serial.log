@@ -1,0 +1,87 @@
+﻿ARM A: 40 rows, delay 16.0s, timeout 120.0s, workers 1, prompt mode narrow-first, model gemini-3-flash-preview
+  [GROUND] AI Summit New York: 4 search(es), 10 source(s) - knock-ai.com, theaisummit.com, vdura.com, wysera.ai  [prompt: narrow]
+  [ 1]   35.2s attempts 1 searches  4 deadline -          AI Summit New York
+  [GROUND] Carbon Capture Technology Expo MENA 2026: 10 search(es), 1 source(s) - yutori.com  [prompt: narrow]
+  [ 2]   40.5s attempts 1 searches 10 deadline 2026-04-24 Carbon Capture Technology Expo MENA 2026
+  [GROUND] Carbon Capture USA 2026: 18 search(es), 0 source(s)  [prompt: narrow]
+  [ 3]   33.8s attempts 1 searches 18 deadline -          Carbon Capture USA 2026
+  [GROUND] CarbonZero Global Conference & Exhibition 2026: 3 search(es), 0 source(s)  [prompt: narrow]
+  [ 4]   13.9s attempts 1 searches  3 deadline -          CarbonZero Global Conference & Exhibition 2026
+  [GROUND] Future Fuels MENA Summit 2026: 12 search(es), 0 source(s)  [prompt: narrow]
+  [ 5]   29.8s attempts 1 searches 12 deadline -          Future Fuels MENA Summit 2026
+  [GROUND] OWASP German Chapter Conference (AppSec Karlsruhe 2026): 7 search(es), 3 source(s) - bsky.app, infosec.exchange  [prompt: narrow]
+  [R22 ] OWASP German Chapter Conference (AppSec Karlsruhe : refused DEADLINE_EVIDENCE_URL [infosec.exchange - R22]
+  [ 6]   13.3s attempts 1 searches  7 deadline 2026-06-21 OWASP German Chapter Conference (AppSec Karlsruhe 
+  [GROUND] Hack In The Box (OOTB 2026 Jakarta): 9 search(es), 2 source(s) - github.com, ootb.net  [prompt: narrow]
+  [ 7]   32.7s attempts 1 searches  9 deadline 2026-03-01 Hack In The Box (OOTB 2026 Jakarta)
+  [GROUND] 17th ACM Conference on Data and Application Security and Privacy (CODASPY 2027): 3 search(es), 2 source(s) - codaspy.org  [prompt: narrow]
+  [ 8]   11.8s attempts 1 searches  3 deadline 2026-11-23 17th ACM Conference on Data and Application Securi
+  [GROUND] Apres-Cyber Slopes Summit 2027: 3 search(es), 1 source(s) - reddit.com  [prompt: narrow]
+  [ 9]   12.7s attempts 1 searches  3 deadline 2026-11-20 Apres-Cyber Slopes Summit 2027
+  [GROUND] Carbon Capture Europe Summit 2027: 12 search(es), 0 source(s)  [prompt: narrow]
+  [10]   25.1s attempts 1 searches 12 deadline -          Carbon Capture Europe Summit 2027
+  [GROUND] Carbon Capture Global Summit: 8 search(es), 0 source(s)  [prompt: narrow]
+  [11]   33.6s attempts 1 searches  8 deadline -          Carbon Capture Global Summit
+  [GROUND] Carbon Capture Technology Expo MENA 2027: 7 search(es), 0 source(s)  [prompt: narrow]
+  [12]   18.7s attempts 1 searches  7 deadline -          Carbon Capture Technology Expo MENA 2027
+  [GROUND] CES 2027 (Consumer Electronics Show - Smart Energy & Clean Tech): 4 search(es), 0 source(s)  [prompt: narrow]
+  [13]   16.0s attempts 1 searches  4 deadline 2026-10-02 CES 2027 (Consumer Electronics Show - Smart Energy
+  [GROUND] Decarbonization Congress 2027: 10 search(es), 5 source(s) - mobilityplaza.com, onegeo.com, petro-online.com, showsbee.com, worldoils.com  [prompt: narrow]
+  [14]   28.2s attempts 1 searches 10 deadline -          Decarbonization Congress 2027
+  [GROUND] ECML PKDD European Conference on Machine Learning and Principles and Practice of Knowledge Discovery in Databases: 3 search(es), 0 source(s)  [prompt: narrow]
+  [15]   25.0s attempts 1 searches  3 deadline 2027-01-31 ECML PKDD European Conference on Machine Learning 
+  [GROUND] European Carbon Capture, Utilization & Storage Conference 2027: 22 search(es), 0 source(s)  [prompt: narrow]
+  [16]   37.7s attempts 1 searches 22 deadline -          European Carbon Capture, Utilization & Storage Con
+  [GROUND] Global Energy Show Canada 2027: 3 search(es), 2 source(s) - globalenergyshow.com  [prompt: narrow]
+  [17]    9.8s attempts 1 searches  3 deadline 2026-12-04 Global Energy Show Canada 2027
+  [GROUND] ODSC East 2027 (Open Data Science Conference): 12 search(es), 1 source(s) - the-power-of.ai  [prompt: narrow]
+  [18]   28.2s attempts 1 searches 12 deadline -          ODSC East 2027 (Open Data Science Conference)
+  [GROUND] Sustainable Fuels Global Summit 2027: 18 search(es), 4 source(s) - safeusummit.com  [prompt: narrow]
+  [19]   45.0s attempts 1 searches 18 deadline -          Sustainable Fuels Global Summit 2027
+  [GROUND] Zero Trust World (ZTW by Threatlocker): 19 search(es), 2 source(s) - christinecastro.com, cyberalert.io  [prompt: narrow]
+  [20]   24.7s attempts 1 searches 19 deadline 2026-11-09 Zero Trust World (ZTW by Threatlocker)
+  [GROUND] AAIML Conference 2027: 3 search(es), 0 source(s)  [prompt: narrow]
+  [21]   12.5s attempts 1 searches  3 deadline 2026-11-10 AAIML Conference 2027
+  [GROUND] RAAI 2026: International Conference on Robotics, Automation and Artificial Intelligence: 4 search(es), 2 source(s) - conferenceineurope.org  [prompt: narrow]
+  [22]   19.1s attempts 1 searches  4 deadline 2026-11-10 RAAI 2026: International Conference on Robotics, A
+  [GROUND] CO2-based Fuels and Chemicals Conference: 3 search(es), 0 source(s)  [prompt: narrow]
+  [23]   10.5s attempts 1 searches  3 deadline 2026-11-16 CO2-based Fuels and Chemicals Conference
+  [GROUND] IEEE Symposium on Security & Privacy: 6 search(es), 4 source(s) - csalab.site, github.io, ieee-security.org  [prompt: narrow]
+  [24]   27.5s attempts 1 searches  6 deadline 2026-11-18 IEEE Symposium on Security & Privacy
+  [GROUND] FIRST Cyber Threat Intelligence Conference (FIRSTCTI) 2027: 3 search(es), 3 source(s) - first.org  [prompt: narrow]
+  [25]   16.8s attempts 1 searches  3 deadline 2026-11-23 FIRST Cyber Threat Intelligence Conference (FIRSTC
+  [GROUND] Clean Tech Forum: 4 search(es), 2 source(s) - cleantech.com  [prompt: narrow]
+  [26]    9.9s attempts 1 searches  4 deadline 2026-12-01 Clean Tech Forum
+  [GROUND] American Fuel & Petrochemical Manufacturers (AFPM) Summit: 12 search(es), 0 source(s)  [prompt: narrow]
+  [27]   27.3s attempts 1 searches 12 deadline -          American Fuel & Petrochemical Manufacturers (AFPM)
+  [GROUND] ARPA-E Summit: 3 search(es), 8 source(s) - arpae-summit.com, theenergy.academy  [prompt: narrow]
+  [28]   11.5s attempts 1 searches  3 deadline 2027-01-08 ARPA-E Summit
+  [GROUND] OWASP Boston Application Security Conference (BASC 2027): 4 search(es), 7 source(s) - basconf.org, sessionize.com  [prompt: narrow]
+  [29]   16.8s attempts 1 searches  4 deadline 2027-01-15 OWASP Boston Application Security Conference (BASC
+  [GROUND] AI For Good Global Summit: 3 search(es), 5 source(s) - futurehubs.eu, genevaaisummit.swiss, itu.int  [prompt: narrow]
+  [30]   24.7s attempts 1 searches  3 deadline 2027-01-31 AI For Good Global Summit
+  [GROUND] Fuel Ethanol Workshop and Expo & Sustainable Fuels Summit: 4 search(es), 3 source(s) - bbiconferences.com, cleanfuels.org, eventmandi.com  [prompt: narrow]
+  [31]   12.6s attempts 1 searches  4 deadline 2027-02-12 Fuel Ethanol Workshop and Expo & Sustainable Fuels
+  [GROUND] 31st Annual Green Chemistry & Engineering Conference (GC&E): 4 search(es), 6 source(s) - advancedbiofuelsusa.info, gcande.org, world-wide.org  [prompt: narrow]
+  [32]   16.0s attempts 1 searches  4 deadline 2027-02-15 31st Annual Green Chemistry & Engineering Conferen
+  [GROUND] World of Concrete 2028: 3 search(es), 1 source(s) - worldofconcrete.com  [prompt: narrow]
+  [33]   31.8s attempts 1 searches  3 deadline 2027-02-18 World of Concrete 2028
+  [GROUND] TROOPERS27: 5 search(es), 1 source(s) - troopers.de  [prompt: narrow]
+  [34]   13.1s attempts 1 searches  5 deadline 2027-03-31 TROOPERS27
+  [GROUND] AIST Material Science and Technology (MS&T): 9 search(es), 2 source(s) - instagram.com, researchsocietyonalcohol.org  [prompt: narrow]
+  [35]   25.9s attempts 1 searches  9 deadline 2027-05-01 AIST Material Science and Technology (MS&T)
+  [GROUND] Cloud & Cyber Security Expo London 2027: 11 search(es), 3 source(s) - techshowlondon.co.uk  [prompt: narrow]
+  [36]   24.8s attempts 1 searches 11 deadline -          Cloud & Cyber Security Expo London 2027
+  [GROUND] SANS Cyber Defense Initiative 2026 (CDI 2026): 8 search(es), 0 source(s)  [prompt: narrow]
+  [37]   26.3s attempts 1 searches  8 deadline 2026-05-26 SANS Cyber Defense Initiative 2026 (CDI 2026)
+  [GROUND] Cyber Security Summit Jacksonville: 7 search(es), 10 source(s) - cyberriskcollaborative.com, cybersecuritysummit.com, infosecworldusa.com, swoogo.com  [prompt: narrow]
+  [38]   16.8s attempts 1 searches  7 deadline -          Cyber Security Summit Jacksonville
+  [GROUND] GITEX Global: 7 search(es), 13 source(s) - beri.net, causo.ai, gitex.com, lensmor.com, orchestra.media  [prompt: narrow]
+  [39]   26.8s attempts 1 searches  7 deadline -          GITEX Global
+  [GROUND] AI & Big Data Expo Global: 16 search(es), 4 source(s) - dataorigin.es, developer-tech.com, marketingtechnews.net, uvik.net  [prompt: narrow]
+  [40]   36.0s attempts 1 searches 16 deadline -          AI & Big Data Expo Global
+
+RUN HEALTH: HEALTHY
+  calls: 40 (40 ok); ungrounded answers: 0
+GROUNDING TRAIL: 40 rows | 40 grounded, 0 no-search | 22 citation-host-not-in-sources (AI Summit New York, Carbon Capture Technology Expo M, CarbonZero Global Conference & E, Future Fuels MENA Summit 2026, Apres-Cyber Slopes Summit 2027)
+ARM A DONE: 40 of 40 rows in 922s wall (1 worker(s)); attempts 40, 504s 0, 429s 0; searches 306 = 4.284 USD at 14 USD per 1,000, tokens about 0.570 USD; no quota stop -> experiments\research_path_bakeoff\arm_a_serial.jsonl, experiments\research_path_bakeoff\arm_a_serial.grounding.jsonl, experiments\research_path_bakeoff\arm_a_serial.health.json

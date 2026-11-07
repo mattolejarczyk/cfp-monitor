@@ -1,0 +1,362 @@
+{
+ "2026-ai-summit-new-york-new-york-speaking": {
+  "event": "AI Summit New York",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Open",
+  "shipped_evidence_url": ""
+ },
+ "2026-carbon-capture-technology-expo-mena-abu-dhabi": {
+  "event": "Carbon Capture Technology Expo MENA 2026",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": ""
+ },
+ "2026-carbon-capture-usa-houston": {
+  "event": "Carbon Capture USA 2026",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Closed",
+  "shipped_evidence_url": ""
+ },
+ "2026-carbonzero-global-conference-exhibition-brussels": {
+  "event": "CarbonZero Global Conference & Exhibition 2026",
+  "key": "2026-09-10",
+  "key_source": "shipped",
+  "shipped": "2026-09-10",
+  "key_live": false,
+  "shipped_status": "Closed",
+  "shipped_evidence_url": ""
+ },
+ "2026-future-fuels-mena-summit-dubai": {
+  "event": "Future Fuels MENA Summit 2026",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": ""
+ },
+ "2026-german-owasp-day-karlsruhe": {
+  "event": "OWASP German Chapter Conference (AppSec Karlsruhe 2026)",
+  "key": "2026-06-21",
+  "key_source": "shipped",
+  "shipped": "2026-06-21",
+  "key_live": false,
+  "shipped_status": "Closed",
+  "shipped_evidence_url": "https://god.owasp.de/2026/cfp.html"
+ },
+ "2026-hitb-ootb-jakarta-speaking": {
+  "event": "Hack In The Box (OOTB 2026 Jakarta)",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": "https://ootb.net/jkt2026"
+ },
+ "2027-acm-codaspy-alexandria-speaking": {
+  "event": "17th ACM Conference on Data and Application Security and Privacy (CODASPY 2027)",
+  "key": "2026-11-16",
+  "key_source": "person-confirmed",
+  "shipped": "2026-11-16",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.codaspy.org/2027/cfp.html"
+ },
+ "2027-apres-cyber-slopes-summit-steamboat-springs-speaking": {
+  "event": "Apres-Cyber Slopes Summit 2027",
+  "key": "2026-11-20",
+  "key_source": "person-confirmed",
+  "shipped": "2026-11-20",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://sessionize.com/apres-cyber-slopes-summit-2027"
+ },
+ "2027-carbon-capture-europe-summit-rotterdam": {
+  "event": "Carbon Capture Europe Summit 2027",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Closed",
+  "shipped_evidence_url": ""
+ },
+ "2027-carbon-capture-global-summit-london-speaking": {
+  "event": "Carbon Capture Global Summit",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": ""
+ },
+ "2027-carbon-capture-technology-expo-mena-abu-dhabi-speaking": {
+  "event": "Carbon Capture Technology Expo MENA 2027",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": ""
+ },
+ "2027-ces-las-vegas": {
+  "event": "CES 2027 (Consumer Electronics Show - Smart Energy & Clean Tech)",
+  "key": "2026-10-02",
+  "key_source": "shipped",
+  "shipped": "2026-10-02",
+  "key_live": false,
+  "shipped_status": "Closed",
+  "shipped_evidence_url": "https://www.ces.tech/attendee-guides/speaking-at-ces/"
+ },
+ "2027-decarbonization-congress-berlin-speaking": {
+  "event": "Decarbonization Congress 2027",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Open",
+  "shipped_evidence_url": ""
+ },
+ "2027-ecml-pkdd-wuerzburg-speaking": {
+  "event": "ECML PKDD European Conference on Machine Learning and Principles and Practice of Knowledge Discovery in Databases",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": "https://ecmlpkdd.org/2027/"
+ },
+ "2027-european-carbon-capture-utilization-storage-amsterdam": {
+  "event": "European Carbon Capture, Utilization & Storage Conference 2027",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Closed",
+  "shipped_evidence_url": ""
+ },
+ "2027-global-energy-show-canada-calgary": {
+  "event": "Global Energy Show Canada 2027",
+  "key": "2026-12-04",
+  "key_source": "person-confirmed",
+  "shipped": "2026-12-04",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.globalenergyshow.com/conferences/energy-influencers/2027-call-for-submissions/"
+ },
+ "2027-odsc-east-boston-speaking": {
+  "event": "ODSC East 2027 (Open Data Science Conference)",
+  "key": "2027-01-08",
+  "key_source": "customer-verified-agrees",
+  "shipped": "2027-01-08",
+  "key_live": true,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": "https://odsc.ai/east/call-for-speakers/"
+ },
+ "2027-sustainable-fuels-global-summit-rotterdam": {
+  "event": "Sustainable Fuels Global Summit 2027",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Closed",
+  "shipped_evidence_url": "https://biofuels-news.com/conference/sustainableaviationfuels/agenda/"
+ },
+ "2027-zero-trust-world-ztw-orlando-speaking": {
+  "event": "Zero Trust World (ZTW by Threatlocker)",
+  "key": "2026-11-09",
+  "key_source": "shipped",
+  "shipped": "2026-11-09",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": ""
+ },
+ "2027-aaiml-conference-london-speaking": {
+  "event": "AAIML Conference 2027",
+  "key": "2026-11-10",
+  "key_source": "shipped",
+  "shipped": "2026-11-10",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://aaiml.net/"
+ },
+ "2026-raai-international-conference-robotics-automation-ai-singapore-speaking": {
+  "event": "RAAI 2026: International Conference on Robotics, Automation and Artificial Intelligence",
+  "key": "2026-11-10",
+  "key_source": "shipped",
+  "shipped": "2026-11-10",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.raai.net/"
+ },
+ "2026-co2-based-fuels-and-chemicals-conference-cologne": {
+  "event": "CO2-based Fuels and Chemicals Conference",
+  "key": "2026-11-16",
+  "key_source": "customer-verified-agrees",
+  "shipped": "2026-11-16",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://co2-chemistry.eu/call-for-abstracts/"
+ },
+ "2027-ieee-symposium-security-privacy-san-francisco-speaking": {
+  "event": "IEEE Symposium on Security & Privacy",
+  "key": "2026-11-17",
+  "key_source": "shipped",
+  "shipped": "2026-11-17",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://bibby.ai/conf/sp-2027"
+ },
+ "2027-firstcti-berlin-speaking": {
+  "event": "FIRST Cyber Threat Intelligence Conference (FIRSTCTI) 2027",
+  "key": "2026-11-23",
+  "key_source": "shipped",
+  "shipped": "2026-11-23",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.first.org/conference/firstcti27/"
+ },
+ "2027-cleantech-forum-north-america-san-diego": {
+  "event": "Clean Tech Forum",
+  "key": "2026-12-01",
+  "key_source": "shipped",
+  "shipped": "2026-12-01",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.cleantech.com/event/cleantech-forum-na/agenda/"
+ },
+ "2027-afpm-summit-san-antonio-speaking": {
+  "event": "American Fuel & Petrochemical Manufacturers (AFPM) Summit",
+  "key": "2026-12-11",
+  "key_source": "shipped",
+  "shipped": "2026-12-11",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.afpm.org/events"
+ },
+ "2027-arpa-e-energy-innovation-summit-orlando": {
+  "event": "ARPA-E Summit",
+  "key": "2027-01-08",
+  "key_source": "shipped",
+  "shipped": "2027-01-08",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.arpae-summit.com/Showcase/Technology-Showcase"
+ },
+ "2027-owasp-boston-application-security-conference-boston-speaking": {
+  "event": "OWASP Boston Application Security Conference (BASC 2027)",
+  "key": "2027-01-15",
+  "key_source": "customer-verified-agrees",
+  "shipped": "2027-01-15",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://basconf.org/"
+ },
+ "2027-ai-for-good-global-summit-geneva-speaking": {
+  "event": "AI For Good Global Summit",
+  "key": "2027-01-31",
+  "key_source": "shipped",
+  "shipped": "2027-01-31",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://aiforgood.itu.int/engage/"
+ },
+ "2027-fuel-ethanol-workshop-sustainable-fuels-summit-omaha-speaking": {
+  "event": "Fuel Ethanol Workshop and Expo & Sustainable Fuels Summit",
+  "key": "2027-02-12",
+  "key_source": "customer-verified-agrees",
+  "shipped": "2027-02-12",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://few.bbiconferences.com/ema/DisplayPage.aspx?pageId=Contact"
+ },
+ "2027-acs-green-chemistry-engineering-conference-reston-speaking": {
+  "event": "31st Annual Green Chemistry & Engineering Conference (GC&E)",
+  "key": "2027-02-15",
+  "key_source": "shipped",
+  "shipped": "2027-02-15",
+  "key_live": true,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": "https://www.gcande.org/"
+ },
+ "2028-world-of-concrete-las-vegas-speaking": {
+  "event": "World of Concrete 2028",
+  "key": "2027-02-18",
+  "key_source": "shipped",
+  "shipped": "2027-02-18",
+  "key_live": true,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": "https://www.worldofconcrete.com/education/topic-submissions/"
+ },
+ "2027-troopers-27-heidelberg": {
+  "event": "TROOPERS27",
+  "key": "2027-03-31",
+  "key_source": "customer-verified-agrees",
+  "shipped": "2027-03-31",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://troopers.de/troopers27/"
+ },
+ "2027-aist-material-science-technology-pittsburgh-speaking": {
+  "event": "AIST Material Science and Technology (MS&T)",
+  "key": "2027-05-01",
+  "key_source": "shipped",
+  "shipped": "2027-05-01",
+  "key_live": true,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.matscitech.org/MST27"
+ },
+ "2027-cloud-cyber-security-expo-london-london": {
+  "event": "Cloud & Cyber Security Expo London 2027",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.techshowlondon.co.uk/call-for-papers"
+ },
+ "2026-sans-cyber-defense-initiative-washington": {
+  "event": "SANS Cyber Defense Initiative 2026 (CDI 2026)",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Upcoming",
+  "shipped_evidence_url": ""
+ },
+ "2026-cyber-security-summit-jacksonville-jacksonville-speaking": {
+  "event": "Cyber Security Summit Jacksonville",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://cybersecuritysummit.com/contact/"
+ },
+ "2026-gitex-global-dubai-speaking": {
+  "event": "GITEX Global",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Open",
+  "shipped_evidence_url": "https://www.gitex.com/become-a-speaker"
+ },
+ "2027-ai-big-data-expo-global-london-speaking": {
+  "event": "AI & Big Data Expo Global",
+  "key": "",
+  "key_source": "shipped",
+  "shipped": "",
+  "key_live": false,
+  "shipped_status": "Open",
+  "shipped_evidence_url": ""
+ }
+}

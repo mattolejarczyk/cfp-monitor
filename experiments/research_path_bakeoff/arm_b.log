@@ -1,0 +1,85 @@
+﻿ARM B: 40 rows to do (0 already in arm_b.jsonl); spent so far 0.000 USD, cap 0.6
+  [ 1] B   13.9s 0.0081 USD deadline -          AI Summit New York                             
+  [ 2] B   13.1s 0.0081 USD deadline -          Carbon Capture Technology Expo MENA 2026       
+  render https://www.usa.carbon-capture-conference.com/speakers: plain 3595 chars -> 4089 chars (rendered via cdp, status 200)
+  render https://www.usa.carbon-capture-conference.com/contact-us: plain 1492 chars -> 1256 chars (rendered via cdp, status 200)
+  [ 3] B   96.1s 0.0080 USD deadline -          Carbon Capture USA 2026                        
+  [ 4] B   17.7s 0.0083 USD deadline -          CarbonZero Global Conference & Exhibition 2026 
+  render https://www.futurefuelsmena.com/cghm-press-release: plain 0 chars -> 194 chars (rendered via cdp, status 404)
+  [ 5] B   25.7s 0.0081 USD deadline -          Future Fuels MENA Summit 2026                  
+  [ 6] B   13.0s 0.0083 USD deadline -          OWASP German Chapter Conference (AppSec Karlsr 
+  render https://ootb.net/jkt2026: plain 313 chars -> 2845 chars (rendered via cdp, status 200)
+  render https://ootb.net/jkt2026/speakers/your-name-here: plain 542 chars -> 2598 chars (rendered via cdp, status 200)
+  render https://www.ootb.net/speakers: plain 542 chars -> 2804 chars (rendered via cdp, status 200)
+  [ 7] B   58.6s 0.0079 USD deadline -          Hack In The Box (OOTB 2026 Jakarta)            
+  [ 8] B   11.1s 0.0082 USD deadline 2026-11-24 17th ACM Conference on Data and Application Se https://codaspy27.hotcrp.com/deadlines
+  [ 9] B   10.1s 0.0080 USD deadline 2026-11-20 Apres-Cyber Slopes Summit 2027                 https://sessionize.com/apres-cyber-slopes-summit-2027
+  [10] B   12.8s 0.0083 USD deadline -          Carbon Capture Europe Summit 2027              
+  [11] B   10.0s 0.0083 USD deadline -          Carbon Capture Global Summit                   
+  [12] B   11.7s 0.0083 USD deadline -          Carbon Capture Technology Expo MENA 2027       
+  render https://www.ces.tech/attend/conference-program/: plain 6171 chars -> 4365 chars (rendered via cdp, status 200)
+  [13] B   21.6s 0.0083 USD deadline -          CES 2027 (Consumer Electronics Show - Smart En 
+  [14] B   12.7s 0.0082 USD deadline -          Decarbonization Congress 2027                  
+  render https://ecmlpkdd.org/guidelines-for-proposals/: plain 12327 chars -> 12380 chars (rendered via cdp, status 200)
+  [15] B   18.7s 0.0084 USD deadline 2027-01-31 ECML PKDD European Conference on Machine Learn https://ecmlpkdd.org/2027/submissions-journal-track/
+  render https://www.europe.carbon-capture-conference.com/abstracts: plain 0 chars -> 524 chars (rendered via cdp, status 404)
+  render https://www.europe.carbon-capture-conference.com/speakers: plain 4239 chars -> 5380 chars (rendered via cdp, status 200)
+  [16] B   40.9s 0.0081 USD deadline -          European Carbon Capture, Utilization & Storage 
+  render https://www.globalenergyshow.com/conferences/energy-influenc: plain 1 chars -> 1576 chars (rendered via cdp, status 404)
+  render https://www.globalenergyshow.com/conferences/2025-call-for-a: plain 0 chars -> 3614 chars (rendered via cdp, status 200)
+  render https://globalenergyshow.com/conference: plain 0 chars -> 1576 chars (rendered via cdp, status 404)
+  [17] B   62.2s 0.0080 USD deadline -          Global Energy Show Canada 2027                 
+  render https://odsc.ai/east/schedule-overview/: plain 11983 chars -> 7005 chars (rendered via cdp, status 200)
+  [18] B   31.7s 0.0080 USD deadline 2027-01-08 ODSC East 2027 (Open Data Science Conference)  https://odsc.ai/east/call-for-speakers/
+  [19] B   13.9s 0.0077 USD deadline -          Sustainable Fuels Global Summit 2027           
+  render https://ztw.com/faq: plain 292 chars -> 189 chars (rendered via cdp, status 200)
+  render https://ztw.com/agenda: plain 6326 chars -> 6523 chars (rendered via cdp, status 200)
+  [20] B   30.1s 0.0087 USD deadline -          Zero Trust World (ZTW by Threatlocker)         
+  [21] B   26.3s 0.0079 USD deadline 2026-11-10 AAIML Conference 2027                          https://aaiml.net/
+  [22] B   15.6s 0.0082 USD deadline 2026-11-10 RAAI 2026: International Conference on Robotic https://easychair.org/cfp/RAAI2026
+  [23] B   18.8s 0.0081 USD deadline 2026-11-16 CO2-based Fuels and Chemicals Conference       https://co2-chemistry.eu/call-for-abstracts/
+  render https://bibby.ai/conf/sp-2027: plain 0 chars -> 0 chars (render failed: Error)
+  [24] B   52.1s 0.0083 USD deadline -          IEEE Symposium on Security & Privacy           
+  [25] B   12.0s 0.0082 USD deadline 2026-11-23 FIRST Cyber Threat Intelligence Conference (FI https://www.first.org/conference/firstcti27/
+  render https://cleantech.com/innovator-faq/: plain 6753 chars -> 1391 chars (rendered via cdp, status 200)
+  [26] B   20.4s 0.0080 USD deadline -          Clean Tech Forum                               
+  render https://www.afpm.org/events/presenter-information: plain 10300 chars -> 1877 chars (rendered via cdp, status 200)
+python.exe : incorrect startxref pointer(4)
+At line:1 char:391
++ ... FFERED="1"; & .\.venv\Scripts\python.exe experiments\research_path_ba ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (incorrect startxref pointer(4):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+parsing for Object Streams
+Cannot find "/Root" key in trailer
+Searching object with "/Catalog" key
+  render https://summit.afpm.org/sites/default/files/2024-10/AFPM_202: plain 0 chars -> 0 chars (rendered via cdp, status 200)
+  [27] B   39.9s 0.0080 USD deadline -          American Fuel & Petrochemical Manufacturers (A 
+  [28] B    9.3s 0.0083 USD deadline 2027-01-08 ARPA-E Summit                                  https://www.arpae-summit.com/Showcase/Technology-Showcase
+  render https://basconf.org/: plain 52 chars -> 3767 chars (rendered via cdp, status 200)
+EOF marker not found
+  render https://basconf.org/assets/files/OWASP-BASC-2027-Sponsorship: plain 0 chars -> 0 chars (rendered via cdp, status 200)
+  render https://basconf.org/schedule/: plain 0 chars -> 3767 chars (rendered via cdp, status 404)
+  [29] B   38.9s 0.0079 USD deadline 2027-01-15 OWASP Boston Application Security Conference ( https://basconf.org/
+  [30] B   13.7s 0.0079 USD deadline 2027-01-31 AI For Good Global Summit                      https://aiforgood.itu.int/engage/
+  [31] B    6.5s 0.0083 USD deadline -          Fuel Ethanol Workshop and Expo & Sustainable F 
+  render https://www.gcande.org/the-science/: plain 10911 chars -> 6901 chars (rendered via cdp, status 200)
+  render https://www.gcande.org/team-2/: plain 5798 chars -> 5375 chars (rendered via cdp, status 200)
+  [32] B   31.7s 0.0083 USD deadline -          31st Annual Green Chemistry & Engineering Conf 
+  [33] B   13.4s 0.0081 USD deadline 2027-02-18 World of Concrete 2028                         https://www.worldofconcrete.com/education/topic-submissions/
+  render https://troopers.de/troopers27/: plain 0 chars -> 41 chars (rendered via cdp, status 403)
+  [34] B   21.7s 0.0082 USD deadline 2027-03-31 TROOPERS27                                     https://cfp.troopers.de/tr27-cfp/cfp
+  render https://www.matscitech.org/MST27: plain 0 chars -> 1997 chars (rendered via cdp, status 200)
+  render https://www.matscitech.org/MST27/MST27/Default.aspx: plain 0 chars -> 1997 chars (rendered via cdp, status 200)
+  render https://www.matscitech.org/MST27/MST27/about/aboutmst.aspx: plain 0 chars -> 2221 chars (rendered via cdp, status 200)
+  [35] B   48.2s 0.0080 USD deadline 2027-05-01 AIST Material Science and Technology (MS&T)    https://www.matscitech.org/MST27
+  [36] B   11.1s 0.0080 USD deadline -          Cloud & Cyber Security Expo London 2027        
+  render https://www.sans.org/call-for-presentations/: plain 0 chars -> 1273 chars (rendered via cdp, status 404)
+  [37] B   24.4s 0.0082 USD deadline -          SANS Cyber Defense Initiative 2026 (CDI 2026)  
+  render https://cybersecuritysummit.com/panelist-submission/: plain 5876 chars -> 1735 chars (rendered via cdp, status 200)
+  [38] B   28.9s 0.0080 USD deadline -          Cyber Security Summit Jacksonville             
+  render https://www.gitex.com/become-a-speaker: plain 2279 chars -> 1465 chars (rendered via cdp, status 200)
+  [39] B   25.3s 0.0080 USD deadline -          GITEX Global                                   
+  [40] B   13.6s 0.0080 USD deadline -          AI & Big Data Expo Global                      
+ARM B DONE: 40 attempted, 16.7 min, spent 0.383 USD

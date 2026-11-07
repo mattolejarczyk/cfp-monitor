@@ -1,0 +1,5 @@
+# the copy of upstream's audit script and rules (the Markets working area is not part of this repo)
+markets_copy/
+# third-party page text and raw provider responses (regenerable, large)
+pages_cache.json
+raw/

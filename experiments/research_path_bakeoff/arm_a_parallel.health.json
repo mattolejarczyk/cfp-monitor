@@ -1,0 +1,50 @@
+{
+  "verdict": "HEALTHY",
+  "reasons": [],
+  "call_health": {
+    "counts": {
+      "gemini_call": {
+        "ok": 40,
+        "http_504": 1
+      },
+      "grounding": {
+        "ok": 40,
+        "no_search_ran": 0
+      }
+    },
+    "notes": {},
+    "examples": {
+      "gemini_call|http_504": [
+        "GITEX Global: 504 DEADLINE_EXCEEDED. {'error': {'code': 504, 'message': 'Deadline expired before operation could complete.', 'status':"
+      ]
+    }
+  },
+  "grounding_trail": {
+    "rows": 40,
+    "grounded": 40,
+    "no_search": 0,
+    "citation_host_not_in_sources": 19,
+    "mismatch_examples": [
+      "AI Summit New York",
+      "CarbonZero Global Conference & Exhibition 2026",
+      "Carbon Capture Technology Expo MENA 2026",
+      "OWASP German Chapter Conference (AppSec Karlsruhe 2026)",
+      "Future Fuels MENA Summit 2026"
+    ],
+    "by_opportunity_type": {
+      "Speaking": {
+        "rows": 40,
+        "grounded": 40,
+        "no_search": 0,
+        "citation_host_not_in_sources": 19,
+        "mismatch_examples": [
+          "AI Summit New York",
+          "CarbonZero Global Conference & Exhibition 2026",
+          "Carbon Capture Technology Expo MENA 2026",
+          "OWASP German Chapter Conference (AppSec Karlsruhe 2026)",
+          "Future Fuels MENA Summit 2026"
+        ]
+      }
+    }
+  }
+}

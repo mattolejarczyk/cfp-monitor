@@ -1,0 +1,37 @@
+{
+  "verdict": "HEALTHY",
+  "reasons": [],
+  "call_health": {
+    "counts": {
+      "gemini_call": {
+        "ok": 1
+      },
+      "grounding": {
+        "ok": 1,
+        "no_search_ran": 0
+      }
+    },
+    "notes": {},
+    "examples": {}
+  },
+  "grounding_trail": {
+    "rows": 1,
+    "grounded": 1,
+    "no_search": 0,
+    "citation_host_not_in_sources": 1,
+    "mismatch_examples": [
+      "AI Summit New York"
+    ],
+    "by_opportunity_type": {
+      "Speaking": {
+        "rows": 1,
+        "grounded": 1,
+        "no_search": 0,
+        "citation_host_not_in_sources": 1,
+        "mismatch_examples": [
+          "AI Summit New York"
+        ]
+      }
+    }
+  }
+}

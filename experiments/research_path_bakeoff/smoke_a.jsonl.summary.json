@@ -1,0 +1,21 @@
+{
+ "rows": 1,
+ "done": 1,
+ "skipped": 0,
+ "wall_secs": 21.6,
+ "workers": 1,
+ "delay": 16.0,
+ "timeout": 120.0,
+ "attempts": 1,
+ "http_504": 0,
+ "http_429": 0,
+ "timeouts": 0,
+ "searches": 4,
+ "usd_search": 0.056,
+ "usd_tokens_est": 0.013,
+ "stubs": 0,
+ "stop": "",
+ "health": "RUN HEALTH: HEALTHY\n  calls: 1 (1 ok); ungrounded answers: 0",
+ "trail": "GROUNDING TRAIL: 1 rows | 1 grounded, 0 no-search | 1 citation-host-not-in-sources (AI Summit New York)",
+ "finished": "2026-11-07T07:09:26"
+}
