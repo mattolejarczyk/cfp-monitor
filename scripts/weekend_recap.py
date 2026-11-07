@@ -32,6 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from src.cfp_monitor.alerts import maybe_send_email                     # noqa: E402
 from src.cfp_monitor.publish_guard import check_publish_fresh, manifest_path  # noqa: E402
+from src.cfp_monitor import research_usable                              # noqa: E402
 
 MARKETS_DIR = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\Markets")
 LIVE_MARKETS = ("Cybersecurity", "Utility")
@@ -285,11 +286,29 @@ def pct(a, b) -> str:
         return str(a)
 
 
-def monthly_recap(log: str) -> tuple[str, str, str]:
+def research_checks(s: dict, markets_dir: Path) -> list:
+    """The shared "research usable" rule (src/cfp_monitor/research_usable.py), one check per market the log researched.
+    2026-11-07: the recap keyed on exit code 0 while the import accepted exit 1, so Friday 2026-11-06 read FAILED for a load
+    that worked; the Saturday wrapper reports exit 0 whatever the markets did. The import and this recap now ask one rule."""
+    try:
+        exit_code = int(s["exit"]) if s.get("exit") is not None else None
+    except ValueError:
+        exit_code = None
+    return [research_usable.check(name, Path(markets_dir), exit_code) for name in s["markets"]]
+
+
+def research_sentence(checks: list) -> str:
+    if not checks:
+        return "Research usable: no market was researched (no market block in the log)."
+    return "Research usable: " + " | ".join(c.sentence() for c in checks)
+
+
+def monthly_recap(log: str, markets_dir: Path = MARKETS_DIR) -> tuple[str, str, str]:
     """The monthly prospect sweep (every 4th Wednesday). Same research as Saturday, but these
     markets have no customer page, so nothing is loaded and nothing downstream changes."""
     s = parse_saturday(log)
-    ok = s["exit"] == "0" and bool(s["markets"])
+    checks = research_checks(s, markets_dir)
+    ok = bool(checks) and all(c.usable for c in checks)
     status = "WORKED" if ok else "FAILED"
     head = ["Market", "Rows done", "Researched with real searches", "Not researched",
             "AI requests"]
@@ -297,7 +316,7 @@ def monthly_recap(log: str) -> tuple[str, str, str]:
              m["stubs"], m["requests"]] for n, m in s["markets"].items()]
     total_req = sum(int(m["requests"] or 0) for m in s["markets"].values())
     facts = [f"5-row test before the run: {s['canary']}.",
-             *([commitment_sentence(commitments)] if kind != "friday" else []),      # promises concern the Cybersecurity and Utility files
+             research_sentence(checks),
              f"AI requests in total: about {total_req}."]
     if s["timeouts"]:
         facts.append(f"Google was slow: {s['timeouts']} '504' timeouts (Google's server took "
@@ -337,7 +356,8 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     """`kind='friday'` is the awards run (2026-09-28): same research, load and table, but the
     next steps are Monday's AWARDS page - Sunday's check covers conferences only."""
     s = parse_saturday(log)
-    research_ok = s["exit"] == "0" and bool(s["markets"])
+    checks = research_checks(s, markets_dir)
+    research_ok = bool(checks) and all(c.usable for c in checks)
     head = ["", *s["markets"].keys()]
     rows = [
         ["Rows done", *[rows_done_cell(m) for m in s["markets"].values()]],
@@ -349,6 +369,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     total_req = sum(int(m["requests"] or 0) for m in s["markets"].values())
 
     facts = [f"5-row test before the run: {s['canary']}.",
+             research_sentence(checks),
              f"Customer sheet check-in: {s['intake'] or 'no result in the log'}.",
              *([coverage_sentence(s["coverage"])] if kind != "friday" else []),      # awards have no customer sheet
              *([autoadd_sentence(s["autoadd"])] if kind != "friday" and s.get("autoadd") else []),
@@ -557,7 +578,7 @@ def main() -> int:
                 qa = None
             subject, text, html_ = saturday_recap(log, imp, md, a.kind, qa, commitment_facts(md) if a.kind != "friday" else None)
         elif a.kind == "monthly":
-            subject, text, html_ = monthly_recap(log)
+            subject, text, html_ = monthly_recap(log, md)
         else:
             digest = Path(a.digest).read_text(encoding="utf-8") if a.digest and Path(a.digest).exists() else ""
             # this run's discovery result: newest in the digest's folder, and only if written

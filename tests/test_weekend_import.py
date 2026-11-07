@@ -217,3 +217,65 @@ def test_exit_1_stub_rows_do_not_block_the_market_but_a_halt_or_a_short_run_stil
         w.writerow(["CONFERENCE"])
         w.writerows([["A"]])
     assert "stopped short" in check_research("Awards", tmp_path, 1), "exit 1 does not hide a run that stopped short"
+
+
+# --- 2026-11-07 (inspection defect 2): a hung gate must not hang the load, and a round is judged on its own result file ---
+def test_run_returns_after_the_timeout_even_when_a_grandchild_holds_the_output(tmp_path, monkeypatch):
+    """2026-11-06: a gate pass ran 2 h 17 min past the 7200 s timeout. subprocess.run(capture_output=True) kills the child
+    on timeout and then waits for the output pipe to close, and accept_delivery's browser grandchild keeps it open. The
+    child's output now goes to a file (kept as evidence) and the whole process tree is killed."""
+    import textwrap
+    import threading
+    import time as _time
+    from scripts import weekend_import as wi
+    beat = tmp_path / "beat.txt"
+    grandchild = tmp_path / "grandchild.py"
+    grandchild.write_text(textwrap.dedent(f"""
+        import time
+        from pathlib import Path
+        p = Path(r"{beat}")
+        for _ in range(100):          # about 25 s, then it leaves on its own: a failed test leaves nothing behind
+            p.write_text(str(time.time()))
+            print("beat", flush=True)
+            time.sleep(0.25)
+    """), encoding="utf-8")
+    child = tmp_path / "child.py"
+    child.write_text(textwrap.dedent(f"""
+        import subprocess, sys, time
+        print("child start", flush=True)
+        subprocess.Popen([sys.executable, r"{grandchild}"])   # inherits stdout: with a pipe it stays open after the child dies
+        time.sleep(60)
+    """), encoding="utf-8")
+    monkeypatch.setattr(wi, "RUN_OUT_DIR", tmp_path / "work", raising=False)
+    log, result = [], {}
+
+    def go():
+        result["rc"] = wi.run([sys.executable, child], tmp_path, log, timeout=2)
+
+    t = threading.Thread(target=go, daemon=True)
+    t.start()
+    t.join(12)
+    assert not t.is_alive(), "run() did not return within 12 s of a 2 s timeout: the kill is waiting on the grandchild's pipe"
+    joined = "\n".join(log)
+    assert result["rc"] == 124 and "TIMEOUT" in joined
+    assert "child start" in joined, "the child's output up to the kill is kept"
+    kept = list((tmp_path / "work").glob("*.out.txt"))
+    assert kept and "child start" in kept[0].read_text(encoding="utf-8"), "the output file is the evidence of what the child did before the kill"
+    _time.sleep(1.5)
+    m1 = beat.stat().st_mtime
+    _time.sleep(1.5)
+    assert beat.stat().st_mtime == m1, "the grandchild is still running: the process tree was not killed"
+
+
+def test_a_round_that_writes_no_gate_result_is_no_result_never_the_previous_rounds_verdict(tmp_path, monkeypatch):
+    """A hung round wrote no .gate.json; gate() read round 1's file and judged round 2 on it."""
+    import json as _json
+    from scripts import weekend_import as wi
+    cand = tmp_path / "Cybersecurity_audited.candidate.csv"
+    cand.write_text("CONFERENCE\nA\n", encoding="utf-8")
+    stale = cand.with_name("Cybersecurity_audited.candidate.gate.json")
+    stale.write_text(_json.dumps({"checks": [{"check": "1", "passed": True, "failures": []}]}), encoding="utf-8")
+    monkeypatch.setattr(wi, "run", lambda cmd, cwd, log, timeout=7200: (log.append("gate hung, wrote nothing"), 124)[1])
+    verdict, fails, js = wi.gate(cand, tmp_path, [])
+    assert verdict == "NO-RESULT", verdict
+    assert not stale.exists(), "the previous round's result file must be gone before the gate runs"

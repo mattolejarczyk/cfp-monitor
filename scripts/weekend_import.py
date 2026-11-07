@@ -54,12 +54,14 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from src.cfp_monitor import research_usable                             # noqa: E402
 from src.cfp_monitor.identity import (SEED_FILES, assert_mapped, seed_map,   # noqa: E402
                                       to_canonical)
 
@@ -78,7 +80,7 @@ AWARDS = "Awards"
 # The gate truncates CONFERENCE to 40 characters (38 in two checks) at the front of a failure.
 NAME_PREFIX = 38
 MAX_ROUNDS = 3
-MAX_OUTPUT_AGE_H = 30
+MAX_OUTPUT_AGE_H = research_usable.MAX_OUTPUT_AGE_H    # the shared rule owns the number (2026-11-07)
 WAITING_MARK = "so it waits"          # in the hold reasons for an id upstream gave when the first-load path is off or capped
 
 
@@ -96,17 +98,63 @@ def write_csv(path: Path, cols: list[str], rows: list[dict]) -> None:
         w.writerows(rows)
 
 
-def run(cmd: list[str], cwd: Path, log: list[str], timeout: int = 7200) -> int:
-    t0 = time.time()
+# Where each child's output is written (set by main() to the run's work folder; a temp folder otherwise). The
+# file is kept: when a child is killed on timeout, what it printed up to that moment is the evidence.
+RUN_OUT_DIR: Path | None = None
+_RUN_SEQ = 0
+
+
+def kill_tree(p: subprocess.Popen) -> str:
+    """Kill the child AND everything it spawned. On Windows `taskkill /T /F`; elsewhere the process group
+    (the child is started in its own session). Returns one line saying what happened, for the log."""
+    if os.name == "nt":
+        r = subprocess.run(["taskkill", "/T", "/F", "/PID", str(p.pid)], capture_output=True, text=True,
+                           errors="replace", timeout=60)
+        return " ".join((r.stdout + r.stderr).split())[:300] or f"taskkill exit {r.returncode}"
+    import signal
     try:
-        p = subprocess.run([str(c) for c in cmd], cwd=str(cwd), capture_output=True,
-                           text=True, encoding="utf-8", errors="replace", timeout=timeout,
-                           env={**os.environ, "PYTHONIOENCODING": "utf-8"})
-        rc, out = p.returncode, (p.stdout or "") + (p.stderr or "")
-    except subprocess.TimeoutExpired:
-        rc, out = 124, f"TIMEOUT after {time.time() - t0:.0f}s"
+        os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+        return f"killed process group of pid {p.pid}"
+    except Exception as e:                                                   # noqa: BLE001
+        p.kill()
+        return f"killed pid {p.pid} only ({type(e).__name__})"
+
+
+def run(cmd: list[str], cwd: Path, log: list[str], timeout: int = 7200) -> int:
+    """Run one of the runbook's commands, output to a FILE, and on timeout kill the whole process tree.
+
+    2026-11-06: a gate pass ran 2 h 17 min past this timeout. subprocess.run(capture_output=True) kills the
+    child when the timeout fires and then waits for the output pipe to close, and accept_delivery's browser
+    grandchild (Playwright) keeps the pipe open after its parent is dead. Output to a file has no pipe to
+    wait on, and taskkill /T takes the grandchild with the child (inspection 2026-11-07, defect 2).
+    """
+    global _RUN_SEQ
+    _RUN_SEQ += 1
+    t0 = time.time()
+    name = Path(str(cmd[1])).stem if len(cmd) > 1 else "cmd"
+    out_dir = RUN_OUT_DIR or Path(tempfile.gettempdir()) / "weekend_import"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / f"run_{_RUN_SEQ:02d}_{name}.out.txt"
+    note = ""
+    with open(out_path, "w", encoding="utf-8", errors="replace") as fh:
+        p = subprocess.Popen([str(c) for c in cmd], cwd=str(cwd), stdout=fh, stderr=subprocess.STDOUT,
+                             env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                             **({} if os.name == "nt" else {"start_new_session": True}))
+        try:
+            rc = p.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            how = kill_tree(p)
+            try:
+                p.wait(timeout=60)
+            except subprocess.TimeoutExpired:
+                how += "; the child did not exit within 60s of the kill"
+            rc = 124
+            note = f"TIMEOUT after {time.time() - t0:.0f}s - process tree killed: {how}"
+    out = out_path.read_text(encoding="utf-8", errors="replace")
+    if note:
+        out = (out.rstrip() + "\n" + note) if out.strip() else note
     shown = [Path(str(cmd[1])).name] + [str(c) for c in cmd[2:]]
-    log.append(f"$ {' '.join(shown)}  -> exit {rc} ({time.time() - t0:.0f}s)")
+    log.append(f"$ {' '.join(shown)}  -> exit {rc} ({time.time() - t0:.0f}s) [output: {out_path}]")
     log.append(out.rstrip())
     return rc
 
@@ -124,6 +172,9 @@ def gate(csv_path: Path, cwd: Path, log: list[str], network: bool = True,
         cmd.append("--no-network")
     if db and market:
         cmd += ["--db", db, "--market", market]
+    # The previous round's file must be gone first: a round that writes none (a hung or killed gate) is
+    # NO-RESULT, never judged on the round before (inspection 2026-11-07, defect 2).
+    js.unlink(missing_ok=True)
     run(cmd, cwd, log)
     if not js.exists():
         return "NO-RESULT", [("?", "the gate wrote no result file")], js
@@ -217,30 +268,16 @@ def apply_row_rule(rows: list[dict], sources: list[str], bad: dict[int, list[str
 
 # ============================================================================ per market
 def check_research(market: str, markets_dir: Path, research_exit: int | None) -> str | None:
-    """Why this market's research cannot be used, or None if it can."""
-    # The audit's exit codes (run_market_audit.py): 0 complete; 1 = finished, but with stub rows (the API failed every retry for a row) or rows that did not land; 3 = quota exhausted;
-    # 4 = grounded search collapsed; 130 = interrupted. Only 3, 4, 130 (and anything unknown) mean the output cannot be used. Exit 1 is routine (run_overnight.ps1: "Stubs are routine,
-    # a handful of transient API failures per run") and used to block the WHOLE market: on 2026-10-16 one stub row (The Climate Awards, three answers without a search) held back
-    # 94 good awards. A stub is handled per row below (resolve_market: last week's accepted version, else held back, never loaded), and a run that stopped short is still caught by
-    # the row count further down, so exit 1 is allowed through.
-    if research_exit not in (None, 0, 1):
-        return f"the research run exited {research_exit} (3 = out of quota, 4 = search collapsed, 130 = interrupted)"
-    out = markets_dir / f"{market}_audited.csv"
-    inp = markets_dir / f"{market}_input.csv"
-    if not out.exists():
-        return f"no research output at {out.name}"
-    age_h = (time.time() - out.stat().st_mtime) / 3600
-    if age_h > MAX_OUTPUT_AGE_H:
-        return f"{out.name} is {age_h:.0f}h old - this weekend's research did not write it"
-    if inp.exists():
-        # rows labelled DUP_OF are skipped by the audit on purpose (one award listed twice), so
-        # they are not "missing" - the awards list carries 14
-        # REFRESH_SKIP (refresh_plan.py, 2026-10-04) marks awards the audit deliberately did not research this week: also not "missing" (their last accepted row is carried over)
-        n_in = sum(1 for r in read_csv(inp)[1] if not (r.get("DUP_OF") or "").strip() and not (r.get("REFRESH_SKIP") or "").strip())
-        n_out = len(read_csv(out)[1])
-        if n_out < n_in:
-            return f"{out.name} holds {n_out} rows for {n_in} input rows - the run stopped short"
-    return None
+    """Why this market's research cannot be used, or None if it can. THE shared rule (src/cfp_monitor/research_usable.py,
+    2026-11-07), read by the recap too, so the import and the email can never disagree about a run.
+
+    The audit's exit codes (run_market_audit.py): 0 complete; 1 = finished, but with stub rows (the API failed every retry for a row) or rows that did not land; 3 = quota exhausted;
+    4 = grounded search collapsed; 130 = interrupted. Only 3, 4, 130 (and anything unknown) mean the output cannot be used. Exit 1 is routine (run_overnight.ps1: "Stubs are routine,
+    a handful of transient API failures per run") and used to block the WHOLE market: on 2026-10-16 one stub row (The Climate Awards, three answers without a search) held back
+    94 good awards. A stub is handled per row below (resolve_market: last week's accepted version, else held back, never loaded). The run's own verdict (<Market>_audited.health.json)
+    decides the rest: FAILED is not usable, DEGRADED is usable and said, and a run that stopped short (row count against the input list) is not usable whatever the exit code.
+    """
+    return research_usable.check(market, Path(markets_dir), research_exit).why or None
 
 
 SIBLING = "MARKET_SIBLING"       # DUP_OF value on an Awards_input row: the SAME award, listed for the customer of ANOTHER market (ACT-67 follow-up)
@@ -900,6 +937,8 @@ def main() -> int:
     db = data_root / "cfp_monitor.db"
     work = markets_dir / "weekend" / stamp if not args.sandbox else data_root / "work"
     work.mkdir(parents=True, exist_ok=True)
+    global RUN_OUT_DIR
+    RUN_OUT_DIR = work                                    # every child's output is kept beside the log
     log: list[str] = [f"weekend_import {stamp} - {'SANDBOX ' + str(data_root) if args.sandbox else 'LIVE'}"]
     report = {"stamp": stamp, "mode": "sandbox" if args.sandbox else "live",
               "markets": [], "database": "unchanged", "status": "FAILED"}

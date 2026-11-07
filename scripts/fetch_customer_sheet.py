@@ -85,6 +85,53 @@ DEFAULT_KIND = "conference"
 SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 DEFAULT_CONFIG = Path(os.environ.get("LOCALAPPDATA", ".")) / "CFP-Monitor" / "customer_sheets.json"
 HERE = Path(__file__).resolve().parent
+# Where a refused export is KEPT (quality by design rule 2: every failure keeps its evidence). Until 2026-11-07
+# a refused export was thrown away ("Nothing was saved"), so when the Utility Global sheet came back with cell
+# A1 blank the cause could only be found by fetching again. Same root as the other QA reports
+# (src/cfp_monitor/qa_report.QA_ROOT), one folder per day: runs_out/qa/<date>/intake_failed_<client>.csv
+QA_ROOT = Path(os.environ.get("LOCALAPPDATA", ".")) / "CFP-Monitor" / "runs_out" / "qa"
+
+
+def keep_evidence(text: str, client: str, evidence_dir: Path | None = None) -> Path:
+    """Write the raw export where a person can read it, and return the path (named in the error)."""
+    d = Path(evidence_dir) if evidence_dir else QA_ROOT / datetime.now().strftime("%Y-%m-%d")
+    d.mkdir(parents=True, exist_ok=True)
+    out = d / f"intake_failed_{client}.csv"
+    out.write_text(text, encoding="utf-8", newline="")
+    return out
+
+
+def _split_header(text: str) -> tuple[str, list[str], str, str]:
+    """(bom, header cells, line ending, rest). The header line is parsed as CSV; the data rows are untouched."""
+    bom = "\ufeff" if text.startswith("\ufeff") else ""
+    body = text[len(bom):]
+    first, nl, rest = body.partition("\n")
+    eol = "\r\n" if first.endswith("\r") else "\n"
+    cells = next(csv.reader(io.StringIO(first.rstrip("\r"))), [])
+    return bom, cells, eol if nl else "", rest
+
+
+def map_blank_first_header(text: str, kind: str) -> tuple[str, str | None]:
+    """The 2026-11-07 Utility Global case: cell A1 blank (spaces), every other required column present, 84 rows
+    intact. When the ONLY missing required column is CONFERENCE and the first header cell is blank or whitespace,
+    the first column IS the conference column by position: name it, and say so. Anything else is left for
+    validate() to refuse. Conference sheets only (the case seen); an awards sheet keys on AWARD and is refused."""
+    if kind != "conference":
+        return text, None
+    bom, cells, eol, rest = _split_header(text)
+    if not cells or cells[0].strip() or not eol:
+        return text, None
+    required = REQUIRED_BY_KIND[kind]
+    present = [c.strip() for c in cells]
+    missing = [c for c in required if c not in present]
+    if missing != ["CONFERENCE"]:
+        return text, None
+    cells[0] = "CONFERENCE"
+    buf = io.StringIO()
+    csv.writer(buf, lineterminator="").writerow(cells)
+    return bom + buf.getvalue() + eol + rest, (
+        "header cell A1 was blank; every other required column was present, so the first column was "
+        "mapped to CONFERENCE by position (the customer's sheet has lost its A1 header - ask for it back)")
 
 
 def load_config(path: Path) -> dict:
@@ -130,39 +177,53 @@ def fetch_csv(sheet_id: str, gid: str, key_path: Path, timeout: int = 60) -> str
     return r.text
 
 
-def validate(text: str, client: str, kind: str = DEFAULT_KIND) -> int:
+def validate(text: str, client: str, kind: str = DEFAULT_KIND,
+             evidence_dir: Path | None = None) -> tuple[int, str, str | None]:
+    """(row count, the text to snapshot, a note when the header was mapped). Raises RuntimeError on refusal,
+    and EVERY refusal first keeps the raw export under runs_out/qa/<date>/ and names that file."""
     # Headers come from the reader, NOT from the first row: an export with a header line and
     # no data would otherwise report "missing columns" and send the reader to check the gid,
     # when the real news is that the sheet came back empty.
+    required = REQUIRED_BY_KIND.get(kind)
+    if required is None:
+        # An unknown kind must not silently fall back to the conference shape and "pass".
+        kept = keep_evidence(text, client, evidence_dir)
+        raise RuntimeError(
+            f"{client}: unknown sheet kind {kind!r}. Known kinds: "
+            f"{sorted(REQUIRED_BY_KIND)}. The export is kept at {kept}."
+        )
+    text, note = map_blank_first_header(text, kind)
     reader = csv.DictReader(io.StringIO(text))
     headers = reader.fieldnames or []
     rows = list(reader)
 
-    required = REQUIRED_BY_KIND.get(kind)
-    if required is None:
-        # An unknown kind must not silently fall back to the conference shape and "pass".
-        raise RuntimeError(
-            f"{client}: unknown sheet kind {kind!r}. Known kinds: "
-            f"{sorted(REQUIRED_BY_KIND)}. Nothing was saved."
-        )
     missing = [c for c in required if c not in headers]
     if missing:
+        kept = keep_evidence(text, client, evidence_dir)
+        if headers and not (headers[0] or "").strip():
+            # The 2026-11-07 shape, but with more than the first column wrong: not a wrong tab.
+            hint = (f"The first header cell (A1) is blank - header cell blank, not a wrong tab: the sheet's "
+                    f"header row has been edited (missing {missing}).")
+        else:
+            hint = "Wrong tab (check the gid) or the sheet's shape has changed."
         raise RuntimeError(
-            f"{client}: the {kind} export is missing column(s) {missing}. Wrong tab (check "
-            "the gid) or the sheet's shape has changed. Nothing was saved."
+            f"{client}: the {kind} export is missing column(s) {missing}. {hint} "
+            f"The export is kept at {kept}."
         )
 
     one_of = ONE_OF_BY_KIND.get(kind, ())
     if one_of and not any(c in headers for c in one_of):
+        kept = keep_evidence(text, client, evidence_dir)
         raise RuntimeError(
             f"{client}: the {kind} export carries none of {list(one_of)}. One of them holds "
-            "the customer's own status, which is the signal we read and never write. "
-            "Nothing was saved."
+            f"the customer's own status, which is the signal we read and never write. "
+            f"The export is kept at {kept}."
         )
 
     if not rows:
-        raise RuntimeError(f"{client}: the export parsed as CSV but has no rows. Nothing was saved.")
-    return len(rows)
+        kept = keep_evidence(text, client, evidence_dir)
+        raise RuntimeError(f"{client}: the export parsed as CSV but has no rows. The export is kept at {kept}.")
+    return len(rows), text, note
 
 
 def raise_alert(lines: list[str]) -> None:
@@ -247,8 +308,10 @@ def main() -> int:
         try:
             kind = entry.get("kind", DEFAULT_KIND)
             text = fetch_csv(entry["sheet_id"], str(entry["gid"]), key_path)
-            rows = validate(text, client, kind)
+            rows, text, note = validate(text, client, kind)
             print(f"{client}: fetched {rows} rows ({len(text):,} bytes) [{kind}]")
+            if note:
+                print(f"{client}: NOTE - {note}")
             if not args.no_snapshot:
                 code = snapshot(text, client, args.out_dir, kind)
                 if code != 0:
