@@ -903,6 +903,9 @@ The customers' sheets define the list of events we research (contract section 3)
 (a same-named event in a different EDITION is not the same event: open the page), then `scripts/add_customer_rows.py --classified <csv>` (report first, then `--apply`), and when upstream gives the ids
 `scripts/stamp_given_ids.py`. An event the customer tracks that we must NOT research goes in `docs/operations/customer_not_researched.csv` (event_name, url, client, reason, ruled_by, ruled_on); only the
 operator adds to it.
+Since 2026-11-08 a customer row LINKED to another edition of its event (the linked event's start more than 30 days from the customer's date) counts as in the queue only when the customer's own edition
+is on the list by its URL and date; otherwise it is reported NOT in the queue with the reason `linked to another edition: ...`, and `customer_auto_add.py` HOLDS it (never adds it) naming both editions.
+The fix is either a new input row for the edition the customer tracks (blank id, as for any class-C row) or a re-link of the customer row when the newer edition is already on the list.
 The weekly route that adds the missing rows is `python scripts/customer_auto_add.py` (Saturday step 3b; dry run by default: it proposes into `runs_out/qa/<date>/` and drafts the request to upstream for the ids). Its `--apply`
 appends the gated rows with a blank id (refused on the live Markets folder without `--live`; on the weekly job it is switched by `CFP_AUTOADD_APPLY=1`). Rows it HOLDS (`auto_add.md`) are for a person: put the held event on the
 list by stamping its canonical id, or rule it out in the ledger. Rehearse on copies: `--markets-dir <copy> --db <copy of the database> --out-dir <scratch>`.

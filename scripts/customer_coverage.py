@@ -102,8 +102,14 @@ def stale_date(start: str, url: str) -> bool:
     return bool(years) and max(years) > int(start[:4])
 
 
-def classify(row: dict, market: str, queue: dict, ledger: list[dict], today: str, up_to_canon: dict[str, str]) -> tuple[str, str, str]:
-    """-> (verdict, how/why, input row name). verdict: IN_QUEUE | NOT_IN_QUEUE | EXCLUDED."""
+def classify(row: dict, market: str, queue: dict, ledger: list[dict], today: str, up_to_canon: dict[str, str], fact: dict | None = None) -> tuple[str, str, str]:
+    """-> (verdict, how/why, input row name). verdict: IN_QUEUE | NOT_IN_QUEUE | EXCLUDED.
+
+    `fact` is the grounding_facts row of the event the customer row is LINKED to (None when unlinked or unknown). A link counts only when the linked
+    event is the SAME EDITION (start within DATE_TOLERANCE_DAYS of the customer's date). Found 2026-11-08: Black Hat USA 2027 on the customer's sheet
+    was linked to 2026-black-hat-usa-las-vegas and counted as in the queue while nobody researched 2027; 5 of 29 disagreeing links hid an edition
+    that way. A link to another edition falls through to the URL-and-date pairing (the customer's own edition on the list, under any row), else the
+    row is NOT in the queue, and the auto-add gate holds it for a person. A place-only disagreement (Dubai against "Middle East") keeps the link."""
     name = (row.get("their_name") or "").strip()
     if int(row.get("withdrawn_by_customer") or 0):
         return "EXCLUDED", "the customer removed this row from their sheet (withdrawn_by_customer)", ""
@@ -119,11 +125,20 @@ def classify(row: dict, market: str, queue: dict, ledger: list[dict], today: str
             return "EXCLUDED", f"operator's ledger (customer_not_researched.csv): {L.get('reason', '')} (ruled by {L.get('ruled_by', '?')} on {L.get('ruled_on', '?')})", ""
     q = queue[market]
     eid = identity.to_canonical((row.get("event_id") or "").strip(), up_to_canon)
+    other_edition = ""
     if eid and eid in q["ids"]:
-        return "IN_QUEUE", "by event id", q["ids"][eid]
+        linked_start = iso_of((fact or {}).get("start_date") or "")
+        gap = days_apart(start, linked_start) if start and linked_start else None
+        if gap is None or gap <= DATE_TOLERANCE_DAYS:
+            return "IN_QUEUE", "by event id", q["ids"][eid]
+        other_edition = f"the linked event {eid} is another edition (starts {linked_start}, {gap} days from the customer's {start})"
     hit = url_match(url, start, q["urls"]) if url else ""
     if hit:
+        if other_edition:
+            return "IN_QUEUE", f"by URL and date; {other_edition}", hit
         return "IN_QUEUE", "by URL and date" + (" (its id is not on that input row)" if eid else " (unlinked row)"), hit
+    if other_edition:
+        return "NOT_IN_QUEUE", f"linked to another edition: {other_edition}; no input row carries the edition the customer tracks", ""
     dup = q["dup_ids"].get(eid, "") or (url_match(url, start, q["dup_urls"]) if url else "")
     if dup:
         return "EXCLUDED", "the only input row it matches is marked DUP_OF", dup
@@ -151,7 +166,7 @@ def check(rows: list[dict], inputs: dict[str, list[dict]], up_to_canon: dict[str
             out["disagree"].append({"client": r["client_key"], "market": market, "name": r["their_name"], "customer_url": r.get("their_url") or "", "customer_start": iso_of(r.get("event_start_date") or ""),
                                     "customer_location": r.get("location") or "", "event_id": r.get("event_id") or "", "event_name": fact.get("name") or "", "event_start": iso_of(fact.get("start_date") or ""),
                                     "event_city": fact.get("city") or "", "event_url": fact.get("url") or "", "why": bad})
-        verdict, why, matched = classify(r, market, queue, ledger, today, up_to_canon)
+        verdict, why, matched = classify(r, market, queue, ledger, today, up_to_canon, fact)
         item = {"client": r["client_key"], "market": market, "name": r["their_name"], "url": r.get("their_url") or "", "start": iso_of(r.get("event_start_date") or ""),
                 "event_id": r.get("event_id") or "", "status": r.get("status") or "", "why": why, "input_row": matched, "_row": r}
         out[{"IN_QUEUE": "in_queue", "NOT_IN_QUEUE": "not_in_queue", "EXCLUDED": "excluded"}[verdict]].append(item)

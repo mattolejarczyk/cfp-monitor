@@ -70,6 +70,11 @@ def gate(not_in: list[dict], inputs: dict[str, list[dict]], cap: int = CAP_PER_M
     for item, row in zip(not_in, cand):
         market = item["market"]
         if (item.get("event_id") or "").strip():
+            if (item.get("why") or "").startswith("linked to another edition"):
+                # 2026-11-08: the customer tracks a later edition than the one we hold (Black Hat USA 2027 against 2026-black-hat-usa-las-vegas).
+                # Adding it is a spend decision (D1 on Daily Review), so it is HELD and named, never added quietly.
+                hold.append((item, item["why"] + ": a person adds the edition the customer tracks (its own row, blank id) or re-links the customer row"))
+                continue
             hold.append((item, "linked to an event we hold (" + item["event_id"] + ") but no input row carries it: a person puts the held event on the list or rules it out"))
             continue
         if not (item.get("url") or "").strip():
