@@ -85,6 +85,10 @@ Climb the whole ladder, in order, and write down which rung gave the answer:
   `\b` in a normal string becomes a backspace character.
 - Edit tool needs the file read first. Check line endings (CRLF) when patching by bytes.
 - Never print keys or tokens.
+- A scheduled run that is slow at EVERY step, or a jump in 'Could not check', is this machine before it is the sites: check free
+  memory and how many Claude sessions, Chromes and shells are open (2026-11-09: 731 MB free of 11.2 GB, 20 Claude processes holding
+  6.4 GB; the Monday evidence step took 2 hours instead of 70 minutes and 72 pages that failed read fine afterwards in a minute).
+  The same starvation makes the Bash safety hook time out: retry, never work around it.
 
 ## 7. Before saying "done"
 

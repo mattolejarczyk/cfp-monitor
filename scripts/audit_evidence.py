@@ -37,6 +37,7 @@ import asyncio
 import re
 import sqlite3
 import sys
+import time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -51,8 +52,8 @@ from src.cfp_monitor.verify import (                              # noqa: E402
 )
 
 
-async def escalate(urls: list[str]) -> dict[str, tuple[str, str]]:
-    """Second pass for pages plain HTTP could not read: {url: (text, rung)}.
+async def escalate(urls: list[str], on_page=None, deadline: float | None = None) -> tuple[dict[str, tuple[str, str]], list[str]]:
+    """Second pass for pages plain HTTP could not read: ({url: (text, rung)}, [urls not attempted]). The loop is `climb`.
 
     The ladder is owned by fetch.py - crawl4ai, then a headed Playwright render, then a real
     Chrome over CDP for hard anti-bot domains. It is NEVER re-implemented here (TOOLING.md),
@@ -65,7 +66,6 @@ async def escalate(urls: list[str]) -> dict[str, tuple[str, str]]:
     from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
 
     settings = Settings()
-    out: dict[str, tuple[str, str]] = {}
     cfg = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, verbose=False,
                            remove_consent_popups=settings.remove_consent_popups,
                            remove_overlay_elements=settings.remove_overlay_elements,
@@ -73,24 +73,78 @@ async def escalate(urls: list[str]) -> dict[str, tuple[str, str]]:
                            page_timeout=settings.primary_page_timeout_s * 1000)
     tracer = Tracer()
     async with AsyncWebCrawler(config=BrowserConfig(headless=True, verbose=False)) as crawler:
-        for i, url in enumerate(urls, 1):
-            try:
-                pf = await asyncio.wait_for(
-                    fetch_page(crawler, url, cfg, settings, tracer),
-                    timeout=settings.per_site_timeout_s)
-            except Exception as exc:
-                print(f"  [{i}/{len(urls)}] {url[:58]} -> {type(exc).__name__}", flush=True)
-                continue
-            text = (pf.markdown or "") if pf.success else ""
-            if text:
-                out[url] = (text, pf.via)
-                print(f"  [{i}/{len(urls)}] {url[:58]} -> {pf.via} "
-                      f"({len(text)}c)", flush=True)
-            else:
-                print(f"  [{i}/{len(urls)}] {url[:58]} -> still unreadable "
-                      f"({pf.via})", flush=True)
+        async def read_one(url: str) -> tuple[str, str]:
+            pf = await asyncio.wait_for(fetch_page(crawler, url, cfg, settings, tracer),
+                                        timeout=settings.per_site_timeout_s)
+            return ((pf.markdown or "") if pf.success else ""), pf.via
+
+        out, not_attempted = await climb(urls, read_one, on_page, deadline)
     await close_fallback_browser()
-    return out
+    return out, not_attempted
+
+
+async def climb(urls: list[str], read_one, on_page=None, deadline: float | None = None,
+                clock=time.monotonic) -> tuple[dict[str, tuple[str, str]], list[str]]:
+    """The ladder's loop, apart from the browser so it can be tested: -> ({url: (text, rung)}, [urls NOT attempted]).
+
+    Two rules, both from 2026-11-09 (Monday pages: the step was killed at its 2-hour limit with 65 of 333 pages climbed,
+    41 of them read, and NOT ONE was in the database, because the results were written after the last page):
+      * `on_page(url, text, rung)` is called the moment a page is read, so the caller writes and commits it then. A kill
+        costs the pages not yet reached, never the ones already read.
+      * `deadline` (a `clock()` value) stops the loop BEFORE the next page and returns what was not attempted, so the
+        caller can say so. Being stopped by our own budget is a verdict; being killed by the caller's timeout is silence.
+    A page that raises is reported and skipped, as before."""
+    out: dict[str, tuple[str, str]] = {}
+    for i, url in enumerate(urls, 1):
+        if deadline is not None and clock() >= deadline:
+            left = urls[i - 1:]
+            print(f"  LADDER STOPPED BY THE TIME BUDGET at page {i} of {len(urls)}: {len(left)} page(s) not attempted", flush=True)
+            return out, left
+        try:
+            text, via = await read_one(url)
+        except Exception as exc:
+            print(f"  [{i}/{len(urls)}] {url[:58]} -> {type(exc).__name__}", flush=True)
+            continue
+        if text:
+            out[url] = (text, via)
+            print(f"  [{i}/{len(urls)}] {url[:58]} -> {via} ({len(text)}c)", flush=True)
+            if on_page is not None:
+                on_page(url, text, via)
+        else:
+            print(f"  [{i}/{len(urls)}] {url[:58]} -> still unreadable ({via})", flush=True)
+    return out, []
+
+
+def unreadable_detail(why: str, note: str) -> str:
+    """What the first pass records for a page it could not read: the reason AND the reader's own note.
+
+    Until 2026-11-09 this was `why or note`, and `why` is never empty for an empty page, so the HTTP status or the exception
+    name was thrown away at the moment of failure: 288 pages read 'page could not be read' and nobody could tell a dead page
+    (404) from a block (403) from our own timeout. A re-read hours later had to be run to classify them (124 / 66 / 72 fine)."""
+    note = (note or "").strip()
+    if not why:
+        return note
+    return why if note in ("", "ok") else f"{why} [{note}]"
+
+
+def apply_rescue(con, claims: list[dict], names: dict, url: str, text: str, via: str, now: str, tally: dict) -> bool:
+    """Write ONE rescued page's verdicts and commit. False (nothing written) when the rescued text is not readable either."""
+    ok2, _ = readable(text)
+    if not ok2:
+        return False
+    for c in claims:
+        verdict, detail, found = check(c["field"], c["value_claimed"], text)
+        exp, block = exportable(verdict, found, url, names.get(c["event_id"], ""))
+        con.execute("""update evidence set verdict=?, detail=?, found_quote=?,
+                       method=?, fetched_at=?, call_type=?, exportable=?,
+                       export_block=? where id=?""",
+                    (verdict, detail, found or None, via, now,
+                     call_label(found) or None, exp, block or None, c["id"]))
+        tally["unreadable"] -= 1
+        tally[verdict] += 1
+        tally["rescued"] += 1
+    con.commit()
+    return True
 
 # A page that loads but says "not found" is not a source. amp.org/education/amp-annual-meeting
 # returned a soft 404 and its text was mined for a date, which then contradicted a correct
@@ -309,7 +363,10 @@ def main() -> int:
                     help="go straight to the browser for pages with this verdict, e.g. no_quote")
     ap.add_argument("--only-method", metavar="M",
                     help="restrict to pages last fetched this way, e.g. http")
+    ap.add_argument("--max-minutes", type=float, default=0,
+                    help="time budget for the WHOLE run; the browser ladder stops before it (exit 2, DEGRADED, names what was not tried). 0 = none")
     a = ap.parse_args()
+    t_start = time.monotonic()
 
     con = sqlite3.connect(a.db)
     con.row_factory = sqlite3.Row
@@ -369,12 +426,13 @@ def main() -> int:
         method = "http"
         if not ok:
             failed.append(url)
+            said = unreadable_detail(why, note)
             for c in claims:
                 con.execute("""update evidence set verdict='unreadable', detail=?, method=?,
                                fetched_at=?, found_quote=null where id=?""",
-                            (why or note, method, now, c["id"]))
+                            (said, method, now, c["id"]))
                 tally["unreadable"] += 1
-            print(f"[{i}/{len(urls)}] {url[:66]}\n        unreadable - {why or note}")
+            print(f"[{i}/{len(urls)}] {url[:66]}\n        unreadable - {said}")
             continue
 
         print(f"[{i}/{len(urls)}] {url[:66]}  ({len(claims)} claim(s))")
@@ -398,24 +456,15 @@ def main() -> int:
     # ---- phase 2: climb the ladder for what plain HTTP could not read --------------------
     # Cheapest first: the plain sweep above resolved 3,238 of 4,021 claims in ~25 minutes on
     # 2026-08-10. Only the remainder pays for a browser.
+    not_attempted: list[str] = []
     if failed and not a.no_escalate:
-        print(f"\n--- escalating {len(failed)} unreadable page(s) through the ladder ---")
-        rescued = asyncio.run(escalate(failed))
-        for url, (text, via) in rescued.items():
-            ok2, _ = readable(text)
-            if not ok2:
-                continue
-            for c in by_url[url]:
-                verdict, detail, found = check(c["field"], c["value_claimed"], text)
-                exp, block = exportable(verdict, found, url, names.get(c["event_id"], ""))
-                con.execute("""update evidence set verdict=?, detail=?, found_quote=?,
-                               method=?, fetched_at=?, call_type=?, exportable=?,
-                               export_block=? where id=?""",
-                            (verdict, detail, found or None, via, now,
-                             call_label(found) or None, exp, block or None, c["id"]))
-                tally["unreadable"] -= 1
-                tally[verdict] += 1
-                tally["rescued"] += 1
+        print(f"\n--- escalating {len(failed)} unreadable page(s) through the ladder ---", flush=True)
+        # Each rescued page is written and committed as it is read (apply_rescue), and the ladder stops on OUR budget before the
+        # caller's timeout can kill it. 2026-11-09: 41 pages read by the ladder were lost to a kill at the step's 2-hour limit.
+        deadline = (t_start + a.max_minutes * 60) if a.max_minutes else None
+        _, not_attempted = asyncio.run(escalate(
+            failed, on_page=lambda url, text, via: apply_rescue(con, by_url[url], names, url, text, via, now, tally),
+            deadline=deadline))
         con.commit()
         print(f"\n  {tally.get('rescued', 0)} claim(s) recovered by the browser")
 
@@ -431,6 +480,13 @@ def main() -> int:
     print("\nOnly `contradicted` is a finding. `unreadable` and `no_quote` leave the claim")
     print("standing - they are things WE could not establish, not things upstream got wrong.")
     con.close()
+    # A RUN ENDS WITH A VERDICT (QbD rule 1). "We ran out of time before looking" is not "we looked": exit 2 and say how many.
+    if not_attempted:
+        print(f"\nEVIDENCE PASS: DEGRADED - the time budget ({a.max_minutes:g} min) ended with {len(not_attempted)} of {len(failed)} "
+              f"unreadable page(s) never tried in a browser; their claims read 'unreadable' because we did not look. "
+              f"Finish them with: --retry-unreadable --only-method http")
+        return 2
+    print("\nEVIDENCE PASS: HEALTHY - every page was read or tried through the ladder")
     return 0
 
 

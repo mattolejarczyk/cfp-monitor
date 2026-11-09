@@ -104,20 +104,7 @@ RUN_OUT_DIR: Path | None = None
 _RUN_SEQ = 0
 
 
-def kill_tree(p: subprocess.Popen) -> str:
-    """Kill the child AND everything it spawned. On Windows `taskkill /T /F`; elsewhere the process group
-    (the child is started in its own session). Returns one line saying what happened, for the log."""
-    if os.name == "nt":
-        r = subprocess.run(["taskkill", "/T", "/F", "/PID", str(p.pid)], capture_output=True, text=True,
-                           errors="replace", timeout=60)
-        return " ".join((r.stdout + r.stderr).split())[:300] or f"taskkill exit {r.returncode}"
-    import signal
-    try:
-        os.killpg(os.getpgid(p.pid), signal.SIGKILL)
-        return f"killed process group of pid {p.pid}"
-    except Exception as e:                                                   # noqa: BLE001
-        p.kill()
-        return f"killed pid {p.pid} only ({type(e).__name__})"
+from src.cfp_monitor.proc import kill_tree                              # noqa: E402,F401  (moved 2026-11-09: weekly_deliverable.py needs the same kill)
 
 
 def run(cmd: list[str], cwd: Path, log: list[str], timeout: int = 7200) -> int:

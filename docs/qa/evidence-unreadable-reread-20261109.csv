@@ -1,0 +1,334 @@
+url,first_pass_detail,claims,now_note,now_chars,seconds
+http://www.biomassconference.com/ema/DisplayPage.aspx?pageId=Become_a_Speaker,page could not be read,1,HTTP 404,0,0.6
+https://2026.ieee-humanoids.org/call-for-papers/,page could not be read,1,ok,10551,1.1
+https://2026.ieee-iros.org/contribute/call-for-iros-award-nominations,page could not be read,1,ok,8300,2.0
+https://2026.ieee-iros.org/contribute/call-for-papers,page could not be read,1,ok,11946,1.4
+https://2026.ieee-iros.org/contribute/call-for-papers/,page could not be read,1,ok,11946,1.2
+https://2026.ieee-iros.org/contribute/call-for-special-sessions,page could not be read,1,ok,7972,1.5
+https://2027.ieee-icra.org/contribute/,page could not be read,1,ok,7816,0.5
+https://3dmix.org/,"page has almost no readable text (30 words, 12714 chars)",1,ok,12714,1.8
+https://about.bnef.com/summit/newyork/speakers/,page could not be read,1,HTTP 404,0,12.1
+https://advancedbioeconomyleadership.com/,page could not be read,1,URLError,0,0.1
+https://advancedbiofuelsusa.info/archive/,page could not be read,1,HTTP 307,0,0.3
+https://advancedbiofuelsusa.info/events/,page could not be read,1,HTTP 307,0,0.2
+https://aes.org/contributions/aes-show-2026-nashville/,page could not be read,1,HTTP 403,0,0.5
+https://amcoe.org/icam2026/,page could not be read,1,HTTP 403,0,0.6
+https://analytica.de/en/supporting-program/analytica-conference/,page could not be read,1,HTTP 404,0,1.4
+https://apec-conf.org/speakers/is-presenter-info,page could not be read,1,ok,16033,0.9
+https://apec-conf.org/speakers/seminar-speaker-information,page could not be read,1,ok,14810,0.8
+https://apec-conf.org/speakers/ts-author-info,page could not be read,1,ok,19937,0.5
+https://apec-conf.org/speakers/ts-author-info/,page could not be read,1,ok,19937,0.4
+https://awards.cesa.or.jp/download,"page has almost no readable text (12 words, 1623 chars)",1,ok,1623,2.4
+https://basconf.org/,page returned almost no text (50 chars),1,ok,52,0.5
+https://bibby.ai/conf/sp-2027,page could not be read,1,URLError,0,20.2
+https://biogasamericas.com/faqs/,page could not be read,1,ok,7228,4.0
+https://blackhat.com/asia/2027/call-for-summits.html,page could not be read,1,HTTP 403,0,0.3
+https://blackhat.com/call-for-papers.html,page could not be read,3,HTTP 403,0,0.2
+https://blackhat.com/call-for-training.html,page could not be read,2,ok,7505,0.3
+https://blackhat.com/html/call-for-sessions.html,page could not be read,3,HTTP 403,0,0.2
+https://bsideslv.org/participate/cfp,page could not be read,1,HTTP 404,0,0.6
+https://car-tcr-summit.com/about/poster-session/,page could not be read,1,HTTP 404,0,0.7
+https://ceramitec.com/en/about/ceramitec-worldwide/,page could not be read,1,HTTP 404,0,1.0
+https://cfptime.com/conferences/wild-west-hackin-fest-mile-high-2027,page returned almost no text (51 chars),1,ok,53,1.2
+https://cfptime.org/cfp/wild-west-hackin-fest-mile-high-2027/,page returned almost no text (51 chars),1,ok,53,0.6
+https://co2-chemistry.eu/call-for-abstracts,"soft 404 - page says ""404 Error""",1,ok,5977,4.2
+https://co2-chemistry.eu/call-for-abstracts/,"soft 404 - page says ""404 Error""",1,ok,5977,2.0
+https://co2-chemistry.eu/call-for-abstracts/thank-you,"soft 404 - page says ""404 Error""",1,ok,1768,3.3
+https://conferencealerts.com/show-event?id=284567,page could not be read,1,HTTP 404,0,0.7
+https://csmantech.org/,page could not be read,1,HTTP 401,0,0.5
+https://csmantech.org/authors/,page could not be read,1,HTTP 401,0,0.4
+https://cyberdefenseawards.com/top-infosec-innovator-awards-for-2026-faq/,page could not be read,1,HTTP 403,0,0.3
+https://cyberdefenseconferences.com/,page could not be read,1,ok,3723,0.4
+https://cyberdefenseconferences.com/call-for-speakers-for-2026/,page could not be read,1,HTTP 404,0,0.9
+https://cybertamago.com/events/,page could not be read,1,URLError,0,0.2
+https://cycle2.sp2026.ieee-security.org/,page could not be read,1,HTTP 502,0,0.4
+https://decarbconnect.com/,page could not be read,1,ok,5525,1.4
+https://decarbconnect.com/events/,page could not be read,1,ok,8461,1.9
+https://decarbconnect.com/events/decarb-connect-north-america/2026-speakers/,page could not be read,1,HTTP 404,0,0.7
+https://decarbconnectcanada.com/,page could not be read,1,HTTP 500,0,0.7
+https://decarbconnectnorthamerica.com/2026-speakers/,page could not be read,1,HTTP 404,0,0.7
+https://decarbconnectuk.com/decarb-connect-uk-2026-speakers/,page could not be read,1,HTTP 404,0,0.8
+https://defcon.org/html/defcon-34/dc-34-cfp.html,page could not be read,1,RemoteDisconnected,0,0.4
+https://defcon.org/html/defcon-singapore/dc-singapore-cfhjh.html,page could not be read,1,RemoteDisconnected,0,0.4
+https://defcon.org/html/defcon-singapore/dc-singapore-cfp.html,page could not be read,2,RemoteDisconnected,0,0.4
+https://eng.robotworld.or.kr/exhibitors/application.php,page returned almost no text (0 chars),1,ok,1,1.7
+https://eng.robotworld.or.kr/media/notice.php?boardid=notice_eng&idx=174&mode=view,page returned almost no text (0 chars),1,ok,1,1.6
+https://events.reutersevents.com/energy-transition/energy-transition-europe,page could not be read,2,HTTP 403,0,0.3
+https://events.reutersevents.com/energy-transition/energy-transition-europe/speakers,page could not be read,1,HTTP 403,0,0.2
+https://events.reutersevents.com/energy-transition/energy-transition-north-america,page could not be read,1,HTTP 403,0,0.2
+https://events.reutersevents.com/energy-transition/industry-europe/,page could not be read,1,HTTP 403,0,0.1
+https://events.reutersevents.com/energy-transition/north-america,page could not be read,1,HTTP 403,0,0.2
+https://events.reutersevents.com/energy/global-energy-forum,page could not be read,1,HTTP 403,0,0.1
+https://events.reutersevents.com/healthcare/digital-health-usa,page could not be read,1,HTTP 403,0,0.2
+https://events.secureworld.io/,page could not be read,1,ok,15012,1.8
+https://events.secureworld.io/dallas-tx-2026/,page could not be read,1,ok,5698,1.3
+https://events.secureworld.io/denver-co/,page could not be read,1,ok,60322,0.7
+https://events.secureworld.io/details/denver-co-2026/,page could not be read,1,ok,5199,0.3
+https://events.secureworld.io/details/detroit-mi-2026/,page could not be read,1,ok,6362,0.5
+https://events.secureworld.io/details/twin-cities-mn-2026/,page could not be read,1,ok,5007,0.3
+https://events.secureworld.io/new-york-ny/,page could not be read,1,ok,57746,1.0
+https://events.secureworld.io/st-louis-mo/,page could not be read,1,ok,37012,0.9
+https://fwdcloudsec.org/cfp/,page could not be read,1,HTTP 403,0,0.9
+https://god.owasp.de/2026/cfp/,page could not be read,1,HTTP 404,0,0.1
+https://h2meet.com/html/en/booth_01.php,page returned almost no text (59 chars),1,ok,61,1.6
+https://h2meet.com/html/en/exhibitor_guideline.php,page returned almost no text (59 chars),1,ok,61,1.6
+https://help.humanx.co/article/11-what-is-the-deadline-to-submit-to-speak,page could not be read,1,URLError,0,0.2
+https://hotchips.org/call-for-contributions/,page could not be read,1,HTTP 404,0,0.4
+https://hubs.ly/Q04rnYWc0,page could not be read,1,HTTP 403,0,0.7
+https://imaps.org/page/symposium,page could not be read,1,HTTP 403,0,0.5
+https://informaconnect.com/bioeurope/company-presentation-information/,page could not be read,1,HTTP 404,0,1.3
+https://informaconnect.com/bioprocess-international-us-2026/speaking-opportunities/,page could not be read,1,HTTP 404,0,1.2
+https://internationalpulpweek.com/,page could not be read,1,ok,15144,0.5
+https://irps.org/call-for-papers-topics-of-interest/,page could not be read,1,HTTP 404,0,1.4
+https://light-building.messefrankfurt.com/frankfurt/en/exhibitors/information.html,page could not be read,1,HTTP 404,0,1.2
+https://lopec.com/en/conference/for-presenters/call-for-papers/,page could not be read,1,HTTP 404,0,1.3
+https://luminik.com/calls/advanced-clean-transportation-expo-act-expo-call-for-speakers,page returned almost no text (0 chars),1,ok,1,0.3
+https://luminik.com/calls/ces-2027-call-for-speakers,page returned almost no text (0 chars),1,ok,1,0.2
+https://nabshow.com/2026/las-vegas/education/,page could not be read,1,ok,9365,0.8
+https://ootb.net/jkt2026,"page has almost no readable text (29 words, 313 chars)",1,ok,313,2.6
+https://openssf.org/events/2026/03/01/cfp-defcon-34/,page could not be read,1,HTTP 404,0,1.1
+https://openssf.org/events/2026/05/08/,page could not be read,1,HTTP 404,0,0.9
+https://openssf.org/events/2026/11/09/open-source-securitycon-north-america-2026/,page could not be read,1,HTTP 404,0,0.9
+https://pmwcintl.com/partnership/,page could not be read,1,ok,5714,0.8
+https://pretalx.com/fwdcloudsec-2026/cfp,page could not be read,1,HTTP 404,0,1.0
+https://professional.diabetes.org/scientific-sessions/online-abstract-submission,page could not be read,1,HTTP 404,0,0.5
+https://redcanary.com/blog/cfp-tracker-august-2025/,page could not be read,1,HTTP 404,0,3.4
+https://redcanary.com/blog/cfp-tracker-february-2026/,page could not be read,1,HTTP 404,0,3.3
+https://redcanary.com/blog/cfp-tracker-june-2026/,page could not be read,1,HTTP 404,0,3.8
+https://redcanary.com/blog/cfp-tracker-may-2026/,page could not be read,1,HTTP 404,0,4.0
+https://redcanary.com/blog/cybersecurity-conference-cfp-tracker/,page could not be read,1,HTTP 404,0,4.1
+https://redcanary.com/blog/red-canary-cfp-tracker-may-2026/,page could not be read,1,HTTP 404,0,2.7
+https://renewable-materials.eu/call-for-posters,"soft 404 - page says ""404 Error""",1,ok,6650,4.7
+https://renewable-materials.eu/call-for-posters/thank-you,"soft 404 - page says ""404 Error""",1,ok,2242,3.4
+https://renewable-materials.eu/workshops,"soft 404 - page says ""404 Error""",1,ok,3171,2.6
+https://semicontaiwan.org/zh/Campus_Ambassador_Program_2026,page could not be read,1,HTTP 403,0,0.3
+https://sessionize.com/ai-devworld-2027/,page could not be read,1,HTTP 404,0,0.6
+https://sessionize.com/global-appsec-eu-2026-cfp/,page could not be read,1,HTTP 404,0,0.4
+https://sessionize.com/global-appsec-us-2026-cfp/,page could not be read,1,HTTP 404,0,0.4
+https://sessionize.com/global-appsec-us-2026/,page could not be read,1,HTTP 404,0,0.5
+https://sessionize.com/owasp-appsec-italy-2026-call-for-trainings/,page could not be read,1,HTTP 404,0,0.4
+https://sessionize.com/owasp-appsec-italy-2026-trainings/,page could not be read,1,HTTP 404,0,0.5
+https://sessionize.com/owasp-global-appsec-eu-2026-cfp/,page could not be read,1,HTTP 404,0,0.5
+https://sessionize.com/owasp-global-appsec-us-2026/,page could not be read,1,HTTP 404,0,0.5
+https://sessionize.com/owasp-italy-day-2026/,page could not be read,1,HTTP 404,0,0.5
+https://sffsymposium.engr.utexas.edu/,page could not be read,1,URLError,0,0.1
+https://sffsymposium.org/,page could not be read,1,ok,6510,1.0
+https://shmoocon.org/,page could not be read,1,HTTP 500,0,1.2
+https://shmoocon.org/call-for-papers,page could not be read,1,HTTP 500,0,1.0
+https://shmoocon.org/cfp-checklist,page could not be read,1,HTTP 500,0,0.8
+https://show.ibc.org/conference/technical-papers,page could not be read,1,HTTP 404,0,1.1
+https://showstoppers.com/ces2027/,page could not be read,1,HTTP 404,0,2.1
+https://showstoppers.com/the-gadgety-awards-at-showstoppers/,page could not be read,1,HTTP 404,0,1.0
+https://smta.org/page/conferences,page could not be read,1,HTTP 403,0,0.6
+https://southeast.mtseries.com/inquiry-request/,page could not be read,1,ok,5367,1.8
+https://sp2026-cycle2.ieee-security.org/deadlines,page could not be read,1,URLError,0,0.1
+https://spemedicalplastics.org/call-for-speaker,page could not be read,1,URLError,0,0.1
+https://spie.org/conferences-and-exhibitions/advanced-lithography-and-patterning/presenters/presentation-guidelines,page returned almost no text (81 chars),1,ok,84,0.6
+https://spie.org/conferences-and-exhibitions/photomask-technology/presenters/abstract-submission-guidelines,page returned almost no text (82 chars),1,ok,83,0.6
+https://spie.org/conferences-and-exhibitions/photonics-west/information-for-authors-and-presenters,page returned almost no text (81 chars),1,ok,84,0.3
+https://starbridge.org/events/sans-cyber-defense-initiative-2026,page returned almost no text (0 chars),1,ok,1,0.4
+https://submissions.mirasmart.com/ISSCC2027,page returned almost no text (20 chars),1,ok,22,0.8
+https://support.sxsw.com/hc/en-us/articles/204629485-What-is-the-timeline-for-PanelPicker-,page could not be read,1,HTTP 404,0,0.7
+https://sustainableskies.world/,page could not be read,1,ok,4365,1.3
+https://sxsw.com/support/knowledge-base/what-is-the-timeline-for-panelpicker/,page could not be read,1,HTTP 404,0,0.5
+https://themedtechconference.com/call-for-sessions-26,page could not be read,1,ok,12693,0.9
+https://themedtechconference.com/call-for-sessions/,page could not be read,1,ok,10706,1.0
+https://themedtechconference.com/company-presentations,page could not be read,1,ok,7421,0.6
+https://themedtechconference.com/insider-tips-for-mtc26-call-for-sessions/,page could not be read,1,ok,7259,1.0
+https://themedtechconference.com/presenting-companies,page could not be read,1,ok,4470,0.7
+https://therocketfuelfactory.com/events/secureworld-denver-2026,page could not be read,1,ok,6675,1.2
+https://trellis.net/article/introducing-trellis-impact-25-usher-next-phase-sustainability/,page could not be read,1,HTTP 404,0,1.0
+https://troopers.de/troopers26/cfp/,page could not be read,1,HTTP 404,0,0.5
+https://troopers.de/troopers26/contribution/,page could not be read,1,HTTP 404,0,0.5
+https://troopers.de/troopers27/,page could not be read,1,HTTP 403,0,0.4
+https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFzUAkabBUf_2wGrvlO4cTmVAxc8RxUcwibiiMvVBM8glKeAo9WmSUTgOEG39tHd8jBYOqdcnB-bbebJIqn-39BjiUns2BVO-ngq6r9R69O0R7xdDGWTcQv0Seg-qZNGSRNdRI2gp1M1nH7Mbdo-tD9ad6N,page could not be read,1,HTTP 404,0,0.5
+https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5wx9sxGGuQpPGYPtVfbcM_B-2yAh_mNQgNI4uXpH2RiNevdV_Ea22OTRLePmQNn2xAZw0TcPlO7keR6H3iYCaZpmMTabBgeCvJgw1Jq1nckhdj9lSeV9EsM9LlhHAk3B6KtduoID9eEJLaFjQ0jsdgk36p5_q05Jhg_ZeAIuQRf_O78sqbTNQofwe14egmHKCTAqF3dxofwhVbqRHGY0xEZqgYIjH,page could not be read,1,HTTP 404,0,0.4
+https://worldagritechusa.com/expert-speakers/,page could not be read,1,HTTP 404,0,1.0
+https://www.aacr.org/meeting/aacr-annual-meeting-2027/,page could not be read,1,ok,20903,1.5
+https://www.aacr.org/professionals/meetings/aacr-travel-grants/aacr-early-career-scholar-in-cancer-research-awards,page could not be read,1,ok,23939,1.0
+https://www.aacr.org/professionals/meetings/aacr-travel-grants/global-scholar-in-training-awards-2,page could not be read,1,ok,27894,1.0
+https://www.aacr.org/professionals/meetings/aacr-travel-grants/women-in-cancer-research-scholar-awards,page could not be read,1,ok,22351,1.0
+https://www.additiveinternational.com/,page could not be read,1,URLError,0,20.2
+https://www.altfuelchem.org/afcc-poster-presentations,page could not be read,1,ok,435567,0.9
+https://www.americaslngsummit.com/conference/call-for-papers/,page could not be read,1,HTTP 404,0,1.7
+https://www.americaslngsummit.com/technical-conference/call-for-papers/,page could not be read,1,HTTP 404,0,1.5
+https://www.amug.com/conference-agenda-and-planner/,page could not be read,1,HTTP 404,0,1.8
+https://www.appsecvillage.com/call-for-papers,page could not be read,1,HTTP 404,0,0.9
+https://www.argusmedia.com/en/events/conferences/biofuels-europe-conference,page could not be read,1,HTTP 404,0,0.4
+https://www.arpae-summit.com/Contact,page could not be read,1,HTTP 404,0,0.4
+https://www.asco.org/annual-meeting/dates-know,page returned almost no text (171 chars),1,ok,173,0.9
+https://www.asco.org/annual-meeting/dates-know?intcmp=nw_ascoorg_am_am26_site_amlandingpage_all__glob_110525__qklnk__aware_image_,page returned almost no text (171 chars),1,ok,173,0.9
+https://www.automotiveworld.jp/tokyo/en-gb.html,page could not be read,1,ok,6856,1.3
+https://www.awexr.com/usa,page could not be read,1,HTTP 404,0,0.4
+https://www.biogastradeshow.com/apply-for-a-speaking-opportunity/,page could not be read,1,HTTP 404,0,0.9
+https://www.biogastradeshow.com/participate/apply-for-a-speaking-opportunity/,page could not be read,1,HTTP 404,0,0.8
+https://www.biomassconference.com/,page returned almost no text (0 chars),1,ok,1,0.8
+https://www.blackhat.com/asia-26/,page could not be read,1,HTTP 403,0,0.4
+https://www.blackhat.com/asia-27/call-for-briefings.html,page could not be read,1,HTTP 404,0,0.7
+https://www.blackhat.com/asia-27/call-for-summits-sessions.html,page could not be read,1,HTTP 403,0,0.4
+https://www.blackhat.com/call-for-briefings.html,page could not be read,1,HTTP 403,0,0.4
+https://www.blackhat.com/cfp/,page could not be read,1,HTTP 403,0,0.4
+https://www.blackhat.com/eu-26/call-for-briefings.html,page could not be read,1,HTTP 403,0,0.4
+https://www.blackhat.com/europe-26/call-for-briefings.html,page could not be read,1,HTTP 403,0,0.4
+https://www.blackhat.com/europe/2026/call-for-briefings.html,page could not be read,1,HTTP 403,0,0.6
+https://www.blackhat.com/html/call-for-sessions.html,page could not be read,1,HTTP 403,0,0.6
+https://www.blackhat.com/html/cfp.html,page could not be read,1,HTTP 403,0,0.5
+https://www.blackhat.com/html/cfp/web-cfp.html,page could not be read,1,HTTP 403,0,0.4
+https://www.blackhat.com/sector/2026/call-for-papers.html,page could not be read,1,HTTP 403,0,0.7
+https://www.blackhat.com/sector/2026/call-for-summits.html,page could not be read,1,HTTP 403,0,0.7
+https://www.blackhat.com/us-26/call-for-briefings.html,page could not be read,1,HTTP 403,0,0.5
+https://www.blackhat.com/us-26/call-for-papers.html,page could not be read,1,HTTP 403,0,0.5
+https://www.blackhat.com/us-26/cfp.html,page could not be read,1,HTTP 403,0,0.4
+https://www.carboncaptureeuropesummit.com/,page could not be read,1,ok,80474,0.9
+https://www.carboncaptureglobalsummit.com/,page could not be read,1,ok,2170,0.9
+https://www.ccus-expo.com/register-your-interest-2027/,page could not be read,1,HTTP 404,0,1.4
+https://www.ceramicsexpousa.com/,page could not be read,1,HTTP 403,0,0.3
+https://www.ces.tech/conference-program/speaking-at-ces/,page could not be read,1,HTTP 404,0,0.6
+https://www.ces.tech/speaking-at-ces/,page could not be read,1,HTTP 404,0,0.3
+https://www.ciif-expo.com/,page returned almost no text (0 chars),1,ok,1,2.1
+https://www.cleantech.com/event/cleantech-forum-na/,page could not be read,1,ok,7214,1.0
+https://www.cleantech.com/event/cleantech-forum-na/agenda/,page could not be read,1,ok,22839,1.3
+https://www.cleantech.com/event/cleantech-forum-na/speakers/,page could not be read,1,ok,1782,1.2
+https://www.climateweeknyc.org/be-part-movement-shapes-global-climate-action-climate-week-nyc-2026,page could not be read,1,HTTP 404,0,0.8
+https://www.climateweeknyc.org/host-climate-week-nyc-event-2026-register-now,page could not be read,1,HTTP 404,0,0.6
+https://www.climateweeknyc.org/host-event,page could not be read,1,HTTP 404,0,0.5
+https://www.climateweeknyc.org/take-part,page could not be read,1,HTTP 404,0,0.6
+https://www.conference-news.co.uk/news/dpw-goes-big-chros-chicago-speak-infosecurity-europe,page could not be read,1,HTTP 404,0,5.5
+https://www.connectinghydrogeneurope.com/,page could not be read,1,HTTP 404,0,0.7
+https://www.cybertechisrael.com/,page could not be read,1,ok,12384,1.0
+https://www.cybertechisrael.com/registration,page could not be read,1,ok,9480,0.7
+https://www.cyberuk.uk/faqs,page could not be read,1,HTTP 404,0,0.9
+https://www.dac.com/About/Future-DAC-Dates,page could not be read,1,HTTP 404,0,0.7
+https://www.dataiq.global/dataiq-100-summit-north-america-2027-faq/,page could not be read,1,ok,15170,5.4
+https://www.diaglobal.org/Abstract,page could not be read,1,ok,3130,1.3
+https://www.digitalconstructionweek.com/register-your-interest-for-dcw-2027/,page could not be read,1,HTTP 404,0,2.6
+https://www.displayweek.org/,page could not be read,1,ok,6083,1.3
+https://www.dmcmeeting.com/abstracts/,page could not be read,1,HTTP 404,0,0.3
+https://www.dmea.de/en/program/become-a-speaker/,page could not be read,1,HTTP 404,0,1.4
+https://www.dpreview.com/news/1423406411/photokina-is-cancelled-indefinitely-decreases-in-imaging-market-force-hard-cut,page could not be read,1,HTTP 403,0,0.3
+https://www.embedded-world.eu,page returned almost no text (0 chars),1,ok,1,1.1
+https://www.escardio.org/Congresses-Events/ESC-Congress/Call-for-Science/Call-for-Abstracts,page could not be read,1,HTTP 404,0,0.5
+https://www.facebook.com/AGRITECHNICA/,page returned almost no text (50 chars),1,ok,128937,1.7
+https://www.facebook.com/ParenteralDrugAssociation/,page returned almost no text (8 chars),1,ok,10,1.3
+https://www.farmprogressshow.com/en/exhibit/exhibit-inquiry.html,page could not be read,1,HTTP 404,0,1.2
+https://www.first.org/conference/2026/call-for-speakers,page could not be read,1,HTTP 404,0,0.5
+https://www.first.org/conference/2026/cfp,page could not be read,1,HTTP 404,0,0.5
+https://www.fuelethanolworkshop.com/ema/DisplayPage.aspx?pageId=Submit_Presentation_Ideas,page could not be read,1,HTTP 404,0,0.4
+https://www.futurefuelsmena.com/,page could not be read,1,HTTP 404,0,0.8
+https://www.gartner.com/en/conferences/apac/security-risk-management-japan,page could not be read,2,HTTP 403,0,0.3
+https://www.gartner.com/en/conferences/emea/security-risk-management-uk,page could not be read,1,HTTP 403,0,0.3
+https://www.gartner.com/en/conferences/emea/security-risk-management-uk/sessions,page could not be read,1,HTTP 403,0,0.2
+https://www.gartner.com/en/conferences/executive-story-speakers,page could not be read,1,HTTP 403,0,0.3
+https://www.gartner.com/en/conferences/na/identity-access-management-us/speakers,page could not be read,1,HTTP 403,0,0.4
+https://www.gartner.com/en/conferences/na/security-risk-management-us,page could not be read,1,HTTP 403,0,0.3
+https://www.gastechevent.com/call-for-papers/preparing-your-submission/,page could not be read,1,HTTP 404,0,0.4
+https://www.gastechevent.com/conference/preparing-your-submission/,page could not be read,1,HTTP 404,0,0.8
+https://www.gastechevent.com/conferences/feature-programmes/exxon-power-play-awards,page could not be read,2,HTTP 404,0,1.4
+https://www.gastechevent.com/conferences/technical-commercial-conference/call-for-papers/preparing-your-submission/,page could not be read,1,HTTP 404,0,0.7
+https://www.gastechevent.com/conferences/technical-commercial-conference/preparing-your-submission/,page could not be read,1,HTTP 404,0,0.6
+https://www.gastechevent.com/preparing-your-submission/,page could not be read,1,HTTP 404,0,0.6
+https://www.gitex.com/become-a-speaker,"soft 404 - page says ""Page not found""",1,ok,2279,0.7
+https://www.globalenergyshow.com/conference/energy-influencers-conference/call-for-submissions/,page returned almost no text (0 chars),1,ok,1,0.4
+https://www.globalenergyshow.com/conferences/energy-influencers/2027-call-for-submissions/,page returned almost no text (82 chars),1,ok,1,0.4
+https://www.globalenergyshow.com/forms-2027/express-interest/,page returned almost no text (0 chars),1,ok,1,0.3
+https://www.globalsources.com/exhibitions/hongkong-consumer-electronics.htm,page could not be read,1,HTTP 429,0,0.8
+https://www.gomactech.net/Paper-Submission,page could not be read,1,HTTP 404,0,0.6
+https://www.gti.energy/training-events/tcbiomass/,page could not be read,1,ok,3526,0.8
+https://www.gti.energy/training-events/tcbiomass/abstracts,page could not be read,1,ok,2538,2.5
+https://www.h2meet.com/,page returned almost no text (59 chars),1,ok,61,2.1
+https://www.h2meet.com/html/en/speaker.php,page returned almost no text (59 chars),1,ok,61,1.6
+https://www.h2meet.com/html/ko/media_notice-view.php?no=117,page returned almost no text (59 chars),1,ok,61,1.5
+https://www.hamburg-messe.de/en/event-details/-/asv/hydrogen-technology-world-expo/show/10419,page could not be read,1,HTTP 404,0,2.5
+https://www.hannovermesse.de/en/for-exhibitors/speaking-opportunities/call-for-papers-stages,page could not be read,1,HTTP 404,0,0.8
+https://www.himss.org/call-for-proposals,page could not be read,1,HTTP 403,0,0.5
+https://www.hydrogen-americas-summit.com/,page could not be read,1,ok,6509,2.4
+https://www.hydrogen-worldexpo.com/2026-conference-agenda,page could not be read,1,HTTP 404,0,0.9
+https://www.hydrogenccs-menaexpo.com/news,page could not be read,1,HTTP 404,0,0.8
+https://www.hydrogenexpo.com/call-for-abstracts-now-open,page could not be read,1,HTTP 404,0,0.7
+https://www.ibioic.com/events/ibioic27-ibioics-13th-annual-conference,page could not be read,1,HTTP 404,0,0.6
+https://www.icheme.org/training-events/hydrogen-2026/call-for-abstracts/,page could not be read,1,HTTP 404,0,1.9
+https://www.icheme.org/training-events/hydrogen-2026/call-for-content,page could not be read,1,HTTP 404,0,1.8
+https://www.ieee-iedm.org/submission-details,page could not be read,1,ok,7542,1.6
+https://www.ifa-berlin.com/stages-themes/call-for-sessions-ifa-2026-applications-closed,page could not be read,1,HTTP 404,0,1.0
+https://www.indiaenergyweek.com/forms-2027/conference-call-for-abstract-submission/,page could not be read,1,HTTP 404,0,2.6
+https://www.infocommshow.org/call-for-presenters,page could not be read,1,HTTP 404,0,0.9
+https://www.infosecurityeurope.com/,page could not be read,2,ok,5760,0.6
+https://www.innovationzero.com/apply-to-speak,page could not be read,1,HTTP 404,0,0.7
+https://www.interphex.com/en-us/education/conference-overview.html,page could not be read,1,HTTP 404,0,0.8
+https://www.iseurope.org/ise-content-programme,page could not be read,1,HTTP 404,0,0.9
+https://www.itctestweek.org/,page could not be read,1,ok,3421,0.5
+https://www.itctestweek.org/ai-in-test-ait-workshop-cfp,page could not be read,1,HTTP 404,0,0.6
+https://www.ivam.de/events/europe_meets_north_america_on_november_18_2026_speaker_registration,page could not be read,1,HTTP 404,0,1.0
+https://www.japanccussummit.com,page could not be read,1,ok,5499,0.7
+https://www.japanccussummit.com/,page could not be read,1,ok,5499,0.5
+https://www.labscon.io/,page could not be read,1,HTTP 429,0,0.7
+https://www.leadersoftoday.com/opportunities/upfront-founder-fellows-investment-2026,page could not be read,1,HTTP 410,0,0.5
+https://www.logimat-messe.de/en,page could not be read,1,HTTP 403,0,1.0
+https://www.matscitech.org/MST27,page could not be read,1,HTTP 403,0,0.5
+https://www.mdmminn.com/en/exhibitor-faqs.html,page could not be read,1,HTTP 404,0,0.8
+https://www.medica-tradefair.com/en/Program/Forums/MEDICA_INNOVATION_FORUM/MEDICA_Start-up_COMPETITION,page could not be read,1,HTTP 404,0,1.2
+https://www.modexshow.com/,page returned almost no text (178 chars),1,ok,180,0.5
+https://www.namm.org/thenammshow/bands-at-namm,page could not be read,1,HTTP 404,0,0.5
+https://www.ncsc.gov.uk/cyberuk/sponsor-and-exhibit/,page could not be read,1,HTTP 404,0,1.0
+https://www.pda.org/membership/about-pda-honor-awards,page could not be read,1,HTTP 403,0,0.2
+https://www.pepcom.com/,page could not be read,1,ok,3125,0.5
+https://www.petropages.com/news/carbon-capture-technology-expo-north-america-2027-call-for-speakers-deadline-approaching/,page could not be read,1,HTTP 404,0,1.2
+https://www.resiconference.com/pitch-challenge/,page could not be read,1,ok,875756,1.1
+https://www.robotworld.or.kr/eng/,page returned almost no text (0 chars),1,ok,1,1.8
+https://www.rsaconference.com/,page could not be read,1,HTTP 403,0,0.5
+https://www.rsaconference.com/call-for-submissions,page could not be read,1,HTTP 403,0,0.4
+https://www.rsaconference.com/usa/call-for-submissions,page could not be read,1,HTTP 403,0,0.4
+https://www.s-ge.com/en/event/world-future-energy-summit-adswwfes-2027,page could not be read,1,HTTP 404,0,0.8
+https://www.sae.org/attend/aerotech,page returned almost no text (62 chars),1,ok,64,0.4
+https://www.secureworld.io/call-for-speakers,page could not be read,6,HTTP 404,0,0.6
+https://www.semi.org/en/communities/technology-communities/asmc/author-kit,page could not be read,1,HTTP 403,0,0.4
+https://www.semi.org/en/connect/events/mems-sensors-executive-congress-msec,page could not be read,1,HTTP 403,0,0.4
+https://www.semi.org/en/connect/events/semicon-southeast-asia-interest,page could not be read,1,HTTP 403,0,0.2
+https://www.semi.org/en/connect/events/strategic-materials-conference-smc,page could not be read,1,HTTP 403,0,0.3
+https://www.semi.org/en/event/foa-summit-q1-collaborative-forum,page could not be read,1,HTTP 403,0,0.3
+https://www.semiconeuropa.org/program/call-for-abstracts,page could not be read,1,HTTP 403,0,0.4
+https://www.semiconkorea.org/en/call-presentations,page could not be read,2,HTTP 403,0,0.5
+https://www.semiconkorea.org/en/conference/speaker-portal,page could not be read,1,HTTP 403,0,0.5
+https://www.semiconkorea.org/ko/call-presentations,page could not be read,1,HTTP 403,0,0.4
+https://www.semicontaiwan.org/en/about/call-for-speakers,page could not be read,1,HTTP 403,0,0.5
+https://www.semiconwest.org/,page could not be read,1,HTTP 403,0,0.6
+https://www.semiconwest.org/programs/call-for-abstracts,page could not be read,1,HTTP 403,0,0.7
+https://www.semiconwest.org/programs/call-for-abstracts/cybersecurity-2026,page could not be read,1,HTTP 403,0,0.4
+https://www.semiconwest.org/programs/call-for-abstracts/flexible-hybrid-electronics-2026,page could not be read,1,HTTP 403,0,0.2
+https://www.semiconwest.org/programs/call-for-abstracts/next-gen-photonics-2026,page could not be read,1,HTTP 403,0,0.2
+https://www.sentinelone.com/labs/labscon25-replay-keynote-steps-to-an-ecology-of-cyber/,page could not be read,1,HTTP 429,0,0.6
+https://www.sentinelone.com/labscon25-replay-keynote-steps-to-an-ecology-of-cyber/,page could not be read,1,HTTP 429,0,0.6
+https://www.sentinelone.com/press/the-worlds-elite-security-researchers-head-to-arizona-for-labscon-2026/,page could not be read,1,HTTP 429,0,0.5
+https://www.sfpaexpo.com/,page could not be read,1,ok,1348,1.2
+https://www.siew.gov.sg/,page returned almost no text (0 chars),1,ok,1,1.7
+https://www.smarthomeexpo.in/,page returned almost no text (20 chars),1,ok,22,1.5
+https://www.spacetechexpo.com/,page could not be read,1,HTTP 403,0,0.4
+https://www.spglobal.com/energy/en/events/conferences/hceeweek/agenda-at-a-glance,page could not be read,1,HTTP 403,0,0.3
+https://www.sustainablefuelsglobal.com/,page could not be read,2,ok,3174,2.2
+https://www.sustainablefuelsglobal.com/registration,page could not be read,1,ok,31641,2.0
+https://www.sxsw.com/news/2026/your-ideas-belong-on-the-sxsw-stage-panelpicker-is-open/,page could not be read,1,HTTP 404,0,2.0
+https://www.tairos.tw/en/eventCalendar.asp,"page has almost no readable text (38 words, 1747 chars)",1,ok,1747,4.9
+https://www.tappi.org/news/news-items/steer-the-conversation-present-at-tappicon-2027/,page could not be read,1,HTTP 404,0,1.6
+https://www.tctmagazine.com/tct-news/tct-the-next-chapter/,page could not be read,1,HTTP 404,0,1.5
+https://www.techblick.com/post/the-future-of-electronics-reshaped-usa-heads-to-mountain-view-california-in-2026,page could not be read,1,HTTP 404,0,3.3
+https://www.techshowlondon.co.uk/register-interest-speak-2027,page could not be read,1,HTTP 404,0,1.7
+https://www.terrapinn.com/conference/advanced-therapies/poster-application.stm,page could not be read,1,HTTP 404,0,1.6
+https://www.terrapinn.com/conference/festival-of-biologics-usa/poster-application.shtml,page could not be read,1,HTTP 404,0,1.1
+https://www.thechemicalengineer.com/news/share-your-insights-and-expertise-at-the-2026-hydrogen-innovation-and-technology-conference/,page could not be read,1,HTTP 404,0,0.8
+https://www.therobotreport.com/robobusiness-2026-call-for-speakers-closes-soon/,page could not be read,1,HTTP 404,0,0.9
+https://www.torontomachinelearning.com/,page could not be read,1,ok,43040,0.8
+https://www.vlsisymposium.org/future-symposia/,page could not be read,1,HTTP 404,0,0.4
+https://www.vlsisymposium.org/overview-cfp,page could not be read,1,HTTP 404,0,0.3
+https://www.vlsisymposium.org/program/call-for-workshops,page could not be read,1,HTTP 404,0,0.3
+https://www.vlsisymposium.org/schedule-at-a-glance/call-for-workshops,page could not be read,1,HTTP 404,0,1.2
+https://www.wearable-technologies.com/events,page could not be read,1,ok,4695,0.6
+https://www.world-hydrogen-summit.com/,page could not be read,1,ok,5276,0.5
+https://www.world-hydrogen-summit.com/americas/,page could not be read,1,ok,6509,1.6
+https://www.world-hydrogen-summit.com/asia-pacific/speaker-enquiry/,page could not be read,1,HTTP 404,0,1.3
+https://www.worldfutureenergysummit.com/,page could not be read,1,ok,4876,1.0
+https://www.worldfutureenergysummit.com/en-gb/conferences.html,page could not be read,1,ok,9338,1.3
+https://www.worldfutureenergysummit.com/en-gb/media.html,page could not be read,1,ok,4212,2.2
+https://www.worldofconcrete.com/en/education/call-for-presentations.html,page could not be read,1,HTTP 404,0,2.2
+https://www.xponential.org/,page could not be read,1,ok,6679,1.0
+https://yutori.io/scouts/global-ai-and-saas-conferences,page returned almost no text (0 chars),1,ok,1,0.4
+https://yutori.io/scouts/regional-ai-conferences-new-england/,page returned almost no text (0 chars),1,ok,1,0.2

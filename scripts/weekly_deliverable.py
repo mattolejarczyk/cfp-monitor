@@ -45,6 +45,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.cfp_monitor.run_health import HEALTH                        # noqa: E402
+from src.cfp_monitor.proc import kill_tree                           # noqa: E402
 from src.cfp_monitor.publish_guard import check_publish_fresh        # noqa: E402
 from src.cfp_monitor.grounding_review import load_outcomes, build_review, render  # noqa: E402
 
@@ -60,13 +61,23 @@ def step(name: str, cmd: list[str], log: Path, timeout: int = 7200) -> bool:
     """Run one step, record its outcome, keep its log. True when it succeeded."""
     print(f"\n=== {name} ===\n{' '.join(str(c) for c in cmd)}", flush=True)
     with open(log, "w", encoding="utf-8") as fh:
+        # 2026-11-09: Popen + kill_tree, not subprocess.run(timeout=). run() kills the child only; on Windows the child is the venv
+        # launcher, and the interpreter and any browser it started can live on and keep writing to the database while the later
+        # steps read it (the 2026-11-06 defect, fixed in weekend_import, never carried over here). The kill is recorded in the log.
+        p = subprocess.Popen([str(c) for c in cmd], stdout=fh, stderr=subprocess.STDOUT,
+                             env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                             **({} if os.name == "nt" else {"start_new_session": True}))
         try:
-            code = subprocess.run([str(c) for c in cmd], stdout=fh, stderr=subprocess.STDOUT,
-                                  timeout=timeout,
-                                  env={**os.environ, "PYTHONIOENCODING": "utf-8"}).returncode
+            code = p.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
+            how = kill_tree(p)
+            try:
+                p.wait(timeout=60)
+            except subprocess.TimeoutExpired:
+                how += "; the child did not exit within 60s of the kill"
+            fh.write(f"\nTIMEOUT after {timeout}s - process tree killed: {how}\n")
             HEALTH.fail("weekly_step", "timed_out", f"{name} after {timeout}s")
-            print(f"  TIMED OUT after {timeout}s - see {log.name}")
+            print(f"  TIMED OUT after {timeout}s - process tree killed ({how}) - see {log.name}")
             return False
     if code == 0:
         HEALTH.ok("weekly_step")
@@ -178,8 +189,11 @@ def main() -> int:
         # the re-read covers them. Free: no AI calls.
         step("register citations", [PY, ROOT / "scripts/build_evidence.py", "--db", a.db],
              work / "0_build_evidence.log")
+        # --max-minutes 105 (2026-11-09): the re-read stops its own browser ladder before this step's 7200 s limit can kill it, writes
+        # each rescued page as it goes, and exits 2 (DEGRADED) saying how many pages it never tried. On 2026-11-09 the kill came first
+        # and every page the ladder had read was lost.
         step("evidence re-read", [PY, ROOT / "scripts/audit_evidence.py", "--db", a.db,
-                                  "--field", "deadline", "--recheck"], work / "1_evidence.log")
+                                  "--field", "deadline", "--recheck", "--max-minutes", "105"], work / "1_evidence.log")
     # ALWAYS exported, even with --skip-evidence: this is the step that gets missed, it costs a
     # second, and skipping it is what makes a page show last week's verdicts.
     step("export checks", [PY, ROOT / "scripts/export_checks.py", "--db", a.db,
