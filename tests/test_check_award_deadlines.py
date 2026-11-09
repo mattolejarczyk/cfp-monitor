@@ -161,3 +161,24 @@ def test_apply_leaves_the_conferences_table_alone(tmp_path):
     con = sqlite3.connect(db)
     assert con.execute("select verify_state from grounding_facts").fetchone()[0] == "contradicted"
     con.close()
+
+
+def test_main_runs_end_to_end_through_the_real_escalate(tmp_path, monkeypatch):
+    """2026-11-09 re-run: b4c5907 changed audit_evidence.escalate to return a pair, and this script's own loop
+    (`escalate(...).items()`) crashed after the ladder had read all 92 award pages; no checks CSV was written and the
+    awards page reused the morning's. This runs main() itself: the flat read fails, the REAL escalate() is called, and
+    only the browser beneath it is faked (escalate_within_budget), so a change to escalate's return shape fails here."""
+    import csv as _csv
+    import audit_evidence as ae_mod                               # the module main() imports, by that name
+    from src.cfp_monitor import verify as verify_mod
+    db = _db(tmp_path, [_row()])
+    out = tmp_path / "checks.csv"
+    monkeypatch.setattr(verify_mod, "fetch_text", lambda url: ("", "HTTP 403"))
+
+    async def browser(urls, on_page=None, deadline=None):
+        return {u: ("Awards 2027. Entries close March 19 2027. Winners in May.", "playwright-fallback") for u in urls}, []
+    monkeypatch.setattr(ae_mod, "escalate_within_budget", browser)
+    monkeypatch.setattr(sys, "argv", ["check_award_deadlines.py", "--db", db, "-o", str(out)])
+    assert cad.main() == 0
+    rows = list(_csv.DictReader(open(out, encoding="utf-8")))
+    assert [(r["EVENT_ID"], r["CHECK"]) for r in rows] == [("theirs-1", "verified")]   # read by the ladder, so verified
