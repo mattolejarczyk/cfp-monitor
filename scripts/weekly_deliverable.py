@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import csv
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -55,6 +56,30 @@ OUT_DIR = Path(r"C:\Users\matts\Desktop\Nicolia-PR-Prime\handoff-files\weekly")
 LIVE_DB = Path(r"C:\Users\matts\AppData\Local\CFP-Monitor\cfp_monitor.db")
 RUNS_OUT = Path(r"C:\Users\matts\AppData\Local\CFP-Monitor\runs_out")
 LIVE_MARKETS = "Cybersecurity,Utility"
+
+
+def evidence_shortfall(log_text: str) -> str:
+    """'' when the evidence re-read finished; otherwise one plain line saying how many cited pages were not read. Pure: reads the step's log.
+
+    D5 on Daily Review (Matt, 2026-11-09): 'Do not publish; the email says NO-GO and how many pages were not read.' The re-read ends with
+    `EVIDENCE PASS: HEALTHY` when every page was read or tried in a browser. Its own time budget ends with `EVIDENCE PASS: DEGRADED ... N of M`.
+    A kill or a crash leaves no verdict line, so the count is taken from the progress lines it did print."""
+    if "EVIDENCE PASS: HEALTHY" in log_text:
+        return ""
+    total_m = re.search(r"(\d+) claim\(s\) across (\d+) page\(s\)", log_text)
+    total = int(total_m.group(2)) if total_m else None
+    budget = re.search(r"EVIDENCE PASS: DEGRADED - the time budget \(([\d.]+) min\) ended with (\d+) of (\d+) unreadable page", log_text)
+    if budget:
+        return (f"{budget.group(2)} of {total if total is not None else '?'} cited pages were never tried in a browser: "
+                f"the evidence re-read's time budget ({budget.group(1)} min) ended first")
+    if total is None:
+        return "the evidence re-read did not finish and its log does not say how far it got"
+    visited = max((int(x) for x in re.findall(r"(?m)^\[(\d+)/\d+\] ", log_text)), default=0)
+    unreadable = len(re.findall(r"(?m)^\s+unreadable - ", log_text))
+    rescued = len(re.findall(r"(?m)^\s+\[\d+/\d+\] .* -> [\w-]+ \(\d+c\)\s*$", log_text))
+    n = (total - visited) + max(unreadable - rescued, 0)
+    return (f"{n} of {total} cited pages were not read: the evidence re-read stopped before it finished "
+            f"({visited} of {total} pages tried once; {rescued} of {unreadable} unreadable pages read in a browser)")
 
 
 def step(name: str, cmd: list[str], log: Path, timeout: int = 7200) -> bool:
@@ -194,6 +219,15 @@ def main() -> int:
         # and every page the ladder had read was lost.
         step("evidence re-read", [PY, ROOT / "scripts/audit_evidence.py", "--db", a.db,
                                   "--field", "deadline", "--recheck", "--max-minutes", "105"], work / "1_evidence.log")
+        # D5 (Matt, 2026-11-09): an unfinished evidence pass is a HARD failure, so the run is DEGRADED and nothing publishes; the
+        # count goes into the manifest, where the release gate quotes it in the NO-GO email.
+        short = evidence_shortfall((work / "1_evidence.log").read_text(encoding="utf-8", errors="replace")
+                                   if (work / "1_evidence.log").exists() else "")
+        if short:
+            HEALTH.fail("evidence_pass", "evidence_incomplete", short)
+            print(f"  EVIDENCE PASS INCOMPLETE: {short} - the pages will not publish (D5)")
+        else:
+            HEALTH.ok("evidence_pass")
     # ALWAYS exported, even with --skip-evidence: this is the step that gets missed, it costs a
     # second, and skipping it is what makes a page show last week's verdicts.
     step("export checks", [PY, ROOT / "scripts/export_checks.py", "--db", a.db,

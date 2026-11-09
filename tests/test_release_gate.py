@@ -161,6 +161,20 @@ def test_a_degraded_manifest_is_a_FAIL(tmp_path):
     assert status(run(w), "a") == "FAIL"
 
 
+def test_an_unfinished_evidence_pass_is_NO_GO_and_the_email_says_how_many_pages(tmp_path):
+    """D5 on Daily Review (Matt, 2026-11-09): 'Do not publish; the email says NO-GO and how many pages were not read.'"""
+    w = world(tmp_path)
+    (w.weekly / "work_2026-10-12" / "MANIFEST.md").write_text(
+        "    HEALTH: DEGRADED\n\n## Run health: DEGRADED\n\nExamples:\n"
+        "- evidence_pass / evidence_incomplete: 292 of 748 cited pages were not read: the evidence re-read stopped before it finished\n",
+        encoding="utf-8")
+    rep = run(w)
+    a = next(c for c in rep["checks"] if c["id"] == "a")
+    assert a["status"] == "FAIL" and rep["verdict"] == "NO-GO"
+    assert a["summary"].startswith("the evidence re-read did not finish: 292 of 748 cited pages were not read"), a["summary"]
+    assert any("292 of 748" in line for line in rg.plain_lines(rep)), "the email body opens with the count"
+
+
 def test_a_stale_approved_file_is_a_FAIL(tmp_path):
     w = world(tmp_path)
     publish_guard.write_manifest(w.md / "Awards_audited.final.csv", "Awards", "src", "acc.json", "ACCEPTED", promoted_at=datetime(2026, 10, 1))

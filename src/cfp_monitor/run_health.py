@@ -33,7 +33,10 @@ MIN_ATTEMPTS = 5
 MAX_FAIL_RATE = 0.20
 # Reasons that make a run DEGRADED on their own, whatever the rate: the run did something that
 # must never pass silently.
-HARD_FAILURES = {"quota_exhausted", "hung", "gate_crashed"}
+HARD_FAILURES = {"quota_exhausted", "hung", "gate_crashed",
+                 # 2026-11-09, D5 on Daily Review (Matt): an evidence pass that did not finish must not publish. As a rate it was 1 failed
+                 # step in 9, under the limit, and the Monday pages went out HEALTHY with 44 rows reading 'Could not check'.
+                 "evidence_incomplete"}
 
 
 class RunHealth:

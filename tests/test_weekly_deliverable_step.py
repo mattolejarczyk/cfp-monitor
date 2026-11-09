@@ -60,6 +60,56 @@ def test_a_timed_out_step_kills_the_grandchild_too_and_keeps_the_log(tmp_path):
     assert beat.stat().st_mtime == m1, "the grandchild is still running: the process tree was not killed"
 
 
+# --- D5 on Daily Review (Matt, 2026-11-09): "Do not publish; the email says NO-GO and how many pages were not read." ---
+KILLED_LOG = """804 claim(s) across 6 page(s)
+one visit per page; the ladder is climbed on failure
+
+[1/6] https://a.example/cfp  (1 claim(s))
+        ok deadline         grounding page states 2027-01-31
+[2/6] https://b.example/cfp
+        unreadable - page could not be read [HTTP 403]
+[3/6] https://c.example/cfp
+        unreadable - page could not be read [TimeoutError]
+[4/6] https://d.example/cfp
+        unreadable - page returned almost no text (0 chars)
+[5/6] https://e.example/cfp  (1 claim(s))
+        -- deadline         grounding nothing claimed for this field
+
+--- escalating 3 unreadable page(s) through the ladder ---
+  [1/3] https://b.example/cfp -> playwright-fallback (8268c)
+  [2/3] https://c.example/cfp -> still unreadable (playwright-fallback)
+"""
+
+
+def test_a_killed_evidence_pass_counts_the_pages_it_never_read():
+    """The 2026-11-09 shape: no verdict line. Page 6 was never visited; of 3 unreadable, the browser read 1. 1 + 2 = 3 of 6."""
+    s = wd.evidence_shortfall(KILLED_LOG)
+    assert s.startswith("3 of 6 cited pages were not read"), s
+    assert "5 of 6 pages tried once; 1 of 3 unreadable pages read in a browser" in s
+
+
+def test_the_budget_verdict_is_quoted_and_a_finished_pass_is_silent():
+    budget = KILLED_LOG + ("\nEVIDENCE PASS: DEGRADED - the time budget (105 min) ended with 2 of 3 unreadable page(s) never tried in a browser; "
+                           "their claims read 'unreadable' because we did not look.\n")
+    assert wd.evidence_shortfall(budget) == "2 of 6 cited pages were never tried in a browser: the evidence re-read's time budget (105 min) ended first"
+    assert wd.evidence_shortfall(KILLED_LOG + "\nEVIDENCE PASS: HEALTHY - every page was read or tried through the ladder\n") == ""
+    assert wd.evidence_shortfall("") == "the evidence re-read did not finish and its log does not say how far it got"
+
+
+def test_an_incomplete_evidence_pass_alone_makes_the_run_degraded():
+    """As a rate it was 1 failed step in 9 and the run said HEALTHY. It is a hard failure now, so nothing publishes."""
+    from src.cfp_monitor.run_health import RunHealth
+    h = RunHealth("t")
+    for _ in range(8):
+        h.ok("weekly_step")
+    h.fail("weekly_step", "timed_out", "evidence re-read after 7200s")
+    assert h.verdict()[0] == "HEALTHY", "the old rate rule alone lets it through"
+    h.fail("evidence_pass", "evidence_incomplete", "292 of 748 cited pages were not read")
+    status, reasons = h.verdict()
+    assert status == "DEGRADED" and any("evidence_incomplete" in r for r in reasons)
+    assert "- evidence_pass / evidence_incomplete: 292 of 748 cited pages were not read" in h.report_lines()
+
+
 def test_a_step_that_finishes_is_ok_and_one_that_fails_is_recorded(tmp_path):
     ok_before = wd.HEALTH.snapshot("weekly_step")["ok"]
     bad_before = wd.HEALTH.snapshot("weekly_step")["step_failed"]
