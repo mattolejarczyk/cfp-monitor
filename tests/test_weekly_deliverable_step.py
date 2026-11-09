@@ -118,3 +118,65 @@ def test_a_step_that_finishes_is_ok_and_one_that_fails_is_recorded(tmp_path):
     assert (tmp_path / "a.log").read_text(encoding="utf-8").strip() == "done"
     assert wd.HEALTH.snapshot("weekly_step")["ok"] == ok_before + 1
     assert wd.HEALTH.snapshot("weekly_step")["step_failed"] == bad_before + 1
+
+
+# --- D8 on Daily Review (Matt, 2026-11-09): "Extend D5 to the awards check: NO-GO, and the email says so." ---
+# The 11:59 re-run's shape: check_award_deadlines read every page through the ladder, then crashed before writing its CSV.
+AWARDS_CRASHED_LOG = """136 cited award deadline(s) across 129 page(s)
+one visit per page; the ladder is climbed on failure
+
+  flat fetch read 84 of 129 page(s)
+  escalating 3 page(s) the flat fetch did not settle
+  [1/3] https://a.example/awards -> crawl4ai (21134c)
+  [2/3] https://b.example/awards -> still unreadable (playwright-fallback)
+  [3/3] https://c.example/awards -> crawl4ai (4184c)
+Traceback (most recent call last):
+  File "scripts/check_award_deadlines.py", line 147, in main
+AttributeError: 'tuple' object has no attribute 'items'
+"""
+AWARDS_FINISHED_TAIL = """
+=== verdicts ===
+  verified      43
+  no_quote      80
+  unreadable    13
+
+wrote C:/x/award_checks_20261109.csv
+Feed it to: build_review_page.py --checks <file>
+"""
+
+
+def test_a_finished_awards_check_is_silent():
+    finished = AWARDS_CRASHED_LOG.split("Traceback")[0] + AWARDS_FINISHED_TAIL
+    assert wd.award_evidence_shortfall(finished, True) == ""
+
+
+def test_a_crashed_awards_check_says_so_and_counts_what_has_no_check():
+    s = wd.award_evidence_shortfall(AWARDS_CRASHED_LOG, False)
+    assert s.startswith("the awards evidence check crashed, so no awards checks were written"), s
+    assert "136 cited award deadlines on 129 pages have no check this week" in s
+    assert "84 pages read directly, 2 of 3 more read in a browser before it stopped" in s
+
+
+def test_a_killed_awards_check_says_killed():
+    s = wd.award_evidence_shortfall(AWARDS_CRASHED_LOG.split("Traceback")[0] + "\nTIMEOUT after 7200s - process tree killed: taskkill\n", False)
+    assert s.startswith("the awards evidence check was killed at its time limit"), s
+
+
+def test_a_zero_exit_without_the_csv_line_is_not_a_finish():
+    """A clean exit that never wrote its CSV would have the page read last week's checks: the morning of 2026-11-09 exactly."""
+    s = wd.award_evidence_shortfall(AWARDS_CRASHED_LOG.split("Traceback")[0], True)
+    assert s.startswith("the awards evidence check did not finish"), s
+    assert wd.award_evidence_shortfall("", False) == ("the awards evidence check did not finish before it said how many pages it had; "
+                                                      "no awards checks were written")
+
+
+def test_an_unfinished_awards_check_alone_makes_the_run_degraded():
+    from src.cfp_monitor.run_health import RunHealth
+    h = RunHealth("t")
+    for _ in range(9):
+        h.ok("weekly_step")
+    h.ok("evidence_pass")
+    h.fail("award_evidence_pass", "evidence_incomplete", "the awards evidence check crashed")
+    status, _ = h.verdict()
+    assert status == "DEGRADED"
+    assert "- award_evidence_pass / evidence_incomplete: the awards evidence check crashed" in h.report_lines()

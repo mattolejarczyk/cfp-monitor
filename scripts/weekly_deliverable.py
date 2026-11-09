@@ -82,6 +82,26 @@ def evidence_shortfall(log_text: str) -> str:
             f"({visited} of {total} pages tried once; {rescued} of {unreadable} unreadable pages read in a browser)")
 
 
+def award_evidence_shortfall(log_text: str, exit_ok: bool) -> str:
+    """'' when the awards evidence check finished and wrote its CSV; otherwise one plain line saying so and how much has no check. Pure.
+
+    D8 on Daily Review (Matt, 2026-11-09): 'Extend D5 to the awards check: NO-GO, and the email says so.' On 2026-11-09 at 11:59 the check
+    read every page and then crashed before writing its CSV; the run said HEALTHY and only a stale CSV from the morning kept the page
+    from being empty. A finish is a zero exit AND the verdict block AND the `wrote` line - a clean exit without the CSV is not one."""
+    if exit_ok and "=== verdicts ===" in log_text and re.search(r"(?m)^wrote \S", log_text):
+        return ""
+    how = ("was killed at its time limit" if "TIMEOUT after" in log_text else "crashed" if "Traceback" in log_text else "did not finish")
+    head = re.search(r"(\d+) cited award deadline\(s\) across (\d+) page\(s\)", log_text)
+    if not head:
+        return f"the awards evidence check {how} before it said how many pages it had; no awards checks were written"
+    flat = re.search(r"flat fetch read (\d+) of", log_text)
+    ladder = re.search(r"escalating (\d+) page", log_text)
+    read = len(re.findall(r"(?m)^\s+\[\d+/\d+\] .* -> [\w-]+ \(\d+c\)\s*$", log_text))
+    return (f"the awards evidence check {how}, so no awards checks were written: {head.group(1)} cited award deadlines on {head.group(2)} pages "
+            f"have no check this week ({flat.group(1) if flat else '?'} pages read directly, {read} of {ladder.group(1) if ladder else 0} more "
+            f"read in a browser before it stopped)")
+
+
 def step(name: str, cmd: list[str], log: Path, timeout: int = 7200) -> bool:
     """Run one step, record its outcome, keep its log. True when it succeeded."""
     print(f"\n=== {name} ===\n{' '.join(str(c) for c in cmd)}", flush=True)
@@ -251,8 +271,18 @@ def main() -> int:
     # --no-evidence guard exists to prevent. A CSV that matches no rows walks around that guard.
     # No API cost: it re-opens cited pages, it does not ask a model anything.
     if not a.skip_evidence:
-        step("awards evidence", [PY, ROOT / "scripts/check_award_deadlines.py", "--db", a.db,
-                                 "-o", award_checks, "--apply"], work / "2a_award_evidence.log")
+        ok = step("awards evidence", [PY, ROOT / "scripts/check_award_deadlines.py", "--db", a.db,
+                                      "-o", award_checks, "--apply"], work / "2a_award_evidence.log")
+        # D8 (Matt, 2026-11-09): the D5 rule for the awards check. Unfinished = a HARD failure, so DEGRADED and nothing publishes; the
+        # line goes into the manifest and the release gate opens the NO-GO email with it. Without this, a crash after the morning's
+        # run left that morning's CSV in place and the page published it as this run's checks.
+        log2a = work / "2a_award_evidence.log"
+        short = award_evidence_shortfall(log2a.read_text(encoding="utf-8", errors="replace") if log2a.exists() else "", ok)
+        if short:
+            HEALTH.fail("award_evidence_pass", "evidence_incomplete", short)
+            print(f"  AWARDS EVIDENCE INCOMPLETE: {short} - the pages will not publish (D8)")
+        else:
+            HEALTH.ok("award_evidence_pass")
     if not award_checks.exists():
         HEALTH.fail("weekly_step", "missing_input", f"no awards checks CSV at {award_checks}")
 

@@ -518,9 +518,9 @@ def check_pages(o: Opts, pages: dict, approved: dict) -> Check:
         if not m or m.group(1) != "HEALTHY":
             bad.append(f"the build manifest says HEALTH {m.group(1) if m else 'not stated'}")
         # D5 (Matt, 2026-11-09): 'the email says NO-GO and how many pages were not read'. First, so it is in the summary the email opens with.
-        ev = re.search(r"^- evidence_pass / evidence_incomplete: (.+)$", mtext, re.M)
-        if ev:
-            bad.insert(0, f"the evidence re-read did not finish: {ev.group(1).strip()}")
+        # D8 (Matt, 2026-11-09): the same for the awards evidence check ('NO-GO, and the email says so'). Awards first, then conferences, both ahead of the rest.
+        for which, text in reversed(re.findall(r"^- (award_)?evidence_pass / evidence_incomplete: (.+)$", mtext, re.M)):
+            bad.insert(0, f"{'the awards evidence check' if which else 'the evidence re-read'} did not finish: {text.strip()}")
     else:
         bad.append(f"no MANIFEST.md in {o.work_dir}")
     return Check("a", "Pages built, fresh and healthy", "FAIL" if bad else "PASS", ("; ".join(bad[:3]) if bad else "both pages built today, published, build healthy, approved files fresh"),

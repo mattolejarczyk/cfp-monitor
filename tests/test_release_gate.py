@@ -175,6 +175,21 @@ def test_an_unfinished_evidence_pass_is_NO_GO_and_the_email_says_how_many_pages(
     assert any("292 of 748" in line for line in rg.plain_lines(rep)), "the email body opens with the count"
 
 
+def test_an_unfinished_awards_check_is_NO_GO_and_the_email_opens_with_it(tmp_path):
+    """D8 (Matt, 2026-11-09): 'Extend D5 to the awards check: NO-GO, and the email says so.'"""
+    w = world(tmp_path)
+    (w.weekly / "work_2026-10-12" / "MANIFEST.md").write_text(
+        "    HEALTH: DEGRADED\n\n## Run health: DEGRADED\n\nExamples:\n"
+        "- award_evidence_pass / evidence_incomplete: the awards evidence check crashed, so no awards checks were written: "
+        "136 cited award deadlines on 129 pages have no check this week\n",
+        encoding="utf-8")
+    rep = run(w)
+    a = next(c for c in rep["checks"] if c["id"] == "a")
+    assert a["status"] == "FAIL" and rep["verdict"] == "NO-GO"
+    assert a["summary"].startswith("the awards evidence check did not finish: the awards evidence check crashed"), a["summary"]
+    assert any("136 cited award deadlines" in line for line in rg.plain_lines(rep)), "the email body says so"
+
+
 def test_a_stale_approved_file_is_a_FAIL(tmp_path):
     w = world(tmp_path)
     publish_guard.write_manifest(w.md / "Awards_audited.final.csv", "Awards", "src", "acc.json", "ACCEPTED", promoted_at=datetime(2026, 10, 1))
