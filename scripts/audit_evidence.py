@@ -52,7 +52,16 @@ from src.cfp_monitor.verify import (                              # noqa: E402
 )
 
 
-async def escalate(urls: list[str], on_page=None, deadline: float | None = None) -> tuple[dict[str, tuple[str, str]], list[str]]:
+async def escalate(urls: list[str]) -> dict[str, tuple[str, str]]:
+    """Second pass for pages plain HTTP could not read: {url: (text, rung)}. The contract SIX callers rely on
+    (check_award_deadlines, extract_citations, diagnose_unread, apply_resolutions x2, refresh_delivery) - do not change it.
+    2026-11-09: it was changed to return a pair and the awards evidence step crashed after reading all 92 pages
+    (`tuple has no attribute items`). The budgeted form with the not-attempted list is `escalate_within_budget`."""
+    out, _ = await escalate_within_budget(urls)
+    return out
+
+
+async def escalate_within_budget(urls: list[str], on_page=None, deadline: float | None = None) -> tuple[dict[str, tuple[str, str]], list[str]]:
     """Second pass for pages plain HTTP could not read: ({url: (text, rung)}, [urls not attempted]). The loop is `climb`.
 
     The ladder is owned by fetch.py - crawl4ai, then a headed Playwright render, then a real
@@ -462,7 +471,7 @@ def main() -> int:
         # Each rescued page is written and committed as it is read (apply_rescue), and the ladder stops on OUR budget before the
         # caller's timeout can kill it. 2026-11-09: 41 pages read by the ladder were lost to a kill at the step's 2-hour limit.
         deadline = (t_start + a.max_minutes * 60) if a.max_minutes else None
-        _, not_attempted = asyncio.run(escalate(
+        _, not_attempted = asyncio.run(escalate_within_budget(
             failed, on_page=lambda url, text, via: apply_rescue(con, by_url[url], names, url, text, via, now, tally),
             deadline=deadline))
         con.commit()

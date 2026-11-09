@@ -102,3 +102,30 @@ def test_a_rescue_that_is_not_readable_either_writes_nothing(tmp_path):
     assert ae.apply_rescue(con, claims, {}, "https://x.example/cfp", "Access denied", "cdp", "2026-11-09T09:00:00", tally) is False
     assert sqlite3.connect(db).execute("select verdict, method from evidence where id = 1").fetchone() == ("unreadable", "http")
     assert tally == {"unreadable": 2, "rescued": 0}
+
+
+def test_escalate_keeps_the_one_value_contract_its_six_callers_use(monkeypatch):
+    """2026-11-09 re-run: escalate() was changed to return a pair and check_award_deadlines (`escalate(...).items()`) crashed after
+    reading all 92 award pages, so the awards page carried the morning's checks. Five scripts call it the old way; keep it a dict."""
+    async def fake(urls, on_page=None, deadline=None):
+        return {u: ("text of " + u, "crawl4ai") for u in urls}, []
+    monkeypatch.setattr(ae, "escalate_within_budget", fake)
+    got = asyncio.run(ae.escalate(["a", "b"]))
+    assert isinstance(got, dict)
+    assert [(u, via) for u, (_t, via) in got.items()] == [("a", "crawl4ai"), ("b", "crawl4ai")]   # the awards checker's own loop
+    assert got.get("a", ("", ""))[0] == "text of a"                                                # apply_resolutions / refresh_delivery
+
+
+def test_every_caller_outside_the_evidence_step_reads_escalate_as_a_dict():
+    """The callers, read from source: none of them unpacks a pair. A new caller that wants the budget uses escalate_within_budget."""
+    import re
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    calls = []
+    for p in list((root / "scripts").glob("*.py")) + list((root / "src").rglob("*.py")):
+        for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
+            if re.search(r"\bescalate\(", line) and "def escalate" not in line:
+                calls.append((p.name, line.strip()))
+    assert len(calls) >= 6, calls
+    for name, line in calls:
+        assert re.search(r"escalate\([^)]*\)\)\s*\.(items|get)\(", line), (name, line)
