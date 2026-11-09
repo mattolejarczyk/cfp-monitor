@@ -7,8 +7,7 @@ from __future__ import annotations
 
 import os
 import sys
-import time
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,8 +110,11 @@ def test_page_rows_carry_no_confidence_and_no_placeholder_places_and_are_tagged(
 def test_a_research_file_from_a_previous_cycle_is_not_used(tmp_path):
     p = tmp_path / "Awards_audited.csv"
     p.write_text("EVENT_ID\n", encoding="utf-8")
+    # File times are set from ON, never from the real clock: `time.time() - 12 days` stopped being older than ON on 2026-10-25 and the test failed.
+    fresh = datetime.combine(ON, datetime.min.time()).replace(hour=1).timestamp()
+    os.utime(p, (fresh, fresh))
     assert pr.find_raw(tmp_path, "Awards", ON)[0] == p
-    old = time.time() - 12 * 86400
+    old = fresh - 12 * 86400
     os.utime(p, (old, old))
     path, note = pr.find_raw(tmp_path, "Awards", ON)
     assert path is None and "no research this cycle" in note

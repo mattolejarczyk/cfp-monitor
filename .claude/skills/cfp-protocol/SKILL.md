@@ -21,7 +21,7 @@ of being done.** Skipping the read has cost real rework.
 
 ## Do this first, every time
 
-Read these three, in order, before writing any code or touching any data:
+Read these, in order, before writing any code or touching any data:
 
 1. **`docs/operations/pipeline-contract.md`** - the *why*. Its header names the amendments also in force.
    Governs the interface between upstream (grounded research) and downstream (cfp-monitor).
@@ -34,10 +34,8 @@ Read these three, in order, before writing any code or touching any data:
    deciding a row needs research: on 2026-08-11 eleven of ninety-three grounded requests were
    spent hunting calls for conferences that had already taken place. It is executable
    (`src/cfp_monitor/lifecycle.py`) - if the two disagree, the document wins.
-
-5. **`docs/operations/TROUBLESHOOTING.md`** - read it the moment you start poking at something by hand
-   (a dead link, an odd number, a failed fetch). It is the checklist of our repeat mistakes, including
-   the real-Chrome CDP rung that manual checks keep skipping.
+5. **`docs/operations/TROUBLESHOOTING.md`** - the moment you poke at something by hand (a dead link, an odd
+   number, a failed fetch): the checklist of our repeat mistakes, incl. the real-Chrome CDP rung manual checks skip.
 
 Then state, in one line, which stage you are working in and which existing tool covers it.
 If none does, say so explicitly before writing anything new.
@@ -233,8 +231,6 @@ a real browser opens per suspect URL at a 25s timeout.
 **Scope research with `DECISION-TREE.md`, not by re-auditing everything.** It names the rows
 that would actually learn something - 229 of 406 on 2026-08-31, with the rest free or nothing.
 
-**Paths are machine-specific and deliberately not recorded here.** Read the local
-`CLAUDE.md` for the actual locations on this machine.
-
-The physical split between the two working areas is itself a hazard: work done in the Markets
-folder is still governed by the contract that lives in the repo.
+**Paths are machine-specific and deliberately not recorded here.** Read the local `CLAUDE.md` for the
+actual locations on this machine. The physical split between the two working areas is itself a hazard:
+work done in the Markets folder is still governed by the contract that lives in the repo.

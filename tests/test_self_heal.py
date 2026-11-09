@@ -4,12 +4,17 @@ row the customer is working is surfaced, never healed. Deterministic: the fetch 
 """
 import sqlite3
 import sys
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.cfp_monitor import self_heal as sh  # noqa: E402
+
+# The fixtures' deadline is 2026-10-19. resolve_rows closes a PASSED deadline for free before any fetch (tested on its own below), so a test about
+# the verifiers must pin the day it runs on, or it starts failing the day after the fixture date (it did, from 2026-10-20).
+BEFORE_THE_DEADLINE = date(2026, 9, 22)
 
 
 # --- the pure date locator (no network) --------------------------------------
@@ -82,11 +87,11 @@ def test_selects_only_notfound_with_deadline_and_url_ordered():
 def test_confirm_flag_and_unavailable():
     con = _db_with([("a", "A", "2026-10-19", "not_found", "http://a")])
     rows = sh.select_unconfirmed(con, 0)
-    conf = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(True, "fetch:date-context", "http://a", "the abstract deadline is October 19, 2026")))
+    conf = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(True, "fetch:date-context", "http://a", "the abstract deadline is October 19, 2026")), today=BEFORE_THE_DEADLINE)
     assert conf[0].action == "confirm" and conf[0].method == "fetch:date-context" and conf[0].quote
-    flag = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(False, "fetch:date-context", "http://a")))
+    flag = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(False, "fetch:date-context", "http://a")), today=BEFORE_THE_DEADLINE)
     assert flag[0].action == "flag"
-    out = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(False, "fetch:date-context", "http://a", status="unavailable")))
+    out = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(False, "fetch:date-context", "http://a", status="unavailable")), today=BEFORE_THE_DEADLINE)
     assert out[0].action == "skip:no-page"          # an outage is not a finding
 
 
@@ -115,7 +120,7 @@ def test_customer_working_row_is_surfaced_not_healed():
     con = _db_with([("a", "A", "2026-10-19", "not_found", "http://a")],
                    clients=[("a", "Drafting Abstract")])
     rows = sh.select_unconfirmed(con, 0)
-    res = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(True, "fetch:date-context", "http://a", "deadline October 19, 2026")))
+    res = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(True, "fetch:date-context", "http://a", "deadline October 19, 2026")), today=BEFORE_THE_DEADLINE)
     assert res[0].action == "skip:customer-working" and "Drafting Abstract" in res[0].reason
 
 
@@ -191,7 +196,7 @@ def test_every_record_carries_a_registered_method():
     from src.cfp_monitor import verify_methods as vm
     con = _db_with([("a", "A", "2026-10-19", "not_found", "http://a")])
     rows = sh.select_unconfirmed(con, 0)
-    res = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(True, vm.FETCH_PLAIN, "http://a", "deadline October 19, 2026")))
+    res = sh.resolve_rows(con, rows, _Fake(sh.VerifyResult(True, vm.FETCH_PLAIN, "http://a", "deadline October 19, 2026")), today=BEFORE_THE_DEADLINE)
     recs = sh.to_records(res)
     assert recs[0]["method"] == vm.FETCH_PLAIN and vm.is_method(recs[0]["method"])
     assert recs[0]["action"] == "confirm" and vm.FETCH_PLAIN in sh.render(res)
@@ -205,10 +210,10 @@ def test_escalation_tries_the_browser_only_when_the_plain_page_is_unreadable():
     rows = sh.select_unconfirmed(con, 0)
     plain_blind = _Fake(sh.VerifyResult(False, vm.FETCH_PLAIN, "http://a", status="unavailable"))
     browser_ok = _Fake(sh.VerifyResult(True, vm.BROWSER_LADDER, "http://a", "abstract deadline October 19, 2026"))
-    res = sh.resolve_rows(con, rows, [plain_blind, browser_ok])
+    res = sh.resolve_rows(con, rows, [plain_blind, browser_ok], today=BEFORE_THE_DEADLINE)
     assert res[0].action == "confirm" and res[0].method == vm.BROWSER_LADDER   # escalated
 
     # a plain page we CAN read but that lacks the date is a real flag - do not escalate past it
     plain_flag = _Fake(sh.VerifyResult(False, vm.FETCH_PLAIN, "http://a"))
-    res2 = sh.resolve_rows(con, rows, [plain_flag, browser_ok])
+    res2 = sh.resolve_rows(con, rows, [plain_flag, browser_ok], today=BEFORE_THE_DEADLINE)
     assert res2[0].action == "flag" and res2[0].method == vm.FETCH_PLAIN
