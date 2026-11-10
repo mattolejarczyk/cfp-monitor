@@ -1,7 +1,7 @@
 {
   "document": "WEEKEND-PROCESS.md",
   "scripts": {
-    "run_monthly.ps1": "04a34446f3a24fff3fda9450002cbf395edd6dced542c752db1ddf7f404d6929",
+    "run_monthly.ps1": "9e4ca25df4e44f8399f9221ba38e0b943ba1f84c4633c5e05d5b77fbb5e54138",
     "run_canary.ps1": "4aa1cde888b90e8da5565a3b4ad1d0d6eb6cb56cb25c1ed954a55cb0b00f7661",
     "run_overnight.ps1": "f372b3b7d887991c09f3218b190666b54539da3f4d0a6e826fa76fc659cd17da",
     "run_all.ps1": "e7ae4f68ff580d1551e45cd7c2fb8d121c3678180afdbd32f09ae906ade2fda1",
