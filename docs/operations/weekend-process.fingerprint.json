@@ -1,11 +1,11 @@
 {
   "document": "WEEKEND-PROCESS.md",
   "scripts": {
-    "run_monthly.ps1": "5a651a3a920606be86411b6a0f4407123669933b6bd846fbd4410908cb695b80",
+    "run_monthly.ps1": "04a34446f3a24fff3fda9450002cbf395edd6dced542c752db1ddf7f404d6929",
     "run_canary.ps1": "4aa1cde888b90e8da5565a3b4ad1d0d6eb6cb56cb25c1ed954a55cb0b00f7661",
     "run_overnight.ps1": "f372b3b7d887991c09f3218b190666b54539da3f4d0a6e826fa76fc659cd17da",
     "run_all.ps1": "e7ae4f68ff580d1551e45cd7c2fb8d121c3678180afdbd32f09ae906ade2fda1",
-    "scripts/weekly_intake.py": "2dcf362209874c56a7e38e22de54e5b9b6f9e552e99597e1118d95e86816fc4b",
+    "scripts/weekly_intake.py": "4c19efdaa0aa778a779792110bc9c16f7e7f15143fe5735ff48982c23387ff25",
     "scripts/stamp_input_ids.py": "3cdca1c95511263051dcc2552bc070ea758f23623538f76ea737eb2b4f0f756b",
     "scripts/weekend_import.py": "9cb46b6e5a4dc9d07402f690bb82fa8b65ff05437d6ae46afb9be556791b7c76",
     "scripts/weekend_recap.py": "77d1225f3d71fc98ca80314be311036eec3e75e69b1bfb34a326356387cdaf7b",
@@ -27,7 +27,8 @@
     "scripts/customer_auto_add.py": "a3e45e6863df326854f7c4eead2f31bd89669968a2cf0308aa04aa526d15059f",
     "scripts/customer_awards.py": "fb31508d3b7b5b282a11868ba4e5646ef583f10c493b4198ff64782cbcc7e9e9",
     "scripts/sponsor_prefill.py": "e3d34e090f811d74ef00dc2a526e9d813242613ffeb01d746f2cb37f08b01a73",
-    "scripts/release_gate.py": "9b5b7b9c5f89d876c26c11b873e4ff97eb03a610936d4f2015bf9f4eec52e64f",
+    "scripts/release_gate.py": "ae989faffbe3db78a9e2ce4a2f3209851bdc5028594ccacb5937bb1a85915eff",
+    "scripts/customer_sheet_load.py": "3195b26140e7a1cedda853382f3c30255b734d27ce6749e6d3d6ed1675d78281",
     "scripts/provisional_rows.py": "dce8962db71fc4dcfa1ff25efe5aeefca2e7091a3a66ef2ff54d0e036d51a85d",
     "scripts/provisional_blank.py": "9f0f59679ce76a23b334270c0f94232b12471141ea7863e99a116b1f96818b42",
     "scripts/build_review_page.py": "da163b4644efe1cf468c97bf682c4fb1bc38855e432aac007837bd997b1e0de8"

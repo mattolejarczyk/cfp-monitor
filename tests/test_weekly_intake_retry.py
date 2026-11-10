@@ -13,7 +13,9 @@ unrecognised one must be treated as transient, because giving up early costs a w
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,21 +28,38 @@ _spec.loader.exec_module(wi)
 ALERT = "\nalert written: C:\\Users\\x\\Desktop\\CUSTOMER-SHEET-FETCH-FAILED.txt"
 
 
-def _fetch_all(monkeypatch, tmp_path, outputs):
-    """Drive fetch_all with a scripted sequence of fetch results; count the attempts."""
+def _fetch_all(monkeypatch, tmp_path, outputs, env=None):
+    """Drive fetch_all with a scripted sequence of fetch results; count the attempts.
+
+    Since 2026-11-09 fetch_all goes through scripts/customer_sheet_load.py (3 tries over about 15 minutes, then one CRITICAL email). A
+    scripted output of (0, "fetched") means every sheet asked for downloaded and a fresh copy landed. Email, Desktop file, evidence and the
+    one-a-day state all go to tmp_path; tests/conftest.py removes the mail settings, so nothing can be sent."""
+    import customer_sheet_load as csl
     key = tmp_path / "key.json"
     key.write_text("{}", encoding="utf-8")
     cfg = tmp_path / "customer_sheets.json"
-    cfg.write_text('{"service_account_key": "%s"}' % str(key).replace("\\", "/"),
-                   encoding="utf-8")
+    cfg.write_text(json.dumps({"service_account_key": str(key), "clients": {"utility": {}, "arnica": {}}}), encoding="utf-8")
     calls = []
 
     def fake_run(cmd, timeout=600):
         calls.append(cmd)
-        return outputs[min(len(calls), len(outputs)) - 1]
+        code, out = outputs[min(len(calls), len(outputs)) - 1]
+        if out == "fetched":
+            asked = str(cmd[cmd.index("--client") + 1]).split(",")
+            stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            for c in asked:
+                (tmp_path / c).mkdir(exist_ok=True)
+                (tmp_path / c / f"{c}_{stamp}.csv").write_text("x", encoding="utf-8")
+            out = "\n".join(f"{c}: fetched 84 rows (1 bytes) [conference]" for c in asked)
+        return code, out
     monkeypatch.setattr(wi, "run", fake_run)
     monkeypatch.setattr(wi.time, "sleep", lambda s: None)
-    ok, notes = wi.fetch_all(cfg, tmp_path)
+    monkeypatch.setattr(csl, "QA_ROOT", tmp_path / "qa")
+    monkeypatch.setattr(csl, "SENT_STATE", tmp_path / "sent.json")
+    monkeypatch.setattr(csl.fcs, "alert_paths", lambda: [tmp_path / "desk.txt"])
+    for k, v in (env or {}).items():
+        monkeypatch.setenv(k, v)
+    ok, notes, code = wi.fetch_all(cfg, tmp_path)
     return ok, notes, len(calls)
 
 
@@ -65,7 +84,8 @@ def test_a_missing_library_is_not_retried(monkeypatch, tmp_path):
 
 
 def test_an_unshared_sheet_is_not_retried(monkeypatch, tmp_path):
-    out = (1, "arnica: FAILED - 403 from the export endpoint. The service account exists" + ALERT)
+    out = (1, "utility: FAILED - 403 from the export endpoint. The service account exists\n"
+              "arnica: FAILED - 403 from the export endpoint. The service account exists" + ALERT)
     ok, notes, attempts = _fetch_all(monkeypatch, tmp_path, [out])
     assert attempts == 1 and any("shared with the service account" in n for n in notes)
 
@@ -90,6 +110,27 @@ def test_one_permanent_and_one_transient_failure_is_still_retried(monkeypatch, t
                 "arnica: FAILED - Read timed out." + ALERT)
     _, _, attempts = _fetch_all(monkeypatch, tmp_path, [mixed])
     assert attempts == 1 + len(wi.RETRY_DELAYS)
+
+
+def test_a_failed_load_is_held_only_when_the_switch_is_on(monkeypatch, tmp_path):
+    """2026-11-09: CFP_SHEETS_HOLD_RESEARCH=1 makes a failed load exit 6 (run_monthly then stops before the research); off, it never stops."""
+    import customer_sheet_load as csl
+    out = (1, "utility: FAILED - 403 from the export endpoint.\narnica: FAILED - 403 from the export endpoint.")
+    for env, want in (({"CFP_SHEETS_HOLD_RESEARCH": "1"}, 6), ({}, 1)):
+        monkeypatch.delenv("CFP_SHEETS_HOLD_RESEARCH", raising=False)
+        (tmp_path / "sent.json").unlink(missing_ok=True)
+        calls = []
+        monkeypatch.setattr(wi, "run", lambda cmd, timeout=600: (calls.append(cmd), out)[1])
+        monkeypatch.setattr(csl, "QA_ROOT", tmp_path / "qa")
+        monkeypatch.setattr(csl, "SENT_STATE", tmp_path / "sent.json")
+        monkeypatch.setattr(csl.fcs, "alert_paths", lambda: [tmp_path / "desk.txt"])
+        for k, v in env.items():
+            monkeypatch.setenv(k, v)
+        cfg = tmp_path / "cfg.json"
+        cfg.write_text(json.dumps({"service_account_key": "k", "clients": {"utility": {}, "arnica": {}}}), encoding="utf-8")
+        ok, notes, code = wi.fetch_all(cfg, tmp_path)
+        assert not ok and code == want and (tmp_path / "desk.txt").read_text(encoding="utf-8").startswith(csl.SUBJECT)
+        assert any(n.startswith("SHEET LOAD: FAILED") for n in notes)
 
 
 # ------------------------------------------------------------------------------------------------

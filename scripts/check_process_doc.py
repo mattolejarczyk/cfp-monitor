@@ -58,6 +58,7 @@ DESCRIBED = {
     "scripts/customer_awards.py": ROOT / "scripts" / "customer_awards.py",
     "scripts/sponsor_prefill.py": ROOT / "scripts" / "sponsor_prefill.py",
     "scripts/release_gate.py": ROOT / "scripts" / "release_gate.py",
+    "scripts/customer_sheet_load.py": ROOT / "scripts" / "customer_sheet_load.py",   # 2026-11-09: the CRITICAL sheet alert
     "scripts/provisional_rows.py": ROOT / "scripts" / "provisional_rows.py",
     "scripts/provisional_blank.py": ROOT / "scripts" / "provisional_blank.py",
     "scripts/build_review_page.py": ROOT / "scripts" / "build_review_page.py",

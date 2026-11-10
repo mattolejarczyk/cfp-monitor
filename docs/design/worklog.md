@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-11-09 (midnight) - customer sheets: a failed load is a CRITICAL alert to Matt
+- WHY: Matt in chat (relayed by the parent session): "if the customer sheets don't load I need immediate emergency escalation ... CFP customer sheets failed to load - critical error (then direct me how to fix it)". Before: Desktop file only, recap hours later; Friday's awards fetch printed one line; a missing key returned before any alert. Snapshot folder shows Utility Global conferences with no copy 10-17 to 11-08
+- BUILT: scripts/customer_sheet_load.py (guarded load, --once, --deadman auto, --check-only, --test-send); weekly_intake.fetch_all uses it; fetch_customer_sheet.py takes a comma list; release_gate t6 (read-only, Thursday) and the CFP_SHEETS_HOLD_RESEARCH switch line; research_usable names exit 6; tests/conftest.py removes the mail settings for every test
+- OPERATOR: patch ACT-73 (Friday guarded awards load, exit 6 on hold, proven on a copy with apply-markets-patches.ps1: dry run, apply HEALTHY, second run already applied, parses); scripts/register_sheet_deadman.ps1 (Fri and Sat 03:00, WakeToRun ON, -WhatIf clean); manifest entry 'CFP Sheet Load Check' added in agentos
+- PROOF: real --check-only read all 4 sheets HEALTHY 23:2x; one [TEST] email sent 23:36:22 (SMTP accepted; the connected Gmail is not the recap mailbox, so arrival is Matt's to confirm)
+- GAP: no PC check can see a PC that is switched off; a VPS check with a PC heartbeat would. Proposed as a follow-up, not built
+
 ## 2026-11-09 (late night) - D13 LIVE; the 11-09 pages went to Nicolia; D9 clarified
 - D13 LIVE: Matt ran agentos tools\move-cfp-weekend.ps1 elevated at 18:46, VERDICT HEALTHY, 2 moved (backups agentos\scheduled-task-backups\move-cfp-weekend-20261109-184650). Home base read them back: CFP Weekly Verification next Sat 11-14 23:00, CFP Weekly Customer Pages next Sun 11-15 01:00, both Ready; Home base updated the CFP jobs table in CLAUDE.md. First Sunday run 11-15: read its MANIFEST, the Fetch methods table and the finish time
 - SENT: Matt sent the 11-09 copy-B pages (conference and awards) to Nicolia himself on 2026-11-09 ("i already sent those 2 emails to Nicolia tonight - done", relayed by Home base)

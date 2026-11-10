@@ -134,7 +134,8 @@ def test_each_switch_is_ON_OFF_or_not_set_with_what_it_means_and_no_value_is_pri
     w = thursday_world(tmp_path)
     rep = thursday(w, env={"CFP_AWARDS_NEW_EVENTS": "1", "CFP_AUTOADD_APPLY": "0", **{k: v for k, v in ENV_ALL.items() if k.startswith(("CFP_RECAP", "CFP_SMTP"))}})
     sw = rep["facts"]["switches"]
-    assert sw == {"CFP_AWARDS_NEW_EVENTS": "ON", "CFP_AWARDS_AUTOADD_APPLY": "not set", "CFP_AUTOADD_APPLY": "OFF", "CFP_REFRESH_APPLY": "not set"}
+    assert sw == {"CFP_AWARDS_NEW_EVENTS": "ON", "CFP_AWARDS_AUTOADD_APPLY": "not set", "CFP_AUTOADD_APPLY": "OFF", "CFP_REFRESH_APPLY": "not set",
+                  "CFP_SHEETS_HOLD_RESEARCH": "not set"}   # the hold switch since 2026-11-09
     text = "\n".join(chk(rep, "t3")["rows"])
     assert "CFP_AWARDS_NEW_EVENTS is ON - Friday: a NEW award" in text and "CFP_AUTOADD_APPLY is OFF - Saturday: Saturday only REPORTS" in text
     blob = json.dumps(rep["facts"]) + rg.thursday_markdown(rep) + "".join(rg.thursday_email(rep)) + json.dumps([dict(c) for c in rep["checks"]])
@@ -302,3 +303,49 @@ def test_main_runs_with_stdout_redirected_to_a_stringio():
         with pytest.raises(SystemExit) as e:
             rg.main(["--help"])
     assert e.value.code == 0
+
+
+# ------------------------------------------------------------------ t6: can the customer sheets be read now? (2026-11-09)
+def _reader(failed=(), cause_text="Service account key not found: C:/keys/reader.json"):
+    def read():
+        clients = ["arnica", "utility", "arnica-awards", "utility-awards"]
+        out = {c: ({"ok": False, "reason": cause_text, "cause": "key"} if c in failed else {"ok": True, "rows": 84}) for c in clients}
+        return {"clients": clients, "outcomes": out, "failed": list(failed), "attempts": [], "read_only": True}
+    return read
+
+
+@pytest.fixture(autouse=True)
+def _no_live_sheet_read(monkeypatch):
+    """main() reads the live sheets for t6; in a test it must never reach Google."""
+    monkeypatch.setattr(rg, "default_sheet_reader", _reader())
+
+
+def test_t6_all_sheets_readable_passes_and_is_in_the_email(tmp_path):
+    w = thursday_world(tmp_path, patches=())
+    o = rg.Opts(THU, THU_NOW, True, w.md, w.db, w.snaps, None, w.weekly, None, w.qa, w.commit, w.given, w.ledger)
+    rep = rg.evaluate_thursday(o, ENV_ALL, w.patches, sheet_reader=_reader())
+    assert chk(rep, "t6")["status"] == "PASS" and rep["verdict"] == "READY"
+    assert "all 4 customer sheets can be read right now" in rg.thursday_email(rep)[1]
+
+
+def test_t6_a_dead_key_is_a_fail_a_day_before_friday_with_the_fix(tmp_path):
+    w = thursday_world(tmp_path, patches=())
+    o = rg.Opts(THU, THU_NOW, True, w.md, w.db, w.snaps, None, w.weekly, None, w.qa, w.commit, w.given, w.ledger)
+    rep = rg.evaluate_thursday(o, ENV_ALL, w.patches, sheet_reader=_reader(failed=("arnica", "utility")))
+    t6 = chk(rep, "t6")
+    assert t6["status"] == "FAIL" and rep["verdict"] == "FIX BEFORE 02:00"
+    assert "2 of 4 customer sheet(s) cannot be read right now" in t6["summary"]
+    assert any("service-account key" in r for r in t6["rows"]) and any("--check-only" in r for r in t6["rows"])
+    assert rep["facts"]["sheet_read"]["causes"] == {"arnica": "key", "utility": "key"}
+
+
+def test_t6_without_a_reader_says_it_was_not_run(tmp_path):
+    w = thursday_world(tmp_path, patches=())
+    assert chk(thursday(w), "t6")["summary"] == "not tested in this run (no reader given)"
+
+
+def test_the_hold_switch_is_reported_with_the_other_switches(tmp_path):
+    w = thursday_world(tmp_path, patches=())
+    rep = thursday(w, env={**ENV_ALL, "CFP_SHEETS_HOLD_RESEARCH": "1"})
+    assert rep["facts"]["switches"]["CFP_SHEETS_HOLD_RESEARCH"] == "ON"
+    assert any("the research does NOT start" in r for r in chk(rep, "t3")["rows"])

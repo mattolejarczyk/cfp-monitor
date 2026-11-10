@@ -798,6 +798,9 @@ SWITCHES = (
     ("CFP_AWARDS_AUTOADD_APPLY", "Friday", "Friday ADDS customer awards that are missing from the research queue", "Friday only REPORTS the customer awards that are missing from the research queue; they are not researched"),
     ("CFP_AUTOADD_APPLY", "Saturday", "Saturday ADDS customer conferences that are missing from the research queue", "Saturday only REPORTS the customer conferences that are missing from the research queue; they are not researched"),
     ("CFP_REFRESH_APPLY", "Saturday", "Saturday skips researching closed events the refresh policy covers (last week's row is carried)", "Saturday researches every row, as before the refresh policy"),
+    # 2026-11-09 (Matt: a failed customer sheet load is a CRITICAL error). The email goes either way; this decides whether the research waits.
+    ("CFP_SHEETS_HOLD_RESEARCH", "Friday and Saturday", "if the customer sheets do not load, the research does NOT start: it waits for you (needs patch ACT-73)",
+     "if the customer sheets do not load, the research goes ahead on the last good copy (you still get the CRITICAL email at once)"),
 )
 MAIL_VARS = ("CFP_RECAP_TO", "CFP_SMTP_HOST", "CFP_SMTP_PORT", "CFP_SMTP_USER", "CFP_SMTP_PASS")
 
@@ -900,8 +903,15 @@ def newest_request_draft(qa_root: Path) -> Path | None:
     return cands[-1] if cands else None
 
 
-def thursday_checks(o: Opts, env: dict | None = None, patches_dir: Path = PATCHES) -> tuple[list, dict]:
-    """The four Thursday checks and the facts behind them (for the report and the tests)."""
+def default_sheet_reader() -> dict:
+    """t6: can every customer sheet be read RIGHT NOW? Read-only (downloads and checks the shape; saves no copy, loads nothing, sends nothing)."""
+    import customer_sheet_load as csl                                       # noqa: PLC0415
+    return csl.read_check()
+
+
+def thursday_checks(o: Opts, env: dict | None = None, patches_dir: Path = PATCHES, *, sheet_reader=None) -> tuple[list, dict]:
+    """The Thursday checks and the facts behind them (for the report and the tests). sheet_reader: t6's live read (main passes the real one;
+    a test passes a fake, or nothing and t6 says it was not run)."""
     facts: dict = {}
     checks: list = []
 
@@ -1019,11 +1029,28 @@ def thursday_checks(o: Opts, env: dict | None = None, patches_dir: Path = PATCHE
         return Check("t5", "Live build against the repo", "PASS",
                      f"{n} file(s) differ (python scripts/live_build.py status; release --apply brings them across)" if n else "the live build matches the repo", rows)
     checks.append(safely("t5", "Live build against the repo", c5))
+
+    def c6():
+        # 2026-11-09 (Matt): a dead key or a removed share must show up on Thursday, a day before Friday 02:00, not in the night.
+        if sheet_reader is None:
+            return Check("t6", "Customer sheets can be read now", "PASS", "not tested in this run (no reader given)", [])
+        import customer_sheet_load as csl                                   # noqa: PLC0415
+        r = sheet_reader()
+        n, bad = len(r["clients"]), r["failed"]
+        facts["sheet_read"] = {"sheets": n, "failed": bad, "causes": {c: r["outcomes"][c]["cause"] for c in bad}}
+        if not bad:
+            return Check("t6", "Customer sheets can be read now", "PASS", f"all {n} customer sheets can be read right now (read only, nothing saved)",
+                         [f"INFO {csl.LABELS.get(c, c)}: read, {r['outcomes'][c].get('rows')} rows" for c in r["clients"]])
+        rows = [f"FAIL {x}" for x in csl.fix_summary(r)]
+        rows.append("INFO after the fix, confirm with (read only): " + csl.check_command())
+        return Check("t6", "Customer sheets can be read now", "FAIL",
+                     f"{len(bad)} of {n} customer sheet(s) cannot be read right now ({', '.join(bad)}): Friday and Saturday would start on old copies", rows)
+    checks.append(safely("t6", "Customer sheets can be read now", c6))
     return checks, facts
 
 
-def evaluate_thursday(o: Opts, env: dict | None = None, patches_dir: Path = PATCHES) -> dict:
-    checks, facts = thursday_checks(o, env, patches_dir)
+def evaluate_thursday(o: Opts, env: dict | None = None, patches_dir: Path = PATCHES, *, sheet_reader=None) -> dict:
+    checks, facts = thursday_checks(o, env, patches_dir, sheet_reader=sheet_reader)
     gv = verdict_of(checks)
     return {"checks": checks, "facts": facts, "verdict": THURSDAY_VERDICT[gv], "gate_verdict": gv, "preflight": True, "thursday": True, "on": o.on.isoformat(),
             "counts": {}, "coverage": {}, "coverage_lines": [], "pages": {}}
@@ -1040,6 +1067,8 @@ def thursday_lines(rep: dict) -> list[str]:
         L.append("Switches: " + "; ".join(f"{n.replace('CFP_', '')} {s}" for n, s in sw.items()) + " (what each means is listed below).")
     L.append("Mail: " + ("all settings present." if c["t3"]["status"] == "PASS" else c["t3"]["summary"].split(";")[0] + "."))
     L.append("Customer sheets: " + c["t4"]["summary"] + ".")
+    if "t6" in c:
+        L.append("Customer sheets readable now: " + c["t6"]["summary"] + ".")
     if "t5" in c:
         L.append("Live build: " + c["t5"]["summary"] + ".")
     L.append({"READY": "Nothing stands in the way of Friday's and Saturday's research.", "READY WITH NOTES": "Friday and Saturday can run; the notes below say what will not happen unless you act first.",
@@ -1226,7 +1255,7 @@ def main(argv=None) -> int:
         o = Opts(date.fromisoformat(a.on), datetime.fromisoformat(a.now) if a.now else None, a.preflight, Path(a.markets_dir), Path(a.db), Path(a.snapshots_dir),
                  Path(a.awards_sheets_dir) if a.awards_sheets_dir else None, Path(a.weekly_dir), Path(a.work_dir) if a.work_dir else None, Path(a.qa_root))
         if a.thursday:
-            rep = evaluate_thursday(o)
+            rep = evaluate_thursday(o, sheet_reader=default_sheet_reader)
             folder = write_thursday_report(rep, o)
             subj, text, html_ = thursday_email(rep)
             print(f"GATE: {rep['verdict']} - {subj}")

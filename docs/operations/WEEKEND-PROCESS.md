@@ -78,6 +78,9 @@ nothing, spends nothing, and emails the operator only.
    refreshes them runs Saturday 2:00 AM; Friday's awards run fetches a fresh copy of the two awards sheets itself at its start, step 0a1b, ACT-67, but only ADDS a missing award when CFP_AWARDS_AUTOADD_APPLY is 1) and, as a dry run, how many
    customer rows are in the research queue. **A customer conference or award that is not in the queue and whose add switch is OFF
    will not be researched: that is FIX BEFORE 02:00.**
+4b. **[Review]** **Can the customer sheets be read right now?** *(added 2026-11-09)* All four sheets are downloaded and their shape checked, READ ONLY (no copy saved, nothing loaded, nothing sent). A sheet that
+   cannot be read (a dead key, a removed share, a changed layout, no network) is FIX BEFORE 02:00, with its likely cause and what to do, so it shows up a day before Friday instead of in the night.
+   Confirm a fix with `customer_sheet_load.py --check-only`. The switches list also shows `CFP_SHEETS_HOLD_RESEARCH` (whether the research waits when the sheets do not load). *(customer_sheet_load.py, via release_gate.py --thursday)*
 5. **[Report]** **Emails ONE verdict** - READY, READY WITH NOTES or FIX BEFORE 02:00 - with the plain lines above and the detail. *(release_gate.py --thursday)*
 
 ---
@@ -89,6 +92,8 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 
 1. **[Setup]** **Starts a log file** in `Markets\logs\`. *(run_monthly.ps1)*
 2. **[Safety check]** **Checks the AI key is present.**
+2a. **[Take in]** **Loads the two awards sheets, and raises a CRITICAL alert if they do not load** *(patch ACT-73, 2026-11-09; until the operator applies it the old per-sheet fetch runs, which only prints a line, and the 3:00 AM check below still catches a failure)*.
+   One guarded load of both awards sheets: `customer_sheet_load.py --clients arnica-awards,utility-awards --context friday`. Same rules as Saturday step 3 (retries, ONE email with the fix, the research goes ahead unless the hold switch is on).
 2b. **[Take in]** **Takes in the customers' AWARDS sheets and checks that every award on them is in the research queue** *(ACT-67, built 2026-10-12; APPLIED to `run_monthly.ps1` by the reviewer on 2026-10-12 (patch `docs/control/patches/ACT-67-run_monthly.ps1.patch`); it
    runs as a DRY RUN every Friday and Saturday until the switch `CFP_AWARDS_AUTOADD_APPLY=1` is set)*. The cycle starts with the customer sheets for awards too: the customers' own awards sheets (Arnica 87 rows, Utility Global 66 on
    2026-10-12) define the job, exactly as their conference sheets do, but until now nothing read them into the queue, so 30 of their awards were never researched and never reached the Awards page. On an awards run the step first fetches the
@@ -138,6 +143,18 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
     Monday's summary says loudly if the awards page is not this week's. *(weekend_recap.py friday)*
 13. **[Experiment, changes nothing]** **Shadow run of the awards finder (ACT-22; live since 2026-10-16 19:00, first runs Friday 2026-10-23).** Last, after the load and the recap, so it can delay neither: the live awards go through the finder (the entry or nomination deadline; a nomination or entry page is the main call) and are set against what we ship. Read-only, capped at 45 minutes and 0.30 USD, skips itself when the job has used 14 of its 16 hours, and never fails the run. *(shadow_finder.py --markets Awards)*
 
+## Friday and Saturday 3:00 AM - Did the customer sheets load? (dead-man check, added 2026-11-09)
+
+*Scheduled task "CFP Sheet Load Check" -> the dev repo's `scripts\customer_sheet_load.py --deadman auto`, registered once by the operator with
+`scripts\register_sheet_deadman.ps1` (add `-WhatIf` to see it first). Until it is registered, this step does not run.*
+
+If the 2:00 AM job never runs (the PC was asleep, the task did not start, it stopped before the sheets), nothing inside it can raise the alert. So an hour later:
+
+1. **[Safety check]** **Are today's copies there?** Friday: the two awards sheets. Saturday: all four. It fetches nothing; it reads `Markets\customer_snapshots\` and today's run log. A research run that is still going (its log changed in the last 15 minutes, as when the PC woke for this check and the 2:00 task caught up) gets up to 25 minutes first.
+2. **[Report]** **If a copy is missing, the same CRITICAL email** as a failed load, with the cause read from today's run log when there is one ("did not take today's copies" when there is none) and the commands to check the task and start it. Not sent again if the run already alerted that day. Exit 0 HEALTHY, 1 FAILED. It wakes a sleeping PC (the only CFP task that does); it cannot see a PC that is switched OFF. *(customer_sheet_load.py)*
+
+---
+
 ## Saturday 2:00 AM - Weekly research (Arnica + Utility Global)
 
 *Scheduled task "CFP Weekly Re-Research (live markets)" -> `Markets\run_monthly.ps1 -Markets Cybersecurity,Utility`*
@@ -151,6 +168,7 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
    When it links a customer row to one of our events it no longer trusts the web address alone: if the customer's row carries a date and a place and the event's city differs, or its start date is more than 30 days off,
    the link is held back for a person ("DISAGREES") instead of being written, and links already held are listed the same way (read-only, nothing is rewritten) *(ACT-54)*.
    If this step fails, research still goes ahead. *(weekly_intake.py)*
+   **Since 2026-11-09 a failed sheet load is a CRITICAL error that reaches Matt at once** (his words: "CFP customer sheets failed to load - critical error (then direct me how to fix it)"). The sheets are loaded through `scripts\customer_sheet_load.py`: a failure that can clear by itself (network, Google down, an unrecognised error, a copy not saved) is tried 3 times over about 15 minutes; one a retry cannot fix (key missing or invalid, sharing removed, layout changed, a library missing) is not retried. If it still fails, ONE email goes to the operator before the research starts, subject `CFP customer sheets failed to load - CRITICAL ERROR`: which sheet failed and when, the likely cause in one line, numbered fix steps with the commands to paste, and the one command that re-runs just the sheet load (`customer_sheet_load.py --clients <sheets> --once`, which ends `SHEET LOAD: HEALTHY` or says why not). The same text goes to the Desktop file `CUSTOMER-SHEET-FETCH-FAILED.txt`; every try is kept in `runs_out\qa\<date>\sheet_load_<time>.json`, named in the log line. At most one such email a day. **The research is NOT stopped by it** unless the hold switch `CFP_SHEETS_HOLD_RESEARCH=1` is set (Matt decides): then the run ends before the research with `RESEARCH HELD` (exit 6, patch ACT-73). *(weekly_intake.py, customer_sheet_load.py)*
    **Since 2026-11-07 a refused sheet export is kept, not thrown away:** the raw text lands in `runs_out\qa\<date>\intake_failed_<client>.csv` and the error names that file, so the cause can be read without fetching again. When the sheet's first header cell (A1) is blank but every other required column is present, the first column is taken as CONFERENCE by position and the log says so (`NOTE - header cell A1 was blank ...`); ask the customer to put the header back. When A1 is blank AND more is missing, the error says "header cell blank" rather than "check the gid". On 2026-11-07 the Utility Global sheet came back with A1 blank and every Saturday intake for Utility failed, with no copy kept. *(fetch_customer_sheet.py)*
 3a. **[Safety check]** **Checks that every customer row is in the research queue** *(added 2026-10-06; APPLIED to `run_monthly.ps1` on 2026-10-06, so it runs from the first Saturday after; patch kept at
    `docs/control/patches/ACT-51-run_monthly.ps1.patch`)*. The customers' sheets define the job: every event on them is researched. This step compares each customer row that is still ahead with our research list
@@ -408,6 +426,8 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 ---
 
 ## Change history
+
+- **2026-11-09** - THE CUSTOMER SHEETS ARE A CRITICAL STEP (Matt, in chat): Saturday step 3 and Friday step 2a retry for about 15 minutes, then email Matt at once (`CFP customer sheets failed to load - CRITICAL ERROR`) with the cause and the fix; a new 3:00 AM Friday and Saturday check catches a job that never ran; the Thursday pre-flight reads every sheet (read only) a day ahead. The research still goes ahead unless the hold switch `CFP_SHEETS_HOLD_RESEARCH=1` is on (Matt decides). Friday's part and the hold need patch ACT-73; the 3:00 AM task needs the operator's registration.
 
 - **2026-11-09** - Friday step 3c and Saturday step 4c (ACT-72; D9 and D10 on Daily Review, decided by Matt): the customer's own row reaches the research as context, never evidence, from Friday 11-13 and Saturday 11-14 once the operator applies the two patches. Rehearsed offline that day: 245 of 298 prompts carry a row (260 cells with a coordinator contact), about 1,371 characters more each on prompts of about 12,500, no login or password pattern anywhere, a row without context gets the same prompt as before.
 - **2026-11-09** - Friday step 3b and the Saturday refresh plan (D11 on Daily Review, decided by Matt): rows the customer is working on are reported in November and never skipped from 2026-12-01.

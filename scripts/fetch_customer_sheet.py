@@ -283,7 +283,7 @@ def snapshot(csv_text: str, client: str, out_dir: str | None,
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Fetch a customer master sheet as CSV and snapshot it.")
-    ap.add_argument("--client", required=True, help="client key from the config, or 'all'")
+    ap.add_argument("--client", required=True, help="client key from the config, a comma list of them, or 'all'")
     ap.add_argument("--config", default=str(DEFAULT_CONFIG))
     ap.add_argument("--out-dir", default=os.environ.get("CFP_CUSTOMER_SNAPSHOTS"))
     ap.add_argument("--alert", action="store_true",
@@ -297,7 +297,8 @@ def main() -> int:
     if not key_path.exists():
         raise SystemExit(f"Service account key not found: {key_path}")
 
-    clients = list(cfg["clients"]) if args.client == "all" else [args.client]
+    # A comma list as well as one name or 'all' (2026-11-09: customer_sheet_load.py retries only the sheets that failed).
+    clients = list(cfg["clients"]) if args.client == "all" else [c.strip() for c in args.client.split(",") if c.strip()]
     unknown = [c for c in clients if c not in cfg["clients"]]
     if unknown:
         raise SystemExit(f"Unknown client(s) {unknown}. Config has: {list(cfg['clients'])}")

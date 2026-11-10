@@ -109,8 +109,9 @@ def test_awards_snapshot_line_reports_age_and_notes_a_missing_or_old_snapshot(tm
 
 
 def test_the_two_awards_clients_are_fetched_by_the_all_clients_fetch():
-    """fetch_all runs `fetch_customer_sheet.py --client all`: every client in customer_sheets.json, awards included. AWARD_CLIENTS must name the config keys."""
+    """fetch_all fetches every client in customer_sheets.json, awards included (since 2026-11-09 through customer_sheet_load.expand("all"), which
+    reads the client names from the config). AWARD_CLIENTS must name the config keys."""
     from scripts import weekly_intake as wi
     from pathlib import Path
     assert wi.AWARD_CLIENTS == ("arnica-awards", "utility-awards")
-    assert '"--client", "all"' in Path(wi.__file__).read_text(encoding="utf-8")
+    assert 'csl.expand("all", config)' in Path(wi.__file__).read_text(encoding="utf-8")

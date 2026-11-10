@@ -29,7 +29,8 @@ fix that, so the honest behaviour is to say so in one clear line and keep going.
 good week and a bad one. Silence about staleness is the failure: on 2026-09-15 the client
 layer was 16 days old, merge decisions had been made against it, and nothing anywhere said so.
 
-    exit 0 always. Read INTAKE HEALTH in the output, or intake_status.json.
+    exit 0, also when degraded. Read INTAKE HEALTH in the output, or intake_status.json. The one exception (2026-11-09): exit 6 when
+    the sheets did not load AND the hold switch CFP_SHEETS_HOLD_RESEARCH=1 is on (customer_sheet_load.py; Matt decides the switch).
 """
 from __future__ import annotations
 
@@ -45,6 +46,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))     # customer_sheet_load (2026-11-09)
 
 PY = sys.executable
 LIVE_DB = Path(r"C:\Users\matts\AppData\Local\CFP-Monitor\cfp_monitor.db")
@@ -64,7 +66,7 @@ CLIENTS = {
 # snapshots are checked and REPORTED here (never loaded into the database); scripts/customer_awards.py compares them with Awards_input.csv.
 AWARD_CLIENTS = ("arnica-awards", "utility-awards")
 
-RETRY_DELAYS = (10, 30, 60)      # a sheet fetch is cheap; a lost research window is not
+RETRY_DELAYS = (300, 600)        # customer_sheet_load.WAITS: 3 tries over about 15 minutes (2026-11-09; was 10, 30, 60 seconds)
 STALE_AFTER_DAYS = 9             # one cycle plus slack: a week plus two days
 
 # FAILURES A RETRY CANNOT FIX, and what a person has to do about each. Matched against the fetch's
@@ -304,38 +306,34 @@ def loaded_snapshot_file(db: str, client_key: str) -> str | None:
     return row[0] if row and row[0] else None
 
 
-def fetch_all(config: Path, snapshots: Path) -> tuple[bool, list[str]]:
-    """Fetch both sheets, with retries. Returns (any_success, notes)."""
-    notes: list[str] = []
-    key = None
-    try:
-        key = Path(json.loads(config.read_text(encoding="utf-8"))["service_account_key"])
-    except Exception as exc:                                         # noqa: BLE001
-        notes.append(f"config unreadable ({type(exc).__name__}) - {config}")
-        return False, notes
-    if not key.exists():
-        # The one thing this script cannot repair. Say it once, plainly, and carry on.
-        notes.append(f"service account key missing: {key}. A person must download it from "
-                     f"Google Cloud and share both sheets with its client_email as Viewer. "
-                     f"Until then intake is manual - see WEEKLY-CYCLE.md step 0.")
-        return False, notes
+def fetch_all(config: Path, snapshots: Path, context: str = "saturday") -> tuple[bool, list[str], int]:
+    """Fetch all four sheets through scripts/customer_sheet_load.py: 3 tries over about 15 minutes for what can clear by itself, none for
+    what cannot, then ONE CRITICAL email to Matt with the fix (Matt, 2026-11-09). Returns (all loaded, notes, load exit code: 0, 1, or 6 =
+    held by CFP_SHEETS_HOLD_RESEARCH=1). Never raises.
 
-    for attempt, delay in enumerate((0, *RETRY_DELAYS)):
-        if delay:
-            time.sleep(delay)
-        code, out = run([PY, ROOT / "scripts/fetch_customer_sheet.py", "--client", "all",
-                         "--config", config, "--out-dir", snapshots, "--alert"], timeout=900)
-        if code == 0:
-            if attempt:
-                notes.append(f"fetch succeeded on attempt {attempt + 1}")
-            return True, notes
-        reasons = failure_reasons(out) or [f"exit {code}"]
-        notes.append(f"fetch attempt {attempt + 1} failed: {' | '.join(reasons)[:300]}")
-        fix = permanent_fix(reasons)
-        if fix:
-            notes.append(f"not retried - a retry cannot fix this. A person must: {fix}")
-            break
-    return False, notes
+    Until 2026-11-09 this retried at 10, 30 and 60 seconds and a failure reached Matt only inside the end-of-run recap. A missing key
+    returned before any fetch, so it never even wrote the Desktop alert."""
+    import customer_sheet_load as csl                                # noqa: PLC0415
+    notes: list[str] = []
+    try:
+        code, res, lines = csl.guarded_load(csl.expand("all", config), context, config, snapshots,
+                                            sleep=lambda s: time.sleep(s), runner=lambda cmd, timeout=600: run(cmd, timeout))
+    except Exception as exc:                                         # noqa: BLE001
+        return False, [f"the guarded sheet load could not run ({type(exc).__name__}: {exc})"], 1
+    for att in res["attempts"]:
+        bad = [f"{c}: FAILED - {r['reason']}" for c, r in att["result"].items() if not r["ok"]]
+        if bad:
+            notes.append(f"fetch attempt {att['n']} failed: {' | '.join(bad)[:300]}")
+    if not res["failed"] and len(res["attempts"]) > 1:
+        notes.append(f"fetch succeeded on attempt {len(res['attempts'])}")
+    perm = [f"{c}: FAILED - {res['outcomes'][c]['reason']}" for c in res["failed"] if res["outcomes"][c]["cause"] not in csl.RETRYABLE]
+    fix = permanent_fix(perm) if perm else None
+    if fix:
+        notes.append(f"not retried - a retry cannot fix this. A person must: {fix}")
+    print(lines[0] if lines else "SHEET LOAD: UNKNOWN")
+    if res["failed"]:
+        notes.append(lines[0] if lines else "SHEET LOAD: FAILED")
+    return not res["failed"], notes, code
 
 
 def main() -> int:
@@ -355,11 +353,12 @@ def main() -> int:
     before = {c: snapshot_date(newest_snapshot(c, snapshots)) for c in CLIENTS}
     notes: list[str] = []
 
+    load_code = 0
     if a.dry_run:
         notes.append("dry run: nothing fetched, nothing loaded")
         fetched = False
     else:
-        fetched, fetch_notes = fetch_all(Path(a.config), snapshots)
+        fetched, fetch_notes, load_code = fetch_all(Path(a.config), snapshots)
         notes += fetch_notes
 
     results = []
@@ -484,7 +483,11 @@ def main() -> int:
         print()
         print(f"INTAKE QA: {verdict}  (runs_out/qa/<cycle Monday>/intake.md)")
 
-    # ALWAYS 0. The Saturday job must not lose a research window to an intake problem.
+    # 0, so the Saturday job never loses a research window to an intake problem - unless Matt turned the hold switch on
+    # (CFP_SHEETS_HOLD_RESEARCH=1) and the sheets did not load: then 6, and run_monthly.ps1 (patch ACT-73) ends the run before the research.
+    if load_code == 6:
+        print("\nRESEARCH HELD: the customer sheets did not load and CFP_SHEETS_HOLD_RESEARCH is 1 (the CRITICAL email says how to fix it).")
+        return 6
     return 0
 
 
