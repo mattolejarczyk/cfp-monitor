@@ -200,7 +200,7 @@ def write_column(inp: Path, cells: dict[int, str], today: date | None = None) ->
     before = [dict(r) for r in rows]
     bak = inp.with_name(inp.stem + ".pre-context.csv")
     if not bak.exists() or date.fromtimestamp(bak.stat().st_mtime) < (today or date.today()):
-        shutil.copy2(inp, bak)
+        shutil.copyfile(inp, bak)        # NOT copy2: the backup must carry TODAY's date, or a second run today overwrites it (Codex review 11-10)
     out_cols = cols if COLUMN in cols else [*cols, COLUMN]
     for i, r in enumerate(rows):
         r[COLUMN] = cells.get(i, "")
@@ -391,7 +391,7 @@ def verdict_line(res: dict, rehearsal: dict | None, failed: list[str], evidence:
     m = sum(len(research_rows(rows)) for (_p, _c, rows) in res["inputs"].values())
     on = sum(1 for mk, cells in res["cells"].items() for i in cells if i in set(research_rows(res["inputs"][mk][2])))
     failed = [*res.get("missing", []), *failed]
-    status, code = ("FAILED", 1) if failed else (("DEGRADED", 2) if res["stale"] or res["refused"] else ("HEALTHY", 0))
+    status, code = ("FAILED", 1) if failed else (("DEGRADED", 2) if res["stale"] or res["refused"] or evidence is None else ("HEALTHY", 0))
     line = (f"CUSTOMER CONTEXT: {status} - {on} of {m} research rows carry the customer's row ({n} input rows in all, "
             f"{res['from_awards']} from awards sheets, {res.get('with_contact', 0)} with a coordinator contact); "
             f"{len(res['refused'])} cell(s) dropped for a login or password pattern")
@@ -406,6 +406,8 @@ def verdict_line(res: dict, rehearsal: dict | None, failed: list[str], evidence:
         line += "; " + "; ".join(failed)
     if evidence:
         line += f"; evidence {evidence}"
+    else:
+        line += "; evidence NOT written"          # QbD rule 2: no evidence is never HEALTHY (Codex review 11-10)
     return line, code
 
 

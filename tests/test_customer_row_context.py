@@ -133,6 +133,20 @@ def test_the_writer_adds_the_column_at_the_end_leaves_every_other_cell_and_keeps
     assert [r["CUSTOMER_ROW"] for r in c.read_csv(p)[1]] == ["", ""], "an old cell never survives"
 
 
+def test_the_backup_is_taken_once_a_day_even_when_the_research_list_is_old(tmp_path):
+    """Codex review 2026-11-10: copy2 kept the input's old date on the backup, so a second run the same day overwrote it."""
+    import os
+    p = tmp_path / "Awards_input.csv"
+    _write(p, ["CONFERENCE"], [{"CONFERENCE": "A"}])
+    old = date(2026, 11, 1)
+    stamp = __import__("datetime").datetime(old.year, old.month, old.day, 9).timestamp()
+    os.utime(p, (stamp, stamp))
+    c.write_column(p, {0: "first"}, date.today())
+    c.write_column(p, {0: "second"}, date.today())
+    bak = tmp_path / "Awards_input.pre-context.csv"
+    assert "CUSTOMER_ROW" not in c.read_csv(bak)[0], "the backup is the file as it was BEFORE today's first run"
+
+
 def test_a_failed_read_back_puts_the_file_back(tmp_path, monkeypatch):
     p = tmp_path / "Utility_input.csv"
     _write(p, ["CONFERENCE"], [{"CONFERENCE": "X"}])
@@ -166,6 +180,17 @@ def test_friday_writes_awards_context_and_says_healthy(tmp_path, capsys):
     assert "fake note" not in out, "a cell is never printed"
     assert "fake note" in c.read_csv(md / "Awards_input.csv")[1][0]["CUSTOMER_ROW"]
     assert (tmp_path / "ev" / "customer_context.csv").exists() and (tmp_path / "ev" / "customer_context_refused.csv").exists()
+
+
+def test_no_evidence_is_never_healthy(tmp_path, capsys, monkeypatch):
+    """Codex review 2026-11-10 (QbD rule 2): when the evidence cannot be written the run is DEGRADED, not HEALTHY."""
+    md = _markets(tmp_path, 0.2)
+    def boom(*a, **k):
+        raise OSError("disk full")
+    monkeypatch.setattr(c, "write_evidence", boom)
+    code = c.main(["--markets", "Awards", "--markets-dir", str(md), "--apply", "--today", date.today().isoformat()])
+    out = capsys.readouterr().out
+    assert code == 2 and "CUSTOMER CONTEXT: DEGRADED" in out and "evidence NOT written" in out
 
 
 def test_an_old_sheet_copy_is_degraded_and_says_which(tmp_path, capsys):
@@ -203,6 +228,17 @@ def test_the_run_patch_only_adds_and_the_prompt_patch_changes_one_line_only_by_a
 def test_a_patch_whose_context_moved_is_refused_not_applied_fuzzily():
     with pytest.raises(PatchDoesNotApply):
         apply_unified("nothing like the script\n", RMA_PATCH.read_text(encoding="utf-8"))
+
+
+def test_a_hunk_matches_whole_lines_only_and_good_text_survives():
+    """Codex review 2026-11-10: the old text 'abc' must not apply inside 'xabc' (a line indented differently, say)."""
+    patch = "--- a/f\n+++ b/f\n@@ -1,2 +1,3 @@\n abc\n+NEW\n def\n"
+    with pytest.raises(PatchDoesNotApply):
+        apply_unified("xabc\ndef\n", patch)
+    assert apply_unified("top\nabc\ndef\nend", patch) == "top\nabc\nNEW\ndef\nend"
+    assert apply_unified("abc\ndef", patch) == "abc\nNEW\ndef", "a hunk at the very start and end of the text still applies"
+    with pytest.raises(PatchDoesNotApply):
+        apply_unified("abc\n\ndef\n", "@@ -1 +1,2 @@\n+only added\n")
 
 
 def _load(text: str, tmp_path: Path, name: str):

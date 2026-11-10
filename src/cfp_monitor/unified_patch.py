@@ -11,7 +11,7 @@ class PatchDoesNotApply(ValueError):
 
 
 def apply_unified(text: str, patch: str) -> str:
-    text = text.replace("\r\n", "\n")
+    text = "\n" + text.replace("\r\n", "\n") + "\n"          # padded, so a hunk matches WHOLE lines only (Codex review 2026-11-10)
     hunks: list[list[str]] = []
     cur: list[str] | None = None
     for line in patch.replace("\r\n", "\n").splitlines():
@@ -25,8 +25,11 @@ def apply_unified(text: str, patch: str) -> str:
     for h in hunks:
         old = "\n".join(ln[1:] for ln in h if ln[0] in " -")
         new = "\n".join(ln[1:] for ln in h if ln[0] in " +")
+        if not old.strip():
+            raise PatchDoesNotApply("a hunk has no context lines to anchor it: regenerate the patch with context")
+        old, new = "\n" + old + "\n", "\n" + new + "\n"
         n = text.count(old)
         if n != 1:
-            raise PatchDoesNotApply(f"a hunk's context occurs {n} times in the target, not once: regenerate the patch")
+            raise PatchDoesNotApply(f"a hunk's context occurs {n} times in the target as whole lines, not once: regenerate the patch")
         text = text.replace(old, new)
-    return text
+    return text[1:-1]
