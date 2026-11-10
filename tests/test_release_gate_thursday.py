@@ -135,7 +135,7 @@ def test_each_switch_is_ON_OFF_or_not_set_with_what_it_means_and_no_value_is_pri
     rep = thursday(w, env={"CFP_AWARDS_NEW_EVENTS": "1", "CFP_AUTOADD_APPLY": "0", **{k: v for k, v in ENV_ALL.items() if k.startswith(("CFP_RECAP", "CFP_SMTP"))}})
     sw = rep["facts"]["switches"]
     assert sw == {"CFP_AWARDS_NEW_EVENTS": "ON", "CFP_AWARDS_AUTOADD_APPLY": "not set", "CFP_AUTOADD_APPLY": "OFF", "CFP_REFRESH_APPLY": "not set",
-                  "CFP_SHEETS_HOLD_RESEARCH": "not set"}   # the hold switch since 2026-11-09
+                  "CFP_SHEETS_HOLD_HOURS": "not set"}   # the sheet wait in hours since 2026-11-10
     text = "\n".join(chk(rep, "t3")["rows"])
     assert "CFP_AWARDS_NEW_EVENTS is ON - Friday: a NEW award" in text and "CFP_AUTOADD_APPLY is OFF - Saturday: Saturday only REPORTS" in text
     blob = json.dumps(rep["facts"]) + rg.thursday_markdown(rep) + "".join(rg.thursday_email(rep)) + json.dumps([dict(c) for c in rep["checks"]])
@@ -344,8 +344,10 @@ def test_t6_without_a_reader_says_it_was_not_run(tmp_path):
     assert chk(thursday(w), "t6")["summary"] == "not tested in this run (no reader given)"
 
 
-def test_the_hold_switch_is_reported_with_the_other_switches(tmp_path):
+def test_the_sheet_wait_is_reported_with_the_other_switches(tmp_path):
     w = thursday_world(tmp_path, patches=())
-    rep = thursday(w, env={**ENV_ALL, "CFP_SHEETS_HOLD_RESEARCH": "1"})
-    assert rep["facts"]["switches"]["CFP_SHEETS_HOLD_RESEARCH"] == "ON"
-    assert any("the research does NOT start" in r for r in chk(rep, "t3")["rows"])
+    rep = thursday(w, env={**ENV_ALL, "CFP_SHEETS_HOLD_HOURS": "1.5"})
+    assert rep["facts"]["switches"]["CFP_SHEETS_HOLD_HOURS"] == "1.5"
+    assert any("CFP_SHEETS_HOLD_HOURS is 1.5 - Friday and Saturday: when the customer sheets do not load, the research waits" in r for r in chk(rep, "t3")["rows"])
+    rep = thursday(thursday_world(tmp_path / "b", patches=()), env=ENV_ALL)
+    assert any("CFP_SHEETS_HOLD_HOURS is not set (2 hours)" in r for r in chk(rep, "t3")["rows"])

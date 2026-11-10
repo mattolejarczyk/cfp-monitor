@@ -1,6 +1,6 @@
 """The customer sheets must load before the research. Retry, then ONE plain email that says what broke and how to fix it.
 
-    python scripts/customer_sheet_load.py --clients all --context saturday       # fetch + copy, 3 tries over 15 min, CRITICAL email if still failing
+    python scripts/customer_sheet_load.py --clients all --context saturday       # fetch + copy, 3 tries over 15 min, CRITICAL email, then wait up to 2 h
     python scripts/customer_sheet_load.py --clients arnica-awards,utility-awards --context friday
     python scripts/customer_sheet_load.py --clients all --once                   # the person's re-run: one try, no email, prints the verdict
     python scripts/customer_sheet_load.py --deadman auto                         # fetches NOTHING: are today's copies there? (03:00 Fri and Sat task)
@@ -24,9 +24,20 @@ text is written to the Desktop file (fetch_customer_sheet.alert_paths) and the e
 runs_out/qa/<date>/sheet_load_<time>.json, named in the verdict line. No secret value is ever written: the key file is named by its path only,
 and redact() strips any secret-looking environment value or private-key block before anything is written or sent.
 
-IT NEVER STOPS THE RESEARCH ON ITS OWN. HOLD = one switch: with the environment variable CFP_SHEETS_HOLD_RESEARCH=1 a failed load exits 6
-and run_monthly.ps1 (patch ACT-73) ends the run before the research; without it the research goes ahead on the last good copy and the email
-says so. Exit codes: 0 HEALTHY, 1 FAILED, 2 DEGRADED (could not check), 6 HELD (FAILED and the hold switch is on).
+THE WAIT (Matt, 2026-11-10, asked how long the research should wait for the sheets: "Wait up to 2 hours"). After the CRITICAL email the
+load keeps trying every 10 minutes, for up to 2 hours from the first failure (CFP_SHEETS_HOLD_HOURS, default 2; 0 = no wait). If the sheets
+load, the research starts on the fresh copies and a second email says so: "CFP customer sheets loaded - research started". If they still do
+not load, the research goes ahead on the last good copies, a second email says so ("CFP customer sheets still not loaded - research ran on
+copies from <date>"), and the weekend is DEGRADED in the recap and in the Sunday gate (runs_out/sheet_load_status.json). The wait is cut
+short to fit the research task's own time limit (Windows stops a task at its limit), so waiting never cuts the research off. Nothing here
+ever stops the research.
+
+THE 03:00 CHECK (--deadman) tells three cases apart: the research task did not start today (CRITICAL email, with how to start it by hand);
+the task is running but the sheets have not loaded yet (no email: the run alerts and waits by itself); the task ran and today's copies are
+missing (CRITICAL email, cause read from today's run log).
+
+Exit codes: 0 HEALTHY (also when the sheets loaded during the wait, or the 03:00 check found the run still going), 1 FAILED or DEGRADED (the
+research goes ahead on old copies), 2 the check itself failed.
 """
 from __future__ import annotations
 
@@ -37,7 +48,7 @@ import re
 import subprocess
 import sys
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -55,17 +66,27 @@ CONFIG = LOCAL / "customer_sheets.json"
 RUNS_OUT = LOCAL / "runs_out"
 QA_ROOT = RUNS_OUT / "qa"
 SENT_STATE = RUNS_OUT / "sheet_alert_sent.json"
+STATUS = RUNS_OUT / "sheet_load_status.json"          # the last load per research (friday / saturday): read by the recap and the Sunday gate
 MARKETS = Path(os.environ.get("CFP_MARKETS_DIR") or Path.home() / "Desktop" / "Nicolia-PR-Prime" / "Markets")
 SNAPSHOTS = MARKETS / "customer_snapshots"
 LOGS = MARKETS / "logs"
 
 SUBJECT = "CFP customer sheets failed to load - CRITICAL ERROR"
-HOLD_VAR = "CFP_SHEETS_HOLD_RESEARCH"
-HELD_EXIT = 6
+SUBJECT_LOADED = "CFP customer sheets loaded - research started"
+SUBJECT_STILL = "CFP customer sheets still not loaded - research ran on copies from {copies}"
+HOLD_VAR = "CFP_SHEETS_HOLD_HOURS"
+# Matt, 2026-11-10 (asked how long the research should wait when the customer sheets do not load): "Wait up to 2 hours".
+HOLD_DEFAULT_H = 2.0
+HOLD_MAX_H = 4.0                         # a typo of 20 must not hold a research run past its task limit
+HOLD_POLL_S = 600                        # one try every 10 minutes while waiting
+# Hours each research needs AFTER the sheets (its slowest recent runs, rounded up: Friday 10.8 h on 11-06, Saturday 4.5 h). The wait is cut
+# so that this still fits inside the task's own time limit (Friday 16 h; Saturday 5 h, 8 h once Matt raises it, D14).
+RESEARCH_NEEDS_H = {"friday": 11.5, "saturday": 5.0}
+HOLD_MARGIN_H = 0.25
 WAITS = (300, 600)                       # tries at 0, +5 and +15 minutes
 FETCH_TIMEOUT = 600
-DEADMAN_GRACE_S = 25 * 60                # a research run that started late (the PC woke at 03:00) gets this long to take its copies
-DEADMAN_POLL_S = 120
+DEADMAN_START_GRACE_S = 5 * 60           # the PC woke for the 03:00 check: a research task that missed 02:00 starts within a minute or two
+DEADMAN_POLL_S = 30
 
 ALL_CLIENTS = ("arnica", "utility", "arnica-awards", "utility-awards")
 AWARD_CLIENTS = ("arnica-awards", "utility-awards")
@@ -160,6 +181,64 @@ def expand(clients, config: Path) -> list[str]:
         names = list(config_info(config)["clients"])
         return names or list(ALL_CLIENTS)
     return [c.strip() for c in clients.split(",") if c.strip()]
+
+
+def parse_duration_h(text: str | None) -> float | None:
+    """'PT5H' -> 5.0, 'PT45M' -> 0.75, 'P3D' -> 72.0. None for no limit ('PT0S', blank) or anything unreadable."""
+    m = re.fullmatch(r"P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?", (text or "").strip())
+    if not m or not any(m.groups()):
+        return None
+    d, h, mi, se = (int(g or 0) for g in m.groups())
+    hours = d * 24 + h + mi / 60 + se / 3600
+    return hours or None
+
+
+def task_info(task: str, runner=None) -> dict:
+    """{'state', 'last_run', 'limit_h'} of a scheduled task, READ ONLY (Get-ScheduledTask). {} when it cannot be read. Never raises."""
+    q = task.replace("'", "''")
+    cmd = ("$t = Get-ScheduledTask -TaskName '" + q + "' -ErrorAction Stop; $i = Get-ScheduledTaskInfo -TaskName '" + q + "'; "
+           "[pscustomobject]@{state = [string]$t.State; last = $i.LastRunTime.ToString('s'); limit = [string]$t.Settings.ExecutionTimeLimit} "
+           "| ConvertTo-Json -Compress")
+    code, out = (runner or run)(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", cmd], timeout=60)
+    try:
+        d = json.loads([ln for ln in (out or "").splitlines() if ln.strip().startswith("{")][-1])
+        last = datetime.fromisoformat(d["last"]) if d.get("last") else None
+        return {"state": str(d.get("state") or ""), "last_run": last, "limit_h": parse_duration_h(d.get("limit"))}
+    except Exception:                                                         # noqa: BLE001
+        return {}
+
+
+def fmt_h(hours: float) -> str:
+    mins = int(round(hours * 60))
+    return f"{mins} minutes" if mins < 120 or mins % 60 else f"{mins // 60} hours"
+
+
+def hold_plan(context: str | None, env: dict | None = None, task_reader=None) -> tuple[float, str]:
+    """(hours to wait for the sheets, why it is shorter than asked or ''). Never raises."""
+    raw = ((os.environ if env is None else env).get(HOLD_VAR) or "").strip()
+    note = ""
+    try:
+        want = float(raw) if raw else HOLD_DEFAULT_H
+    except ValueError:
+        want, note = HOLD_DEFAULT_H, f"{HOLD_VAR}={raw!r} is not a number, so the usual {HOLD_DEFAULT_H:g} hours is used"
+    want = max(0.0, min(want, HOLD_MAX_H))
+    if want == 0:
+        return 0.0, f"{HOLD_VAR} is 0 (no wait)"
+    if context not in CONTEXTS:
+        return want, note
+    task = CONTEXTS[context][1]
+    try:
+        limit = (task_reader or task_info)(task).get("limit_h")
+    except Exception:                                                         # noqa: BLE001
+        limit = None
+    if not limit:
+        return want, note
+    room = limit - RESEARCH_NEEDS_H[context] - HOLD_MARGIN_H
+    if room >= want:
+        return want, note
+    room = max(0.0, round(room, 2))
+    return room, (f"Windows stops '{task}' after {limit:g} hours and the research itself needs about {RESEARCH_NEEDS_H[context]:g}, "
+                  f"so a longer wait would cut it off" + (" (raise the task's limit to allow the full wait)" if room < want else ""))
 
 
 # ------------------------------------------------------------------------------------------------ one attempt, then the retries
@@ -293,11 +372,22 @@ def cause_block(cause: str, failed: list[str], info: dict, outcomes: dict, snaps
                 "check disk space and the folder.", rerun_does)
     if cause == "never_ran":
         what, task, _cl = CONTEXTS.get(context or "", ("the weekend research", "CFP Weekly Re-Research (live markets)", ALL_CLIENTS))
-        return (f"{what[0].upper() + what[1:]} did not take today's copies: the PC was off or asleep at 02:00, the task did not start, or it stopped before the sheets.",
-                [f"See whether the task started (look at LastRunTime and LastTaskResult):\n       Get-ScheduledTaskInfo -TaskName '{task}' | Format-List LastRunTime,LastTaskResult,NextRunTime",
+        return (f"The research task did not start: {what} never ran today (the PC was off or asleep at 02:00, or the task is disabled).",
+                [f"See what Task Scheduler says (LastRunTime, LastTaskResult, and State: Disabled means it was switched off):\n"
+                 f"       Get-ScheduledTaskInfo -TaskName '{task}' | Format-List LastRunTime,LastTaskResult,NextRunTime; (Get-ScheduledTask -TaskName '{task}').State",
+                 f"Start the research by hand. It runs exactly as the night run would: the sheets first, then the research, then the load and the recap "
+                 f"(it costs the normal weekly research, nothing extra; it takes hours, leave the PC on):\n       Start-ScheduledTask -TaskName '{task}'",
+                 f"Confirm it is running (State should say Running):\n       (Get-ScheduledTask -TaskName '{task}').State",
+                 "If State said Disabled, it was switched off on purpose or by mistake: tell Claude before switching it back on."],
+                "start the task (one command) and leave the PC on.",
+                "you do not need it here: the started task loads the sheets itself. Use it only to see whether the sheets can be read at all.")
+    if cause == "ran_no_copies":
+        what, task, _cl = CONTEXTS.get(context or "", ("the weekend research", "CFP Weekly Re-Research (live markets)", ALL_CLIENTS))
+        return (f"{what[0].upper() + what[1:]} ran today and finished, but did not save today's copies of these sheets (it stopped early, or skipped the sheet step).",
+                [f"Open today's run log and search it for SHEET LOAD and STOPPED:\n       notepad (Get-ChildItem {ps(LOGS)} -Filter 'run_monthly_*.log' | Sort-Object LastWriteTime | Select-Object -Last 1).FullName",
                  "Run the sheet load now (the re-run below).",
-                 f"If the research has not run today, start it (it takes the sheets again first; it costs the normal weekly research, nothing extra):\n       Start-ScheduledTask -TaskName '{task}'"],
-                "find out why the job did not run, then start it.", rerun_does)
+                 "If it loads, tell Claude 'the research ran on old customer sheets today' with the log: whether to run the research again is a decision (it costs a second research run)."],
+                "read the log, run the re-run, and decide with Claude whether to research again.", rerun_does)
     reason = "; ".join(sorted({(outcomes[c].get("reason") or "")[:200] for c in failed}))
     return (f"An error our checker does not recognise: {reason}",
             ["Run the re-run below.", "If it fails again, tell Claude 'customer sheet load failed' and give it the evidence file named below."],
@@ -311,14 +401,57 @@ def fmt_time(iso: str | None) -> str:
         return "an unknown time"
 
 
-def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold: bool, evidence: Path | None = None,
-            today: date | None = None, test: bool = False) -> tuple[str, str]:
-    """(subject, plain-text body) for Matt. No secret: paths and names only, and redact() runs over the whole text."""
+def last_good(failed: list[str], snapshots: Path, today: date) -> list[str]:
+    out = []
+    for c in failed:
+        t = taken_at(newest_copy(c, snapshots))
+        days = (today - t.date()).days if t else None
+        out.append(f"{LABELS.get(c, c)}: " + (t.strftime("%a %d %b") + f" ({days} day{'' if days == 1 else 's'} old)" if t else "NONE on disk"))
+    return out
+
+
+def copies_from(failed: list[str], snapshots: Path) -> str:
+    """The date of the OLDEST last good copy among the failed sheets, for the follow-up subject."""
+    ts = [taken_at(newest_copy(c, snapshots)) for c in failed]
+    if not ts or any(t is None for t in ts):
+        return "before this week (a sheet has no copy at all)" if ts else "the last good copy"
+    return min(ts).strftime("%a %d %b %Y")
+
+
+def cause_sections(result: dict, info: dict, snapshots: Path, context: str | None) -> list[str]:
+    out, failed = result["outcomes"], result["failed"]
+    causes: list[str] = []
+    for c in failed:
+        if out[c]["cause"] not in causes:
+            causes.append(out[c]["cause"])
+    L: list[str] = []
+    for n, cause in enumerate(causes, 1):
+        group = [c for c in failed if out[c]["cause"] == cause]
+        line, steps, you, rerun = cause_block(cause, group, info, out, snapshots, context)
+        head = "LIKELY CAUSE" + (f" {n} of {len(causes)} ({', '.join(LABELS.get(c, c) for c in group)})" if len(causes) > 1 else "")
+        L += [f"{head}: {line}", "", "HOW TO FIX IT"]
+        k = 0
+        for k, st in enumerate(steps, 1):
+            L.append(f"{k}. {st}")
+        L.append(f"{k + 1}. Re-run just the sheet load and confirm it worked (paste into PowerShell):")
+        L.append(f"       {rerun_command(group)}")
+        L.append("   It ends with one line: SHEET LOAD: HEALTHY (fixed) or SHEET LOAD: FAILED with the reason.")
+        L.append(f"   What you do yourself: {you}")
+        L.append(f"   What the re-run does for you: {rerun}")
+        L.append("")
+    return L
+
+
+def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold: tuple | None = None, evidence: Path | None = None,
+            today: date | None = None, test: bool = False, meaning: list[str] | None = None) -> tuple[str, str]:
+    """(subject, plain-text body) for Matt. `hold` = (hours, why shorter, deadline) for a guarded load; `meaning` replaces the WHAT THIS
+    MEANS lines (the 03:00 check). No secret: paths and names only, and redact() runs over the whole text."""
     today = today or date.today()
     out = result["outcomes"]
     failed = result["failed"]
     fine = [c for c in result["clients"] if c not in failed]
     what, task, _cl = CONTEXTS.get(context or "", (None, None, None))
+    What = what[0].upper() + what[1:] if what else None
     L = [SUBJECT, ""]
     if test:
         L += ["THIS IS A TEST. Nothing failed: this is what the real alert looks like, sent once to prove it reaches you.", ""]
@@ -331,44 +464,67 @@ def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold
     if fine:
         L.append("Loaded fine: " + ", ".join(LABELS.get(c, c) for c in fine) + ".")
     L += ["", "WHAT THIS MEANS"]
-    lastgood = []
-    for c in failed:
-        t = taken_at(newest_copy(c, snapshots))
-        days = (today - t.date()).days if t else None
-        lastgood.append(f"{LABELS.get(c, c)}: " + (t.strftime("%a %d %b") + f" ({days} day{'' if days == 1 else 's'} old)" if t else "NONE on disk"))
-    if hold and what:
-        L.append(f"The hold switch is ON ({HOLD_VAR}=1): {what} has NOT started and waits for you. After the fix, start it again:")
-        L.append(f"       Start-ScheduledTask -TaskName '{task}'")
-    elif what:
-        L.append(f"{what[0].upper() + what[1:]} goes ahead with the last good copy of each failed sheet, so anything the customer changed since then is not seen this week.")
+    if meaning is not None:
+        L += meaning
+    elif What and hold is not None and hold[0] > 0:
+        hours, why, deadline = hold
+        L.append(f"{What} is WAITING for the sheets. It tries again every {HOLD_POLL_S // 60} minutes until {deadline:%H:%M} "
+                 f"({fmt_h(hours)} after the first failure).")
+        L.append(f"- If they load by then, the research starts on fresh copies and you get a second email: '{SUBJECT_LOADED}'.")
+        L.append(f"- If not, at {deadline:%H:%M} the research goes ahead on the last good copies and you get: '{SUBJECT_STILL.format(copies='<date>')}'.")
+        L.append(f"Fix it while it waits: the waiting run notices your fix within {HOLD_POLL_S // 60} minutes by itself (the re-run below only shows you sooner).")
+        if why:
+            L.append(f"The wait is shorter than {HOLD_DEFAULT_H:g} hours: {why}.")
+    elif What:
+        L.append(f"{What} goes ahead with the last good copy of each failed sheet, so anything the customer changed since then is not seen this week.")
+        if hold is not None and hold[1]:
+            L.append(f"It does not wait for the sheets: {hold[1]}.")
     else:
         L.append("Anything that reads these sheets uses the last good copy until this is fixed.")
-    L.append("Last good copy: " + "; ".join(lastgood) + ".")
+    L.append("Last good copy: " + "; ".join(last_good(failed, snapshots, today)) + ".")
     L.append("")
-    causes = []
-    for c in failed:
-        if out[c]["cause"] not in causes:
-            causes.append(out[c]["cause"])
-    for n, cause in enumerate(causes, 1):
-        group = [c for c in failed if out[c]["cause"] == cause]
-        line, steps, you, rerun = cause_block(cause, group, info, out, snapshots, context)
-        head = "LIKELY CAUSE" + (f" {n} of {len(causes)} ({', '.join(LABELS.get(c, c) for c in group)})" if len(causes) > 1 else "")
-        L += [f"{head}: {line}", "", "HOW TO FIX IT"]
-        k = 0
-        for k, s in enumerate(steps, 1):
-            L.append(f"{k}. {s}")
-        L.append(f"{k + 1}. Re-run just the sheet load and confirm it worked (paste into PowerShell):")
-        L.append(f"       {rerun_command(group)}")
-        L.append("   It ends with one line: SHEET LOAD: HEALTHY (fixed) or SHEET LOAD: FAILED with the reason.")
-        L.append(f"   What you do yourself: {you}")
-        L.append(f"   What the re-run does for you: {rerun}")
-        L.append("")
+    L += cause_sections(result, info, snapshots, context)
     L.append("EVIDENCE")
     L.append(f"- Every try and its output: {evidence}" if evidence else "- (no evidence file was written)")
     L.append(f"- This text is also on your Desktop: {fcs.alert_paths()[-1]}")
     L.append("")
     L.append("This email goes to you only. No secret is in it: the key file is named by its path, never its contents.")
     subject = ("[TEST] " if test else "") + SUBJECT
+    return subject, redact("\n".join(L) + "\n")
+
+
+def compose_followup(loaded: bool, result: dict, context: str | None, info: dict, snapshots: Path, first: datetime, at: datetime,
+                     evidence: Path | None, failed_at_first: list[str]) -> tuple[str, str]:
+    """The second email after a wait: loaded (the research starts on fresh copies) or still not loaded (it goes ahead on old copies)."""
+    what = CONTEXTS.get(context or "", ("the research", None, None))[0]
+    What = what[0].upper() + what[1:]
+    waited = max(0, int(round((at - first).total_seconds() / 60)))
+    names = ", ".join(LABELS.get(c, c) for c in failed_at_first)
+    if loaded:
+        subject = SUBJECT_LOADED
+        L = [subject, "",
+             f"The customer sheets that failed at {first:%H:%M} loaded at {at:%H:%M}, after waiting {waited} minutes: {names}.",
+             f"{What} has started on fresh copies. Nothing for you to do.",
+             "If you fixed something, that worked. If you did nothing, the fault cleared by itself.", "",
+             f"Evidence: {evidence}" if evidence else "Evidence: (no evidence file was written)"]
+        return subject, redact("\n".join(L) + "\n")
+    copies = copies_from(result["failed"], snapshots)
+    subject = SUBJECT_STILL.format(copies=copies)
+    L = [subject, "", "STILL NOT LOADED"]
+    for c in result["failed"]:
+        o = result["outcomes"][c]
+        L.append(f"- {LABELS.get(c, c)} ({c}): still failing at {at:%H:%M} after waiting {waited} minutes since {first:%H:%M}. Error: {(o.get('reason') or '')[:300]}")
+    back = [c for c in failed_at_first if c not in result["failed"]]
+    if back:
+        L.append("Loaded during the wait: " + ", ".join(LABELS.get(c, c) for c in back) + ".")
+    L += ["", "WHAT THIS MEANS",
+          f"{What} is going ahead now on the last good copies, so anything the customer changed since then is not seen this week.",
+          "Last good copy: " + "; ".join(last_good(result["failed"], snapshots, at.date())) + ".",
+          "The recap and the Sunday check show this weekend as DEGRADED.", ""]
+    L += cause_sections(result, info, snapshots, context)
+    L += ["EVIDENCE", f"- Every try and its output: {evidence}" if evidence else "- (no evidence file was written)",
+          f"- This text is also on your Desktop: {fcs.alert_paths()[-1]}", "",
+          "This email goes to you only. No secret is in it: the key file is named by its path, never its contents."]
     return subject, redact("\n".join(L) + "\n")
 
 
@@ -404,9 +560,10 @@ def already_sent(today: date, state: Path | None = None) -> str | None:
         return None
 
 
-def send(subject: str, body: str, today: date, now: datetime, mailer=None, state: Path | None = None, test: bool = False) -> str:
-    """'sent', 'already sent at ...', 'not sent: ...'. At most one real alert a day; a test send is never counted."""
-    if not test:
+def send(subject: str, body: str, today: date, now: datetime, mailer=None, state: Path | None = None, test: bool = False,
+         once_a_day: bool = True) -> str:
+    """'sent', 'already sent at ...', 'not sent: ...'. At most one CRITICAL alert a day; a test send and a follow-up are never counted."""
+    if not test and once_a_day:
         prior = already_sent(today, state)
         if prior:
             return f"already sent at {prior[11:16]} today (one alert a day)"
@@ -418,7 +575,7 @@ def send(subject: str, body: str, today: date, now: datetime, mailer=None, state
         return f"not sent: {type(exc).__name__} from the mailer"
     if not ok:
         return "not sent: the mail settings (CFP_RECAP_TO, CFP_SMTP_*) are not all set"
-    if not test:
+    if not test and once_a_day:
         try:
             state = Path(state or SENT_STATE)
             state.parent.mkdir(parents=True, exist_ok=True)
@@ -428,20 +585,44 @@ def send(subject: str, body: str, today: date, now: datetime, mailer=None, state
     return "sent"
 
 
-def hold_on(env: dict | None = None) -> bool:
-    return ((os.environ if env is None else env).get(HOLD_VAR) or "").strip() == "1"
-
-
 def alert(result: dict, context: str | None, config: Path, snapshots: Path, now: datetime, env: dict | None = None, mailer=None,
-          qa_root: Path | None = None, state: Path | None = None, email: bool = True, alert_files=None) -> dict:
-    """Evidence, the Desktop file and (once a day) the email. Returns {'evidence', 'files', 'email', 'subject', 'body', 'hold'}."""
-    hold = hold_on(env)
+          qa_root: Path | None = None, state: Path | None = None, email: bool = True, alert_files=None, hold: tuple | None = None,
+          meaning: list[str] | None = None) -> dict:
+    """Evidence, the Desktop file and (once a day) the email. Returns {'evidence', 'files', 'email', 'subject', 'body'}."""
     info = config_info(config)
-    evidence = write_evidence({"context": context, "at": now.isoformat(timespec="seconds"), "hold": hold, **result}, now, qa_root)
-    subject, body = compose(result, context, info, snapshots, hold, evidence, now.date())
+    evidence = write_evidence({"context": context, "at": now.isoformat(timespec="seconds"),
+                               "wait_hours": hold[0] if hold else None, **result}, now, qa_root)
+    subject, body = compose(result, context, info, snapshots, hold, evidence, now.date(), meaning=meaning)
     files = write_alert_file(body, alert_files)
     status = send(subject, body, now.date(), now, mailer, state) if email else "not sent: --once (you are at the keyboard)"
-    return {"evidence": evidence, "files": files, "email": status, "subject": subject, "body": body, "hold": hold}
+    return {"evidence": evidence, "files": files, "email": status, "subject": subject, "body": body}
+
+
+def write_status(context: str | None, verdict: str, result: dict, snapshots: Path, at: datetime, waited_min: int = 0,
+                 path: Path | None = None, note: str = "") -> None:
+    """runs_out/sheet_load_status.json: the last load of each research (friday / saturday), for the recap and the Sunday gate. Never raises."""
+    if context not in CONTEXTS:
+        return
+    try:
+        p = Path(path or STATUS)
+        d = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+        copies = {}
+        for c in result["clients"]:
+            t = taken_at(newest_copy(c, snapshots))
+            copies[c] = t.isoformat() if t else None
+        d[context] = {"date": at.date().isoformat(), "at": at.isoformat(timespec="seconds"), "verdict": verdict,
+                      "failed": list(result["failed"]), "copies": copies, "waited_min": waited_min, "note": note}
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(d, indent=2), encoding="utf-8")
+    except Exception:                                                         # noqa: BLE001
+        pass
+
+
+def read_status(path: Path | None = None) -> dict:
+    try:
+        return json.loads(Path(path or STATUS).read_text(encoding="utf-8"))
+    except Exception:                                                         # noqa: BLE001
+        return {}
 
 
 def verdict_line(result: dict, extra: str = "") -> str:
@@ -453,32 +634,103 @@ def verdict_line(result: dict, extra: str = "") -> str:
 
 
 # ------------------------------------------------------------------------------------------------ the guarded load (Friday, Saturday, the person's re-run)
+def clear_alert_files(alert_files=None) -> None:
+    """The sheets loaded: the Desktop alert is out of date. Never raises."""
+    try:
+        if alert_files is None:
+            fcs.clear_alert()
+        else:
+            for f in alert_files:
+                Path(f).unlink(missing_ok=True)
+    except Exception:                                                         # noqa: BLE001
+        pass
+
+
+def safe_load(clients, config, snapshots, waits, sleep, runner, now) -> dict:
+    try:
+        return load(clients, config, snapshots, waits=waits, sleep=sleep, runner=runner, now=now)
+    except Exception as exc:                                                  # noqa: BLE001
+        return {"clients": list(clients), "failed": list(clients), "attempts": [], "read_only": False,
+                "outcomes": {c: {"ok": False, "reason": f"{type(exc).__name__}: {exc}", "cause": "unknown",
+                                 "at": now().isoformat(timespec="seconds")} for c in clients}}
+
+
 def guarded_load(clients: list[str], context: str | None, config: Path | None = None, snapshots: Path | None = None, once: bool = False,
                  env: dict | None = None, mailer=None, sleep=time.sleep, runner=None, now=datetime.now, qa_root: Path | None = None,
-                 state: Path | None = None, alert_files=None) -> tuple[int, dict, list[str]]:
-    """(exit code, result, printed lines). Never raises."""
+                 state: Path | None = None, alert_files=None, task_reader=None, say=None, status_path: Path | None = None
+                 ) -> tuple[int, dict, list[str]]:
+    """(exit code, result, printed lines; the LAST line is the verdict). Never raises.
+
+    Fail -> CRITICAL email -> wait up to CFP_SHEETS_HOLD_HOURS (default 2, Matt 2026-11-10: "Wait up to 2 hours"), one try every 10 minutes ->
+    loaded: second email, exit 0, the research starts on fresh copies | still failing: second email, exit 1, DEGRADED, the research goes ahead."""
     config, snapshots = Path(config or CONFIG), Path(snapshots or SNAPSHOTS)
-    try:
-        result = load(clients, config, snapshots, waits=() if once else WAITS, sleep=sleep, runner=runner, now=now)
-    except Exception as exc:                                                  # noqa: BLE001
-        result = {"clients": list(clients), "failed": list(clients), "attempts": [], "read_only": False,
-                  "outcomes": {c: {"ok": False, "reason": f"{type(exc).__name__}: {exc}", "cause": "unknown", "at": now().isoformat(timespec="seconds")} for c in clients}}
+    say = say or (lambda line: print(line, flush=True))
+    first = now()
+    result = safe_load(clients, config, snapshots, () if once else WAITS, sleep, runner, now)
     lines: list[str] = []
     if not result["failed"]:
-        if alert_files is None:
-            try:
-                fcs.clear_alert()
-            except Exception:                                                 # noqa: BLE001
-                pass
+        clear_alert_files(alert_files)
         tries = len(result["attempts"])
         lines.append(verdict_line(result, f" at {now().strftime('%H:%M')}" + (f", on try {tries}" if tries > 1 else "")))
+        if not once:
+            write_status(context, "HEALTHY", result, snapshots, now(), path=status_path)
         return 0, result, lines
-    a = alert(result, context, config, snapshots, now(), env, mailer, qa_root, state, email=not once, alert_files=alert_files)
-    held = a["hold"] and not once
-    lines.append(verdict_line(result, f"; email {a['email']}; evidence: {a['evidence']}" + (f"; RESEARCH HELD ({HOLD_VAR}=1)" if held else "")))
     if once:
+        a = alert(result, context, config, snapshots, now(), env, mailer, qa_root, state, email=False, alert_files=alert_files)
+        lines.append(verdict_line(result, f"; email {a['email']}; evidence: {a['evidence']}"))
         lines += ["", *a["body"].splitlines()]
-    return (HELD_EXIT if held else 1), result, lines
+        return 1, result, lines
+
+    hours, why = hold_plan(context, env, task_reader)
+    deadline = first + timedelta(hours=hours)
+    a = alert(result, context, config, snapshots, now(), env, mailer, qa_root, state, alert_files=alert_files, hold=(hours, why, deadline))
+    wait_txt = (f"; waiting up to {fmt_h(hours)} (until {deadline:%H:%M}) for the sheets" if hours > 0 else "; no wait (" + (why or "0 hours") + ")")
+    lines.append(verdict_line(result, f"; email {a['email']}; evidence: {a['evidence']}{wait_txt}"))
+    say(lines[-1])
+    if hours <= 0:
+        lines.append(verdict_line(result, "; the research goes ahead on the last good copies"))
+        write_status(context, "FAILED", result, snapshots, now(), path=status_path, note=why)
+        return 1, result, lines
+
+    failed_at_first = list(result["failed"])
+    n = len(result["attempts"])
+    max_tries = int(hours * 3600 // HOLD_POLL_S) + 2              # a stuck clock (or a fake sleep) can never make this loop forever
+    tries = 0
+    while result["failed"] and now() < deadline and tries < max_tries:
+        tries += 1
+        sleep(max(1.0, min(HOLD_POLL_S, (deadline - now()).total_seconds())))
+        again = safe_load(list(result["failed"]), config, snapshots, (), sleep, runner, now)
+        for att in again["attempts"]:
+            n += 1
+            result["attempts"].append({**att, "n": n, "during_wait": True})
+        for c, o in again["outcomes"].items():
+            o["tries"] = result["outcomes"][c].get("tries", 1) + 1
+            result["outcomes"][c] = o
+        result["failed"] = [c for c in result["clients"] if not result["outcomes"][c]["ok"]]
+        line = (f"SHEET WAIT: try at {now():%H:%M} - " + ("all loaded" if not result["failed"] else
+                f"{len(result['failed'])} still failing ({', '.join(result['failed'])}); next try in {HOLD_POLL_S // 60} min, until {deadline:%H:%M}"))
+        lines.append(line)
+        say(line)
+    at = now()
+    waited = max(0, int(round((at - first).total_seconds() / 60)))
+    info = config_info(config)
+    evidence = write_evidence({"context": context, "at": at.isoformat(timespec="seconds"), "wait_hours": hours, "waited_min": waited, **result},
+                              at, qa_root)
+    subject, body = compose_followup(not result["failed"], result, context, info, snapshots, first, at, evidence, failed_at_first)
+    st = send(subject, body, at.date(), at, mailer, state, once_a_day=False)
+    if not result["failed"]:
+        clear_alert_files(alert_files)
+        write_status(context, "RECOVERED", result, snapshots, at, waited, path=status_path)
+        lines.append(f"SHEET LOAD: HEALTHY - all {len(result['clients'])} sheet(s) loaded at {at:%H:%M} after waiting {waited} min; "
+                     f"email '{subject}' {st}; evidence: {evidence}")
+        return 0, result, lines
+    write_alert_file(body, alert_files)
+    write_status(context, "DEGRADED", result, snapshots, at, waited, path=status_path, note=why)
+    causes = sorted({result["outcomes"][c]["cause"] for c in result["failed"]})
+    lines.append(f"SHEET LOAD: DEGRADED - {len(result['failed'])} of {len(result['clients'])} sheet(s) still not loaded after waiting {waited} min "
+                 f"({', '.join(result['failed'])}; cause: {', '.join(causes)}); the research runs on copies from {copies_from(result['failed'], snapshots)}; "
+                 f"email {st}; evidence: {evidence}")
+    return 1, result, lines
 
 
 # ------------------------------------------------------------------------------------------------ the dead-man check (03:00 Friday and Saturday)
@@ -496,13 +748,16 @@ def failures_in_log(log: Path) -> list[str]:
 
 
 def deadman(kind: str, snapshots: Path | None = None, logs: Path | None = None, config: Path | None = None, now=datetime.now, sleep=time.sleep,
-            env: dict | None = None, mailer=None, qa_root: Path | None = None, state: Path | None = None,
-            grace_s: int = DEADMAN_GRACE_S, poll_s: int = DEADMAN_POLL_S, alert_files=None) -> tuple[int, list[str]]:
-    """Fetches nothing. Are today's copies there for the sheets this day's research takes? If not, the same CRITICAL email (once a day)."""
+            env: dict | None = None, mailer=None, qa_root: Path | None = None, state: Path | None = None, task_reader=None,
+            start_grace_s: int = DEADMAN_START_GRACE_S, poll_s: int = DEADMAN_POLL_S, alert_files=None) -> tuple[int, list[str]]:
+    """Fetches nothing. Are today's copies there for the sheets this day's research takes? If not, which of three cases (Matt, 2026-11-10):
+      did_not_start  no run log today and the task's last run is not today -> CRITICAL email: how to start it by hand
+      running        the task is running (or its log changed in the last 15 minutes) -> NO email: the run alerts and waits by itself
+      ran_no_copies  the task ran today, is not running, and today's copies are missing -> CRITICAL email, cause read from today's run log"""
     snapshots, logs, config = Path(snapshots or SNAPSHOTS), Path(logs or LOGS), Path(config or CONFIG)
-    _what, _task, clients = CONTEXTS[kind]
-    t0 = now()
-    today = t0.date()
+    what, task, clients = CONTEXTS[kind]
+    reader = task_reader or task_info
+    today = now().date()
 
     def stale() -> list[str]:
         out = []
@@ -512,41 +767,70 @@ def deadman(kind: str, snapshots: Path | None = None, logs: Path | None = None, 
                 out.append(c)
         return out
 
-    def running() -> bool:
-        cut = now().timestamp() - 15 * 60
-        return any(p.stat().st_mtime >= cut for p in todays_run_logs(today, logs))
+    def look() -> tuple[str, dict]:
+        try:
+            info = reader(task) or {}
+        except Exception:                                                     # noqa: BLE001
+            info = {}
+        cut_ts = now().timestamp() - 15 * 60
+        fresh_log = any(p.stat().st_mtime >= cut_ts for p in todays_run_logs(today, logs))
+        if info.get("state") == "Running" or fresh_log:
+            return "running", info
+        last = info.get("last_run")
+        if todays_run_logs(today, logs) or (last and last.date() == today):
+            return "ran_no_copies", info
+        return "did_not_start", info
 
     missing = stale()
+    if not missing:
+        return 0, [f"SHEET DEADMAN: HEALTHY - today's copies of all {len(clients)} sheet(s) for {kind} are there"]
+    case, info = look()
     waited = 0
-    # A research run that started late (the PC woke for this check and the 02:00 task caught up) is given time to take its copies.
-    while missing and waited < grace_s and running():
+    # The PC woke for this check: a task that missed 02:00 starts by itself within a minute or two (StartWhenAvailable).
+    while case == "did_not_start" and waited < start_grace_s:
         sleep(poll_s)
         waited += poll_s
         missing = stale()
-    if not missing:
-        return 0, [f"SHEET DEADMAN: HEALTHY - today's copies of all {len(clients)} sheet(s) for {kind} are there"]
+        if not missing:
+            return 0, [f"SHEET DEADMAN: HEALTHY - today's copies of all {len(clients)} sheet(s) for {kind} are there"]
+        case, info = look()
+    if case == "running":
+        return 0, [f"SHEET DEADMAN: RUNNING - {len(missing)} of {len(clients)} sheet(s) have no copy from today yet ({', '.join(missing)}), but "
+                   f"'{task}' is running: it raises its own alert and waits for the sheets. Nothing sent."]
     logs_today = todays_run_logs(today, logs)
+    last = info.get("last_run")
+    last_txt = f"its last run was {last:%a %d %b %H:%M}" if last else "Task Scheduler could not be read"
     outcomes = {}
     for c in clients:
         if c not in missing:
             outcomes[c] = {"ok": True, "reason": "", "cause": None}
             continue
         cp = newest_copy(c, snapshots)
-        cause = "never_ran"
-        fl = next((ln for f in logs_today for ln in failures_in_log(f) if ln.startswith(f"{c}: FAILED - ")), None)
-        if fl:
-            reason = fl.split(": FAILED - ", 1)[1]
-            cause = classify(reason)
-        elif logs_today:
-            reason = f"today's run log ({logs_today[-1].name}) exists but no copy of this sheet was taken today"
+        if case == "did_not_start":
+            cause, reason = "never_ran", f"'{task}' did not start today ({last_txt}; no run log for today in {logs})"
         else:
-            reason = f"no run log for today in {logs} and no copy taken today"
-        reason += f"; newest copy: {cp.name if cp else 'none'}"
-        outcomes[c] = {"ok": False, "reason": reason, "cause": cause, "at": now().isoformat(timespec="seconds"), "tries": 1}
+            fl = next((ln for f in logs_today for ln in failures_in_log(f) if ln.startswith(f"{c}: FAILED - ")), None)
+            if fl:
+                reason = fl.split(": FAILED - ", 1)[1]
+                cause = classify(reason)
+            else:
+                cause = "ran_no_copies"
+                reason = (f"'{task}' ran today ({last_txt}) and is no longer running, but took no copy of this sheet"
+                          + (f"; run log: {logs_today[-1]}" if logs_today else ""))
+        outcomes[c] = {"ok": False, "reason": reason + f"; newest copy: {cp.name if cp else 'none'}", "cause": cause,
+                       "at": now().isoformat(timespec="seconds"), "tries": 1}
     result = {"clients": list(clients), "outcomes": outcomes, "failed": missing, "attempts": [], "read_only": True,
-              "run_logs_today": [str(p) for p in logs_today]}
-    a = alert(result, kind, config, snapshots, now(), env, mailer, qa_root, state, alert_files=alert_files)
-    return 1, [f"SHEET DEADMAN: FAILED - {len(missing)} of {len(clients)} sheet(s) have no copy from today ({', '.join(missing)}); "
+              "run_logs_today": [str(p) for p in logs_today], "case": case, "task": {k: str(v) for k, v in info.items()}}
+    What = what[0].upper() + what[1:]
+    if case == "did_not_start":
+        meaning = [f"{What} did NOT start today, so nothing has been researched yet and no sheet was read.",
+                   "Starting it by hand (step below) runs it exactly as the night run would: it takes the sheets first, then researches."]
+    else:
+        meaning = [f"{What} ran today but did not take today's copies of these sheets, so it researched with the last good copies.",
+                   "Anything the customer changed since then is not seen this week, unless the sheet load and the research are run again."]
+    a = alert(result, kind, config, snapshots, now(), env, mailer, qa_root, state, alert_files=alert_files, meaning=meaning)
+    label = {"did_not_start": "the research task did not start", "ran_no_copies": "the research ran but today's copies are missing"}[case]
+    return 1, [f"SHEET DEADMAN: FAILED - {label}: {len(missing)} of {len(clients)} sheet(s) have no copy from today ({', '.join(missing)}); "
                f"email {a['email']}; evidence: {a['evidence']}"]
 
 
@@ -580,7 +864,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--context", choices=sorted(CONTEXTS), help="which research this load feeds (the wording of the email)")
     ap.add_argument("--config", default=str(CONFIG))
     ap.add_argument("--snapshots", default=str(SNAPSHOTS))
-    ap.add_argument("--once", action="store_true", help="one try, no email: the person's re-run")
+    ap.add_argument("--once", action="store_true", help="one try, no email, no wait: the person's re-run")
     ap.add_argument("--deadman", choices=[*sorted(CONTEXTS), "auto"], help="fetch nothing; are today's copies there? auto = by weekday (the 03:00 task)")
     ap.add_argument("--check-only", action="store_true", help="read-only: can every sheet be read now? (saves nothing, sends nothing)")
     ap.add_argument("--test-send", action="store_true", help="send ONE '[TEST] ...' email with a sample body")
@@ -589,7 +873,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if a.test_send:
             now = datetime.now()
-            subj, body = compose(sample_result(now), "saturday", config_info(config), snapshots, hold_on(), None, now.date(), test=True)
+            hours, why = hold_plan("saturday")
+            subj, body = compose(sample_result(now), "saturday", config_info(config), snapshots, (hours, why, now + timedelta(hours=hours)), None,
+                                 now.date(), test=True)
             st = send(subj, body, now.date(), now, test=True)
             print(f"SHEET LOAD TEST: {st} at {now.strftime('%Y-%m-%d %H:%M:%S')} - subject '{subj}'")
             return 0 if st == "sent" else 2

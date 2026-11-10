@@ -29,8 +29,9 @@ fix that, so the honest behaviour is to say so in one clear line and keep going.
 good week and a bad one. Silence about staleness is the failure: on 2026-09-15 the client
 layer was 16 days old, merge decisions had been made against it, and nothing anywhere said so.
 
-    exit 0, also when degraded. Read INTAKE HEALTH in the output, or intake_status.json. The one exception (2026-11-09): exit 6 when
-    the sheets did not load AND the hold switch CFP_SHEETS_HOLD_RESEARCH=1 is on (customer_sheet_load.py; Matt decides the switch).
+    exit 0, also when degraded. Read INTAKE HEALTH in the output, or intake_status.json. When the sheets do not load, the load itself
+    waits up to 2 hours for them before this returns (customer_sheet_load.py, Matt 2026-11-10: "Wait up to 2 hours"); it never stops
+    the research.
 """
 from __future__ import annotations
 
@@ -308,8 +309,8 @@ def loaded_snapshot_file(db: str, client_key: str) -> str | None:
 
 def fetch_all(config: Path, snapshots: Path, context: str = "saturday") -> tuple[bool, list[str], int]:
     """Fetch all four sheets through scripts/customer_sheet_load.py: 3 tries over about 15 minutes for what can clear by itself, none for
-    what cannot, then ONE CRITICAL email to Matt with the fix (Matt, 2026-11-09). Returns (all loaded, notes, load exit code: 0, 1, or 6 =
-    held by CFP_SHEETS_HOLD_RESEARCH=1). Never raises.
+    what cannot, then ONE CRITICAL email to Matt with the fix (Matt, 2026-11-09), then a wait of up to 2 hours with a try every 10 minutes
+    and a second email either way (Matt, 2026-11-10). Returns (all loaded, notes, load exit code: 0 or 1). Never raises.
 
     Until 2026-11-09 this retried at 10, 30 and 60 seconds and a failure reached Matt only inside the end-of-run recap. A missing key
     returned before any fetch, so it never even wrote the Desktop alert."""
@@ -330,9 +331,14 @@ def fetch_all(config: Path, snapshots: Path, context: str = "saturday") -> tuple
     fix = permanent_fix(perm) if perm else None
     if fix:
         notes.append(f"not retried - a retry cannot fix this. A person must: {fix}")
-    print(lines[0] if lines else "SHEET LOAD: UNKNOWN")
+    if lines and len(lines) > 1:
+        print(lines[-1])                                             # the earlier lines were printed as they happened (say=print)
+    elif lines:
+        print(lines[0])
+    else:
+        print("SHEET LOAD: UNKNOWN")
     if res["failed"]:
-        notes.append(lines[0] if lines else "SHEET LOAD: FAILED")
+        notes.append(lines[-1] if lines else "SHEET LOAD: FAILED")
     return not res["failed"], notes, code
 
 
@@ -483,11 +489,7 @@ def main() -> int:
         print()
         print(f"INTAKE QA: {verdict}  (runs_out/qa/<cycle Monday>/intake.md)")
 
-    # 0, so the Saturday job never loses a research window to an intake problem - unless Matt turned the hold switch on
-    # (CFP_SHEETS_HOLD_RESEARCH=1) and the sheets did not load: then 6, and run_monthly.ps1 (patch ACT-73) ends the run before the research.
-    if load_code == 6:
-        print("\nRESEARCH HELD: the customer sheets did not load and CFP_SHEETS_HOLD_RESEARCH is 1 (the CRITICAL email says how to fix it).")
-        return 6
+    # 0, so the Saturday job never loses a research window to an intake problem (the sheet load already waited up to 2 hours for the sheets).
     return 0
 
 

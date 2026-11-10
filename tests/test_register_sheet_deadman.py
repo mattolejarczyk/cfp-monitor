@@ -1,6 +1,6 @@
 """The operator-run registration of 'CFP Sheet Load Check' (the customer sheet dead-man check, 2026-11-09) and patch ACT-73.
 
-Nothing is registered while these tests run: only -WhatIf is executed. The patch is only read here; applying it was proven on a copy of the
+Nothing is registered while these tests run: only -WhatIf and -DryRun are executed. The patch is only read here; applying it was proven on a copy of the
 Markets scripts with agentos tools\apply-markets-patches.ps1 -Patches ACT-73-run_monthly.ps1.patch (dry run, apply, second run, parse)."""
 from __future__ import annotations
 
@@ -36,6 +36,7 @@ def test_the_task_runs_the_deadman_check_friday_and_saturday_at_0300_and_wakes_t
     assert "-Weekly -DaysOfWeek Friday, Saturday -At $At" in TEXT
     assert "--deadman auto" in TEXT and "scripts\\customer_sheet_load.py" in TEXT
     assert "$settings.WakeToRun = $true" in TEXT, "the one difference from the other CFP tasks, on purpose: a sleeping PC must wake for it"
+    assert "-ExecutionTimeLimit (New-TimeSpan -Minutes 10)" in TEXT, "10 minutes (2026-11-10): it fetches nothing; 5 min start grace plus reads"
     assert "-StartWhenAvailable" in TEXT and "-MultipleInstances IgnoreNew" in TEXT and "-LogonType Interactive -RunLevel Limited" in TEXT
 
 
@@ -56,6 +57,18 @@ def test_whatif_registers_nothing():
     assert before == after
 
 
+@needs_ps
+def test_dryrun_registers_nothing_and_shows_the_three_cases():
+    before = subprocess.run([PS, "-NoProfile", "-Command", "[bool](Get-ScheduledTask -TaskName 'CFP Sheet Load Check' -ErrorAction SilentlyContinue)"],
+                            capture_output=True, text=True).stdout.strip()
+    out = subprocess.run([PS, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT), "-DryRun"], capture_output=True, text=True)
+    assert out.returncode == 0 and "(-DryRun: nothing was registered.)" in out.stdout and "10 minute limit" in out.stdout
+    assert "0 HEALTHY or RUNNING (no email)" in out.stdout
+    after = subprocess.run([PS, "-NoProfile", "-Command", "[bool](Get-ScheduledTask -TaskName 'CFP Sheet Load Check' -ErrorAction SilentlyContinue)"],
+                           capture_output=True, text=True).stdout.strip()
+    assert before == after
+
+
 # ------------------------------------------------------------------ patch ACT-73
 PATCH_TEXT = PATCH.read_text(encoding="utf-8")
 def test_act73_is_plain_ascii_lf_and_names_no_customer_detail():
@@ -64,15 +77,19 @@ def test_act73_is_plain_ascii_lf_and_names_no_customer_detail():
     assert not re.search(r"docs\.google\.com|spreadsheets/d/|[\w.-]+@[\w-]+\.\w+", PATCH_TEXT)
 
 
-def test_act73_adds_the_guarded_awards_load_and_the_hold_exit_in_both_places():
+def test_act73_replaces_only_fridays_awards_fetch_and_never_stops_the_run():
+    """Rebuilt 2026-11-10 (Matt: "Wait up to 2 hours"): the load waits for the sheets itself and the research always goes ahead, so there
+    is no exit 6 and Saturday's step 0 is not touched (one hunk)."""
     added = [ln[1:] for ln in PATCH_TEXT.splitlines() if ln.startswith("+") and not ln.startswith("+++")]
     removed = [ln[1:] for ln in PATCH_TEXT.splitlines() if ln.startswith("-") and not ln.startswith("---")]
-    assert sum("if ($LASTEXITCODE -eq 6)" in a and "exit 6" in a for a in added) == 2
+    assert PATCH_TEXT.count("\n@@") + PATCH_TEXT.startswith("@@") == 1
+    assert not any("exit 6" in a or "LASTEXITCODE" in a or re.search(r"\bexit\b", a) for a in added), "the patch must never end the run"
     assert any("--clients 'arnica-awards,utility-awards' --context friday" in a for a in added)
+    assert any("Wait up to 2 hours" in a for a in added)
     assert any("foreach ($awClient" in r for r in removed), "the old unguarded per-sheet fetch is replaced"
     assert not any(re.search(r"STEP\s+\w+:", a) for a in added), "no STEP marker: the pre-flight recognises it by its added line"
 
 
 def test_the_thursday_preflight_recognises_act73_by_its_added_line():
     sig = rg.patch_signature(PATCH_TEXT)
-    assert sig["kind"] == "line" and sig["target"] == "run_monthly.ps1" and "RESEARCH HELD (ACT-73)" in sig["line"]
+    assert sig["kind"] == "line" and sig["target"] == "run_monthly.ps1" and "--clients 'arnica-awards,utility-awards' --context friday" in sig["line"]

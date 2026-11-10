@@ -177,6 +177,8 @@ def parse_saturday(log: str) -> dict:
     out: dict = {"markets": {}}
     out["exit"] = first(r"=== run_monthly exit code: (-?\d+) ===", log)
     out["intake"] = first(r"INTAKE HEALTH: (.+)", log)
+    loads = re.findall(r"^SHEET LOAD: (.+)$", log, flags=re.M)                          # 2026-11-10: the LAST one is the verdict (after any wait)
+    out["sheet_load"] = loads[-1].strip() if loads else None
     out["coverage"] = coverage_facts(log)
     out["refresh_plan"] = re.findall(r"^REFRESH-PLAN (.+)$", log, flags=re.M)        # ACT-33: one line per market (a summary, or UNKNOWN - why)
     out["autoadd"] = autoadd_facts(log)
@@ -387,6 +389,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     facts = [f"5-row test before the run: {s['canary']}.",
              research_sentence(checks),
              f"Customer sheet check-in: {s['intake'] or 'no result in the log'}.",
+             *([f"Customer sheets: {s['sheet_load']}"] if s.get("sheet_load") else []),
              *([coverage_sentence(s["coverage"])] if kind != "friday" else []),      # awards have no customer sheet
              *([autoadd_sentence(s["autoadd"])] if kind != "friday" and s.get("autoadd") else []),
              *([refresh_plan_sentence(s["refresh_plan"])] if kind != "friday" and s.get("refresh_plan") else []),
@@ -440,6 +443,9 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     if good and qa_flags:
         status = "WORKED - " + str(len(qa_flags)) + " to check"
     label = "Friday awards research" if kind == "friday" else "Saturday research"
+    if (s.get("sheet_load") or "").startswith(("DEGRADED", "FAILED")):
+        # Matt, 2026-11-10: a weekend researched on old copies of the customer sheets is DEGRADED, said in the subject.
+        status += " - DEGRADED: customer sheets did not load, research used old copies"
     cov_n = (s["coverage"] or {}).get("not_in")
     if kind != "friday" and cov_n:
         status += f" - FLAG: {cov_n} customer row(s) not in the research queue"

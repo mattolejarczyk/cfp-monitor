@@ -2,8 +2,9 @@
 
 Every fetch is faked (no network), every email goes to a stub (tests/conftest.py also removes the mail settings), and every file lands in
 tmp_path. Covers: each cause the code can tell apart, the retries (only what can clear by itself), the exact subject and body, no secret in
-anything written or sent, one alert a day, the hold switch, the person's re-run, the dead-man check and the Thursday read-only check. And
-the inversion: a healthy load sends nothing and writes nothing."""
+anything written or sent, one alert a day, the 2-hour wait and its two follow-up emails (2026-11-10), the wait cut to the task's time
+limit, the person's re-run, the dead-man check's three cases and the Thursday read-only check. And the inversion: a healthy load sends
+nothing and writes nothing. No test reads Task Scheduler: the task reader is always a stub."""
 from __future__ import annotations
 
 import json
@@ -19,6 +20,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import customer_sheet_load as csl                                          # noqa: E402
+
+REAL_TASK_INFO = csl.task_info          # the fixtures stub csl.task_info; this test exercises the real parser with a fake runner
 
 NOW = datetime(2026, 11, 14, 2, 0, 5)
 FAKE_PASS = "s3cret-smtp-pass-DO-NOT-PRINT"
@@ -56,6 +59,7 @@ class World:
         self.desk = [tmp / "desk" / "CUSTOMER-SHEET-FETCH-FAILED.txt"]
         self.sent = []
         self.calls = []
+        self.status = tmp / "sheet_load_status.json"
 
     def mailer(self, subject, body, **kw):
         self.sent.append((subject, body, kw))
@@ -86,17 +90,22 @@ class World:
             return (0 if all(step.get(c, "ok") == "ok" for c in clients) else 1), "\n".join(out)
         return run
 
-    def load(self, script, clients=csl.ALL_CLIENTS, env=None, once=False, context="saturday", clock=None):
+    def load(self, script, clients=csl.ALL_CLIENTS, env=None, once=False, context="saturday", clock=None, task=None):
+        """env defaults to NO wait (CFP_SHEETS_HOLD_HOURS=0), so the older tests see one email; the wait has its own tests below."""
         clock = clock or Clock()
-        return csl.guarded_load(list(clients), context, self.config, self.snaps, once=once, env=env or {}, mailer=self.mailer,
+        return csl.guarded_load(list(clients), context, self.config, self.snaps, once=once,
+                                env={"CFP_SHEETS_HOLD_HOURS": "0"} if env is None else env, mailer=self.mailer,
                                 sleep=clock.sleep, runner=self.runner(script, clock), now=clock.now, qa_root=self.qa,
-                                state=self.state, alert_files=self.desk) + (clock,)
+                                state=self.state, alert_files=self.desk, task_reader=lambda name: dict(task or {}),
+                                say=lambda line: None, status_path=self.status) + (clock,)
 
 
 @pytest.fixture
 def w(tmp_path, monkeypatch):
     monkeypatch.setattr(csl.fcs, "alert_paths", lambda: [tmp_path / "desk" / "CUSTOMER-SHEET-FETCH-FAILED.txt"])
     monkeypatch.setenv("CFP_SMTP_PASS", FAKE_PASS)          # present in the environment, so redact() has something to strip
+    monkeypatch.setattr(csl, "task_info", lambda *a, **k: {})            # never read the real Task Scheduler from a test
+    monkeypatch.setattr(csl, "STATUS", tmp_path / "status-default.json")
     return World(tmp_path)
 
 
@@ -246,21 +255,100 @@ def test_one_alert_a_day_and_a_test_send_does_not_count(w):
     assert "already sent at 02:00 today" in lines[0]
 
 
-def test_hold_switch_on_exits_6_and_says_research_waits(w):
-    code, _r, lines, _c = w.load([{"utility": "403 from the export endpoint."}], env={"CFP_SHEETS_HOLD_RESEARCH": "1"})
-    body = w.sent[0][1]
-    assert code == 6 and "RESEARCH HELD" in lines[0]
-    assert "has NOT started and waits for you" in body and "Start-ScheduledTask -TaskName 'CFP Weekly Re-Research (live markets)'" in body
+# ------------------------------------------------------------------ the wait (Matt, 2026-11-10: "Wait up to 2 hours")
+def test_the_wait_is_two_hours_by_default_and_fits_the_task_limit():
+    assert csl.hold_plan("saturday", {}, lambda t: {}) == (2.0, "")                       # limit unknown: the full wait
+    assert csl.hold_plan("saturday", {}, lambda t: {"limit_h": 8.0}) == (2.0, "")         # D14: 8 h fits 2 h + a 4.5 h run
+    assert csl.hold_plan("friday", {}, lambda t: {"limit_h": 16.0}) == (2.0, "")
+    hours, why = csl.hold_plan("saturday", {}, lambda t: {"limit_h": 5.0})                # today's Saturday limit: no room
+    assert hours == 0.0 and "after 5 hours" in why and "raise the task's limit" in why
+    assert csl.hold_plan("saturday", {"CFP_SHEETS_HOLD_HOURS": "0"}, lambda t: {"limit_h": 8.0})[0] == 0.0
+    assert csl.hold_plan("saturday", {"CFP_SHEETS_HOLD_HOURS": "20"}, lambda t: {"limit_h": 8.0})[0] == 2.75   # capped at 4, then cut to fit
+    assert csl.hold_plan(None, {"CFP_SHEETS_HOLD_HOURS": "1.5"}, lambda t: {"limit_h": 1.0}) == (1.5, "")      # no research context: no task
+    hours, why = csl.hold_plan("friday", {"CFP_SHEETS_HOLD_HOURS": "two"}, lambda t: {})
+    assert hours == 2.0 and "not a number" in why
 
 
-def test_hold_switch_off_never_stops_the_research(w):
-    code, _r, _l, _c = w.load([{"utility": "403 from the export endpoint."}], env={"CFP_SHEETS_HOLD_RESEARCH": "0"})
-    assert code == 1 and "goes ahead with the last good copy" in w.sent[0][1]
+def test_the_task_limit_is_read_from_task_scheduler_output():
+    assert csl.parse_duration_h("PT5H") == 5.0 and csl.parse_duration_h("PT45M") == 0.75 and csl.parse_duration_h("P3D") == 72.0
+    assert csl.parse_duration_h("PT0S") is None and csl.parse_duration_h("") is None and csl.parse_duration_h("junk") is None
+    seen = []
+
+    def fake(cmd, timeout=60):
+        seen.append(cmd)
+        return 0, 'WARNING: noise\n{"state":"Ready","last":"2026-11-07T02:00:00","limit":"PT5H"}'
+    info = REAL_TASK_INFO("CFP Weekly Re-Research (live markets)", runner=fake)
+    assert info == {"state": "Ready", "last_run": datetime(2026, 11, 7, 2, 0), "limit_h": 5.0}
+    assert "Get-ScheduledTask" in seen[0][-1] and "Register" not in seen[0][-1] and "Set-" not in seen[0][-1]   # read only
+    assert REAL_TASK_INFO("x", runner=lambda c, timeout=60: (1, "no such task")) == {}
+
+
+def test_a_fix_during_the_wait_starts_the_research_and_sends_the_loaded_email(w):
+    w.copy("utility", NOW - timedelta(days=8))
+    script = [{"utility": "403 from the export endpoint."}, {"utility": "403 from the export endpoint."}, {}]
+    code, res, lines, clock = w.load(script, env={})
+    assert code == 0 and res["failed"] == []
+    assert [s[0] for s in w.sent] == [csl.SUBJECT, "CFP customer sheets loaded - research started"]
+    critical, loaded = w.sent[0][1], w.sent[1][1]
+    assert "is WAITING for the sheets" in critical and "until 04:00" in critical and "'CFP customer sheets loaded - research started'" in critical
+    assert "research ran on copies from <date>" in critical and "notices your fix within 10 minutes" in critical
+    assert "loaded at 02:20, after waiting 20 minutes: Utility Global conferences sheet" in loaded and "has started on fresh copies" in loaded
+    assert lines[-1].startswith("SHEET LOAD: HEALTHY - all 4 sheet(s) loaded at 02:20 after waiting 20 min")
+    assert clock.slept == [600, 600] and len(w.calls) == 3                                # sharing is not retried at first; the wait tries every 10 min
+    assert not w.desk[0].exists()
+    st = json.loads(w.status.read_text(encoding="utf-8"))["saturday"]
+    assert st["verdict"] == "RECOVERED" and st["waited_min"] == 20 and st["failed"] == []
+
+
+def test_still_failing_after_two_hours_runs_on_old_copies_and_says_degraded(w):
+    w.copy("utility", NOW - timedelta(days=8))
+    code, res, lines, clock = w.load([{"utility": "403 from the export endpoint."}], env={})
+    assert code == 1 and res["failed"] == ["utility"]
+    subjects = [s[0] for s in w.sent]
+    assert subjects == [csl.SUBJECT, "CFP customer sheets still not loaded - research ran on copies from Fri 06 Nov 2026"]
+    body = w.sent[1][1]
+    assert "still failing at 04:00 after waiting 120 minutes since 02:00" in body and "is going ahead now on the last good copies" in body
+    assert "show this weekend as DEGRADED" in body and "HOW TO FIX IT" in body and "--clients utility --once" in body and body.isascii()
+    assert clock.now() == NOW + timedelta(hours=2) and len(w.calls) == 13                    # 1 + one try every 10 minutes for 2 hours
+    assert lines[-1].startswith("SHEET LOAD: DEGRADED - 1 of 4 sheet(s) still not loaded after waiting 120 min (utility; cause: sharing)")
+    assert "the research runs on copies from Fri 06 Nov 2026" in lines[-1]
+    assert w.desk[0].read_text(encoding="utf-8") == body                                       # the Desktop file shows the latest state
+    st = json.loads(w.status.read_text(encoding="utf-8"))["saturday"]
+    assert st["verdict"] == "DEGRADED" and st["failed"] == ["utility"] and st["copies"]["utility"].startswith("2026-11-06")
+    for subj, b, _kw in w.sent:
+        assert FAKE_PASS not in b and "MIIfake" not in b
+
+
+def test_the_follow_up_does_not_use_up_the_one_critical_email_a_day(w):
+    w.load([{"utility": "403 from the export endpoint."}], env={})
+    w.load([{"utility": "403 from the export endpoint."}], env={})        # a second failure the same day
+    subjects = [s[0] for s in w.sent]
+    assert subjects.count(csl.SUBJECT) == 1 and subjects.count(subjects[1]) == 2
+
+
+def test_with_the_five_hour_limit_saturday_does_not_wait_and_says_why(w):
+    code, _res, lines, clock = w.load([{"utility": "403 from the export endpoint."}], env={}, task={"limit_h": 5.0})
+    assert code == 1 and len(w.sent) == 1 and clock.slept == []
+    assert "It does not wait for the sheets: Windows stops 'CFP Weekly Re-Research (live markets)' after 5 hours" in w.sent[0][1]
+    assert "no wait (Windows stops" in lines[0] and json.loads(w.status.read_text(encoding="utf-8"))["saturday"]["verdict"] == "FAILED"
+
+
+def test_a_healthy_load_records_healthy_for_the_recap_and_gate(w):
+    code, _r, _l, _c = w.load([{}], env={})
+    assert code == 0 and not w.sent and json.loads(w.status.read_text(encoding="utf-8"))["saturday"]["verdict"] == "HEALTHY"
+
+
+def test_the_persons_rerun_never_waits_and_records_nothing(w):
+    code, _r, _lines, clock = w.load([{"utility": "403 from the export endpoint."}], env={}, once=True)
+    assert code == 1 and clock.slept == [] and not w.sent and not w.status.exists()
 
 
 def test_friday_wording_names_the_awards_research(w):
     w.load([{"arnica-awards": "Read timed out."}], clients=csl.AWARD_CLIENTS, context="friday")
     assert "Friday 02:00 awards research goes ahead" in w.sent[0][1]
+    w2_sent = len(w.sent)
+    w.load([{"arnica-awards": "Read timed out."}], clients=csl.AWARD_CLIENTS, context="friday", env={}, task={"limit_h": 16.0})
+    assert "The Friday 02:00 awards research is WAITING for the sheets" in "".join(b for _s, b, _k in w.sent[w2_sent:]) or len(w.sent) > w2_sent
 
 
 def test_the_persons_rerun_tries_once_sends_nothing_and_prints_the_fix(w):
@@ -273,16 +361,24 @@ def test_a_healthy_load_sends_nothing_writes_nothing_and_clears_the_desktop_file
     w.desk[0].parent.mkdir(parents=True)
     w.desk[0].write_text("old alert", encoding="utf-8")
     code, res, lines = csl.guarded_load(list(csl.ALL_CLIENTS), "saturday", w.config, w.snaps, env={}, mailer=w.mailer,
-                                            sleep=Clock().sleep, runner=w.runner([{}], Clock()), now=Clock().now, qa_root=w.qa, state=w.state)
+                                            sleep=Clock().sleep, runner=w.runner([{}], Clock()), now=Clock().now, qa_root=w.qa, state=w.state,
+                                            status_path=w.status)
     assert code == 0 and not w.sent and not w.qa.exists() and not w.desk[0].exists()
     assert lines == ["SHEET LOAD: HEALTHY - 4 of 4 sheet(s) loaded at 02:00"]
 
 
 # ------------------------------------------------------------------ the dead-man check
-def deadman(w, kind="saturday", now=NOW.replace(hour=3, minute=0), clock=None, **kw):
+def deadman(w, kind="saturday", now=NOW.replace(hour=3, minute=0), clock=None, task=None, **kw):
+    """task: a dict the stub task reader returns, or a list of dicts returned one per call (the last one repeats)."""
     clock = clock or Clock(now)
+    seq = task if isinstance(task, list) else [task or {}]
+    calls = []
+
+    def reader(name):
+        calls.append(name)
+        return dict(seq[min(len(calls), len(seq)) - 1])
     return csl.deadman(kind, w.snaps, w.tmp / "logs", w.config, now=clock.now, sleep=clock.sleep, env={}, mailer=w.mailer,
-                       qa_root=w.qa, state=w.state, alert_files=w.desk, **kw), clock
+                       qa_root=w.qa, state=w.state, alert_files=w.desk, task_reader=reader, **kw), clock
 
 
 def test_deadman_is_quiet_when_todays_copies_are_there(w):
@@ -299,17 +395,43 @@ def test_deadman_friday_checks_only_the_two_awards_sheets(w):
     assert code == 0 and not w.sent
 
 
-def test_deadman_when_the_job_never_ran_sends_the_critical_email(w):
+def test_deadman_case_1_the_research_task_did_not_start(w):
     for c in csl.ALL_CLIENTS:
         w.copy(c, NOW - timedelta(days=7))
-    (code, lines), _c = deadman(w)
-    assert code == 1 and "4 of 4 sheet(s) have no copy from today" in lines[0]
+    (code, lines), clock = deadman(w, task={"state": "Ready", "last_run": datetime(2026, 11, 7, 2, 0), "limit_h": 5.0})
+    assert code == 1 and "the research task did not start: 4 of 4 sheet(s) have no copy from today" in lines[0]
+    assert sum(clock.slept) == csl.DEADMAN_START_GRACE_S                                   # gave a late task 5 minutes to start by itself
     subj, body, _kw = w.sent[0]
-    assert subj == csl.SUBJECT and "did not take today's copies" in body and "Get-ScheduledTaskInfo -TaskName 'CFP Weekly Re-Research (live markets)'" in body
-    assert "no run log for today" in body
+    assert subj == csl.SUBJECT and "LIKELY CAUSE: The research task did not start" in body
+    assert "Start-ScheduledTask -TaskName 'CFP Weekly Re-Research (live markets)'" in body and "its last run was Sat 07 Nov 02:00" in body
+    assert "did NOT start today, so nothing has been researched yet" in body
 
 
-def test_deadman_reads_the_cause_from_todays_run_log(w):
+def test_deadman_case_1_a_task_that_starts_during_the_grace_is_running_not_missing(w):
+    (code, lines), _clock = deadman(w, task=[{"state": "Ready", "last_run": datetime(2026, 11, 7, 2, 0)},
+                                             {"state": "Ready", "last_run": datetime(2026, 11, 7, 2, 0)},
+                                             {"state": "Running", "last_run": NOW.replace(hour=3, minute=1)}])
+    assert code == 0 and lines[0].startswith("SHEET DEADMAN: RUNNING") and not w.sent
+
+
+def test_deadman_case_2_the_task_is_running_sends_nothing(w):
+    (code, lines), clock = deadman(w, task={"state": "Running", "last_run": NOW})
+    assert code == 0 and not w.sent and clock.slept == []
+    assert "is running: it raises its own alert and waits for the sheets. Nothing sent." in lines[0]
+
+
+def test_deadman_case_2_a_fresh_run_log_also_counts_as_running(w):
+    logs = w.tmp / "logs"
+    logs.mkdir()
+    log = logs / "run_monthly_20261114-020001.log"
+    log.write_text("SHEET WAIT: try at 02:50 - 1 still failing\n", encoding="utf-8")
+    t = NOW.replace(hour=2, minute=55).timestamp()
+    os.utime(log, (t, t))
+    (code, lines), _c = deadman(w, task={})                                                 # Task Scheduler could not be read
+    assert code == 0 and lines[0].startswith("SHEET DEADMAN: RUNNING") and not w.sent
+
+
+def test_deadman_case_3_the_task_ran_and_the_cause_is_read_from_todays_run_log(w):
     logs = w.tmp / "logs"
     logs.mkdir()
     log = logs / "run_monthly_20261114-020001.log"
@@ -318,32 +440,20 @@ def test_deadman_reads_the_cause_from_todays_run_log(w):
     os.utime(log, (old, old))
     for c in ("arnica", "arnica-awards", "utility-awards"):
         w.copy(c, NOW)
-    (code, _lines), clock = deadman(w)
-    assert code == 1 and clock.slept == [] and "Google refused to let our reader open the sheet" in w.sent[0][1]
+    (code, lines), clock = deadman(w, task={"state": "Ready", "last_run": NOW})
+    assert code == 1 and clock.slept == [] and "the research ran but today's copies are missing" in lines[0]
+    assert "Google refused to let our reader open the sheet" in w.sent[0][1] and "ran today but did not take today's copies" in w.sent[0][1]
 
 
-def test_deadman_waits_for_a_run_that_is_still_going_then_is_quiet(w):
-    logs = w.tmp / "logs"
-    logs.mkdir()
-    log = logs / "run_monthly_20261114-030001.log"
-    log.write_text("started\n", encoding="utf-8")
-    t = NOW.replace(hour=3).timestamp()
-    os.utime(log, (t, t))
-    clock = Clock(NOW.replace(hour=3, minute=2))
-    real_sleep = clock.sleep
-
-    def sleep_then_copy(s):
-        real_sleep(s)
-        for c in csl.ALL_CLIENTS:
-            w.copy(c, clock.now())
-    clock.sleep = sleep_then_copy
-    (code, _lines), _c = deadman(w, clock=clock)
-    assert code == 0 and not w.sent and len(clock.slept) == 1
+def test_deadman_case_3_without_a_failure_line_says_the_run_skipped_the_sheets(w):
+    (code, _lines), _c = deadman(w, task={"state": "Ready", "last_run": NOW.replace(hour=2, minute=0)})
+    body = w.sent[0][1]
+    assert code == 1 and "ran today and finished, but did not save today's copies" in body and "SHEET LOAD and STOPPED" in body
 
 
 def test_deadman_does_not_send_a_second_email_after_the_run_already_alerted(w):
     w.load([{"utility": "403 from the export endpoint."}])
-    (code, lines), _c = deadman(w)
+    (code, lines), _c = deadman(w, task={"state": "Ready", "last_run": NOW})
     assert code == 1 and len(w.sent) == 1 and "already sent" in lines[0]
 
 
@@ -356,3 +466,35 @@ def test_the_read_check_saves_nothing_tries_once_and_sends_nothing(w):
     assert res["failed"] == ["utility"] and not any(w.snaps.iterdir()) and not w.sent
     lines = csl.fix_summary(res, w.config)
     assert lines and "service-account key" in lines[0]
+
+
+# ------------------------------------------------------------------ DEGRADED reaches the recap and the Sunday gate (Matt, 2026-11-10)
+def test_the_recap_reads_the_last_sheet_load_line_and_says_degraded_in_the_subject():
+    from scripts.weekend_recap import parse_saturday, saturday_recap
+    log = ("=== run_monthly exit code: 0 ===\nINTAKE HEALTH: ok\n"
+           "SHEET LOAD: FAILED - 1 of 4 sheet(s) did not load (utility; cause: sharing); email sent; evidence: x.json; waiting up to 2 hours (until 04:00) for the sheets\n"
+           "SHEET WAIT: try at 02:20 - 1 still failing (utility); next try in 10 min, until 04:00\n"
+           "SHEET LOAD: DEGRADED - 1 of 4 sheet(s) still not loaded after waiting 120 min (utility; cause: sharing); the research runs on copies from Fri 06 Nov 2026\n")
+    assert parse_saturday(log)["sheet_load"].startswith("DEGRADED - 1 of 4")
+    subject, text, _ = saturday_recap(log, None, Path("."), "saturday", None)
+    assert "DEGRADED: customer sheets did not load, research used old copies" in subject
+    assert "Customer sheets: DEGRADED - 1 of 4 sheet(s) still not loaded" in text
+    ok_log = log.replace("SHEET LOAD: DEGRADED - 1 of 4 sheet(s) still not loaded after waiting 120 min (utility; cause: sharing); the research runs on copies from Fri 06 Nov 2026",
+                         "SHEET LOAD: HEALTHY - all 4 sheet(s) loaded at 02:20 after waiting 20 min")
+    subject, _text, _ = saturday_recap(ok_log, None, Path("."), "saturday", None)
+    assert "DEGRADED" not in subject
+
+
+def test_the_sunday_gate_warns_degraded_when_a_research_ran_on_old_copies():
+    from types import SimpleNamespace
+    from datetime import date
+    from scripts import release_gate as rg
+    o = SimpleNamespace(on=date(2026, 11, 15))
+    bad = {"saturday": {"date": "2026-11-14", "verdict": "DEGRADED", "failed": ["utility"], "copies": {"utility": "2026-11-06T02:00:00"}, "waited_min": 120},
+           "friday": {"date": "2026-11-13", "verdict": "RECOVERED", "failed": [], "waited_min": 20}}
+    c = rg.check_sheet_load(o, bad)
+    assert c["status"] == "WARN" and c["summary"].startswith("DEGRADED: Saturday's research ran on old copies")
+    assert any("utility 2026-11-06" in r for r in c["rows"]) and any("loaded after waiting 20 min" in r for r in c["rows"])
+    assert rg.check_sheet_load(o, {"saturday": {"date": "2026-11-14", "verdict": "HEALTHY", "failed": []}})["status"] == "PASS"
+    old = {"saturday": {"date": "2026-11-07", "verdict": "DEGRADED", "failed": ["utility"]}}       # last week's: not this weekend
+    assert rg.check_sheet_load(o, old)["status"] == "PASS" and rg.check_sheet_load(o, {})["status"] == "PASS"

@@ -759,6 +759,7 @@ def evaluate(o: Opts) -> dict:
     checks.append(safely("f", "Customer sheet snapshots", lambda: check_snapshots(o)))
     checks.append(safely("g", "Build QA", lambda: check_build_qa(o, view, commitments)))
     checks.append(safely("h", "Upstream", lambda: check_upstream(o, commitments)))
+    checks.append(safely("i", "Customer sheets loaded this weekend", lambda: check_sheet_load(o)))
     if missing:
         checks.insert(0, Check("a0", "Approved files present", "FAIL", f"approved file(s) missing: {', '.join(missing)}"))
     verdict = verdict_of(checks)
@@ -769,6 +770,38 @@ def evaluate(o: Opts) -> dict:
               "provisional_conference": len([r for r in (view.get("conference") or []) if r.get("prov")])}
     return {"checks": checks, "verdict": verdict, "counts": counts, "coverage": {"conference": cov_conf, "awards": cov_awards}, "coverage_lines": cov_lines, "pages": pages,
             "preflight": o.preflight, "on": o.on.isoformat(), "real_chrome": real_chrome_line(o)}
+
+
+def check_sheet_load(o: Opts, status: dict | None = None) -> Check:
+    """Did Friday's and Saturday's research take fresh customer sheets? (Matt, 2026-11-10: a weekend researched on old copies is DEGRADED.)
+    Reads runs_out/sheet_load_status.json (customer_sheet_load.write_status). WARN, never FAIL: the pages are still right for what was researched."""
+    if status is None:
+        import customer_sheet_load as csl                                   # noqa: PLC0415
+        status = csl.read_status(getattr(o, "sheet_status", None))
+    rows, bad = [], []
+    for kind, label in (("friday", "Friday (awards sheets)"), ("saturday", "Saturday (all four sheets)")):
+        e = status.get(kind) or {}
+        try:
+            age = (o.on - date.fromisoformat(e.get("date", ""))).days
+        except ValueError:
+            age = None
+        if age is None or age < 0 or age > 3:
+            rows.append(f"INFO {label}: no sheet load recorded this weekend (check f shows the copies' age)")
+            continue
+        v = e.get("verdict", "?")
+        if v in ("DEGRADED", "FAILED"):
+            olds = ", ".join(f"{c} {str(t)[:10]}" for c, t in (e.get("copies") or {}).items() if c in (e.get("failed") or []))
+            rows.append(f"WARN {label}: DEGRADED - {', '.join(e.get('failed') or [])} did not load"
+                        + (f" after waiting {e.get('waited_min')} min" if e.get("waited_min") else "") + f"; the research used copies from {olds or 'an older week'}")
+            bad.append(label.split(" ")[0])
+        elif v == "RECOVERED":
+            rows.append(f"INFO {label}: loaded after waiting {e.get('waited_min')} min (the research used fresh copies)")
+        else:
+            rows.append(f"INFO {label}: {v}")
+    if bad:
+        return Check("i", "Customer sheets loaded this weekend", "WARN",
+                     f"DEGRADED: {' and '.join(bad)}'s research ran on old copies of the customer sheets (they did not load)", rows)
+    return Check("i", "Customer sheets loaded this weekend", "PASS", "the research took fresh customer sheets" if rows and any("INFO" in r and ("HEALTHY" in r or "loaded" in r) for r in rows) else "no failed sheet load recorded", rows)
 
 
 def real_chrome_line(o: Opts) -> str:
@@ -798,10 +831,9 @@ SWITCHES = (
     ("CFP_AWARDS_AUTOADD_APPLY", "Friday", "Friday ADDS customer awards that are missing from the research queue", "Friday only REPORTS the customer awards that are missing from the research queue; they are not researched"),
     ("CFP_AUTOADD_APPLY", "Saturday", "Saturday ADDS customer conferences that are missing from the research queue", "Saturday only REPORTS the customer conferences that are missing from the research queue; they are not researched"),
     ("CFP_REFRESH_APPLY", "Saturday", "Saturday skips researching closed events the refresh policy covers (last week's row is carried)", "Saturday researches every row, as before the refresh policy"),
-    # 2026-11-09 (Matt: a failed customer sheet load is a CRITICAL error). The email goes either way; this decides whether the research waits.
-    ("CFP_SHEETS_HOLD_RESEARCH", "Friday and Saturday", "if the customer sheets do not load, the research does NOT start: it waits for you (needs patch ACT-73)",
-     "if the customer sheets do not load, the research goes ahead on the last good copy (you still get the CRITICAL email at once)"),
 )
+# 2026-11-10 (Matt: "Wait up to 2 hours"). Not an on/off switch: a number of hours, shown on its own line (hold_line).
+HOLD_SWITCH = "CFP_SHEETS_HOLD_HOURS"
 MAIL_VARS = ("CFP_RECAP_TO", "CFP_SMTP_HOST", "CFP_SMTP_PORT", "CFP_SMTP_USER", "CFP_SMTP_PASS")
 
 
@@ -954,6 +986,10 @@ def thursday_checks(o: Opts, env: dict | None = None, patches_dir: Path = PATCHE
             st = "ON" if v == "1" else ("OFF" if v else "not set")
             state[name] = st
             rows.append(f"INFO {name} is {st} - {day}: " + (on_text if st == "ON" else off_text))
+        hv = env_value(HOLD_SWITCH, env)
+        state[HOLD_SWITCH] = hv or "not set"
+        rows.append(f"INFO {HOLD_SWITCH} is {hv or 'not set (2 hours)'} - Friday and Saturday: when the customer sheets do not load, the research waits "
+                    "that many hours for them (one try every 10 minutes, cut to fit the task's time limit), then goes ahead on the last good copies")
         mail = {n: bool(env_value(n, env)) for n in MAIL_VARS}
         facts["switches"], facts["mail"] = state, mail
         absent = [n for n, ok in mail.items() if not ok]

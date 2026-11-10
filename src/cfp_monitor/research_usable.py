@@ -32,7 +32,7 @@ MAX_OUTPUT_AGE_H = 30
 # run_market_audit.py exit codes: 0 complete; 1 finished with stub rows or rows that did not land
 # (routine, the row rule handles each one); 3 quota exhausted; 4 grounded search collapsed; 130 interrupted.
 USABLE_EXITS = (None, 0, 1)
-HALT_EXITS = "3 = out of quota, 4 = search collapsed, 6 = held: the customer sheets did not load and CFP_SHEETS_HOLD_RESEARCH is 1, 130 = interrupted"
+HALT_EXITS = "3 = out of quota, 4 = search collapsed, 130 = interrupted"
 
 
 @dataclass

@@ -1,29 +1,18 @@
 --- a/Markets/run_monthly.ps1
 +++ b/Markets/run_monthly.ps1
-@@ -227,6 +227,10 @@
-     try {
-         if ((Test-Path $py) -and (Test-Path $intake)) {
-             & $py $intake
-+            # ACT-73 (2026-11-09, Matt: a failed customer sheet load is a CRITICAL error). The intake now loads the sheets through
-+            # cfp-monitor scripts/customer_sheet_load.py: 3 tries over about 15 minutes, then ONE CRITICAL email with the fix. It still returns 0
-+            # (the research goes ahead on the last good copy) unless Matt's hold switch CFP_SHEETS_HOLD_RESEARCH=1 is on: then 6, and the run ends here.
-+            if ($LASTEXITCODE -eq 6) { Write-Host "RESEARCH HELD (ACT-73): the customer sheets did not load and the hold switch CFP_SHEETS_HOLD_RESEARCH is 1. Nothing researched, nothing spent. The CRITICAL email says how to fix it; then start this task again." -ForegroundColor Red; exit 6 }
-         } else {
-             Write-Host "INTAKE SKIPPED: interpreter or script not found ($py / $intake)." -ForegroundColor Yellow
-             Write-Host "  Research continues. The client layer is whatever it already was." -ForegroundColor Yellow
-@@ -300,9 +304,12 @@
+@@ -300,9 +300,12 @@
      if ($env:CFP_AWARDS_AUTOADD_APPLY -eq '1') { $awArgs = @('--apply', '--live') }
      try {
          if ($Markets -contains 'Awards' -and (Test-Path $awPy) -and (Test-Path $awFetch)) {
 -            foreach ($awClient in @('arnica-awards', 'utility-awards')) {
 -                try { & $awPy $awFetch --client $awClient --out-dir "$PSScriptRoot\customer_snapshots" } catch { Write-Host "AWARDS SHEET FETCH FAILED ($awClient): $($_.Exception.Message) - the newest snapshot on disk is used." }
 -            }
-+            # ACT-73 (2026-11-09): ONE guarded load of both awards sheets (cfp-monitor scripts/customer_sheet_load.py): 3 tries over about 15 minutes,
-+            # then ONE CRITICAL email to Matt with the fix, before the research. Until now a failed fetch here printed one line and nothing else.
-+            # Exit 6 = it failed AND the hold switch CFP_SHEETS_HOLD_RESEARCH=1 is on: the research does not start. Otherwise it goes ahead.
++            # ACT-73 (2026-11-09, Matt: a failed customer sheet load is a CRITICAL error; 2026-11-10: "Wait up to 2 hours"). ONE guarded load of
++            # both awards sheets (cfp-monitor scripts/customer_sheet_load.py): 3 tries over about 15 minutes, then ONE CRITICAL email to Matt with
++            # the fix, then a try every 10 minutes for up to 2 hours and a second email either way. The research then always goes ahead: on fresh
++            # copies, or on the last good ones (DEGRADED in the recap and the Sunday gate). Until now a failed fetch here printed one line.
 +            $awLoad = "C:\Users\matts\cfp-monitor\scripts\customer_sheet_load.py"
 +            try { & $awPy $awLoad --clients 'arnica-awards,utility-awards' --context friday --snapshots "$PSScriptRoot\customer_snapshots" } catch { Write-Host "SHEET LOAD: DEGRADED - $($_.Exception.Message) - the newest snapshot on disk is used." }
-+            if ($LASTEXITCODE -eq 6) { Write-Host "RESEARCH HELD (ACT-73): the customer sheets did not load and the hold switch CFP_SHEETS_HOLD_RESEARCH is 1. Nothing researched, nothing spent. The CRITICAL email says how to fix it; then start this task again." -ForegroundColor Red; exit 6 }
          }
          if ((Test-Path $awPy) -and (Test-Path $awPy_)) {
              & $awPy $awPy_ @awArgs

@@ -112,12 +112,12 @@ def test_one_permanent_and_one_transient_failure_is_still_retried(monkeypatch, t
     assert attempts == 1 + len(wi.RETRY_DELAYS)
 
 
-def test_a_failed_load_is_held_only_when_the_switch_is_on(monkeypatch, tmp_path):
-    """2026-11-09: CFP_SHEETS_HOLD_RESEARCH=1 makes a failed load exit 6 (run_monthly then stops before the research); off, it never stops."""
+def test_a_failed_load_never_stops_the_research_and_the_verdict_is_the_last_line(monkeypatch, tmp_path):
+    """2026-11-10 (Matt: "Wait up to 2 hours"): no exit 6 any more. A failed load returns 1 after its wait (none here: conftest sets
+    CFP_SHEETS_HOLD_HOURS=0) and the research goes ahead; the note is the final verdict line."""
     import customer_sheet_load as csl
     out = (1, "utility: FAILED - 403 from the export endpoint.\narnica: FAILED - 403 from the export endpoint.")
-    for env, want in (({"CFP_SHEETS_HOLD_RESEARCH": "1"}, 6), ({}, 1)):
-        monkeypatch.delenv("CFP_SHEETS_HOLD_RESEARCH", raising=False)
+    for env, want in (({}, 1),):
         (tmp_path / "sent.json").unlink(missing_ok=True)
         calls = []
         monkeypatch.setattr(wi, "run", lambda cmd, timeout=600: (calls.append(cmd), out)[1])
@@ -130,7 +130,7 @@ def test_a_failed_load_is_held_only_when_the_switch_is_on(monkeypatch, tmp_path)
         cfg.write_text(json.dumps({"service_account_key": "k", "clients": {"utility": {}, "arnica": {}}}), encoding="utf-8")
         ok, notes, code = wi.fetch_all(cfg, tmp_path)
         assert not ok and code == want and (tmp_path / "desk.txt").read_text(encoding="utf-8").startswith(csl.SUBJECT)
-        assert any(n.startswith("SHEET LOAD: FAILED") for n in notes)
+        assert any(n.startswith("SHEET LOAD: FAILED") and "the research goes ahead on the last good copies" in n for n in notes)
 
 
 # ------------------------------------------------------------------------------------------------
