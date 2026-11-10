@@ -5,6 +5,11 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-11-09 (night) - D12: speaking_route.py recorded as site-walking debt (Matt's option A)
+- Matt on Daily Review: "A Add to pending-migration list with reason, no behaviour change; migrate later with a before/after on a real Monday". `tests/test_no_reimplemented_crawling.py`: speaking_route.py is on PENDING_MIGRATION with the reason (it joins the home page's anchors itself and keeps exact home and sponsor hosts; rank_links would change which links the pages job's speaking-route step reads)
+- The companion guard `test_the_allow_list_only_shrinks` capped the list at 11; option A needs 12, so the cap is 12 with D12 written beside it and "the next change to this number goes DOWN". Not a quiet loosening: it is the mechanical half of the option Matt clicked. No script changed; the speaking-route step behaves exactly as before
+- Still to do (later, not scheduled): migrate speaking_route.py onto sitewalk.rank_links with a before/after of the links it reads on a real run, then take it off the list and the cap back to 11
+
 ## 2026-11-09 (evening) - the 7 tests that already failed: 6 fixed, 1 is D12 for Matt
 - Matt in the parent's chat, before Friday's 02:00 awards run: "Yes, fix them" (these 7 tests, nothing wider). Classified each from its evidence; nothing loosened
 - STALE FIXTURE, fixed (3): `test_self_heal.py::test_confirm_flag_and_unavailable`, `::test_every_record_carries_a_registered_method`, `::test_escalation_tries_the_browser_only_when_the_plain_page_is_unreadable`. Their row's deadline is 2026-10-19 and `resolve_rows` uses today's date by default; since 10-20 the row is a passed deadline and is closed for free before any verifier (correct behaviour, tested on its own in `test_passed_deadline_is_resolved_free_before_any_fetch`). The tests now pass `today=BEFORE_THE_DEADLINE` (2026-09-22), as that neighbouring test already did; one more call in the customer-working test is pinned the same way. No code changed

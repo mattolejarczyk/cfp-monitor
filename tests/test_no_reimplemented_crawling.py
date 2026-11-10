@@ -36,6 +36,11 @@ PENDING_MIGRATION = {
     "extract_sponsor_quotes.py": "fetches the one page upstream supplied",
     "accept_delivery.py":        "the gate fetches cited pages; check 3 is its own concern",
     "check_dns.py":              "DNS only, deliberately no fetch",
+    # D12 on Daily Review (Matt, 2026-11-09): "Add to pending-migration list with reason, no behaviour change; migrate later with
+    # a before/after on a real Monday". Added 10-19 (69fbde6) without this list; the guard failed from then on.
+    "speaking_route.py":         "joins the home page's anchors itself and keeps links on the exact home and sponsor hosts; "
+                                 "rank_links (same-site, NOT_A_PAGE) would change which links the pages job's speaking-route "
+                                 "step reads, so it moves in its own change with a before/after on a real run (D12)",
 }
 
 # The moves that mean "I am walking a site myself".
@@ -69,8 +74,12 @@ def test_no_new_script_walks_a_site_on_its_own():
 
 
 def test_the_allow_list_only_shrinks():
-    """Eleven known offenders on 2026-08-29. A rising number means the debt is growing."""
-    assert len(PENDING_MIGRATION) <= 11, (
+    """Eleven known offenders on 2026-08-29. A rising number means the debt is growing.
+
+    12 since 2026-11-09, by Matt's own decision (D12 on Daily Review, option A): speaking_route.py was added on 10-19 without
+    this list, and moving it onto sitewalk would change a scheduled job, so it is recorded as debt rather than migrated blind.
+    The next change to this number goes DOWN: migrating speaking_route.py takes it back to 11."""
+    assert len(PENDING_MIGRATION) <= 12, (
         f"PENDING_MIGRATION has grown to {len(PENDING_MIGRATION)}. It is a record of debt, "
         "not a place to file new duplication.")
     for name, why in PENDING_MIGRATION.items():
