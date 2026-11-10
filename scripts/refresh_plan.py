@@ -43,6 +43,91 @@ COLUMN = "REFRESH_SKIP"
 OPENING_WINDOW_DAYS, ROTATION_MIN_AGE, STALE_DAYS, ROTATION_WEEKS = 60, 21, 56, 4
 CENTS_PER_CALL = 6.1          # measured on the conference narrow question (2026-09-30); awards not yet measured
 
+# D11 on Daily Review (Matt, 2026-11-09): "A. Report only in November; switch on in December". Plan step 9 of
+# docs/design/customer-context-plan.md: a row the customer is working on (their status Info Needed, Drafting or Submitted, or their own
+# deadline within 30 days) is never skipped. Before CUSTOMER_WORKING_FROM the plan only REPORTS the skipped rows this would bring back
+# (a REFRESH-PLAN bracket and a report section, with the estimated cost); from that day they are researched as an override.
+CUSTOMER_WORKING_FROM = date(2026, 12, 1)
+CUSTOMER_WORKING_DAYS = 30
+WORKING_STATUSES = ("info needed", "drafting", "submitted")
+
+
+def working_reason(status: str, their_deadline: str, today: date) -> str:
+    """'' when the customer's row does not say they are working on it; otherwise why, in plain words. Pure."""
+    st = (status or "").strip()
+    if any(st.lower().startswith(w) for w in WORKING_STATUSES):
+        return f"their status is '{st}'"
+    d = _d(their_deadline)
+    if d and today <= d <= today + timedelta(days=CUSTOMER_WORKING_DAYS):
+        return f"their deadline {d.isoformat()} is within {CUSTOMER_WORKING_DAYS} days"
+    return ""
+
+
+def customer_working_active(today: date) -> bool:
+    return today >= CUSTOMER_WORKING_FROM
+
+
+def customer_working_conferences(db: Path, today: date) -> dict[str, str]:
+    """{our canonical id: reason} from the client layer (client_conferences, loaded by Saturday's intake BEFORE this step). Joined on OUR
+    event_id, the id the client matcher stamped (contract 5.4); a customer row with no matched id cannot be joined and is left out. A row
+    the customer withdrew is not work. Read-only."""
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    con.row_factory = sqlite3.Row
+    out: dict[str, str] = {}
+    try:
+        for r in con.execute("select event_id, status, their_deadline, withdrawn_by_customer from client_conferences"):
+            eid = (r["event_id"] or "").strip()
+            if not eid or str(r["withdrawn_by_customer"] or "").strip().lower() not in ("", "0", "no", "false", "none", "n/a", "-"):
+                continue
+            why = working_reason(r["status"], r["their_deadline"], today)
+            if why and eid not in out:
+                out[eid] = why
+    finally:
+        con.close()
+    return out
+
+
+def working_award_index(sheet_rows: list[dict], today: date) -> dict:
+    """{'names': {name key: reason}, 'urls': {deep url key: reason}} for the awards the customers are working on (rows from
+    customer_awards.sheet_rows). Matched by name or deep link, never by an id (the sheets carry none)."""
+    from scripts.customer_awards import name_key, url_key
+    names: dict[str, str] = {}
+    urls: dict[str, str] = {}
+    for r in sheet_rows:
+        why = working_reason(r.get("status", ""), r.get("deadline", ""), today)
+        if not why:
+            continue
+        if name_key(r.get("name", "")):
+            names.setdefault(name_key(r["name"]), why)
+        if url_key(r.get("url", "")):
+            urls.setdefault(url_key(r["url"]), why)
+    return {"names": names, "urls": urls}
+
+
+def award_working(index: dict | None, row: dict) -> str:
+    if not index:
+        return ""
+    from scripts.customer_awards import name_key, url_key
+    k = name_key(row.get("CONFERENCE", ""))
+    if k and k in index["names"]:
+        return index["names"][k]
+    for u in (row.get("SUBMISSION URL", ""), row.get("CONFERENCE URL", "")):
+        if url_key(u) and url_key(u) in index["urls"]:
+            return index["urls"][url_key(u)]
+    return ""
+
+
+def customer_working_awards(today: date, sheets_dir: Path | None = None) -> dict:
+    """The working index from the newest copies of the two customer awards sheets (Friday step 0a1b refreshes them before this step)."""
+    from scripts import customer_awards as ca
+    rows = []
+    for client in ca.CLIENTS:
+        p = ca.newest_sheet(Path(sheets_dir) if sheets_dir else ca.SNAPSHOTS, client)
+        if p is None:
+            raise FileNotFoundError(f"no copy of the {client} sheet")
+        rows += ca.sheet_rows(p, client)
+    return working_award_index(rows, today)
+
 
 def stable_hash(s: str) -> int:
     return int(hashlib.sha1((s or "").encode("utf-8")).hexdigest()[:8], 16)
@@ -99,14 +184,22 @@ def due(rec: dict | None, award_id: str, today: date) -> tuple[bool, str]:
     return False, f"dormant (closed, next cycle not near, researched {age} days ago)"
 
 
-def plan(rows: list[dict], db_rows: dict, today: date, max_skip_fraction: float = 0.7) -> dict:
-    """{'skip': {row_index: reason}, 'why': Counter-like dict of reasons for researched rows, 'fuse': text or ''}. Rows labelled DUP_OF are left to the audit's own rule."""
-    skip, why = {}, {}
+def plan(rows: list[dict], db_rows: dict, today: date, max_skip_fraction: float = 0.7, working: dict | None = None) -> dict:
+    """{'skip': {row_index: reason}, 'why': Counter-like dict of reasons for researched rows, 'fuse': text or '', 'customer_working': [(row_index, why)]
+    for skipped rows the customer is working on (report only before CUSTOMER_WORKING_FROM; from then they are researched, reason
+    'customer-working')}. Rows labelled DUP_OF are left to the audit's own rule."""
+    skip, why, report_only = {}, {}, []
     candidates = [i for i, r in enumerate(rows) if not (r.get("DUP_OF") or "").strip()]
     for i in candidates:
         r = rows[i]
         aid = (r.get("EVENT_ID_CANON") or "").strip()
         go, reason = due(db_rows.get(aid), aid, today)
+        if not go:
+            w = award_working(working, r)
+            if w and customer_working_active(today):
+                go, reason = True, "customer-working"
+            elif w:
+                report_only.append((i, w))
         if go:
             why[reason] = why.get(reason, 0) + 1
         else:
@@ -115,7 +208,7 @@ def plan(rows: list[dict], db_rows: dict, today: date, max_skip_fraction: float 
     if candidates and len(skip) / len(candidates) > max_skip_fraction:
         fuse = f"would skip {len(skip)} of {len(candidates)} rows (over {int(max_skip_fraction * 100)}%): skipping nothing, something is off with the data"
         skip = {}
-    return {"skip": skip, "researched": why, "fuse": fuse, "rows": len(candidates)}
+    return {"skip": skip, "researched": why, "fuse": fuse, "rows": len(candidates), "customer_working": [w for w in report_only if w[0] in skip]}
 
 
 def read_db_rows(db: Path, market: str) -> dict:
@@ -351,7 +444,8 @@ def dead_links(rec: dict, states: dict[str, str]) -> list[str]:
     return [u for u in ((rec.get(c) or "").strip() for c in LINK_COLUMNS) if u and link_state(u, states) == "dead"]
 
 
-def conference_plan(rows: list[dict], prior_by_canon: dict[str, dict], states: dict[str, str], overrides: set[str], today: date, pol: dict) -> dict:
+def conference_plan(rows: list[dict], prior_by_canon: dict[str, dict], states: dict[str, str], overrides: set[str], today: date, pol: dict,
+                    working: dict[str, str] | None = None) -> dict:
     """{'decisions': [per candidate row dict], 'skip': {row_index: mark}, 'counts': {...}, 'fuse': text or '', 'rows': n}. Rows labelled DUP_OF are left to the audit's own rule."""
     decisions = []
     jan = first_saturday_of_january(today)
@@ -383,6 +477,11 @@ def conference_plan(rows: list[dict], prior_by_canon: dict[str, dict], states: d
                     dead = []                                    # a lean week does not chase links on Closed rows
                 if dead:
                     forced.append(("dead-link", "customer-facing link recorded dead: " + dead[0]))
+                wr = (working or {}).get(canon, "")
+                if wr and customer_working_active(today):
+                    forced.append(("customer-working", "the customer is working on it: " + wr))
+                elif wr:
+                    d["would_force"] = wr                         # D11: reported in November, researched from CUSTOMER_WORKING_FROM
                 if forced:
                     d.update(research=True, kind="override", override="+".join(k for k, _ in forced),
                              reason=c["reason"] + "; FORCED: " + "; ".join(t for _, t in forced))
@@ -402,7 +501,8 @@ def conference_plan(rows: list[dict], prior_by_canon: dict[str, dict], states: d
     for d in skipped:
         d["mark"] = f"{d['group']} dormant: {d['reason'][:80]}; next check {d['next_due'] or 'n/a'}"
         skip[d["index"]] = d["mark"]
-    counts = {"g1": 0, "g2": 0, "g3": 0, "g4": 0, "overrides": 0}
+    counts = {"g1": 0, "g2": 0, "g3": 0, "g4": 0, "overrides": 0,
+              "customer_working_report_only": sum(1 for d in decisions if not d["research"] and d.get("would_force"))}
     for d in decisions:
         if not d["research"]:
             continue
@@ -416,6 +516,10 @@ def summary_line(market: str, pl: dict, pol: dict, dry: bool = False) -> str:
             f"{s} skipped (saving about {s * pol['cost_per_row_usd']:.2f} USD, an estimate)")
     if pol.get("_lean"):
         line += " [LEAN WEEK: only new events, deadlines within " + str(int(pol.get("lean_deadline_days", 14))) + " days, live rows with a dead link, and named rows are researched]"
+    cw = c.get("customer_working_report_only", 0)
+    if cw:
+        line += (f" [CUSTOMER-WORKING: {cw} skipped row(s) the customer is working on would be researched from {CUSTOMER_WORKING_FROM.isoformat()} "
+                 f"(report only until then, about {cw * pol['cost_per_row_usd']:.2f} USD a week)]")
     return line + (f" [{pl['fuse']}]" if pl["fuse"] else "") + (" [DRY RUN: nothing was marked, so every row is researched this week]" if dry else "")
 
 
@@ -453,6 +557,9 @@ def write_conference_report(out_dir: Path, market: str, pl: dict, pol: dict, tod
     for d in pl["decisions"]:
         if not d["research"]:
             lines.append(f"- {d['conference']} ({d['canonical']}): {d['reason']}; next check {d['next_due'] or 'n/a'}")
+    cw = [d for d in pl["decisions"] if not d["research"] and d.get("would_force")]
+    lines += ["", f"## The customer is working on these: report only until {CUSTOMER_WORKING_FROM.isoformat()} (D11), researched from then", ""]
+    lines += [f"- {d['conference']} ({d['canonical']}): {d['would_force']}" for d in cw] or ["- none this week"]
     lines += ["", "## Researched because of an override or doubt", ""]
     for d in pl["decisions"]:
         if d["research"] and d["kind"] == "override":
@@ -507,6 +614,7 @@ def conference_main(a) -> int:
         with open(inp, encoding="utf-8-sig", newline="") as fh:
             rows = list(csv.DictReader(fh))
         stale = sum(1 for r in rows if (r.get(COLUMN) or "").strip())
+        cw_note = ""
         from src.cfp_monitor.identity import assert_mapped, seed_map
         up_to_canon, roots = seed_map(str(a.db))
         assert_mapped(up_to_canon, roots, minimum=a.min_mapped)
@@ -514,9 +622,14 @@ def conference_main(a) -> int:
         if not final.exists():
             raise FileNotFoundError(f"no approved file {final.name}: nothing to carry, so nothing may be skipped")
         prior = prior_rows_by_canon(final, up_to_canon)
+        try:
+            working = customer_working_conferences(Path(a.db), today)
+        except Exception as e:                                       # noqa: BLE001  the customer layer is a guard, never a reason to skip research
+            working = None
+            cw_note = f"CUSTOMER-WORKING {market}: UNKNOWN - the client layer could not be read ({type(e).__name__}: {e}); no row is held back for it"
         from scripts.sponsor_prefill import read_link_states
         states = read_link_states(Path(a.db))
-        pl = conference_plan(rows, prior, states, read_overrides(Path(a.overrides) if a.overrides else None), today, pol)
+        pl = conference_plan(rows, prior, states, read_overrides(Path(a.overrides) if a.overrides else None), today, pol, working=working)
     except (Exception, SystemExit) as e:                             # noqa: BLE001  a planning fault (assert_mapped exits) must never cost the research window
         print(f"REFRESH-PLAN {market}: UNKNOWN - {type(e).__name__}: {e}; nothing skipped, every row will be researched")
         if a.apply and inp.exists() and not a.clear:
@@ -528,6 +641,8 @@ def conference_main(a) -> int:
         return 0
     line = summary_line(market, pl, pol, dry=not a.apply)
     print(line)
+    if cw_note:
+        print("  " + cw_note)
     if pl["fuse"]:
         print("  " + pl["fuse"])
     if stale and not a.apply:
@@ -574,7 +689,12 @@ def main(argv=None) -> int:
     try:
         with open(inp, encoding="utf-8-sig", newline="") as fh:
             rows = list(csv.DictReader(fh))
-        pl = plan(rows, read_db_rows(Path(a.db), a.market), date.fromisoformat(a.today), a.max_skip_fraction)
+        try:
+            working = customer_working_awards(date.fromisoformat(a.today))
+        except Exception as e:                                       # noqa: BLE001
+            working = None
+            print(f"CUSTOMER-WORKING Awards: UNKNOWN - the customer awards sheets could not be read ({type(e).__name__}: {e}); no row is held back for it")
+        pl = plan(rows, read_db_rows(Path(a.db), a.market), date.fromisoformat(a.today), a.max_skip_fraction, working=working)
     except Exception as e:                                           # noqa: BLE001  a planning fault must never cost the research window
         print(f"refresh_plan FAILED ({type(e).__name__}: {e}): nothing marked, every award will be researched")
         return 0
@@ -584,6 +704,13 @@ def main(argv=None) -> int:
     if pl["fuse"]:
         print("  FUSE:", pl["fuse"])
     print(f"  estimated saving this run: about {k * CENTS_PER_CALL / 100:.2f} USD ({k} calls at {CENTS_PER_CALL} cents, the conference figure)")
+    cw = pl.get("customer_working", [])
+    if cw:
+        print(f"  CUSTOMER-WORKING: {len(cw)} skipped award(s) the customer is working on would be researched from {CUSTOMER_WORKING_FROM.isoformat()} "
+              f"(report only until then, about {len(cw) * CENTS_PER_CALL / 100:.2f} USD a week): "
+              + "; ".join(f"{(rows[i].get('CONFERENCE') or '')[:50]} ({w})" for i, w in cw[:10]))
+    elif pl["researched"].get("customer-working"):
+        print(f"  CUSTOMER-WORKING: {pl['researched']['customer-working']} award(s) researched because the customer is working on them (D11)")
     if a.apply:
         print(f"  marked {apply_marks(inp, pl['skip'])} row(s) in {inp.name} (column {COLUMN}); backup {inp.stem}.pre-refresh.csv")
     else:

@@ -4,6 +4,8 @@
 [`docs/design/worklog.md`](docs/design/worklog.md) - read it for the latest state until these
 sections are refreshed in a verified session.
 
+> **2026-11-09 (NIGHT) - D11 DONE (REPORT ONLY UNTIL 2026-12-01).** Rows the customer is working on are reported by the refresh plan each Friday and Saturday and researched from 2026-12-01 (dated constant, `CUSTOMER_WORKING_FROM`). This weekend's dry run: 2 Cybersecurity, 3 Utility, 7 awards; about 1 USD a week from December. Next: the customer-context build (steps 2 to 4, 6, 8), Matt's "Yes, start it" via the parent session.
+>
 > **2026-11-09 (NIGHT) - D13 BUILT, WAITING FOR MATT TO RUN THE TRIGGER SCRIPT.** Verification Sat 23:00 and pages Sun 01:00 (ready before 06:00 Monday), research nights unchanged. The move is `agentos\tools\move-cfp-weekend.ps1` (agentos 4165bdf; dry run HEALTHY): Home base reviews, Matt runs it elevated by Thu 18:00 for this weekend. Until then the old times apply. The pages run now has real Chrome for every step (it never had it for the evidence re-read and the awards check) and counts each fetch method in its MANIFEST; read that table on the first Sunday run (11-15).
 >
 > **2026-11-09 (NIGHT) - D12 DONE (MATT: OPTION A); D13 CHECKS SENT TO HOME BASE.** speaking_route.py is on the site-walking debt list with its reason; the list's cap is 12 with D12 beside it. No behaviour change. The suite has no failures left from the 7. D13 (pages Sunday 01:00, verification Saturday 23:00): checks done; the pages job's evidence and awards steps have never had the real-Chrome rung (CFP_CDP_URL is only passed to step 5), and that fix plus a cfp-guard marker wait for Home base's OK before the trigger script is built.
