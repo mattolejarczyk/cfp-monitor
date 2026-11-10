@@ -846,7 +846,7 @@ def patches_status(markets_dir: Path, patches_dir: Path = PATCHES) -> dict:
     """{'script', 'readable', 'markers': {marker: present}, 'patches': [{'name', 'applied': True|False|None, 'how'}]}. Reads Markets run_monthly.ps1 (and run_overnight.ps1 for its patch) and
     docs/control/patches; changes nothing."""
     texts: dict = {}
-    for name in ("run_monthly.ps1", "run_overnight.ps1"):
+    for name in ("run_monthly.ps1", "run_overnight.ps1", "run_market_audit.py"):      # run_market_audit.py: the ACT-72 prompt patch
         try:
             texts[name] = (Path(markets_dir) / name).read_text(encoding="utf-8", errors="replace")
         except OSError:

@@ -73,9 +73,11 @@ def page_wording(row: dict, fact: dict | None) -> str:
     return f"Your sheet says {said}; we found {found} ({(fact.get('name') or '').strip()})."
 
 
-def context_rows(rows: list[dict], inputs: dict[str, list[dict]], up_to_canon: dict[str, str]) -> list[dict]:
+def context_rows(rows: list[dict], inputs: dict[str, list[dict]], up_to_canon: dict[str, str], text=None, with_index: bool = False) -> list[dict]:
     """For each input row of a market that a customer row pairs with: its CUSTOMER_ROW cell. Pairing = coverage rule (canonical id, else URL plus a date within 30 days).
-    Customer rows the customer removed are skipped. One input row, several customer rows: the cells are joined."""
+    Customer rows the customer removed are skipped. One input row, several customer rows: the cells are joined.
+    `text` (default context_text) makes the cell; scripts/customer_row_context.py passes the D9 cell. `with_index` adds the input row's index."""
+    text = text or context_text
     out: dict[tuple, dict] = {}
     for r in rows:
         market = cc.CLIENT_MARKET.get(r.get("client_key"))
@@ -93,11 +95,15 @@ def context_rows(rows: list[dict], inputs: dict[str, list[dict]], up_to_canon: d
                 hit = gap is None or gap <= cc.DATE_TOLERANCE_DAYS
             if hit:
                 k = (market, i)
-                cell = context_text(r)
+                cell = text(r)
+                if not cell:
+                    continue
                 if k in out:
                     out[k]["CUSTOMER_ROW"] += " || " + cell
                 else:
                     out[k] = {"market": market, "EVENT_ID_CANON": (inp.get("EVENT_ID_CANON") or "").strip(), "CONFERENCE": (inp.get("CONFERENCE") or "").strip(), "CUSTOMER_ROW": cell}
+                    if with_index:
+                        out[k]["index"] = i
     return list(out.values())
 
 

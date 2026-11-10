@@ -1,0 +1,35 @@
+diff --git a/Markets/run_market_audit.py b/Markets/run_market_audit.py
+index 06f844a..a7f642f 100644
+--- a/Markets/run_market_audit.py
++++ b/Markets/run_market_audit.py
+@@ -603,6 +603,21 @@ def _prompt_scaffold(row_dict: dict, today_str: str, subject_label: str,
+     conf_dates = ctx('CONFERENCE DATES')
+     operator = ctx('OPERATOR')
+     opp_type = ctx('OPPORTUNITY_TYPE')
++    # CUSTOMER CONTEXT (2026-11-09, ACT-72, cfp-monitor customer-context plan; D9 and D10 on Daily Review, Matt). The customer's own
++    # sheet row, written into CUSTOMER_ROW by cfp-monitor scripts/customer_row_context.py just before this run. CONTEXT, NEVER
++    # EVIDENCE: rule C below. A row without the column, or with a blank cell, gets exactly the prompt it got before.
++    customer_row = ctx('CUSTOMER_ROW')
++    customer_block = (
++        "\n\n    CUSTOMER'S OWN ROW (context, NOT evidence; see rule C):\n    - " + customer_row + "\n"
++        "    C. HOW TO USE THE CUSTOMER'S ROW. It is what our customer wrote on their own tracking sheet: their name for\n"
++        "       the event, links, place, dates, deadline, their own status, status details and notes, and their coordinator\n"
++        "       contact; these may say how they submit (for example an email address). Use it like the prior record: to find the right event\n"
++        "       and edition and to know what to check. NEVER copy a value from it into an output field: every value you\n"
++        "       return comes from a page you read on this run. Where the event's own page differs from the customer's row\n"
++        "       (place, dates, deadline, submission link or route), return what the page says and write both in\n"
++        "       STATUS_DETAILS as: Your sheet says <X>; the event's page says <Y>. Never return NOTES, and never return the\n"
++        "       customer's contact or status as a value."
++    ) if customer_row else ''
+ 
+     return f"""
+     Act as an enterprise data extraction agent. Perform live Google Search Grounding to audit, verify, and extract all details for this event:
+@@ -624,7 +639,7 @@ def _prompt_scaffold(row_dict: dict, today_str: str, subject_label: str,
+     - Prior Categories: {categories}
+     - Prior Announcement: {announcement}
+     - Operating Organisation: {operator}
+-    - Prior Opportunity Type: {opp_type}
++    - Prior Opportunity Type: {opp_type}{customer_block}
+ 
+     STRICT EXTRACTION & FORMATTING RULES:
+     0. HOW TO USE THE PRIOR RECORD. It is UNVERIFIED. It may be stale, mis-keyed, or

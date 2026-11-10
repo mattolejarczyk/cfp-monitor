@@ -1,0 +1,45 @@
+diff --git a/Markets/run_monthly.ps1 b/Markets/run_monthly.ps1
+index 5a278db..3142d17 100644
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -394,6 +394,40 @@ if ($liveMarkets.Count -gt 0 -and $Markets -notcontains 'Awards' -and -not $What
+     Write-Host ""
+ }
+ 
++# ------------------------------------------- STEP 0a4: CUSTOMER CONTEXT (2026-11-09, ACT-72) ----
++# The customer's own sheet row reaches the research as CONTEXT, never evidence (cfp-monitor docs/design/customer-context-plan.md; D9 and D10
++# on Daily Review, Matt 2026-11-09: event facts plus their status details and notes, contacts kept; live from Fri 11-13 and Sat 11-14).
++# LAST before the research, so no earlier writer (the id stamp, the refresh plan) can drop the column: scripts/customer_row_context.py
++# rewrites ONLY the CUSTOMER_ROW column of the input lists of this run (backup and read-back proof) from the client layer the step 0 intake just
++# loaded (Saturday) and the awards sheet copies step 0a1b just took (Friday). run_market_audit.py (patch ACT-72) puts a non-blank cell in the
++# prompt with rule C; a blank cell leaves the prompt exactly as before. It prints one CUSTOMER CONTEXT line, which the recap repeats; Saturday
++# also prints the CUSTOMER ROWS answer line (scripts/customer_row_answers.py, read-only).
++# SWITCH: CFP_CUSTOMER_CONTEXT=0 turns it off: the column is emptied, so no old cell is read. Like the intake it can never stop the research:
++# wrapped, exit code ignored. Not run for the monthly prospect run (no customer) or -WhatIf.
++if (($liveMarkets.Count -gt 0 -or $Markets -contains 'Awards') -and -not $WhatIf) {
++    $ccPy  = "C:\Users\matts\cfp-monitor\.venv\Scripts\python.exe"
++    $ccPy_ = "C:\Users\matts\cfp-monitor\scripts\customer_row_context.py"
++    $ccMarkets = (@($Markets | Where-Object { $_ -in @('Cybersecurity','Utility','Awards') }) -join ',')
++    $ccArgs = if ($env:CFP_CUSTOMER_CONTEXT -eq '0') { @('--clear') } else { @('--apply') }
++    try {
++        if ((Test-Path $ccPy) -and (Test-Path $ccPy_)) {
++            & $ccPy $ccPy_ --markets $ccMarkets @ccArgs
++        } else {
++            Write-Host "CUSTOMER CONTEXT: UNKNOWN - interpreter or script not found ($ccPy / $ccPy_). The research runs without it."
++        }
++    } catch {
++        Write-Host "CUSTOMER CONTEXT: UNKNOWN - $($_.Exception.Message). The research runs without it."
++    }
++    if ($liveMarkets.Count -gt 0) {
++        try {
++            & $ccPy "C:\Users\matts\cfp-monitor\scripts\customer_row_answers.py" | Where-Object { "$_" -like 'CUSTOMER ROWS:*' } | ForEach-Object { Write-Host $_ }
++        } catch {
++            Write-Host "CUSTOMER ROWS: UNKNOWN - $($_.Exception.Message)"
++        }
++    }
++    Write-Host ""
++}
++
+ # ---------------------------------------------------------------- STEP 0b: CANARY ----
+ # Prove the chain works on a few rows BEFORE committing the window. Deliberately placed
+ # ahead of the archive step: a canary that fails must leave the previous cycle's files

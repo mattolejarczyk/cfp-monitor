@@ -181,6 +181,8 @@ def parse_saturday(log: str) -> dict:
     out["refresh_plan"] = re.findall(r"^REFRESH-PLAN (.+)$", log, flags=re.M)        # ACT-33: one line per market (a summary, or UNKNOWN - why)
     out["autoadd"] = autoadd_facts(log)
     out["awards_cov"] = awards_coverage_facts(log)                                           # ACT-67
+    out["customer_context"] = first(r"^CUSTOMER CONTEXT: (.+)$", log, flags=re.M)              # ACT-72: step 0a4's verdict line
+    out["customer_rows"] = first(r"^CUSTOMER ROWS: (.+)$", log, flags=re.M)                    # ACT-72 (plan step 8): one answer per customer row
     if re.search(r"CANARY PASSED", log):
         out["canary"] = "passed"
     elif re.search(r"Canary passed [\d.]+h ago - reusing it", log):
@@ -268,6 +270,20 @@ def rows_due(m: dict):
 def rows_done_cell(m: dict) -> str:
     n = int(m.get("refresh_skipped") or 0)
     return f"{m['written']} of {rows_due(m)}" + (f" ({n} not due this week, kept)" if n else "")
+
+
+def customer_context_sentences(s: dict, kind: str) -> list[str]:
+    """ACT-72: did the customer's own row reach this run's research, as context? From step 0a4's CUSTOMER CONTEXT line (and, on Saturday, the
+    CUSTOMER ROWS answer line). A missing line is said plainly: the step did not run (not applied yet, or switched off with no line)."""
+    line = s.get("customer_context")
+    if not line:
+        out = ["Customer context in the research: no CUSTOMER CONTEXT line in the log - the step did not run, so this run's research had no customer context."]
+    else:
+        flag = "" if line.startswith(("HEALTHY", "OFF")) else "FLAG - "
+        out = [f"{flag}Customer context in the research (the customer's own row; context, never evidence): {line}."]
+    if kind != "friday" and s.get("customer_rows"):
+        out.append(f"Customer rows answered: {s['customer_rows']}.")
+    return out
 
 
 def refresh_plan_sentence(lines: list[str]) -> str | None:
@@ -375,6 +391,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
              *([autoadd_sentence(s["autoadd"])] if kind != "friday" and s.get("autoadd") else []),
              *([refresh_plan_sentence(s["refresh_plan"])] if kind != "friday" and s.get("refresh_plan") else []),
              *awards_coverage_sentences(s.get("awards_cov")),                                 # ACT-67: the customers' AWARDS sheets, Friday and Saturday alike
+             *customer_context_sentences(s, kind),                                             # ACT-72: the customer's row as research context
              f"AI requests in total: about {total_req}."]
     if s["timeouts"]:
         facts.append(f"Google was slow: {s['timeouts']} '504' timeouts (Google's server took too "

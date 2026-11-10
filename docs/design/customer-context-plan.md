@@ -59,13 +59,13 @@ Statuses in use on the conference sheets: Closed 17, Submitted 16, Info Needed 1
 | # | Bucket | Step | Pts | Who |
 |---|---|---|---|---|
 | 1 | Web research | Decide the fields and the go-live date (D9, D10, D11 on Daily Review) | 1 | Matt |
-| 2 | Web research | Context text for conference AND awards rows, from the database and the awards copies, personal data removed; tests | 3 | Claude |
-| 3 | Web research | Weekly writer refreshes the CUSTOMER_ROW column on the three research lists after the intake (backup, read-back proof that nothing else changed) | 5 | Claude |
-| 4 | Web research | Research prompt reads CUSTOMER_ROW as context, not evidence (a patch to run_market_audit.py the operator applies) | 3 | Claude, Matt applies |
+| 2 | Web research | Context text for conference AND awards rows, from the database and the awards copies (D9: contacts KEPT, plus their STATUS and COORDINATOR CONTACT per Matt's clarification; LOGIN and PW never); tests | 3 | Claude (BUILT 2026-11-09) |
+| 3 | Web research | Weekly writer refreshes the CUSTOMER_ROW column on the three research lists after the intake (backup, read-back proof that nothing else changed) | 5 | Claude (BUILT 2026-11-09: scripts/customer_row_context.py, step 0a4) |
+| 4 | Web research | Research prompt reads CUSTOMER_ROW as context, not evidence (a patch to run_market_audit.py the operator applies) | 3 | Claude, Matt applies (PATCH READY 2026-11-09: ACT-72) |
 | 5 | Web research | Codex reads the writer and the prompt patch against the contract (read-only, code only, no customer data) | 2 | Codex, Claude checks |
-| 6 | QC data | Offline rehearsal: build every prompt, count rows carrying context, prove 0 emails or phone numbers, measure how much each prompt grows | 2 | Claude |
+| 6 | QC data | Offline rehearsal: build every prompt, count rows carrying context, prove 0 LOGIN or PW (D9 keeps contacts), measure how much each prompt grows | 2 | Claude (DONE 2026-11-09: 245 of 298, +1,375 chars on about 12,500, 260 cells with a coordinator contact) |
 | 7 | QC data | The pages say "Your sheet says X; we found Y" where they differ | 3 | Claude |
-| 8 | QC data | The one-line answer per customer row goes into the Saturday recap (A52 hooked in) | 2 | Claude |
+| 8 | QC data | The one-line answer per customer row goes into the Saturday recap (A52 hooked in) | 2 | Claude (BUILT 2026-11-09: CUSTOMER ROWS and CUSTOMER CONTEXT lines) |
 | 9 | Optimization | Rows the client is working on (Info Needed, Submitted, Drafting, or their deadline within 30 days) are never skipped by the refresh plan: REPORT ONLY in November | 3 | Claude (BUILT 2026-11-09: D11 A; switches on 2026-12-01) |
 | 10 | Web research | Read the first live run: a CUSTOMER CONTEXT verdict line, disagreements found, no value copied from the sheet | 3 | Claude |
 | 11 | Close | Contract amendment, QA-REGISTER A51 and A52, TOOLING, worklog; retro with estimates against actuals | 2 | Claude |
