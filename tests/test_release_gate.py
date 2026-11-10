@@ -190,6 +190,21 @@ def test_an_unfinished_awards_check_is_NO_GO_and_the_email_opens_with_it(tmp_pat
     assert any("136 cited award deadlines" in line for line in rg.plain_lines(rep)), "the email body says so"
 
 
+def test_no_real_chrome_is_said_in_plain_words_and_does_not_fail_the_pages(tmp_path):
+    """D13 (2026-11-09): the build's REAL CHROME line reaches the email; it is reported, never judged."""
+    w = world(tmp_path)
+    man = w.weekly / "work_2026-10-12" / "MANIFEST.md"
+    base = man.read_text(encoding="utf-8")
+    rep_ok = run(w)
+    man.write_text(base + "REAL CHROME: not available - Chrome could not be started on port 9222, so the hard anti-bot pages were read without it\n", encoding="utf-8")
+    rep = run(w)
+    assert rep["real_chrome"].startswith("not available")
+    assert any(line.startswith("Real Chrome not available this run: Chrome could not be started") for line in rg.plain_lines(rep)), rg.plain_lines(rep)
+    assert rep["verdict"] == rep_ok["verdict"], "no Chrome never changes the verdict"
+    man.write_text(base + "REAL CHROME: available - started by this run on port 9222 and closed by it at the end\n", encoding="utf-8")
+    assert not any("Real Chrome" in line for line in rg.plain_lines(run(w))), "an available Chrome is not news in the email"
+
+
 def test_a_stale_approved_file_is_a_FAIL(tmp_path):
     w = world(tmp_path)
     publish_guard.write_manifest(w.md / "Awards_audited.final.csv", "Awards", "src", "acc.json", "ACCEPTED", promoted_at=datetime(2026, 10, 1))
@@ -402,7 +417,7 @@ def test_preflight_builds_no_pages_and_says_so(tmp_path):
     a = next(c for c in rep["checks"] if c["id"] == "a")
     assert a["status"] == "PASS" and "not built yet" in a["summary"]
     subj, text, _h = rg.build_email(rep)
-    assert subj.startswith("CFP weekly pre-flight:") and "Sunday pre-flight" in text
+    assert subj.startswith("CFP weekly pre-flight:") and "(pre-flight for " in text and "The Sunday 01:00 build would show" in text   # D13: the pre-flight runs Saturday 23:00 now
     assert rep["counts"]["conference"] == 4 and rep["counts"]["awards"] == 2
 
 

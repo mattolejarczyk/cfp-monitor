@@ -39,6 +39,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 from datetime import date
 from pathlib import Path
 
@@ -190,7 +191,134 @@ def start_cdp_chrome() -> bool:
         return False
 
 
+CDP_URL = "http://localhost:9222"
+# The scheduled task's limit is 6 hours (PT6H). A Task Scheduler kill ends this process without running any `finally`, so a Chrome we
+# started is closed by a timer 15 minutes before that limit; the steps still running after it fall back to the playwright rung.
+CHROME_STOP_AFTER_S = 6 * 3600 - 15 * 60
+REAL_CHROME = {"state": "not tried", "note": "not tried (a test or a by-hand run that never called with_real_chrome)"}
+
+
+def cdp_up() -> bool:
+    """True when something answers on the debug port (scripts/cdp_ctl.py check). Never raises."""
+    try:
+        return subprocess.run([PY, str(ROOT / "scripts/cdp_ctl.py"), "check"], capture_output=True, timeout=30).returncode == 0
+    except Exception:                                                 # noqa: BLE001
+        return False
+
+
+def stop_cdp_chrome() -> None:
+    """Close the Chrome this job started (cdp_ctl stop matches the dedicated profile only, never a window a person is using). Never raises."""
+    try:
+        subprocess.run([PY, str(ROOT / "scripts/cdp_ctl.py"), "stop"], capture_output=True, timeout=60)
+    except Exception:                                                 # noqa: BLE001
+        pass
+
+
+def with_real_chrome(run, start=None, stop=None, is_up=None, stop_after_s: float | None = CHROME_STOP_AFTER_S) -> int:
+    """Run the whole build with the operator's real Chrome on the debug port: the ladder's top rung for the evidence re-read (step 1) and the
+    awards check (2a) too, not only the speaking routes. D13 (2026-11-09): the job moved to Sunday 01:00, when no person's Chrome is open,
+    and until now CFP_CDP_URL reached step 5 only, so steps 1 and 2a never had the rung (TROUBLESHOOTING.md: it is mandatory).
+
+    Starts it with start_cdp_chrome; closes ONLY a Chrome this run started, on every exit path: normal end, an error, after a step that was
+    killed at its time limit (the step's own kill_tree never reaches this process's Chrome), and by a timer before the task's 6 h limit.
+    If Chrome cannot be started the run carries on at the playwright rung and REAL_CHROME says so in plain words (the manifest line the
+    release gate puts in its email). It never fails the run."""
+    start, stop, is_up = start or start_cdp_chrome, stop or stop_cdp_chrome, is_up or cdp_up
+    try:
+        ours = bool(start())
+    except Exception:                                                 # noqa: BLE001
+        ours = False
+    try:
+        up = ours or bool(is_up())
+    except Exception:                                                 # noqa: BLE001
+        up = False
+    if up:
+        os.environ["CFP_CDP_URL"] = CDP_URL
+        REAL_CHROME.update(state="started" if ours else "already-running",
+                           note=("available - started by this run on port 9222 and closed by it at the end" if ours else
+                                 "available - already running on port 9222 (used, left open: this run did not start it)"))
+    else:
+        REAL_CHROME.update(state="not-available",
+                           note="not available - Chrome could not be started on port 9222, so the hard anti-bot pages were read without it "
+                                "(the playwright rung was the top rung this run)")
+    print(f"REAL CHROME: {REAL_CHROME['note']}", flush=True)
+    stopped = threading.Event()
+
+    def stop_once(why: str) -> None:
+        if ours and not stopped.is_set():
+            stopped.set()
+            print(f"REAL CHROME: closing the Chrome this run started ({why})", flush=True)
+            try:
+                stop()
+            except Exception:                                         # noqa: BLE001
+                pass
+
+    timer = None
+    if ours and stop_after_s:
+        timer = threading.Timer(stop_after_s, stop_once, args=(f"{stop_after_s / 60:.0f} min, before the task's time limit",))
+        timer.daemon = True
+        timer.start()
+    try:
+        return run()
+    finally:
+        if timer:
+            timer.cancel()
+        stop_once("end of the run")
+
+
+LADDER_LINE = r"(?m)^\s+\[\d+/\d+\] \S+ -> (?:still unreadable \(([\w-]+)\)|([\w-]+) \(\d+c\))\s*$"
+
+
+def fetch_method_rows(step_label: str, log_text: str, kind: str) -> list[tuple[str, str, str, str, str]]:
+    """QbD rule 4 for steps 1 and 2a: (step, method, attempts, read, unreadable) per fetch method, from the step's log. Pure.
+    kind 'evidence' = audit_evidence (first pass `[i/N]` page lines and `unreadable - ` results), 'awards' = check_award_deadlines (`flat
+    fetch read F of M`). The ladder lines are the same in both. Attempts per rung are not logged: 'read' is the rung that finally read the
+    page, 'unreadable' the rung the ladder stopped at."""
+    if not log_text.strip():
+        return [(step_label, "log not found or empty", "-", "-", "-")]
+    rows = []
+    if kind == "awards":
+        m = re.search(r"flat fetch read (\d+) of (\d+)", log_text)
+        if m:
+            rows.append((step_label, "plain fetch", m.group(2), m.group(1), str(int(m.group(2)) - int(m.group(1)))))
+    else:
+        tried = max((int(x) for x in re.findall(r"(?m)^\[(\d+)/\d+\] ", log_text)), default=0)
+        bad = len(re.findall(r"(?m)^\s+unreadable - ", log_text))
+        if tried:
+            rows.append((step_label, "plain fetch", str(tried), str(max(tried - bad, 0)), str(bad)))
+    hits = re.findall(LADDER_LINE, log_text)
+    if hits:
+        read: dict[str, int] = {}
+        still: dict[str, int] = {}
+        for stuck, ok in hits:
+            if ok:
+                read[ok] = read.get(ok, 0) + 1
+            else:
+                still[stuck] = still.get(stuck, 0) + 1
+        rows.append((step_label, "browser ladder (all rungs)", str(len(hits)), str(sum(read.values())), str(sum(still.values()))))
+        rows += [(step_label, f"  read by {k}", "-", str(v), "-") for k, v in sorted(read.items())]
+        rows += [(step_label, f"  still unreadable at {k}", "-", "-", str(v)) for k, v in sorted(still.items())]
+    if not rows:
+        rows.append((step_label, "no fetch lines in the log", "-", "-", "-"))
+    return rows
+
+
+def fetch_methods_lines(work: Path) -> list[str]:
+    """The run-summary table: one row per method for the evidence re-read and the awards check, and which real Chrome the run had."""
+    out = ["## Fetch methods (steps 1 and 2a)", "", f"Real Chrome: {REAL_CHROME['note']}", "",
+           "| Step | Method | Attempts | Read | Unreadable |", "|---|---|---|---|---|"]
+    for label, name, kind in (("evidence re-read", "1_evidence.log", "evidence"), ("awards check", "2a_award_evidence.log", "awards")):
+        p = work / name
+        text = p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
+        out += [f"| {' | '.join(r)} |" for r in fetch_method_rows(label, text, kind)]
+    return out + ["", "Attempts per rung are not logged: 'read by' is the rung that finally read the page; 'still unreadable at' is where the ladder stopped.", ""]
+
+
 def main() -> int:
+    return with_real_chrome(build)
+
+
+def build() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--db", default=str(LIVE_DB))
     ap.add_argument("--markets-dir", default=str(MARKETS_DIR))
@@ -467,7 +595,9 @@ def main() -> int:
     lines = [f"# Weekly customer pages - {stamp}", "", f"    HEALTH: {status}", ""]
     lines += HEALTH.report_lines() + ["", f"conference rows: {n_rows}",
                                       f"awards input: {awards_in.name if awards_in else '(none)'}",
-                                      f"checks CSV: {checks.name}", ""]
+                                      f"checks CSV: {checks.name}",
+                                      f"REAL CHROME: {REAL_CHROME['note']}", ""]
+    lines += fetch_methods_lines(work)
     if awards_note:
         lines += [f"**{awards_note}**", ""]
     if status == "HEALTHY":

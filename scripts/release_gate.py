@@ -490,7 +490,7 @@ def check_pages(o: Opts, pages: dict, approved: dict) -> Check:
     if o.preflight:
         st = "FAIL" if bad else "PASS"
         return Check("a", "Pages built, fresh and healthy", "FAIL" if bad else "PASS",
-                     ("approved files NOT fresh (the Monday build would publish old research); " if bad else "approved files fresh and accepted; ") + "pages not built yet (pre-flight)", rows)
+                     ("approved files NOT fresh (the Sunday pages build would publish old research); " if bad else "approved files fresh and accepted; ") + "pages not built yet (pre-flight)", rows)
     import qa_build
     for kind, label in (("conference", "Conference page"), ("awards", "Awards page")):
         p = pages.get(kind)
@@ -768,7 +768,17 @@ def evaluate(o: Opts) -> dict:
               "awaiting": len([r for r in (view.get("awards") or []) if r.get("aw")]),
               "provisional_conference": len([r for r in (view.get("conference") or []) if r.get("prov")])}
     return {"checks": checks, "verdict": verdict, "counts": counts, "coverage": {"conference": cov_conf, "awards": cov_awards}, "coverage_lines": cov_lines, "pages": pages,
-            "preflight": o.preflight, "on": o.on.isoformat()}
+            "preflight": o.preflight, "on": o.on.isoformat(), "real_chrome": real_chrome_line(o)}
+
+
+def real_chrome_line(o: Opts) -> str:
+    """The build's `REAL CHROME:` manifest line (D13, 2026-11-09), '' when there is none. Reported, never judged: no Chrome is not a FAIL."""
+    try:
+        man = Path(o.work_dir) / "MANIFEST.md" if o.work_dir else None
+        m = re.search(r"^REAL CHROME: (.+)$", man.read_text(encoding="utf-8", errors="replace"), re.M) if man and man.exists() else None
+        return m.group(1).strip() if m else ""
+    except Exception:                                                           # noqa: BLE001
+        return ""
 
 
 def safely_cov(fn):
@@ -1082,10 +1092,13 @@ def plain_lines(rep: dict) -> list[str]:
     pre = rep["preflight"]
     L = []
     if pre:
-        L.append(f"This is the Sunday pre-flight: the approved files and the customer sheets as they stand now, pages not built yet. Monday's build would show about {n['conference'] if n['conference'] is not None else '?'} conferences and {n['awards'] if n['awards'] is not None else '?'} awards.")
+        L.append(f"This is the pre-flight: the approved files and the customer sheets as they stand now, pages not built yet. The Sunday 01:00 build would show about {n['conference'] if n['conference'] is not None else '?'} conferences and {n['awards'] if n['awards'] is not None else '?'} awards.")
     else:
         L.append(f"The pages are {'built and published' if c.get('a', {}).get('status') == 'PASS' else 'NOT ready to send'}: {n['conference'] if n['conference'] is not None else '?'} conferences and {n['awards'] if n['awards'] is not None else '?'} awards"
                  + (f" ({n['provisional']} of the awards {'is' if n['provisional'] == 1 else 'are'} Provisional)." if n["provisional"] else "."))
+    if not pre and (rep.get("real_chrome") or "").startswith("not available"):
+        L.append("Real Chrome not available this run: " + rep["real_chrome"].split(" - ", 1)[-1] + ". The pages are not held back for it; "
+                 "pages that need it read 'Could not check'.")
     if n.get("awaiting"):
         L.append(f"{n['awaiting']} customer award(s) are shown as Awaiting research: on the customer's sheet, not researched yet (the page says so; they count as on the page).")
     if n.get("provisional_conference"):
@@ -1113,8 +1126,8 @@ def plain_lines(rep: dict) -> list[str]:
         if x and x["status"] in ("WARN", "FAIL"):
             L.append(f"{x['title']}: {x['summary']}.")
     if pre:
-        L.append({"GO": "Nothing stands in the way of Monday's build.", "GO WITH NOTES": "Monday's build can go ahead; the notes below say what is missing and why, so there is time to act before 07:00.",
-                  "NO-GO": "Monday's build would not be safe to forward: deal with the FAIL items below before 07:00 Monday."}[rep["verdict"]])
+        L.append({"GO": "Nothing stands in the way of the Sunday 01:00 build.", "GO WITH NOTES": "The Sunday 01:00 build can go ahead; the notes below say what is missing and why, so there is time to act before then.",
+                  "NO-GO": "The Sunday 01:00 build would not be safe to forward: deal with the FAIL items below before Sunday 01:00."}[rep["verdict"]])
     else:
         L.append({"GO": "Nothing stands in the way: forward the pages.", "GO WITH NOTES": "The pages can be forwarded; the notes below say what is missing and why.",
                   "NO-GO": "Do not forward the pages until the FAIL items below are dealt with."}[rep["verdict"]])
@@ -1136,7 +1149,7 @@ def build_email(rep: dict) -> tuple[str, str, str]:
     word = "pre-flight" if rep["preflight"] else "pages"
     subj = f"CFP weekly {word}: {rep['verdict']} - Conferences {n['conference'] if n['conference'] is not None else '?'}, Awards {n['awards'] if n['awards'] is not None else '?'}"
     lines = plain_lines(rep)
-    T = [f"VERDICT: {rep['verdict']}  ({'Sunday pre-flight' if rep['preflight'] else 'Monday build'} for {rep['on']})", ""]
+    T = [f"VERDICT: {rep['verdict']}  ({'pre-flight' if rep['preflight'] else 'pages build'} for {rep['on']})", ""]
     T += [f"- {ascii_text(x)}" for x in lines] + ["", "CUSTOMER COVERAGE (rows still ahead that are on the page)"]
     T += [f"  {ascii_text(x)}" for x in rep["coverage_lines"]] or ["  (not judged)"]
     for title, items in named_rows(rep):
@@ -1152,7 +1165,7 @@ def build_email(rep: dict) -> tuple[str, str, str]:
 
 
 def to_markdown(rep: dict) -> str:
-    L = [f"# Release gate - {'Sunday pre-flight' if rep['preflight'] else 'Monday build'} for {rep['on']}", "", f"**{rep['verdict']}**", ""]
+    L = [f"# Release gate - {'pre-flight' if rep['preflight'] else 'pages build'} for {rep['on']}", "", f"**{rep['verdict']}**", ""]
     L += [f"- {x}" for x in plain_lines(rep)] + ["", "## Customer coverage", ""] + [f"- {x}" for x in rep["coverage_lines"]]
     for ck in rep["checks"]:
         L += ["", f"## ({ck['id']}) {ck['title']} - {ck['status']}", "", ck["summary"], ""] + [f"- {r}" for r in ck["rows"]]

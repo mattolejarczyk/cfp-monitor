@@ -19,9 +19,11 @@ what it means for the next run.
 | Thursday 6:00 PM | Pre-flight for Friday and Saturday: reads files, emails one verdict (task registered once by the operator, 2026-10-13, ACT-70) | No |
 | Friday 2:00 AM | Weekly awards research + automatic load (Arnica, Utility Global) | Yes, about 130-300 |
 | Saturday 2:00 AM | Weekly research + automatic load (Arnica, Utility Global) | Yes, about 120-290 |
-| Sunday 1:00 AM | Weekly link and deadline check (the two customer markets in the report) | A few (about 10-20) |
-| Monday 7:00 AM | Customer pages | No |
+| Saturday 11:00 PM | Weekly link and deadline check (the two customer markets in the report) | A few (about 10-20) |
+| Sunday 1:00 AM | Customer pages, ready for the operator before 06:00 Monday | No |
 | Every 4th Wednesday 2:00 AM | Monthly research (the six markets without a customer) | Yes, about 280 |
+
+**Moved 2026-11-09 (D13 on Daily Review, Matt):** "Customer pages complete before 6am Monday AM so I can review them and send them". The link check moved from Sunday 1:00 AM to Saturday 11:00 PM (it takes 30 to 40 minutes) and the customer pages from Monday 7:00 AM to Sunday 1:00 AM; the research nights did not change. It is a move, not an extra run. The trigger change is `agentos\tools\move-cfp-weekend.ps1`, run by the operator; until it has run, the old times still apply. The pages run takes 2 to 4 hours, sometimes longer (7h54 on 2026-10-12), so 'about 04:00' is a target and 06:00 Monday is the deadline. If it is still running at the daily 04:50 Chief of Staff, that job waits up to 20 minutes for it (cfp-guard), then still writes the day file and every project's dispatch, but skips the Codex draft (its own script table instead) and ends DEGRADED 'CFP still running': a late Sunday is visible, not silent. The customer sheets are still pulled before each research night: Friday's awards run fetches both awards sheets before it researches (step 0a1b), Saturday's run takes the full intake first (step 0).
 
 **Status, 2026-09-30: two of these jobs are switched OFF by the operator.** The Friday awards job
 (`CFP Weekly Awards Research`, its first run was due 2026-10-02) and the monthly job (`CFP Monthly
@@ -276,7 +278,9 @@ job pointed at the awards list (`Markets\Awards_input.csv`), added 2026-09-28*
 egistry.jsonl`. After four Saturdays the registry gives a written recommendation (adopt, keep as second reader, drop). *(luna_shadow.py --markets ...)*
 11. **[Experiment, changes nothing]** **Shadow run of the real-URL deadline finder (added 2026-10-04).** Last, after the load and the recap, so it can delay neither. For every live row (Open or Upcoming, about 40) it reads the event's own home page, sitemap and menu, picks the pages that look like the call, reads each with a cheap model and accepts a deadline only if a verbatim sentence on the page states it. It sets that next to what we ship and emails a short note: how many agree, and every place the pages state a different date (look at these) or a date where we ship none. It writes nothing to the database or the approved files, takes about 2 to 3 minutes per event (about 40 events, so roughly 100 minutes), stops at 120 minutes or 0.60 USD, skips itself if the job has already run 4.25 hours, and never fails the run. Files: `runs_out\shadow\shadow_<stamp>.md/.csv/.json`. Purpose: collect Saturday-by-Saturday evidence on whether it should become a second opinion or a fallback. *(shadow_finder.py)*
 
-## Sunday 1:00 AM - Weekly link and deadline check (the two customer markets)
+## Saturday 11:00 PM - Weekly link and deadline check (the two customer markets)
+
+*Until 2026-11-09 this ran Sunday 1:00 AM (D13). Its recap and pre-flight are still called 'sunday' in the commands.*
 
 *Scheduled task "CFP Weekly Verification" -> `AppData\Local\CFP-Monitor\scripts\run_weekly.bat`*
 
@@ -301,20 +305,22 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
    database is backed up first and restored automatically if the health check then fails.
    About 10-20 AI requests (hard cap 25 rows). *(weekly_discovery.py, apply_resolutions.py)*
 7. **[Report]** **Emails the Sunday recap** - worked or failed, the counts, every new call applied (before
-   and after), and whether Monday's pages will publish. *(weekend_recap.py sunday)*
+   and after), and whether Sunday's pages will publish. *(weekend_recap.py sunday)*
 8. **[Report]** **Emails the Sunday pre-flight** (added 2026-10-12, ACT-68) - a second email, 'CFP weekly pre-flight:
-   GO / GO WITH NOTES / NO-GO', sent to the operator only. It runs the same release-gate checks Monday will run, from
+   GO / GO WITH NOTES / NO-GO', sent to the operator only. It runs the same release-gate checks the Sunday 1:00 AM pages will run, from
    the approved files and the newest copies of the four customer sheets, **without building the pages**: is every
    customer conference and award still ahead either going onto the page or listed with ONE named reason (held waiting
    for an id, held by a check, provisional, awaiting first research, past, withdrawn, duplicate); which researched
    rows are on neither page and why; which rows have not been researched for too long; whether a customer sheet copy
    is old; what upstream still owes (promises overdue, ids). It only reports. Anything it names can be fixed before
-   Monday 07:00. It runs inside the Sunday recap command the Sunday task already calls, so it needed no change to the
+   Sunday 01:00. It runs inside the Sunday recap command the Sunday task already calls, so it needed no change to the
    scheduled task. *(weekend_recap.py sunday -> release_gate.py --preflight)*
 
 5. **[Review]** **Live build against the repo** (2026-10-18, information only, never changes the verdict) - the Sunday job and the customer app run from the live build (`AppData\Local\CFP-Monitor`), not from the repo. This line says how many code files differ (`python scripts/live_build.py status`). Code reaches the live build only through `python scripts/live_build.py release --apply`, which refuses uncommitted files and a running CFP task, backs up what it overwrites and writes `RELEASE-LOG.md` there. Nothing else should be copied by hand.
 
-## Monday 7:00 AM - Customer pages
+## Sunday 1:00 AM - Customer pages
+
+*Until 2026-11-09 this ran Monday 7:00 AM (D13). The pages folder and page names carry the day the run starts (a Sunday); the QA reports still file under the Monday of the cycle.*
 
 *Awards page rule (ACT-67, 2026-10-12): the page is built from the approved awards file. A row our research typed as something other than an award (Speaking, Registration) is left off UNLESS the customer's awards sheet lists it; then it stays, because the customer's sheet is the source of truth (World Hydrogen and Carbon Asia, Clinton Global Initiative). If the customers' sheet copies cannot be read, every row is kept. The build QA lists such kept rows for information instead of flagging them as a retired label.*
 
@@ -324,6 +330,7 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
 
 *Scheduled task "CFP Weekly Customer Pages" -> `cfp-monitor\scripts\weekly_deliverable.py`*
 
+0. **[Setup]** **Opens the real Chrome first, for the whole run** (D13, 2026-11-09). The fetch ladder's top rung reads the hard anti-bot sites through the operator's real Chrome on port 9222 (dedicated profile). Until 2026-11-09 only step 13 had it, so the re-read of cited pages (step 2) and the awards check (step 2a) never did: on 11-09, 7 cited pages were skipped as anti-bot sites for want of it. If Chrome is already up it is used and left open; if this run starts it, this run closes it - at the end, after an error or a step killed at its time limit, and 15 minutes before the task's 6-hour limit (a Task Scheduler kill skips the normal close). If Chrome will not start, the run carries on without it and the summary and the release gate email say 'Real Chrome not available' in plain words; it never fails the run. The summary has a table of every fetch method for steps 2 and 2a (pages tried, read, unreadable; which rung read each page). *(weekly_deliverable.py with_real_chrome, fetch_methods_lines)*
 1. **[Safety check]** **Records the starting point** - what Saturday's automatic load left in the database, so any
    change later in this run can be spotted. *(qa_import.py)*
 2. **[Update]** **Registers this week's links, then re-reads every cited web page** and confirms each
@@ -378,7 +385,7 @@ egistry.jsonl`. After four Saturdays the registry gives a written recommendation
     call-for-speakers pages (chosen from its sitemap and menu), and the cheap model gets them ALL TOGETHER with four questions: is there a public call anyone can submit to; are speaking slots part of sponsor packages; does a page say vendors MUST sponsor to speak; one plain sentence. Every answer needs a word for
     word quote; CODE checks the quote is on the pages, that it says what is claimed, and that a call is not dated before the edition, then derives the route: OPEN_CALL, OPEN_CALL_AND_PAID_SLOTS, PAID_SLOTS_NO_CALL_SEEN, INVITE_ONLY, MUST_SPONSOR, or UNCLEAR (Unknown, a complete answer). It writes only the table
     `speaking_route` in the database (who, when, which page) and never touches an upstream value (R21.1). The open row of the conference page shows 'How to speak' with the quote and a source link; the 'Sponsor required' badge appears only for a stated requirement (MUST_SPONSOR) or when the customer's own sheet says it.
-    Before it starts, Monday opens the real Chrome on port 9222 if it is not already up (dedicated profile) and closes it afterwards only if it opened it; hard anti-bot sites are read through it. Events whose start date has passed are skipped, and so are discovered links whose path names a year before the current calendar year (the home page and the cited sponsor page are always read). (2026-10-19)
+    It uses the real Chrome step 0 opened (if step 0 could not, it tries once more itself and closes only what it opened); hard anti-bot sites are read through it. Events whose start date has passed are skipped, and so are discovered links whose path names a year before the current calendar year (the home page and the cited sponsor page are always read). (2026-10-19)
     Advisory: not counted in the run health, switchable with `--no-routes`, any fault is one printed line. Cost about 0.002 USD an event. *(speaking_route.py -> table speaking_route -> build_review_page.py)*
 
 ## Every 4th Wednesday 2:00 AM - Monthly research (markets without a customer)
@@ -398,6 +405,7 @@ Semiconductor, Consumer Electronics, Bioeconomy, BioMedTech and Additive Manufac
 
 ## Change history
 
+- **2026-11-09** - THE WEEKEND MOVES (D13 on Daily Review, decided by Matt): link check Saturday 11:00 PM, customer pages Sunday 1:00 AM, so the pages are ready before 06:00 Monday; research nights unchanged. The pages run now opens the real Chrome for the whole run (step 0), so the cited-page re-read and the awards check get the anti-bot rung too, and its summary counts every fetch method. The email wording follows the new days. The trigger change is a script the operator runs (agentos\tools\move-cfp-weekend.ps1).
 - **2026-11-09** - Monday steps 10 and 12 (D8 on Daily Review, decided by Matt): the D5 rule now covers the awards evidence check too. On 11-09 at 11:59 it crashed after reading every page, never wrote its checks file, and the run still said HEALTHY; the awards page would have shown that morning's checks as the re-run's. Now an unfinished awards check stops the publish and the release gate email reads NO-GO, opening with how many award deadlines have no check.
 - **2026-11-09** - Monday steps 10 and 12 (D5 on Daily Review, decided by Matt): an evidence re-read that did not finish stops the publish on its own (it was 1 failed step in 9, under the 20 percent limit, so today's pages went out HEALTHY), and the release gate email reads NO-GO and opens with how many cited pages were not read.
 - **2026-11-09** - Monday step 2: the re-read of the cited pages now saves each page it reads in a browser as it goes, stops its browser pass on its own 105 minute budget and reports the pages it never tried (exit 2), and records why a page could not be read. A step that passes its time limit is stopped together with every process it started (the same kill the Saturday load has used since 11-07, now shared in `src/cfp_monitor/proc.py`; `weekend_import.py` only imports it from there, its behaviour is unchanged). Reason: on Monday 2026-11-09 the step was stopped at its 2-hour limit on a starved machine, the 41 pages its browser pass had read were lost, and 44 rows on the two pages read 'Could not check' while the run said HEALTHY. Whether such a run may publish at all is D5 on Daily Review.

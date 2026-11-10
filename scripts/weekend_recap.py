@@ -8,7 +8,7 @@
 WHY. The weekend jobs ran at 02:00 and 01:00 and reported to a console nobody watched. The
 operator found out on Sunday that Saturday had failed, by asking. Every weekend run now ends in
 one email that says, in plain words: did it work, the numbers, and what it means for the NEXT
-run - Saturday -> Sunday's check -> Monday's customer pages.
+run - Saturday -> Saturday 23:00 check -> Sunday 01:00 customer pages (D13, 2026-11-09; was Sunday 01:00 and Monday 07:00).
 
 Everything reported is DERIVED from the run's own log and files at the moment of sending, never
 written down in advance. What Monday will publish comes from publish_guard.check_publish_fresh,
@@ -325,7 +325,7 @@ def monthly_recap(log: str, markets_dir: Path = MARKETS_DIR) -> tuple[str, str, 
         facts.append(f"The run stopped early: {s['stopped']}")
     means = ["These markets have no customer page, so the results stay in the Markets folder "
              "and are NOT loaded into the database - by design.",
-             "Nothing changes for Arnica or Utility Global, Sunday's check or Monday's pages."]
+             "Nothing changes for Arnica or Utility Global, Saturday night's check or Sunday's pages."]
     subject = f"CFP monthly research (prospect markets) {status} - {datetime.now():%a %b %d}"
     html_ = "".join([f'<div style="{CSS}">',
                      f"<h2 style='margin:0 0 8px'>Monthly research, markets without a customer: {status}</h2>",
@@ -354,7 +354,7 @@ def load_qa_lines(qa: dict | None) -> tuple[str, list[str]]:
 def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
                    kind: str = "saturday", qa: dict | None = None, commitments: dict | None = None) -> tuple[str, str, str]:
     """`kind='friday'` is the awards run (2026-09-28): same research, load and table, but the
-    next steps are Monday's AWARDS page - Sunday's check covers conferences only."""
+    next steps are Sunday's AWARDS page - Saturday night's check covers conferences only."""
     s = parse_saturday(log)
     checks = research_checks(s, markets_dir)
     research_ok = bool(checks) and all(c.usable for c in checks)
@@ -402,19 +402,19 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     # What it means next
     if kind == "friday":
         ok, why = check_publish_fresh(markets_dir / "Awards_audited.final.csv")
-        sunday = ("Sunday's check covers conferences; award deadlines and links are re-checked "
-                  "by Monday's build.")
-        monday = ["Monday 7 AM awards page: " + (
+        sunday = ("Saturday 11 PM check covers conferences; award deadlines and links are re-checked "
+                  "by the Sunday 1 AM pages build.")
+        monday = ["Sunday 1 AM awards page: " + (
             f"will use THIS research - {why}" if ok else
             f"will NOT show this week's research - {why}. The conferences page is not affected.")]
     else:
-        sunday = ("Sunday 1 AM check: will check THIS weekend's research."
+        sunday = ("Saturday 11 PM check: will check THIS weekend's research."
                   if imp and imp.get("database") == "updated" else
-                  "Sunday 1 AM check: will run, but on LAST week's information.")
+                  "Saturday 11 PM check: will run, but on LAST week's information.")
         monday = []
         for m, ok, why in monday_outlook(markets_dir):
             who = CUSTOMER.get(m, m)
-            monday.append(f"Monday 7 AM page ({who}): " + (
+            monday.append(f"Sunday 1 AM page ({who}): " + (
                 f"will publish - {why}" if ok else f"will NOT publish - {why}"))
 
     qa_head, qa_flags = load_qa_lines(qa) if imp else ("", [])
@@ -447,7 +447,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
                   "<h3 style='margin:14px 0 4px'>Loaded into the database automatically</h3>"]
     if imp_rows:
         html_parts.append(table(["Market", "This week's research", "Kept last week's version",
-                                 "Held back", "Ready for Monday"], imp_rows))
+                                 "Held back", "Ready for Sunday's pages"], imp_rows))
     html_parts.append("<ul>" + "".join(f"<li>{H.escape(x)}</li>" for x in imp_lines + [db_line])
                       + "</ul>")
     if qa_head:
@@ -461,7 +461,7 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
                         "\n".join("- " + f for f in facts),
                         "Loaded into the database automatically:\n"
                         + (text_table(["Market", "This week", "Kept last week", "Held back",
-                                       "Ready for Monday"], imp_rows) + "\n" if imp_rows else "")
+                                       "Ready for Sunday's pages"], imp_rows) + "\n" if imp_rows else "")
                         + "\n".join("- " + x for x in imp_lines + [db_line]),
                         "What this means next:\n" + "\n".join("- " + x for x in [sunday] + monday)])
     return subject, text, "".join(html_parts)
@@ -502,9 +502,9 @@ def sunday_recap(log: str, digest: str, markets_dir: Path,
     monday = []
     for m, ok, why in monday_outlook(markets_dir):
         who = CUSTOMER.get(m, m)
-        monday.append(f"Monday 7 AM page ({who}): " + (
+        monday.append(f"Sunday 1 AM page ({who}): " + (
             f"will publish - {why}" if ok else f"will NOT publish - {why}"))
-    subject = f"CFP Sunday link check {status} - {datetime.now():%a %b %d}"
+    subject = f"CFP weekly link check {status} - {datetime.now():%a %b %d}"
     facts = ([f"{needs} item(s) need someone to act." if glance else
               "The check wrote no summary - see the log."] + fresh)
     d_lines, d_rows = discovery_section(disc)

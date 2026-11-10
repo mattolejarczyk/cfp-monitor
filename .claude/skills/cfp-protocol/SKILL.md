@@ -211,9 +211,9 @@ where it should go next: **"Where an LLM is safe, and where it is not"** in the 
 
 | Job | When | Cost |
 |---|---|---|
-| CFP Weekly Awards Research / Re-Research (live markets) | Fri / Sat 02:00 | ~130-300 each - awards / **Cybersecurity + Utility only**; auto-load + recap. Mon 07:00 pages: free |
+| CFP Weekly Awards Research / Re-Research (live markets) | Fri / Sat 02:00 | ~130-300 each - awards / **Cybersecurity + Utility only**; auto-load + recap. Sun 01:00 pages: free |
 | CFP Monthly Re-Research (prospect markets) | every 4th Wednesday 02:00 | ~280 requests - the other six; recap |
-| CFP Weekly Verification | Sunday 01:00 | ~10-20 (discovery, auto-applies proven finds); recap |
+| CFP Weekly Verification | Saturday 23:00 | ~10-20 (discovery, auto-applies proven finds); recap |
 
 **Research is split by whether a market has a customer** (2026-08-31). Only Cybersecurity
 (Arnica) and Utility (Utility Global) have one, so only those earn weekly quota; the other six
