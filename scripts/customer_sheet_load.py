@@ -677,8 +677,8 @@ def guarded_load(clients: list[str], context: str | None, config: Path | None = 
         return 0, result, lines
     if once:
         a = alert(result, context, config, snapshots, now(), env, mailer, qa_root, state, email=False, alert_files=alert_files)
+        lines += [*a["body"].splitlines(), ""]                         # the fix first: the verdict stays the LAST line (Codex review, 2026-11-10)
         lines.append(verdict_line(result, f"; email {a['email']}; evidence: {a['evidence']}"))
-        lines += ["", *a["body"].splitlines()]
         return 1, result, lines
 
     hours, why = hold_plan(context, env, task_reader)
@@ -889,9 +889,9 @@ def main(argv: list[str] | None = None) -> int:
             return code
         if a.check_only:
             r = read_check(config)
-            print(verdict_line(r))
             for ln in fix_summary(r, config):
                 print("  - " + ln)
+            print(verdict_line(r))                                         # the verdict is the LAST line (Codex review, 2026-11-10)
             return 0 if not r["failed"] else 1
         code, _r, lines = guarded_load(expand(a.clients, config), a.context, config, snapshots, once=a.once)
         print("\n".join(lines))

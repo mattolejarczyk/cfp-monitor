@@ -354,7 +354,19 @@ def test_friday_wording_names_the_awards_research(w):
 def test_the_persons_rerun_tries_once_sends_nothing_and_prints_the_fix(w):
     code, _r, lines, clock = w.load([{"utility": "Read timed out."}], once=True)
     assert code == 1 and len(w.calls) == 1 and clock.slept == [] and not w.sent
-    assert "email not sent: --once" in lines[0] and any("HOW TO FIX IT" in ln for ln in lines)
+    assert any("HOW TO FIX IT" in ln for ln in lines)
+    assert lines[-1].startswith("SHEET LOAD: FAILED") and "email not sent: --once" in lines[-1], "the verdict is the LAST line (Codex review, 2026-11-10)"
+
+
+def test_check_only_prints_the_verdict_last(monkeypatch, capsys):
+    """Codex review 2026-11-10: --check-only printed the verdict first and the fix lines after it."""
+    failed = {"clients": ["utility"], "failed": ["utility"], "attempts": [], "read_only": True, "outcome": {}}
+    monkeypatch.setattr(csl, "read_check", lambda config: failed)
+    monkeypatch.setattr(csl, "verdict_line", lambda r, extra="": "SHEET LOAD: FAILED - 1 of 1 sheet(s) did not load")
+    monkeypatch.setattr(csl, "fix_summary", lambda r, config: ["utility: open the sheet and check its sharing"])
+    assert csl.main(["--check-only"]) == 1
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out[-1].startswith("SHEET LOAD: FAILED") and out[0].lstrip().startswith("- utility")
 
 
 def test_a_healthy_load_sends_nothing_writes_nothing_and_clears_the_desktop_file(w, tmp_path):
