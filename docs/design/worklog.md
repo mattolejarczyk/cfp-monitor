@@ -5,6 +5,9 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-11-11 - ACT-72 review findings triaged (no weekend change)
+- Both Codex 1.14 findings reproduced by reading the live Markets files. (1) Sponsorship prompt gets rule C's STATUS_DETAILS line though it may return only three keys; harmless (audit_sponsorship keeps only the sponsor keys; that pass is run_overnight.ps1's, not the weekend's). (2) If the context writer cannot run, last week's CUSTOMER_ROW stays; no list has the column yet, so the risk starts 11-20. One follow-up ACT-72 patch after the weekend. Reviews of 5.7 and 6.12 wait until after the Nicolia meeting (Matt, 11-11).
+
 ## 2026-11-10 (evening) - live and read back; PC wording; D43 Codex reviews started
 - LIVE: Matt applied ACT-73, registered 'CFP Sheet Load Check' (D37) and raised Saturday's research limit PT5H to PT8H (D14). The coordinator read each back from the machine: patches ALREADY APPLIED, run_monthly.ps1 parses (hash 9e4ca25d), check task Ready Fri and Sat 03:00 with wake, Saturday trigger, action and logon unchanged. Docs 66cf766 (fingerprint re-confirmed).
 - CORRECTED: only the 03:00 check wakes the PC; every other CFP task starts late after a sleep (WakeToRun off, StartWhenAvailable on) and runs only while Matt is signed in. The PC needs: signed in, plugged in, not put to sleep by hand (WEEKEND-PROCESS.md top note).
