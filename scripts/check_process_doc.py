@@ -59,6 +59,8 @@ DESCRIBED = {
     "scripts/sponsor_prefill.py": ROOT / "scripts" / "sponsor_prefill.py",
     "scripts/release_gate.py": ROOT / "scripts" / "release_gate.py",
     "scripts/customer_sheet_load.py": ROOT / "scripts" / "customer_sheet_load.py",   # 2026-11-09: the CRITICAL sheet alert
+    "scripts/sheet_daytime_check.py": ROOT / "scripts" / "sheet_daytime_check.py",   # 2026-11-13: the daytime load (D67)
+    "scripts/step_0a4_rehearsal.py": ROOT / "scripts" / "step_0a4_rehearsal.py",   # 2026-11-13: runs the context step on copies (plan step 1.20)
     "scripts/provisional_rows.py": ROOT / "scripts" / "provisional_rows.py",
     "scripts/provisional_blank.py": ROOT / "scripts" / "provisional_blank.py",
     "scripts/build_review_page.py": ROOT / "scripts" / "build_review_page.py",

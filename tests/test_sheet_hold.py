@@ -291,6 +291,7 @@ CTX_CASES = [
     ("CUSTOMER CONTEXT: HEALTHY - 0 of 187 research rows carry the customers row", {}, True),
     ("CUSTOMER CONTEXT: FAILED - the context could not be built (KeyError: x); the research lists were not changed", {}, True),
     ("CUSTOMER CONTEXT: UNKNOWN - interpreter or script not found", {}, True),
+    ("CUSTOMER CONTEXT: BROKEN - 3 of 4 research rows carry the customers row", {}, True),      # Codex 2026-11-13: a verdict word nobody has seen is not good
     ("", {}, True),                                                                              # the writer crashed: no verdict line at all
     ("CUSTOMER CONTEXT: FAILED - x", {"CFP_CONTEXT_ON_FAIL": "proceed"}, False),                  # the by-hand override
     ("CUSTOMER CONTEXT: OFF - the switch is off", {"CFP_CUSTOMER_CONTEXT": "0"}, False),          # context switched off on purpose: never holds

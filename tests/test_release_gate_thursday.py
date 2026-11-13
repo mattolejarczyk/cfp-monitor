@@ -226,6 +226,9 @@ def test_main_thursday_dry_run_writes_only_under_the_qa_root_and_always_exits_0(
     monkeypatch.setattr(rg, "env_value", lambda name, env=None: ENV_ALL.get(name, ""))
     monkeypatch.setattr(rg, "PATCHES", w.patches)
     monkeypatch.setattr(rg.evaluate_thursday, "__defaults__", (None, w.patches))
+    # t7 (2026-11-13) would run the step 0a4 block of the Markets folder in PowerShell: this integration test must not (tests/test_sheet_daytime.py covers t7)
+    ok = {"verdict": "GREEN", "reason": "CUSTOMER CONTEXT: HEALTHY - 5 of 6 research rows"}
+    monkeypatch.setattr(rg, "default_step_rehearsal", lambda o: {"friday": ok, "saturday": ok})
     before = {p for p in tmp_path.rglob("*") if p.is_file() and w.qa not in p.parents}
     rc = rg.main(["--thursday", "--dry-run", "--on", "2026-10-15", "--now", "2026-10-15T18:00:00", "--markets-dir", str(w.md), "--db", str(w.db), "--snapshots-dir", str(w.snaps),
                   "--weekly-dir", str(w.weekly), "--qa-root", str(w.qa)])

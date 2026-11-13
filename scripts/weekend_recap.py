@@ -448,6 +448,11 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     if (s.get("sheet_load") or "").startswith(("DEGRADED", "FAILED")):
         # Matt, 2026-11-10: a weekend researched on old copies of the customer sheets is DEGRADED, said in the subject.
         status += " - DEGRADED: customer sheets did not load, research used old copies"
+    if (s.get("sheet_load") or "").startswith("YELLOW"):
+        # Matt, 2026-11-13 (D67 = A): the load failed but a copy no older than the limit covered it: the research ran, YELLOW (not green) in the subject.
+        m_age = re.search(r"copies up to ([\d.]+) hours old", s["sheet_load"])
+        status += f" - YELLOW: customer sheets did not load, research used copies up to {float(m_age.group(1)):.0f} hours old" if m_age else \
+                  " - YELLOW: customer sheets did not load, research used fresh enough copies"
     if (s.get("exit") == "6") or (s.get("sheet_load") or "").startswith("HELD"):
         # Matt, 2026-11-13 (D66 = B): the sheets (or the customer context) were not ready, so the research did NOT start. Exit 6 is the hold.
         by = s.get("held_by")

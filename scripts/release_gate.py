@@ -778,7 +778,7 @@ def check_sheet_load(o: Opts, status: dict | None = None) -> Check:
     if status is None:
         import customer_sheet_load as csl                                   # noqa: PLC0415
         status = csl.read_status(getattr(o, "sheet_status", None))
-    rows, bad, held = [], [], []
+    rows, bad, held, yellow = [], [], [], []
     for kind, label in (("friday", "Friday (awards sheets)"), ("saturday", "Saturday (all four sheets)")):
         e = status.get(kind) or {}
         try:
@@ -789,7 +789,11 @@ def check_sheet_load(o: Opts, status: dict | None = None) -> Check:
             rows.append(f"INFO {label}: no sheet load recorded this weekend (check f shows the copies' age)")
             continue
         v = e.get("verdict", "?")
-        if v == "HELD":
+        if v == "COPIES":
+            rows.append(f"WARN {label}: YELLOW - {', '.join(e.get('failed') or [])} did not load; the research proceeded on copies within the freshness limit "
+                        f"({e.get('note') or 'D67'}). Fix the cause before the next run")
+            yellow.append(label.split(" ")[0])
+        elif v == "HELD":
             rows.append(f"WARN {label}: HELD - {', '.join(e.get('failed') or [])} did not load"
                         + (f" after waiting {e.get('waited_min')} min" if e.get("waited_min") else "")
                         + "; the research did NOT start (Matt, 2026-11-13). If it was started by hand later, a RECOVERED or HEALTHY load replaces this line")
@@ -803,9 +807,10 @@ def check_sheet_load(o: Opts, status: dict | None = None) -> Check:
             rows.append(f"INFO {label}: loaded after waiting {e.get('waited_min')} min (the research used fresh copies)")
         else:
             rows.append(f"INFO {label}: {v}")
-    if held or bad:
+    if held or bad or yellow:
         parts = ([f"HELD: {' and '.join(held)}'s research did NOT start (the customer sheets did not load)"] if held else []) + \
-                ([f"DEGRADED: {' and '.join(bad)}'s research ran on old copies of the customer sheets (they did not load)"] if bad else [])
+                ([f"DEGRADED: {' and '.join(bad)}'s research ran on old copies of the customer sheets (they did not load)"] if bad else []) + \
+                ([f"YELLOW: {' and '.join(yellow)}'s load failed, the research ran on copies within the freshness limit"] if yellow else [])
         return Check("i", "Customer sheets loaded this weekend", "WARN", "; ".join(parts), rows)
     return Check("i", "Customer sheets loaded this weekend", "PASS", "the research took fresh customer sheets" if rows and any("INFO" in r and ("HEALTHY" in r or "loaded" in r) for r in rows) else "no failed sheet load recorded", rows)
 
@@ -947,7 +952,14 @@ def default_sheet_reader() -> dict:
     return csl.read_check()
 
 
-def thursday_checks(o: Opts, env: dict | None = None, patches_dir: Path = PATCHES, *, sheet_reader=None) -> tuple[list, dict]:
+def default_step_rehearsal(o: "Opts") -> dict:
+    """t7's live rehearsal: the real step 0a4 block of the Markets folder the gate was given, run on scratch copies, for Friday's shape and Saturday's. Each result is
+    {'verdict', 'reason', ...}. Never raises."""
+    import step_0a4_rehearsal as rh                                         # noqa: PLC0415
+    return {k: rh.rehearse(k, markets=o.markets_dir, db=o.db) for k in ("friday", "saturday")}
+
+
+def thursday_checks(o: Opts, env: dict | None = None, patches_dir: Path = PATCHES, *, sheet_reader=None, step_rehearsal=None) -> tuple[list, dict]:
     """The Thursday checks and the facts behind them (for the report and the tests). sheet_reader: t6's live read (main passes the real one;
     a test passes a fake, or nothing and t6 says it was not run)."""
     facts: dict = {}
@@ -1088,11 +1100,30 @@ def thursday_checks(o: Opts, env: dict | None = None, patches_dir: Path = PATCHE
         return Check("t6", "Customer sheets can be read now", "FAIL",
                      f"{len(bad)} of {n} customer sheet(s) cannot be read right now ({', '.join(bad)}): Friday and Saturday would start on old copies", rows)
     checks.append(safely("t6", "Customer sheets can be read now", c6))
+
+    def c7():
+        # Plan step 1.20 (Matt, 2026-11-13: "next week I expect this will not happen again"). Every earlier check of step 0a4 was a check of its TEXT; on 11-13 the step
+        # crashed in the night. This RUNS the real block, from the live script, on scratch copies, for Friday's and Saturday's shape (scripts/step_0a4_rehearsal.py).
+        if step_rehearsal is None:
+            return Check("t7", "The customer-context step runs", "PASS", "not tested in this run (no rehearsal given)", [])
+        r = step_rehearsal(o)
+        facts["step_0a4"] = {k: {"verdict": v["verdict"], "reason": v["reason"], "seconds": v.get("seconds")} for k, v in r.items()}
+        reds = [(k, v) for k, v in r.items() if v["verdict"] == "RED"]
+        yellows = [(k, v) for k, v in r.items() if v["verdict"] == "YELLOW"]
+        rows = [f"{'FAIL' if v['verdict'] == 'RED' else 'WARN' if v['verdict'] == 'YELLOW' else 'INFO'} {k} shape: {v['verdict']} - {v['reason']}" for k, v in r.items()]
+        if reds:
+            return Check("t7", "The customer-context step runs", "FAIL",
+                         f"step 0a4 would NOT build the customer context ({'; '.join(k + ': ' + v['reason'][:90] for k, v in reds)}): that night's research would run WITHOUT it", rows)
+        if yellows:
+            return Check("t7", "The customer-context step runs", "WARN", "step 0a4 runs but with a warning: " + "; ".join(f"{k}: {v['reason'][:90]}" for k, v in yellows), rows)
+        return Check("t7", "The customer-context step runs", "PASS",
+                     "the real step 0a4 block ran on scratch copies for both nights' shapes and printed a good CUSTOMER CONTEXT line (nothing live was touched)", rows)
+    checks.append(safely("t7", "The customer-context step runs", c7))
     return checks, facts
 
 
-def evaluate_thursday(o: Opts, env: dict | None = None, patches_dir: Path = PATCHES, *, sheet_reader=None) -> dict:
-    checks, facts = thursday_checks(o, env, patches_dir, sheet_reader=sheet_reader)
+def evaluate_thursday(o: Opts, env: dict | None = None, patches_dir: Path = PATCHES, *, sheet_reader=None, step_rehearsal=None) -> dict:
+    checks, facts = thursday_checks(o, env, patches_dir, sheet_reader=sheet_reader, step_rehearsal=step_rehearsal)
     gv = verdict_of(checks)
     return {"checks": checks, "facts": facts, "verdict": THURSDAY_VERDICT[gv], "gate_verdict": gv, "preflight": True, "thursday": True, "on": o.on.isoformat(),
             "counts": {}, "coverage": {}, "coverage_lines": [], "pages": {}}
@@ -1111,6 +1142,8 @@ def thursday_lines(rep: dict) -> list[str]:
     L.append("Customer sheets: " + c["t4"]["summary"] + ".")
     if "t6" in c:
         L.append("Customer sheets readable now: " + c["t6"]["summary"] + ".")
+    if "t7" in c:
+        L.append("Customer-context step (run on copies): " + c["t7"]["summary"] + ".")
     if "t5" in c:
         L.append("Live build: " + c["t5"]["summary"] + ".")
     L.append({"READY": "Nothing stands in the way of Friday's and Saturday's research.", "READY WITH NOTES": "Friday and Saturday can run; the notes below say what will not happen unless you act first.",
@@ -1297,7 +1330,7 @@ def main(argv=None) -> int:
         o = Opts(date.fromisoformat(a.on), datetime.fromisoformat(a.now) if a.now else None, a.preflight, Path(a.markets_dir), Path(a.db), Path(a.snapshots_dir),
                  Path(a.awards_sheets_dir) if a.awards_sheets_dir else None, Path(a.weekly_dir), Path(a.work_dir) if a.work_dir else None, Path(a.qa_root))
         if a.thursday:
-            rep = evaluate_thursday(o, sheet_reader=default_sheet_reader)
+            rep = evaluate_thursday(o, sheet_reader=default_sheet_reader, step_rehearsal=default_step_rehearsal)
             folder = write_thursday_report(rep, o)
             subj, text, html_ = thursday_email(rep)
             print(f"GATE: {rep['verdict']} - {subj}")

@@ -468,7 +468,8 @@ def main() -> int:
         status, why = "DEGRADED", (f"{', '.join(shape_changed)} sheet changed shape - affected "
                                    f"fields kept at last week's values; see notes")
     elif notes and not fetched:
-        status, why = "DEGRADED", "nothing was fetched this run"
+        status, why = "DEGRADED", ("a sheet did not fetch this run and the research proceeds on a copy within the freshness limit (YELLOW, D67): see the SHEET LOAD line"
+                                   if any("SHEET LOAD: YELLOW" in n for n in notes) else "nothing was fetched this run")
     else:
         status, why = "HEALTHY", f"client layer is {worst} day(s) old"
 

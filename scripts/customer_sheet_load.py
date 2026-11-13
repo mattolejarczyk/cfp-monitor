@@ -184,7 +184,9 @@ def taken_at(path: Path | None) -> datetime | None:
 
 def newest_copy(client: str, snapshots: Path) -> Path | None:
     d = Path(snapshots) / client
-    files = sorted(d.glob(f"{client}_*.csv")) if d.is_dir() else []
+    # only names that carry a load time count (Codex pass 2, 2026-11-13: a stray name such as utility_bad.csv sorted last, had no time, and made a valid fresh
+    # copy look missing)
+    files = sorted(f for f in d.glob(f"{client}_*.csv") if taken_at(f) is not None) if d.is_dir() else []
     return files[-1] if files else None
 
 
@@ -253,6 +255,48 @@ def hold_plan(context: str | None, env: dict | None = None, task_reader=None) ->
     room = max(0.0, round(room, 2))
     return room, (f"Windows stops '{task}' after {limit:g} hours and the research itself needs about {RESEARCH_NEEDS_H[context]:g}, "
                   f"so a longer wait would cut it off" + (" (raise the task's limit to allow the full wait)" if room < want else ""))
+
+
+# Matt, 2026-11-13 (D67 = A): "we should proceed if the copies of the customer sheet data are 24 hours or less from a freshness standpoint. ... if tonight
+# tries to load the customer data and it fails, we should STILL PROCEED because we have updated data less than 24 hours old. That is perfectly fine."
+# So a failed load HOLDS the research only when a sheet it needs has NO copy that fresh. The limit is a setting, clamped to 48 hours: the customer-context step
+# (customer_row_context.STALE_AFTER_DAYS = 2) and the intake call a copy older than 2 days stale, so a larger limit would contradict them.
+MAX_AGE_VAR = "CFP_SHEETS_MAX_AGE_HOURS"
+MAX_AGE_DEFAULT_H = 24.0
+MAX_AGE_CAP_H = 48.0
+SUBJECT_YELLOW = "CFP customer sheets YELLOW - load failed, research proceeding on copies up to {hours} hours old"
+
+
+def max_age_hours(env: dict | None = None) -> float:
+    """The freshest-copy limit in hours (CFP_SHEETS_MAX_AGE_HOURS, default 24, 0 = never proceed on a copy, at most 48). Never raises."""
+    raw = ((os.environ if env is None else env).get(MAX_AGE_VAR) or "").strip()
+    try:
+        want = float(raw) if raw else MAX_AGE_DEFAULT_H
+    except ValueError:
+        want = MAX_AGE_DEFAULT_H
+    return max(0.0, min(want, MAX_AGE_CAP_H))
+
+
+def copy_ages(clients: list[str], snapshots: Path, at: datetime) -> dict:
+    """{client: {'copy': file name or None, 'taken': datetime or None, 'age_h': hours or None}} for the newest copy of each sheet."""
+    out = {}
+    for c in clients:
+        p = newest_copy(c, snapshots)
+        t = taken_at(p)
+        # NOT rounded: this is compared with the limit (Codex review 2026-11-13: a copy 24 h and 10 s old rounded to 24.00 and passed). Rounded only for display.
+        out[c] = {"copy": p.name if p else None, "taken": t, "age_h": (at - t).total_seconds() / 3600 if t else None}
+    return out
+
+
+def covered_by_copies(failed: list[str], snapshots: Path, at: datetime, limit_h: float) -> tuple[bool, dict]:
+    """(every failed sheet has a copy no older than limit_h, the ages). False when there is nothing failed to cover or the limit is 0."""
+    ages = copy_ages(failed, snapshots, at)
+    ok = bool(failed) and limit_h > 0 and all(a["age_h"] is not None and 0 <= a["age_h"] <= limit_h for a in ages.values())
+    return ok, ages
+
+
+def fmt_age(h: float | None) -> str:
+    return "no copy" if h is None else f"{h:.1f} hours old"
 
 
 HOLD_MARKER = "RESEARCH HELD (ACT-75)"
@@ -512,7 +556,8 @@ def cause_sections(result: dict, info: dict, snapshots: Path, context: str | Non
 
 
 def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold: tuple | None = None, evidence: Path | None = None,
-            today: date | None = None, test: bool = False, meaning: list[str] | None = None, mode: str | None = None) -> tuple[str, str]:
+            today: date | None = None, test: bool = False, meaning: list[str] | None = None, mode: str | None = None,
+            at: datetime | None = None) -> tuple[str, str]:
     """(subject, plain-text body) for Matt. `hold` = (hours, why shorter, deadline) for a guarded load; `meaning` replaces the WHAT THIS
     MEANS lines (the 03:00 check); `mode` is 'hold' (default: the research does NOT start while the sheets fail) or 'proceed' (old copies).
     No secret: paths and names only, and redact() runs over the whole text."""
@@ -561,6 +606,11 @@ def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold
     else:
         L.append("Anything that reads these sheets uses the last good copy until this is fixed.")
     L.append("Last good copy: " + "; ".join(last_good(failed, snapshots, today)) + ".")
+    if What and mode == "hold" and meaning is None:
+        lim = max_age_hours()
+        ages = copy_ages(failed, snapshots, at or datetime.now())
+        L.append(f"A failed sheet does NOT hold the research if its newest copy is no older than {lim:g} hours (your rule, D67). That is not the case here: "
+                 + "; ".join(f"{LABELS.get(c, c)}: {fmt_age(a['age_h'])}" for c, a in ages.items()) + ".")
     L.append("")
     L += cause_sections(result, info, snapshots, context)
     if What and mode == "hold" and meaning is None:
@@ -683,9 +733,65 @@ def alert(result: dict, context: str | None, config: Path, snapshots: Path, now:
     info = config_info(config)
     evidence = write_evidence({"context": context, "at": now.isoformat(timespec="seconds"),
                                "wait_hours": hold[0] if hold else None, **result}, now, qa_root)
-    subject, body = compose(result, context, info, snapshots, hold, evidence, now.date(), meaning=meaning, mode=mode)
+    subject, body = compose(result, context, info, snapshots, hold, evidence, now.date(), meaning=meaning, mode=mode, at=now)
     files = write_alert_file(body, alert_files)
     status = send(subject, body, now.date(), now, mailer, state) if email else "not sent: --once (you are at the keyboard)"
+    return {"evidence": evidence, "files": files, "email": status, "subject": subject, "body": body}
+
+
+# ------------------------------------------------------------------------------------------------ YELLOW: the load failed, a fresh enough copy covers it (D67)
+def yellow_subject(ages: dict) -> str:
+    worst = max((a["age_h"] for a in ages.values() if a["age_h"] is not None), default=0.0)
+    return SUBJECT_YELLOW.format(hours=f"{worst:.0f}" if worst >= 1 else "1")
+
+
+def yellow_line(result: dict, ages: dict, limit_h: float, extra: str = "") -> str:
+    """The verdict when the load failed but every failed sheet has a copy within the limit: the research PROCEEDS (exit 0). One line: the recap reads it."""
+    f, n = result["failed"], len(result["clients"])
+    causes = sorted({result["outcomes"][c]["cause"] for c in f})
+    worst = max((a["age_h"] for a in ages.values() if a["age_h"] is not None), default=0.0)
+    return (f"SHEET LOAD: YELLOW - {len(f)} of {n} sheet(s) did not load ({', '.join(f)}; cause: {', '.join(causes)}); the research PROCEEDS on copies up to "
+            f"{worst:.1f} hours old (limit {limit_h:g} h): " + ", ".join(f"{c} {a['age_h']:.1f} h" for c, a in ages.items()) + extra)
+
+
+def compose_yellow(result: dict, context: str | None, info: dict, snapshots: Path, ages: dict, limit_h: float, evidence: Path | None, today: date | None = None) -> tuple[str, str]:
+    """(subject, body) for Matt: the load failed, the research is NOT held, it proceeds on copies up to limit_h old. YELLOW, not green: fix it before the next run."""
+    today = today or date.today()
+    what = CONTEXTS.get(context or "", ("the research", None, None))[0]
+    What = what[0].upper() + what[1:]
+    out, failed = result["outcomes"], result["failed"]
+    subject = yellow_subject(ages)
+    L = [subject, "", "WHAT FAILED"]
+    for c in failed:
+        o = out[c]
+        tries = o.get("tries", 1)
+        L.append(f"- {LABELS.get(c, c)} ({c}): failed at {fmt_time(o.get('at'))}" + (f", after {tries} tries over about 15 minutes" if tries > 1 else "")
+                 + f". Error: {(o.get('reason') or '')[:300]}")
+    fine = [c for c in result["clients"] if c not in failed]
+    if fine:
+        L.append("Loaded fine: " + ", ".join(LABELS.get(c, c) for c in fine) + ".")
+    L += ["", "WHAT THIS MEANS (YELLOW, not green)",
+          f"{What} is NOT held. It proceeds, because every sheet that failed has a copy no older than {limit_h:g} hours (your rule, 2026-11-13, D67).",
+          "The copies it uses:"]
+    for c, a in ages.items():
+        L.append(f"- {LABELS.get(c, c)}: taken {a['taken']:%a %d %b %H:%M} ({fmt_age(a['age_h'])})")
+    L += ["Anything the customer changed since those copies is not seen by this run.",
+          "The recap subject and the Sunday check show this weekend as YELLOW. Fix the cause before the next run, or the same thing happens again.", ""]
+    L += cause_sections(result, info, snapshots, context)
+    L += ["EVIDENCE", f"- Every try and its output: {evidence}" if evidence else "- (no evidence file was written)",
+          f"- This text is also on your Desktop: {fcs.alert_paths()[-1]}", "",
+          "This email goes to you only. No secret is in it: the key file is named by its path, never its contents."]
+    return subject, redact("\n".join(L) + "\n")
+
+
+def yellow_alert(result: dict, context: str | None, config: Path, snapshots: Path, now: datetime, ages: dict, limit_h: float, mailer=None,
+                 qa_root: Path | None = None, state: Path | None = None, alert_files=None, once_a_day: bool = True) -> dict:
+    info = config_info(config)
+    evidence = write_evidence({"context": context, "at": now.isoformat(timespec="seconds"), "yellow": True, "limit_h": limit_h,
+                               "ages": {c: {"copy": a["copy"], "age_h": None if a["age_h"] is None else round(a["age_h"], 2)} for c, a in ages.items()}, **result}, now, qa_root)
+    subject, body = compose_yellow(result, context, info, snapshots, ages, limit_h, evidence, now.date())
+    files = write_alert_file(body, alert_files)
+    status = send(subject, body, now.date(), now, mailer, state, once_a_day=once_a_day)
     return {"evidence": evidence, "files": files, "email": status, "subject": subject, "body": body}
 
 
@@ -811,6 +917,18 @@ def guarded_load(clients: list[str], context: str | None, config: Path | None = 
         lines.append(verdict_line(result, f"; email {a['email']}; evidence: {a['evidence']}"))
         return 1, result, lines
 
+    limit_h = max_age_hours(env)
+    if mode == "hold":
+        covered, ages = covered_by_copies(result["failed"], snapshots, now(), limit_h)
+        if covered:
+            # D67 (Matt, 2026-11-13): the load failed, but every failed sheet has a copy no older than the limit: the research PROCEEDS on those copies.
+            # YELLOW, not green: one email says so, the recap and the Sunday gate show it. No wait: a fix cannot make the copies fresher than they already are.
+            y = yellow_alert(result, context, config, snapshots, now(), ages, limit_h, mailer, qa_root, state, alert_files)
+            lines.append(yellow_line(result, ages, limit_h, f"; email {y['email']}; evidence: {y['evidence']}"))
+            write_status(context, "COPIES", result, snapshots, now(), path=status_path,
+                         note=f"proceeding on copies up to {max(a['age_h'] for a in ages.values()):.1f} h old (limit {limit_h:g} h)")
+            return 0, result, lines
+
     hours, why = hold_plan(context, env, task_reader)
     deadline = first + timedelta(hours=hours)
     a = alert(result, context, config, snapshots, now(), env, mailer, qa_root, state, alert_files=alert_files, hold=(hours, why, deadline), mode=mode)
@@ -845,8 +963,18 @@ def guarded_load(clients: list[str], context: str | None, config: Path | None = 
                 f"{len(result['failed'])} still failing ({', '.join(result['failed'])}); next try in {HOLD_POLL_S // 60} min, until {deadline:%H:%M}"))
         lines.append(line)
         say(line)
+        if mode == "hold" and result["failed"] and covered_by_copies(result["failed"], snapshots, now(), limit_h)[0]:
+            break                                                    # a sheet that loaded during the wait left only sheets a fresh copy covers: stop waiting
     at = now()
     waited = max(0, int(round((at - first).total_seconds() / 60)))
+    if mode == "hold" and result["failed"]:
+        covered, ages = covered_by_copies(result["failed"], snapshots, at, limit_h)
+        if covered:
+            y = yellow_alert(result, context, config, snapshots, at, ages, limit_h, mailer, qa_root, state, alert_files, once_a_day=False)
+            write_status(context, "COPIES", result, snapshots, at, waited, path=status_path,
+                         note=f"proceeding on copies up to {max(a['age_h'] for a in ages.values()):.1f} h old (limit {limit_h:g} h)")
+            lines.append(yellow_line(result, ages, limit_h, f" after waiting {waited} min; email {y['email']}; evidence: {y['evidence']}"))
+            return 0, result, lines
     info = config_info(config)
     evidence = write_evidence({"context": context, "at": at.isoformat(timespec="seconds"), "wait_hours": hours, "waited_min": waited, **result},
                               at, qa_root)
@@ -887,7 +1015,8 @@ def failures_in_log(log: Path) -> list[str]:
 
 def deadman(kind: str, snapshots: Path | None = None, logs: Path | None = None, config: Path | None = None, now=datetime.now, sleep=time.sleep,
             env: dict | None = None, mailer=None, qa_root: Path | None = None, state: Path | None = None, task_reader=None,
-            start_grace_s: int = DEADMAN_START_GRACE_S, poll_s: int = DEADMAN_POLL_S, alert_files=None) -> tuple[int, list[str]]:
+            start_grace_s: int = DEADMAN_START_GRACE_S, poll_s: int = DEADMAN_POLL_S, alert_files=None, status_path: Path | None = None
+            ) -> tuple[int, list[str]]:
     """Fetches nothing. Are today's copies there for the sheets this day's research takes? If not, which of three cases (Matt, 2026-11-10):
       did_not_start  no run log today and the task's last run is not today -> CRITICAL email: how to start it by hand
       running        the task is running (or its log changed in the last 15 minutes) -> NO email: the run alerts and waits by itself
@@ -935,6 +1064,12 @@ def deadman(kind: str, snapshots: Path | None = None, logs: Path | None = None, 
     if case == "running":
         return 0, [f"SHEET DEADMAN: RUNNING - {len(missing)} of {len(clients)} sheet(s) have no copy from today yet ({', '.join(missing)}), but "
                    f"'{task}' is running: it raises its own alert and waits for the sheets. Nothing sent."]
+    if case == "ran_no_copies":
+        st = read_status(status_path).get(kind) or {}
+        if st.get("date") == today.isoformat() and st.get("verdict") == "COPIES":
+            # D67 (Matt, 2026-11-13): the load failed and the research proceeded on copies within the freshness limit. The YELLOW email already said so.
+            return 0, [f"SHEET DEADMAN: YELLOW - no copy from today for {', '.join(missing)}: the load failed and the research proceeded on copies within the "
+                       f"freshness limit ({st.get('note') or 'D67'}). The YELLOW email already told you. Nothing sent."]
     logs_today = todays_run_logs(today, logs)
     last = info.get("last_run")
     last_txt = f"its last run was {last:%a %d %b %H:%M}" if last else "Task Scheduler could not be read"
@@ -970,6 +1105,94 @@ def deadman(kind: str, snapshots: Path | None = None, logs: Path | None = None, 
     label = {"did_not_start": "the research task did not start", "ran_no_copies": "the research ran but today's copies are missing"}[case]
     return 1, [f"SHEET DEADMAN: FAILED - {label}: {len(missing)} of {len(clients)} sheet(s) have no copy from today ({', '.join(missing)}); "
                f"email {a['email']}; evidence: {a['evidence']}"]
+
+
+# ------------------------------------------------------------------------------------------------ the 03:00 context watch (plan step 1.20, Matt 2026-11-13)
+SUBJECT_CONTEXT_RUNNING = "CFP customer context did not build - research is running WITHOUT it - CRITICAL ERROR"
+
+
+def context_level(line: str | None) -> tuple[str, str]:
+    """(GREEN | YELLOW | RED, reason) for the text after 'CUSTOMER CONTEXT: ' (None = no line at all). An ALLOWLIST (Codex review 2026-11-13: an unrecognised verdict word
+    such as BROKEN used to count as fine): only HEALTHY, DEGRADED and OFF are ever good; zero rows carrying the customer's row out of a non-zero number of research
+    rows is RED; 0 of 0 (nothing to research) and a verdict with no row count are YELLOW because the rows cannot be shown."""
+    if line is None:
+        return "RED", "no CUSTOMER CONTEXT line was printed (the step crashed or was not reached)"
+    line = line.strip()
+    word = re.match(r"(HEALTHY|DEGRADED|OFF|FAILED|UNKNOWN)\b", line)
+    if not word:
+        return "RED", f"CUSTOMER CONTEXT: {line[:160]} (an unrecognised verdict)"
+    w = word.group(1)
+    if w == "OFF":
+        return "GREEN", f"CUSTOMER CONTEXT: {line[:160]}"
+    if w in ("FAILED", "UNKNOWN"):
+        return "RED", f"CUSTOMER CONTEXT: {line[:160]}"
+    rows = re.search(r"(\d+) of (\d+) research rows", line)
+    if not rows:
+        return "YELLOW", f"CUSTOMER CONTEXT: {line[:160]} (no row count to check)"
+    got, due = int(rows.group(1)), int(rows.group(2))
+    if got == 0 and due > 0:
+        return "RED", f"CUSTOMER CONTEXT: {line[:160]} (no research row carries the customer's row)"
+    if due == 0:
+        return "YELLOW", f"CUSTOMER CONTEXT: {line[:160]} (there are no research rows to carry context)"
+    return ("YELLOW" if w == "DEGRADED" else "GREEN"), f"CUSTOMER CONTEXT: {line[:160]}"
+
+
+def context_problem(log_text: str) -> str | None:
+    """None when the run's step 0a4 is fine or not reached; else a plain reason. Reads the LAST 'CUSTOMER CONTEXT:' line of a run log."""
+    if "RESEARCH HELD" in log_text:
+        return None                                                           # a held run has its own email
+    if not any(m in log_text for m in ("Cost preview", "CANARY", "STAGE A")):
+        return None                                                           # still waiting for the sheets or in setup: step 0a4 has not had its turn
+    lines = re.findall(r"^CUSTOMER CONTEXT: (.+)$", log_text, flags=re.M)
+    if not lines:
+        return "the run log has no CUSTOMER CONTEXT line although the research has started (the step crashed, or was never reached)"
+    level, reason = context_level(lines[-1])
+    return reason if level == "RED" else None
+
+
+def compose_context_running(kind: str, reason: str, log: Path | None) -> tuple[str, str]:
+    what = CONTEXTS[kind][0]
+    What = what[0].upper() + what[1:]
+    mk = research_markets(kind)
+    L = [SUBJECT_CONTEXT_RUNNING, "", "WHAT FAILED",
+         f"- Step 0a4 (the customer's own sheet row, put in front of the research as context): {' '.join(reason.split())[:400]}", "",
+         "WHAT THIS MEANS",
+         f"{What} is RUNNING, but WITHOUT the customer context. The sheets loaded; the context made from them did not. Nothing is held (the hold switch was off or not applied).",
+         "A re-run of the research with context is a paid run: you decide, it is not started for you.", "",
+         "WHAT TO DO",
+         "1. See what the context step says now. This changes nothing (report only):",
+         f"       & {ps(PY)} {ps(HERE / 'customer_row_context.py')} --markets {mk}",
+         "2. Send that line and the run log to the Claude session that built it:", f"       {log if log else '(no run log was found)'}",
+         "3. Next run: with patch ACT-76 applied the research is HELD instead of running without context.", "",
+         "This email goes to you only. No secret is in it."]
+    return SUBJECT_CONTEXT_RUNNING, redact("\n".join(L) + "\n")
+
+
+def context_watch(kind: str, logs: Path | None = None, now=datetime.now, mailer=None, state: Path | None = None) -> tuple[int, list[str]]:
+    """03:00: did step 0a4 build the customer context? Read from today's run log; one CRITICAL email if it did not. Fetches nothing. Never raises."""
+    try:
+        today = now().date()
+        logs_today = todays_run_logs(today, Path(logs or LOGS))
+        if not logs_today:
+            return 0, []                                                      # no run today: the three-case check already says so
+        log = logs_today[-1]
+        reason = context_problem(log.read_text(encoding="utf-8", errors="replace"))
+        if not reason:
+            return 0, ["SHEET DEADMAN: CONTEXT OK - step 0a4 built the customer context, or has not been reached yet"]
+        subject, body = compose_context_running(kind, reason, log)
+        written = write_alert_file(body)
+        st = send(subject, body, today, now(), mailer, state, once_a_day=False)
+        return 1, [f"SHEET DEADMAN: CONTEXT FAILED - {reason}; email {st}; the same text is on the Desktop ({len(written)} file(s))"]
+    except Exception as exc:                                                  # noqa: BLE001
+        # "Could not look" is never reported as "nothing found" (Codex pass 2, 2026-11-13): a watch that could not run exits 1 and says so by email, best effort.
+        note = f"the context watch could not run ({type(exc).__name__}: {exc})"
+        try:
+            send("CFP customer context watch could not run - CRITICAL ERROR", f"CFP customer context watch could not run - CRITICAL ERROR\n\nWHAT FAILED\n- {redact(note)}\n\n"
+                 "WHAT THIS MEANS\nThe 03:00 check could not tell whether step 0a4 built the customer context for today's research. Look at today's run log for a line that "
+                 "starts CUSTOMER CONTEXT:.\n", now().date(), now(), mailer, state, once_a_day=False)
+        except Exception:                                                     # noqa: BLE001
+            pass
+        return 1, [f"SHEET DEADMAN: CONTEXT UNKNOWN - {note}"]
 
 
 # ------------------------------------------------------------------------------------------------ the read-only check (Thursday)
@@ -1032,8 +1255,10 @@ def main(argv: list[str] | None = None) -> int:
                 print("SHEET DEADMAN: HEALTHY - nothing to check today (it checks Friday and Saturday only)")
                 return 0
             code, lines = deadman(kind, snapshots, config=config)
+            ctx_code, ctx_lines = context_watch(kind)                          # plan step 1.20: did step 0a4 build the context? (never raises)
+            lines += ctx_lines
             print("\n".join(lines))
-            return code
+            return code or ctx_code
         if a.check_only:
             r = read_check(config)
             for ln in fix_summary(r, config):

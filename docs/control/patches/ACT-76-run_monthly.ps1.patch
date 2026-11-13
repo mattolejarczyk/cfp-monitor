@@ -16,15 +16,15 @@ diff --git a/Markets/run_monthly.ps1 b/Markets/run_monthly.ps1
          Write-Host "CUSTOMER CONTEXT: UNKNOWN - $($_.Exception.Message). The research runs without it."
      }
 +    # ACT-76 (2026-11-13; Matt's gate #1 is that the customer data is loaded AND turned into context before the research): the customer context HOLDS the
-+    # research when it did not build: no CUSTOMER CONTEXT line at all (the step crashed or was not found), a FAILED or UNKNOWN verdict, or ZERO research
-+    # rows carrying the customer's row. A DEGRADED verdict with rows (a dropped cell, an old copy) does NOT hold. Exit 6, like the sheet-load hold:
++    # research when it did not build: no CUSTOMER CONTEXT line at all (the step crashed or was not found), ANY verdict but HEALTHY, DEGRADED or OFF (FAILED,
++    # UNKNOWN, or one nobody has seen before: Codex review 2026-11-13), or ZERO research rows carrying the customer's row. A DEGRADED verdict with rows does NOT hold. Exit 6, like the sheet-load hold:
 +    # nothing researched, nothing spent, one CRITICAL email with the fix and the command to start the research again. CFP_CONTEXT_ON_FAIL = 'proceed',
 +    # set by a person starting this script by hand, runs the research without context instead. CFP_CUSTOMER_CONTEXT = 0 (context switched off) never holds.
 +    $ccLine = @($ccOut | Where-Object { "$_" -like 'CUSTOMER CONTEXT:*' }) | Select-Object -Last 1
 +    $ccWhy = $null
 +    if ($env:CFP_CUSTOMER_CONTEXT -ne '0' -and $env:CFP_CONTEXT_ON_FAIL -ne 'proceed') {
 +        if (-not $ccLine) { $ccWhy = 'the context step printed no CUSTOMER CONTEXT line (it crashed or was not found)' }
-+        elseif ("$ccLine" -match '^CUSTOMER CONTEXT: (FAILED|UNKNOWN)') { $ccWhy = "$ccLine" }
++        elseif ("$ccLine" -notmatch '^CUSTOMER CONTEXT: (HEALTHY|DEGRADED|OFF)( |$)') { $ccWhy = "$ccLine" }
 +        elseif ("$ccLine" -match ' - 0 of [1-9][0-9]* research rows') { $ccWhy = "$ccLine" }
 +    }
 +    if ($ccWhy) {
