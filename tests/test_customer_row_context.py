@@ -279,7 +279,9 @@ def test_the_run_patch_puts_step_0a4_after_the_refresh_plan_and_before_the_canar
     a3, a4, b = t.index("STEP 0a3: CONFERENCE REFRESH PLAN"), t.index("STEP 0a4: CUSTOMER CONTEXT"), t.index("STEP 0b: CANARY")
     assert a3 < a4 < b
     added = "\n".join(_added(RM_PATCH))
-    assert "customer_row_context.py" in added and "--apply" in added and "$env:CFP_CUSTOMER_CONTEXT -eq '0'" in added and "@('--clear')" in added
+    assert "customer_row_context.py" in added and "--apply" in added and "$env:CFP_CUSTOMER_CONTEXT -eq '0'" in added
+    # ACT-74 (2026-11-13): this used to assert `{ @('--clear') }`, the form PowerShell unwraps to a string and splats as characters
+    assert "$ccArgs = @(if ($env:CFP_CUSTOMER_CONTEXT -eq '0') { '--clear' } else { '--apply' })" in added
     assert "-not $WhatIf" in added and "customer_row_answers.py" in added and "CUSTOMER ROWS:*" in added
 
 

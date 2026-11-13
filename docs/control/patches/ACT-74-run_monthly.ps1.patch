@@ -1,0 +1,13 @@
+diff --git a/Markets/run_monthly.ps1 b/Markets/run_monthly.ps1
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -411,7 +411,8 @@
+     $ccPy  = "C:\Users\matts\cfp-monitor\.venv\Scripts\python.exe"
+     $ccPy_ = "C:\Users\matts\cfp-monitor\scripts\customer_row_context.py"
+     $ccMarkets = (@($Markets | Where-Object { $_ -in @('Cybersecurity','Utility','Awards') }) -join ',')
+-    $ccArgs = if ($env:CFP_CUSTOMER_CONTEXT -eq '0') { @('--clear') } else { @('--apply') }
++    # ACT-74 (2026-11-13): the @( ) keeps a ONE-element array an array. Without it PowerShell unwrapped '--apply' to a plain string and splatted it one character at a time (- - a p p l y): step 0a4 crashed on Fri 11-13 and that research ran with no customer context.
++    $ccArgs = @(if ($env:CFP_CUSTOMER_CONTEXT -eq '0') { '--clear' } else { '--apply' })
+     try {
+         if ((Test-Path $ccPy) -and (Test-Path $ccPy_)) {
+             & $ccPy $ccPy_ --markets $ccMarkets @ccArgs
