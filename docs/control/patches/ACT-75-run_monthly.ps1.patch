@@ -1,0 +1,29 @@
+diff --git a/Markets/run_monthly.ps1 b/Markets/run_monthly.ps1
+--- a/Markets/run_monthly.ps1
++++ b/Markets/run_monthly.ps1
+@@ -227,6 +227,13 @@
+     try {
+         if ((Test-Path $py) -and (Test-Path $intake)) {
+             & $py $intake
++            # ACT-75 (2026-11-13, Matt, D66 = B: "If the customer sheets don't load I do NOT want to proceed - this is the first and most critical step").
++            # The intake loads the four customer sheets through cfp-monitor scripts/customer_sheet_load.py: 3 tries, ONE CRITICAL email, then a wait of
++            # up to 2 hours with a try every 10 minutes. Exit 6 = the sheets STILL did not load: the research must NOT start. This ends the run here,
++            # before the archive, the canary and any spend. The email says how to fix it and how to start the research again. A person who decides to
++            # research on old copies starts this script by hand with $env:CFP_SHEETS_ON_FAIL = 'proceed' (then the load returns 1 and the run goes on).
++            if ($LASTEXITCODE -eq 6) { Write-Host "RESEARCH HELD (ACT-75): the customer sheets did not load, even after waiting. Nothing researched, nothing spent. The CRITICAL email says how to fix it and how to start the research again." -ForegroundColor Red; exit 6 }
+         } else {
+             Write-Host "INTAKE SKIPPED: interpreter or script not found ($py / $intake)." -ForegroundColor Yellow
+             Write-Host "  Research continues. The client layer is whatever it already was." -ForegroundColor Yellow
+@@ -305,7 +312,13 @@
+             # the fix, then a try every 10 minutes for up to 2 hours and a second email either way. The research then always goes ahead: on fresh
+             # copies, or on the last good ones (DEGRADED in the recap and the Sunday gate). Until now a failed fetch here printed one line.
+             $awLoad = "C:\Users\matts\cfp-monitor\scripts\customer_sheet_load.py"
++            $LASTEXITCODE = 0
+             try { & $awPy $awLoad --clients 'arnica-awards,utility-awards' --context friday --snapshots "$PSScriptRoot\customer_snapshots" } catch { Write-Host "SHEET LOAD: DEGRADED - $($_.Exception.Message) - the newest snapshot on disk is used." }
++            # ACT-75 (2026-11-13, Matt, D66 = B): exit 6 = the awards sheets STILL did not load after the wait: the research must NOT start. Nothing is
++            # researched, nothing is spent; the CRITICAL email says how to fix it and how to start the task again (CFP_SHEETS_ON_FAIL = 'proceed' by hand
++            # makes the load return 1 instead, and the run goes on). This replaces the 11-10 rule above, "the research then always goes ahead".
++            if ($LASTEXITCODE -eq 6) { Write-Host "RESEARCH HELD (ACT-75): the customer awards sheets did not load, even after waiting. Nothing researched, nothing spent. The CRITICAL email says how to fix it and how to start the research again." -ForegroundColor Red; exit 6 }
+         }
+         if ((Test-Path $awPy) -and (Test-Path $awPy_)) {
+             & $awPy $awPy_ @awArgs

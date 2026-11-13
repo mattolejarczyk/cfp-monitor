@@ -446,6 +446,10 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
     if (s.get("sheet_load") or "").startswith(("DEGRADED", "FAILED")):
         # Matt, 2026-11-10: a weekend researched on old copies of the customer sheets is DEGRADED, said in the subject.
         status += " - DEGRADED: customer sheets did not load, research used old copies"
+    if (s.get("exit") == "6") or (s.get("sheet_load") or "").startswith("HELD"):
+        # Matt, 2026-11-13 (D66 = B): the sheets (or the customer context) were not ready, so the research did NOT start. Exit 6 is the hold.
+        status = ("HELD - research did NOT start: customer sheets did not load" if (s.get("sheet_load") or "").startswith("HELD")
+                  else "HELD - research did NOT start: customer context did not build")
     cov_n = (s["coverage"] or {}).get("not_in")
     if kind != "friday" and cov_n:
         status += f" - FLAG: {cov_n} customer row(s) not in the research queue"

@@ -31,3 +31,7 @@ def _no_sheet_wait(monkeypatch, tmp_path):
         return
     monkeypatch.setattr(csl, "task_info", lambda *a, **k: {})
     monkeypatch.setattr(csl, "STATUS", tmp_path / "sheet_load_status.json")
+    # 2026-11-13 (D66 = B): a failed load HOLDS the research only when the live run script can enforce it (patch ACT-75 applied). The tests assume it
+    # can, whatever state the live Markets script is in today; test_sheet_hold.py exercises the real check through csl._real_hold_wired.
+    monkeypatch.setattr(csl, "_real_hold_wired", csl.hold_wired, raising=False)
+    monkeypatch.setattr(csl, "hold_wired", lambda markets=None: True)

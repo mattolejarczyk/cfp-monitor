@@ -26,18 +26,24 @@ and redact() strips any secret-looking environment value or private-key block be
 
 THE WAIT (Matt, 2026-11-10, asked how long the research should wait for the sheets: "Wait up to 2 hours"). After the CRITICAL email the
 load keeps trying every 10 minutes, for up to 2 hours from the first failure (CFP_SHEETS_HOLD_HOURS, default 2; 0 = no wait). If the sheets
-load, the research starts on the fresh copies and a second email says so: "CFP customer sheets loaded - research started". If they still do
-not load, the research goes ahead on the last good copies, a second email says so ("CFP customer sheets still not loaded - research ran on
-copies from <date>"), and the weekend is DEGRADED in the recap and in the Sunday gate (runs_out/sheet_load_status.json). The wait is cut
-short to fit the research task's own time limit (Windows stops a task at its limit), so waiting never cuts the research off. Nothing here
-ever stops the research.
+load, the research starts by itself on the fresh copies and a second email says so: "CFP customer sheets loaded - research started". The wait
+is cut short to fit the research task's own time limit (Windows stops a task at its limit), so waiting never cuts the research off.
+
+THE HOLD (Matt, 2026-11-13, D66 = B: "If the customer sheets don't load I do NOT want to proceed - this is the first and most critical step and
+foundational to data success"). If the sheets still do not load when the wait ends, the research does NOT start: this exits 6 (HELD), run_monthly.ps1
+(patch ACT-75) ends right there before the archive, the canary and any spend, and a second email says so ("CFP research HELD - customer sheets
+still not loaded - CRITICAL ERROR") with the commands to re-run just the sheet load and to start the research once it works. There is no automatic
+restart: Matt starts the task (Start-ScheduledTask). The weekend shows as HELD in the recap and the Sunday gate (runs_out/sheet_load_status.json).
+CFP_SHEETS_ON_FAIL=proceed, set by a person starting run_monthly.ps1 by hand, brings back the 11-10 rule: the research goes ahead on the last good
+copies, exit 1, DEGRADED. It is never the default.
 
 THE 03:00 CHECK (--deadman) tells three cases apart: the research task did not start today (CRITICAL email, with how to start it by hand);
 the task is running but the sheets have not loaded yet (no email: the run alerts and waits by itself); the task ran and today's copies are
 missing (CRITICAL email, cause read from today's run log).
 
-Exit codes: 0 HEALTHY (also when the sheets loaded during the wait, or the 03:00 check found the run still going), 1 FAILED or DEGRADED (the
-research goes ahead on old copies), 2 the check itself failed.
+Exit codes: 0 HEALTHY (also when the sheets loaded during the wait, or the 03:00 check found the run still going), 1 FAILED (the person's --once
+re-run, the 03:00 check, or CFP_SHEETS_ON_FAIL=proceed: the research goes ahead on old copies), 2 the check itself failed, 6 HELD (the sheets did not
+load: the research must NOT start).
 """
 from __future__ import annotations
 
@@ -73,7 +79,15 @@ LOGS = MARKETS / "logs"
 
 SUBJECT = "CFP customer sheets failed to load - CRITICAL ERROR"
 SUBJECT_LOADED = "CFP customer sheets loaded - research started"
-SUBJECT_STILL = "CFP customer sheets still not loaded - research ran on copies from {copies}"
+SUBJECT_STILL = "CFP customer sheets still not loaded - research ran on copies from {copies}"       # only with CFP_SHEETS_ON_FAIL=proceed (the 11-10 rule)
+SUBJECT_HELD = "CFP research HELD - customer sheets still not loaded - CRITICAL ERROR"
+SUBJECT_CONTEXT_HELD = "CFP research HELD - customer context did not build - CRITICAL ERROR"
+# Matt, 2026-11-13 (D66 = B): "If the customer sheets don't load I do NOT want to proceed - this is the first and most critical step and
+# foundational to data success." So after the retries, the CRITICAL email and the wait, a research that cannot get its sheets does NOT start:
+# exit 6, nothing researched, nothing spent. Matt starts it by hand once the sheets load. CFP_SHEETS_ON_FAIL=proceed brings the 11-10 rule back
+# (research on the last good copies, DEGRADED); it is for a person starting run_monthly.ps1 by hand, never the default.
+HELD_EXIT = 6
+ON_FAIL_VAR = "CFP_SHEETS_ON_FAIL"
 HOLD_VAR = "CFP_SHEETS_HOLD_HOURS"
 # Matt, 2026-11-10 (asked how long the research should wait when the customer sheets do not load): "Wait up to 2 hours".
 HOLD_DEFAULT_H = 2.0
@@ -239,6 +253,57 @@ def hold_plan(context: str | None, env: dict | None = None, task_reader=None) ->
     room = max(0.0, round(room, 2))
     return room, (f"Windows stops '{task}' after {limit:g} hours and the research itself needs about {RESEARCH_NEEDS_H[context]:g}, "
                   f"so a longer wait would cut it off" + (" (raise the task's limit to allow the full wait)" if room < want else ""))
+
+
+HOLD_MARKER = "RESEARCH HELD (ACT-75)"
+
+
+def hold_wired(markets: Path | None = None) -> bool:
+    """True when the live run_monthly.ps1 carries patch ACT-75, the part that actually STOPS the run at exit 6. These scripts are live the moment they are
+    saved, the patch only when Matt applies it: until then a HELD email would promise 'the research did NOT start' while it runs. So until the patch is
+    in (or the file cannot be read) a failed load behaves as it did from 2026-11-10 to 2026-11-13: exit 1, the research goes ahead, DEGRADED."""
+    try:
+        return HOLD_MARKER in (Path(markets or MARKETS) / "run_monthly.ps1").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+
+
+def on_fail_mode(env: dict | None = None) -> str:
+    """'hold' (Matt 2026-11-13: do NOT proceed when the sheets do not load) or 'proceed' (the 2026-11-10 rule). CFP_SHEETS_ON_FAIL=proceed or =hold
+    forces either, by hand; otherwise it is 'hold' exactly when the live run script can enforce it (patch ACT-75 applied)."""
+    raw = ((os.environ if env is None else env).get(ON_FAIL_VAR) or "").strip().lower()
+    if raw in ("proceed", "hold"):
+        return raw
+    return "hold" if hold_wired() else "proceed"
+
+
+def research_markets(context: str | None) -> str:
+    return "Awards" if context == "friday" else "Cybersecurity,Utility"
+
+
+def start_research_command(context: str | None) -> str:
+    """The line that starts the held research once the sheets load: the same task Task Scheduler starts at 02:00."""
+    task = CONTEXTS.get(context or "", (None, None, None))[1]
+    return f"Start-ScheduledTask -TaskName '{task}'" if task else "Start-ScheduledTask -TaskName '<the research task>'"
+
+
+def proceed_command(context: str | None) -> str:
+    """The last resort, by hand: the same run as the task, told to go ahead on the old copies if the sheets still do not load."""
+    return (f"$env:{ON_FAIL_VAR} = 'proceed'; & {ps(MARKETS / 'run_monthly.ps1')} -Markets {research_markets(context)}")
+
+
+def held_steps(context: str | None) -> list[str]:
+    """THEN START THE RESEARCH: what Matt does after the fix. Plain, exact commands."""
+    what = CONTEXTS.get(context or "", ("the research", None, None))[0]
+    return ["THEN START THE RESEARCH (it is held; it will not start by itself again)",
+            "1. Confirm the sheets load now. This tries each failed sheet once, saves a fresh copy and prints SHEET LOAD: HEALTHY, or the reason it still fails.",
+            "   The re-run command is in the numbered steps above.",
+            f"2. When it says SHEET LOAD: HEALTHY, start {what}: it is the normal full job, from its own start (its time limit starts again, and its own sheet load runs first):",
+            f"       {start_research_command(context)}",
+            "3. Only if you decide to research on the OLD copies instead (the old rule, your choice, by hand): in PowerShell, run",
+            f"       {proceed_command(context)}",
+            "   Anything the customer changed since the last good copy is then not seen this week, and the recap and the Sunday check show DEGRADED.",
+            ""]
 
 
 # ------------------------------------------------------------------------------------------------ one attempt, then the retries
@@ -443,10 +508,12 @@ def cause_sections(result: dict, info: dict, snapshots: Path, context: str | Non
 
 
 def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold: tuple | None = None, evidence: Path | None = None,
-            today: date | None = None, test: bool = False, meaning: list[str] | None = None) -> tuple[str, str]:
+            today: date | None = None, test: bool = False, meaning: list[str] | None = None, mode: str | None = None) -> tuple[str, str]:
     """(subject, plain-text body) for Matt. `hold` = (hours, why shorter, deadline) for a guarded load; `meaning` replaces the WHAT THIS
-    MEANS lines (the 03:00 check). No secret: paths and names only, and redact() runs over the whole text."""
+    MEANS lines (the 03:00 check); `mode` is 'hold' (default: the research does NOT start while the sheets fail) or 'proceed' (old copies).
+    No secret: paths and names only, and redact() runs over the whole text."""
     today = today or date.today()
+    mode = mode or on_fail_mode()
     out = result["outcomes"]
     failed = result["failed"]
     fine = [c for c in result["clients"] if c not in failed]
@@ -468,13 +535,21 @@ def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold
         L += meaning
     elif What and hold is not None and hold[0] > 0:
         hours, why, deadline = hold
-        L.append(f"{What} is WAITING for the sheets. It tries again every {HOLD_POLL_S // 60} minutes until {deadline:%H:%M} "
+        L.append(f"{What} is WAITING for the sheets and has NOT started. It tries again every {HOLD_POLL_S // 60} minutes until {deadline:%H:%M} "
                  f"({fmt_h(hours)} after the first failure).")
-        L.append(f"- If they load by then, the research starts on fresh copies and you get a second email: '{SUBJECT_LOADED}'.")
-        L.append(f"- If not, at {deadline:%H:%M} the research goes ahead on the last good copies and you get: '{SUBJECT_STILL.format(copies='<date>')}'.")
+        L.append(f"- If they load by then, the research starts by itself on fresh copies and you get a second email: '{SUBJECT_LOADED}'.")
+        if mode == "hold":
+            L.append(f"- If not, at {deadline:%H:%M} the research is HELD: it does NOT start, nothing is researched, nothing is spent (your rule, 2026-11-13). "
+                     f"You get: '{SUBJECT_HELD}', with the commands to start it once the sheets load.")
+        else:
+            L.append(f"- If not, at {deadline:%H:%M} the research goes ahead on the last good copies and you get: '{SUBJECT_STILL.format(copies='<date>')}'.")
         L.append(f"Fix it while it waits: the waiting run notices your fix within {HOLD_POLL_S // 60} minutes by itself (the re-run below only shows you sooner).")
         if why:
             L.append(f"The wait is shorter than {HOLD_DEFAULT_H:g} hours: {why}.")
+    elif What and mode == "hold":
+        L.append(f"{What} is HELD: it did NOT start, because the sheets did not load. Nothing is researched and nothing is spent (your rule, 2026-11-13).")
+        if hold is not None and hold[1]:
+            L.append(f"It does not wait for the sheets: {hold[1]}.")
     elif What:
         L.append(f"{What} goes ahead with the last good copy of each failed sheet, so anything the customer changed since then is not seen this week.")
         if hold is not None and hold[1]:
@@ -484,6 +559,8 @@ def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold
     L.append("Last good copy: " + "; ".join(last_good(failed, snapshots, today)) + ".")
     L.append("")
     L += cause_sections(result, info, snapshots, context)
+    if What and mode == "hold" and meaning is None:
+        L += held_steps(context)
     L.append("EVIDENCE")
     L.append(f"- Every try and its output: {evidence}" if evidence else "- (no evidence file was written)")
     L.append(f"- This text is also on your Desktop: {fcs.alert_paths()[-1]}")
@@ -494,8 +571,10 @@ def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold
 
 
 def compose_followup(loaded: bool, result: dict, context: str | None, info: dict, snapshots: Path, first: datetime, at: datetime,
-                     evidence: Path | None, failed_at_first: list[str]) -> tuple[str, str]:
-    """The second email after a wait: loaded (the research starts on fresh copies) or still not loaded (it goes ahead on old copies)."""
+                     evidence: Path | None, failed_at_first: list[str], mode: str | None = None) -> tuple[str, str]:
+    """The second email after a wait: loaded (the research starts on fresh copies) or still not loaded: HELD (default, it does not start) or,
+    with CFP_SHEETS_ON_FAIL=proceed, it goes ahead on old copies."""
+    mode = mode or on_fail_mode()
     what = CONTEXTS.get(context or "", ("the research", None, None))[0]
     What = what[0].upper() + what[1:]
     waited = max(0, int(round((at - first).total_seconds() / 60)))
@@ -509,7 +588,7 @@ def compose_followup(loaded: bool, result: dict, context: str | None, info: dict
              f"Evidence: {evidence}" if evidence else "Evidence: (no evidence file was written)"]
         return subject, redact("\n".join(L) + "\n")
     copies = copies_from(result["failed"], snapshots)
-    subject = SUBJECT_STILL.format(copies=copies)
+    subject = SUBJECT_HELD if mode == "hold" else SUBJECT_STILL.format(copies=copies)
     L = [subject, "", "STILL NOT LOADED"]
     for c in result["failed"]:
         o = result["outcomes"][c]
@@ -517,11 +596,19 @@ def compose_followup(loaded: bool, result: dict, context: str | None, info: dict
     back = [c for c in failed_at_first if c not in result["failed"]]
     if back:
         L.append("Loaded during the wait: " + ", ".join(LABELS.get(c, c) for c in back) + ".")
-    L += ["", "WHAT THIS MEANS",
-          f"{What} is going ahead now on the last good copies, so anything the customer changed since then is not seen this week.",
-          "Last good copy: " + "; ".join(last_good(result["failed"], snapshots, at.date())) + ".",
-          "The recap and the Sunday check show this weekend as DEGRADED.", ""]
-    L += cause_sections(result, info, snapshots, context)
+    if mode == "hold":
+        L += ["", "WHAT THIS MEANS",
+              f"{What} is HELD: it did NOT start, because the sheets did not load. Nothing is researched and nothing is spent (your rule, 2026-11-13).",
+              "Last good copy: " + "; ".join(last_good(result["failed"], snapshots, at.date())) + ".",
+              "The recap and the Sunday check show this weekend as HELD until the research has run.", ""]
+        L += cause_sections(result, info, snapshots, context)
+        L += held_steps(context)
+    else:
+        L += ["", "WHAT THIS MEANS",
+              f"{What} is going ahead now on the last good copies, so anything the customer changed since then is not seen this week.",
+              "Last good copy: " + "; ".join(last_good(result["failed"], snapshots, at.date())) + ".",
+              "The recap and the Sunday check show this weekend as DEGRADED.", ""]
+        L += cause_sections(result, info, snapshots, context)
     L += ["EVIDENCE", f"- Every try and its output: {evidence}" if evidence else "- (no evidence file was written)",
           f"- This text is also on your Desktop: {fcs.alert_paths()[-1]}", "",
           "This email goes to you only. No secret is in it: the key file is named by its path, never its contents."]
@@ -587,12 +674,12 @@ def send(subject: str, body: str, today: date, now: datetime, mailer=None, state
 
 def alert(result: dict, context: str | None, config: Path, snapshots: Path, now: datetime, env: dict | None = None, mailer=None,
           qa_root: Path | None = None, state: Path | None = None, email: bool = True, alert_files=None, hold: tuple | None = None,
-          meaning: list[str] | None = None) -> dict:
+          meaning: list[str] | None = None, mode: str | None = None) -> dict:
     """Evidence, the Desktop file and (once a day) the email. Returns {'evidence', 'files', 'email', 'subject', 'body'}."""
     info = config_info(config)
     evidence = write_evidence({"context": context, "at": now.isoformat(timespec="seconds"),
                                "wait_hours": hold[0] if hold else None, **result}, now, qa_root)
-    subject, body = compose(result, context, info, snapshots, hold, evidence, now.date(), meaning=meaning)
+    subject, body = compose(result, context, info, snapshots, hold, evidence, now.date(), meaning=meaning, mode=mode)
     files = write_alert_file(body, alert_files)
     status = send(subject, body, now.date(), now, mailer, state) if email else "not sent: --once (you are at the keyboard)"
     return {"evidence": evidence, "files": files, "email": status, "subject": subject, "body": body}
@@ -633,6 +720,43 @@ def verdict_line(result: dict, extra: str = "") -> str:
     return f"SHEET LOAD: FAILED - {len(f)} of {n} sheet(s) did not load ({', '.join(f)}; cause: {', '.join(causes)})" + extra
 
 
+def held_line(result: dict, context: str | None, waited: int, snapshots: Path) -> str:
+    """The verdict when the research does NOT start (exit 6). The recap reads the LAST 'SHEET LOAD:' line of the log, so this must stay one line."""
+    f, n = result["failed"], len(result["clients"])
+    causes = sorted({result["outcomes"][c]["cause"] for c in f})
+    what = CONTEXTS.get(context or "", ("the research", None, None))[0]
+    return (f"SHEET LOAD: HELD - {len(f)} of {n} sheet(s) still not loaded ({', '.join(f)}; cause: {', '.join(causes)})"
+            + (f" after waiting {waited} min" if waited else "")
+            + f"; {what} did NOT start: nothing researched, nothing spent. After the fix, start it: {start_research_command(context)}")
+
+
+# ------------------------------------------------------------------------------------------------ the customer-context hold (ACT-76)
+def compose_context_held(context: str | None, detail: str, today: date | None = None) -> tuple[str, str]:
+    """(subject, body): the customer context (step 0a4) did not build, so the research is HELD. Sent by run_monthly.ps1 through --held-notice context.
+    Plain words, exact commands, no secret (redact() over the whole text)."""
+    what = CONTEXTS.get(context or "", ("the research", None, None))[0]
+    What = what[0].upper() + what[1:]
+    mk = research_markets(context)
+    detail = " ".join((detail or "(no detail was passed)").split())[:400]
+    L = [SUBJECT_CONTEXT_HELD, "", "WHAT FAILED",
+         "- Step 0a4 (the customer's own sheet row, put in front of the research as context) did not build. " + f"What it said: {detail}", "",
+         "WHAT THIS MEANS",
+         f"{What} is HELD: it did NOT start. Nothing is researched and nothing is spent. The customer sheets themselves loaded; the context made from them did not.",
+         "Your rule is that the customer data must be loaded and turned into context before the research runs, so this holds it the same way a failed sheet load does.", "",
+         "WHAT TO DO",
+         "1. See what the context step says now. This changes nothing (report only):",
+         f"       & {ps(PY)} {ps(HERE / 'customer_row_context.py')} --markets {mk}",
+         "   It prints one line that starts CUSTOMER CONTEXT: HEALTHY, DEGRADED or FAILED. HEALTHY (or DEGRADED with rows carrying the customer's row) is good.",
+         "2. If it still FAILS, the line says why. Send it to the Claude session that built it, or read runs_out\\qa\\<date>\\customer_context.csv.",
+         "3. When it is good, start the research (the normal full job, from its own start):",
+         f"       {start_research_command(context)}",
+         "4. Only if you decide to research WITHOUT the customer context (your choice, by hand): in PowerShell, run",
+         f"       $env:CFP_CONTEXT_ON_FAIL = 'proceed'; & {ps(MARKETS / 'run_monthly.ps1')} -Markets {mk}",
+         "   The research then runs as it did before this step existed, and the recap says the context was missing.", "",
+         "This email goes to you only. No secret is in it."]
+    return SUBJECT_CONTEXT_HELD, redact("\n".join(L) + "\n")
+
+
 # ------------------------------------------------------------------------------------------------ the guarded load (Friday, Saturday, the person's re-run)
 def clear_alert_files(alert_files=None) -> None:
     """The sheets loaded: the Desktop alert is out of date. Never raises."""
@@ -662,7 +786,9 @@ def guarded_load(clients: list[str], context: str | None, config: Path | None = 
     """(exit code, result, printed lines; the LAST line is the verdict). Never raises.
 
     Fail -> CRITICAL email -> wait up to CFP_SHEETS_HOLD_HOURS (default 2, Matt 2026-11-10: "Wait up to 2 hours"), one try every 10 minutes ->
-    loaded: second email, exit 0, the research starts on fresh copies | still failing: second email, exit 1, DEGRADED, the research goes ahead."""
+    loaded: second email, exit 0, the research starts on fresh copies | still failing: second email, exit 6 HELD, the research does NOT start
+    (Matt 2026-11-13, D66 = B). With CFP_SHEETS_ON_FAIL=proceed (by hand only) it is the 11-10 rule instead: exit 1, DEGRADED, research on old copies."""
+    mode = on_fail_mode(env)
     config, snapshots = Path(config or CONFIG), Path(snapshots or SNAPSHOTS)
     say = say or (lambda line: print(line, flush=True))
     first = now()
@@ -683,11 +809,15 @@ def guarded_load(clients: list[str], context: str | None, config: Path | None = 
 
     hours, why = hold_plan(context, env, task_reader)
     deadline = first + timedelta(hours=hours)
-    a = alert(result, context, config, snapshots, now(), env, mailer, qa_root, state, alert_files=alert_files, hold=(hours, why, deadline))
+    a = alert(result, context, config, snapshots, now(), env, mailer, qa_root, state, alert_files=alert_files, hold=(hours, why, deadline), mode=mode)
     wait_txt = (f"; waiting up to {fmt_h(hours)} (until {deadline:%H:%M}) for the sheets" if hours > 0 else "; no wait (" + (why or "0 hours") + ")")
     lines.append(verdict_line(result, f"; email {a['email']}; evidence: {a['evidence']}{wait_txt}"))
     say(lines[-1])
     if hours <= 0:
+        if mode == "hold":
+            write_status(context, "HELD", result, snapshots, now(), path=status_path, note=why)
+            lines.append(held_line(result, context, 0, snapshots))
+            return HELD_EXIT, result, lines
         lines.append(verdict_line(result, "; the research goes ahead on the last good copies"))
         write_status(context, "FAILED", result, snapshots, now(), path=status_path, note=why)
         return 1, result, lines
@@ -716,7 +846,7 @@ def guarded_load(clients: list[str], context: str | None, config: Path | None = 
     info = config_info(config)
     evidence = write_evidence({"context": context, "at": at.isoformat(timespec="seconds"), "wait_hours": hours, "waited_min": waited, **result},
                               at, qa_root)
-    subject, body = compose_followup(not result["failed"], result, context, info, snapshots, first, at, evidence, failed_at_first)
+    subject, body = compose_followup(not result["failed"], result, context, info, snapshots, first, at, evidence, failed_at_first, mode=mode)
     st = send(subject, body, at.date(), at, mailer, state, once_a_day=False)
     if not result["failed"]:
         clear_alert_files(alert_files)
@@ -725,6 +855,10 @@ def guarded_load(clients: list[str], context: str | None, config: Path | None = 
                      f"email '{subject}' {st}; evidence: {evidence}")
         return 0, result, lines
     write_alert_file(body, alert_files)
+    if mode == "hold":
+        write_status(context, "HELD", result, snapshots, at, waited, path=status_path, note=why)
+        lines.append(held_line(result, context, waited, snapshots) + f"; email {st}; evidence: {evidence}")
+        return HELD_EXIT, result, lines
     write_status(context, "DEGRADED", result, snapshots, at, waited, path=status_path, note=why)
     causes = sorted({result["outcomes"][c]["cause"] for c in result["failed"]})
     lines.append(f"SHEET LOAD: DEGRADED - {len(result['failed'])} of {len(result['clients'])} sheet(s) still not loaded after waiting {waited} min "
@@ -868,9 +1002,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--deadman", choices=[*sorted(CONTEXTS), "auto"], help="fetch nothing; are today's copies there? auto = by weekday (the 03:00 task)")
     ap.add_argument("--check-only", action="store_true", help="read-only: can every sheet be read now? (saves nothing, sends nothing)")
     ap.add_argument("--test-send", action="store_true", help="send ONE '[TEST] ...' email with a sample body")
+    ap.add_argument("--held-notice", choices=["context"], help="send the CRITICAL 'research HELD' email for a failed step (run_monthly.ps1, ACT-76)")
+    ap.add_argument("--detail", default="", help="with --held-notice: what the failed step said (one line)")
     a = ap.parse_args(argv)
     config, snapshots = Path(a.config), Path(a.snapshots)
     try:
+        if a.held_notice:
+            now = datetime.now()
+            subj, body = compose_context_held(a.context, a.detail, now.date())
+            files = write_alert_file(body)
+            st = send(subj, body, now.date(), now, once_a_day=False)
+            print(f"RESEARCH HELD NOTICE: email {st}; the same text is on the Desktop ({len(files)} file(s))")
+            return 0 if st == "sent" else 2
         if a.test_send:
             now = datetime.now()
             hours, why = hold_plan("saturday")

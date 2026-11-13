@@ -778,7 +778,7 @@ def check_sheet_load(o: Opts, status: dict | None = None) -> Check:
     if status is None:
         import customer_sheet_load as csl                                   # noqa: PLC0415
         status = csl.read_status(getattr(o, "sheet_status", None))
-    rows, bad = [], []
+    rows, bad, held = [], [], []
     for kind, label in (("friday", "Friday (awards sheets)"), ("saturday", "Saturday (all four sheets)")):
         e = status.get(kind) or {}
         try:
@@ -789,7 +789,12 @@ def check_sheet_load(o: Opts, status: dict | None = None) -> Check:
             rows.append(f"INFO {label}: no sheet load recorded this weekend (check f shows the copies' age)")
             continue
         v = e.get("verdict", "?")
-        if v in ("DEGRADED", "FAILED"):
+        if v == "HELD":
+            rows.append(f"WARN {label}: HELD - {', '.join(e.get('failed') or [])} did not load"
+                        + (f" after waiting {e.get('waited_min')} min" if e.get("waited_min") else "")
+                        + "; the research did NOT start (Matt, 2026-11-13). If it was started by hand later, a RECOVERED or HEALTHY load replaces this line")
+            held.append(label.split(" ")[0])
+        elif v in ("DEGRADED", "FAILED"):
             olds = ", ".join(f"{c} {str(t)[:10]}" for c, t in (e.get("copies") or {}).items() if c in (e.get("failed") or []))
             rows.append(f"WARN {label}: DEGRADED - {', '.join(e.get('failed') or [])} did not load"
                         + (f" after waiting {e.get('waited_min')} min" if e.get("waited_min") else "") + f"; the research used copies from {olds or 'an older week'}")
@@ -798,9 +803,10 @@ def check_sheet_load(o: Opts, status: dict | None = None) -> Check:
             rows.append(f"INFO {label}: loaded after waiting {e.get('waited_min')} min (the research used fresh copies)")
         else:
             rows.append(f"INFO {label}: {v}")
-    if bad:
-        return Check("i", "Customer sheets loaded this weekend", "WARN",
-                     f"DEGRADED: {' and '.join(bad)}'s research ran on old copies of the customer sheets (they did not load)", rows)
+    if held or bad:
+        parts = ([f"HELD: {' and '.join(held)}'s research did NOT start (the customer sheets did not load)"] if held else []) + \
+                ([f"DEGRADED: {' and '.join(bad)}'s research ran on old copies of the customer sheets (they did not load)"] if bad else [])
+        return Check("i", "Customer sheets loaded this weekend", "WARN", "; ".join(parts), rows)
     return Check("i", "Customer sheets loaded this weekend", "PASS", "the research took fresh customer sheets" if rows and any("INFO" in r and ("HEALTHY" in r or "loaded" in r) for r in rows) else "no failed sheet load recorded", rows)
 
 

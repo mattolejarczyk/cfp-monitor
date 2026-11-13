@@ -141,7 +141,7 @@ def test_a_network_blip_clears_itself_on_a_retry_and_sends_nothing(w):
 
 def test_a_network_failure_is_tried_three_times_over_15_minutes_then_one_email(w):
     code, res, lines, clock = w.load([{"utility": "Read timed out."}])
-    assert code == 1 and res["failed"] == ["utility"] and clock.slept == [300, 600] and len(w.calls) == 3
+    assert code == csl.HELD_EXIT and res["failed"] == ["utility"] and clock.slept == [300, 600] and len(w.calls) == 3      # HELD since 2026-11-13 (D66 = B)
     assert len(w.sent) == 1
     subj, body, kw = w.sent[0]
     assert subj == "CFP customer sheets failed to load - CRITICAL ERROR" and kw == {"to_env": "CFP_RECAP_TO"}
@@ -150,20 +150,20 @@ def test_a_network_failure_is_tried_three_times_over_15_minutes_then_one_email(w
 
 def test_a_failure_a_retry_cannot_fix_is_not_retried(w):
     code, res, _l, clock = w.load([{"arnica": "403 from the export endpoint. Share it."}])
-    assert code == 1 and len(w.calls) == 1 and clock.slept == []
+    assert code == csl.HELD_EXIT and len(w.calls) == 1 and clock.slept == []
     assert res["outcomes"]["arnica"]["cause"] == "sharing"
 
 
 def test_one_permanent_and_one_transient_failure_retries_only_the_transient_one(w):
     code, res, _l, _c = w.load([{"arnica": "403 from the export endpoint.", "utility": "Read timed out."}, {"arnica": "403 from the export endpoint."}])
     assert [c[c.index("--client") + 1] for c in w.calls] == ["arnica,utility,arnica-awards,utility-awards", "utility"]
-    assert res["failed"] == ["arnica"] and code == 1
+    assert res["failed"] == ["arnica"] and code == csl.HELD_EXIT
 
 
 def test_a_copy_older_than_this_run_is_a_failure(w):
     w.copy("utility-awards", NOW - timedelta(days=7))
     code, res, _l, _c = w.load([{"utility-awards": "nocopy"}])
-    assert code == 1 and res["outcomes"]["utility-awards"]["cause"] == "not_saved" and len(w.calls) == 3
+    assert code == csl.HELD_EXIT and res["outcomes"]["utility-awards"]["cause"] == "not_saved" and len(w.calls) == 3
     assert "no new copy was saved" in w.sent[0][1]
 
 
@@ -179,7 +179,7 @@ def test_the_subject_and_the_body_layout_are_exact(w):
     order = [body.index(h) for h in ("WHAT FAILED", "WHAT THIS MEANS", "LIKELY CAUSE:", "HOW TO FIX IT", "EVIDENCE")]
     assert order == sorted(order)
     assert "Loaded fine: Arnica conferences sheet, Arnica awards sheet, Utility Global awards sheet." in body
-    assert "The Saturday 02:00 conference research goes ahead with the last good copy" in body
+    assert "The Saturday 02:00 conference research is HELD: it did NOT start, because the sheets did not load" in body       # D66 = B, 2026-11-13
     assert "Utility Global conferences sheet: Fri 06 Nov (8 days old)" in body
     assert "customer_sheet_load.py' --clients utility --once" in body and "SHEET LOAD: HEALTHY" in body
     assert "What you do yourself:" in body and "What the re-run does for you:" in body
@@ -291,7 +291,7 @@ def test_a_fix_during_the_wait_starts_the_research_and_sends_the_loaded_email(w)
     assert [s[0] for s in w.sent] == [csl.SUBJECT, "CFP customer sheets loaded - research started"]
     critical, loaded = w.sent[0][1], w.sent[1][1]
     assert "is WAITING for the sheets" in critical and "until 04:00" in critical and "'CFP customer sheets loaded - research started'" in critical
-    assert "research ran on copies from <date>" in critical and "notices your fix within 10 minutes" in critical
+    assert "the research is HELD: it does NOT start" in critical and csl.SUBJECT_HELD in critical and "notices your fix within 10 minutes" in critical
     assert "loaded at 02:20, after waiting 20 minutes: Utility Global conferences sheet" in loaded and "has started on fresh copies" in loaded
     assert lines[-1].startswith("SHEET LOAD: HEALTHY - all 4 sheet(s) loaded at 02:20 after waiting 20 min")
     assert clock.slept == [600, 600] and len(w.calls) == 3                                # sharing is not retried at first; the wait tries every 10 min
@@ -300,9 +300,54 @@ def test_a_fix_during_the_wait_starts_the_research_and_sends_the_loaded_email(w)
     assert st["verdict"] == "RECOVERED" and st["waited_min"] == 20 and st["failed"] == []
 
 
-def test_still_failing_after_two_hours_runs_on_old_copies_and_says_degraded(w):
+def test_still_failing_after_two_hours_is_HELD_the_research_does_not_start(w):
+    """Matt, 2026-11-13 (D66 = B): "If the customer sheets don't load I do NOT want to proceed." Exit 6, nothing researched."""
     w.copy("utility", NOW - timedelta(days=8))
     code, res, lines, clock = w.load([{"utility": "403 from the export endpoint."}], env={})
+    assert code == csl.HELD_EXIT == 6 and res["failed"] == ["utility"]
+    assert [s[0] for s in w.sent] == [csl.SUBJECT, csl.SUBJECT_HELD]
+    first, held = w.sent[0][1], w.sent[1][1]
+    assert "is WAITING for the sheets and has NOT started" in first and "the research is HELD: it does NOT start" in first and csl.SUBJECT_HELD in first
+    assert "going ahead" not in held and "goes ahead on the last good copies" not in held and "research ran on copies" not in held
+    assert "is HELD: it did NOT start, because the sheets did not load" in held and "show this weekend as HELD" in held
+    assert "Start-ScheduledTask -TaskName 'CFP Weekly Re-Research (live markets)'" in held
+    assert "--clients utility --once" in held and "SHEET LOAD: HEALTHY" in held and "HOW TO FIX IT" in held
+    assert "CFP_SHEETS_ON_FAIL" in held and "-Markets Cybersecurity,Utility" in held and held.isascii()
+    assert "Start-ScheduledTask -TaskName 'CFP Weekly Re-Research (live markets)'" in first, "the first email already says how to start it"
+    assert clock.now() == NOW + timedelta(hours=2) and len(w.calls) == 13                    # 1 + one try every 10 minutes for 2 hours
+    assert lines[-1].startswith("SHEET LOAD: HELD - 1 of 4 sheet(s) still not loaded (utility; cause: sharing) after waiting 120 min")
+    assert "did NOT start: nothing researched, nothing spent" in lines[-1] and "Start-ScheduledTask" in lines[-1]
+    st = json.loads(w.status.read_text(encoding="utf-8"))["saturday"]
+    assert st["verdict"] == "HELD" and st["failed"] == ["utility"] and st["waited_min"] == 120
+    for subj, b, _kw in w.sent:
+        assert FAKE_PASS not in b and "MIIfake" not in b
+
+
+def test_held_with_no_wait_possible_sends_one_email_and_does_not_start(w):
+    code, res, lines, clock = w.load([{"utility": "403 from the export endpoint."}])          # default env: CFP_SHEETS_HOLD_HOURS=0
+    assert code == csl.HELD_EXIT and clock.slept == [] and [s[0] for s in w.sent] == [csl.SUBJECT]
+    assert "is HELD: it did NOT start" in w.sent[0][1] and lines[-1].startswith("SHEET LOAD: HELD") and "after waiting" not in lines[-1]
+    assert json.loads(w.status.read_text(encoding="utf-8"))["saturday"]["verdict"] == "HELD"
+
+
+def test_a_good_load_still_lets_the_research_run_and_a_fix_during_the_wait_starts_it(w):
+    code, _r, _l, _c = w.load([{}])
+    assert code == 0 and not w.sent
+    code, res, lines, _c = w.load([{"utility": "403 from the export endpoint."}, {}], env={})
+    assert code == 0 and res["failed"] == [] and lines[-1].startswith("SHEET LOAD: HEALTHY") and csl.SUBJECT_HELD not in [s[0] for s in w.sent]
+
+
+def test_friday_hold_names_the_awards_task_and_the_awards_markets(w):
+    code, _r, _l, _c = w.load([{"arnica-awards": "403 from the export endpoint."}], clients=csl.AWARD_CLIENTS, context="friday", env={}, task={"limit_h": 16.0})
+    held = w.sent[-1][1]
+    assert code == csl.HELD_EXIT and w.sent[-1][0] == csl.SUBJECT_HELD
+    assert "Start-ScheduledTask -TaskName 'CFP Weekly Awards Research'" in held and "-Markets Awards" in held and "Friday 02:00 awards research is HELD" in held
+
+
+def test_the_person_can_choose_to_proceed_on_old_copies_by_hand(w):
+    """CFP_SHEETS_ON_FAIL=proceed brings back the 2026-11-10 rule: research on the last good copies, exit 1, DEGRADED. Never the default."""
+    w.copy("utility", NOW - timedelta(days=8))
+    code, res, lines, clock = w.load([{"utility": "403 from the export endpoint."}], env={"CFP_SHEETS_ON_FAIL": "proceed"})
     assert code == 1 and res["failed"] == ["utility"]
     subjects = [s[0] for s in w.sent]
     assert subjects == [csl.SUBJECT, "CFP customer sheets still not loaded - research ran on copies from Fri 06 Nov 2026"]
@@ -328,9 +373,10 @@ def test_the_follow_up_does_not_use_up_the_one_critical_email_a_day(w):
 
 def test_with_the_five_hour_limit_saturday_does_not_wait_and_says_why(w):
     code, _res, lines, clock = w.load([{"utility": "403 from the export endpoint."}], env={}, task={"limit_h": 5.0})
-    assert code == 1 and len(w.sent) == 1 and clock.slept == []
+    assert code == csl.HELD_EXIT and len(w.sent) == 1 and clock.slept == []
     assert "It does not wait for the sheets: Windows stops 'CFP Weekly Re-Research (live markets)' after 5 hours" in w.sent[0][1]
-    assert "no wait (Windows stops" in lines[0] and json.loads(w.status.read_text(encoding="utf-8"))["saturday"]["verdict"] == "FAILED"
+    assert "is HELD: it did NOT start" in w.sent[0][1]
+    assert "no wait (Windows stops" in lines[0] and json.loads(w.status.read_text(encoding="utf-8"))["saturday"]["verdict"] == "HELD"
 
 
 def test_a_healthy_load_records_healthy_for_the_recap_and_gate(w):
@@ -345,7 +391,7 @@ def test_the_persons_rerun_never_waits_and_records_nothing(w):
 
 def test_friday_wording_names_the_awards_research(w):
     w.load([{"arnica-awards": "Read timed out."}], clients=csl.AWARD_CLIENTS, context="friday")
-    assert "Friday 02:00 awards research goes ahead" in w.sent[0][1]
+    assert "Friday 02:00 awards research is HELD: it did NOT start" in w.sent[0][1]
     w2_sent = len(w.sent)
     w.load([{"arnica-awards": "Read timed out."}], clients=csl.AWARD_CLIENTS, context="friday", env={}, task={"limit_h": 16.0})
     assert "The Friday 02:00 awards research is WAITING for the sheets" in "".join(b for _s, b, _k in w.sent[w2_sent:]) or len(w.sent) > w2_sent

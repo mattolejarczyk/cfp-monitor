@@ -112,12 +112,13 @@ def test_one_permanent_and_one_transient_failure_is_still_retried(monkeypatch, t
     assert attempts == 1 + len(wi.RETRY_DELAYS)
 
 
-def test_a_failed_load_never_stops_the_research_and_the_verdict_is_the_last_line(monkeypatch, tmp_path):
-    """2026-11-10 (Matt: "Wait up to 2 hours"): no exit 6 any more. A failed load returns 1 after its wait (none here: conftest sets
-    CFP_SHEETS_HOLD_HOURS=0) and the research goes ahead; the note is the final verdict line."""
+def test_a_failed_load_holds_the_research_and_the_verdict_is_the_last_line(monkeypatch, tmp_path):
+    """2026-11-13 (Matt, D66 = B: "If the customer sheets don't load I do NOT want to proceed"): a failed load returns 6 (HELD) after its wait
+    (none here: conftest sets CFP_SHEETS_HOLD_HOURS=0); with CFP_SHEETS_ON_FAIL=proceed it is the 2026-11-10 rule again (1, the research goes
+    ahead on the last good copies). The note is the final verdict line either way."""
     import customer_sheet_load as csl
     out = (1, "utility: FAILED - 403 from the export endpoint.\narnica: FAILED - 403 from the export endpoint.")
-    for env, want in (({}, 1),):
+    for env, want in (({}, 6), ({"CFP_SHEETS_ON_FAIL": "proceed"}, 1)):
         (tmp_path / "sent.json").unlink(missing_ok=True)
         calls = []
         monkeypatch.setattr(wi, "run", lambda cmd, timeout=600: (calls.append(cmd), out)[1])
@@ -130,7 +131,10 @@ def test_a_failed_load_never_stops_the_research_and_the_verdict_is_the_last_line
         cfg.write_text(json.dumps({"service_account_key": "k", "clients": {"utility": {}, "arnica": {}}}), encoding="utf-8")
         ok, notes, code = wi.fetch_all(cfg, tmp_path)
         assert not ok and code == want and (tmp_path / "desk.txt").read_text(encoding="utf-8").startswith(csl.SUBJECT)
-        assert any(n.startswith("SHEET LOAD: FAILED") and "the research goes ahead on the last good copies" in n for n in notes)
+        if want == 6:
+            assert any(n.startswith("SHEET LOAD: HELD") and "did NOT start: nothing researched, nothing spent" in n for n in notes)
+        else:
+            assert any(n.startswith("SHEET LOAD: FAILED") and "the research goes ahead on the last good copies" in n for n in notes)
 
 
 # ------------------------------------------------------------------------------------------------

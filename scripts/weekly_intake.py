@@ -68,6 +68,7 @@ CLIENTS = {
 AWARD_CLIENTS = ("arnica-awards", "utility-awards")
 
 RETRY_DELAYS = (300, 600)        # customer_sheet_load.WAITS: 3 tries over about 15 minutes (2026-11-09; was 10, 30, 60 seconds)
+HELD_EXIT = 6                    # customer_sheet_load.HELD_EXIT: the sheets did not load, the research must not start (Matt 2026-11-13, D66 = B)
 STALE_AFTER_DAYS = 9             # one cycle plus slack: a week plus two days
 
 # FAILURES A RETRY CANNOT FIX, and what a person has to do about each. Matched against the fetch's
@@ -310,7 +311,8 @@ def loaded_snapshot_file(db: str, client_key: str) -> str | None:
 def fetch_all(config: Path, snapshots: Path, context: str = "saturday") -> tuple[bool, list[str], int]:
     """Fetch all four sheets through scripts/customer_sheet_load.py: 3 tries over about 15 minutes for what can clear by itself, none for
     what cannot, then ONE CRITICAL email to Matt with the fix (Matt, 2026-11-09), then a wait of up to 2 hours with a try every 10 minutes
-    and a second email either way (Matt, 2026-11-10). Returns (all loaded, notes, load exit code: 0 or 1). Never raises.
+    and a second email either way (Matt, 2026-11-10). Returns (all loaded, notes, load exit code: 0, 1, or 6 = HELD, the research must not
+    start: Matt, 2026-11-13, D66 = B). Never raises.
 
     Until 2026-11-09 this retried at 10, 30 and 60 seconds and a failure reached Matt only inside the end-of-run recap. A missing key
     returned before any fetch, so it never even wrote the Desktop alert."""
@@ -366,6 +368,14 @@ def main() -> int:
     else:
         fetched, fetch_notes, load_code = fetch_all(Path(a.config), snapshots)
         notes += fetch_notes
+        if load_code == HELD_EXIT:
+            # Matt, 2026-11-13 (D66 = B): the sheets did not load, even after the wait, so the research must NOT start. Stop here: nothing below
+            # (loading copies into the database, matching, the health verdict) is needed to tell him, and the held run's exit code 6 reaches
+            # run_monthly.ps1 (patch ACT-75), which ends the run before the archive, the canary and any spend. The email has been sent.
+            print("\nINTAKE HEALTH: HELD - the customer sheets did not load; the research must not start (exit 6). Nothing was loaded into the database.")
+            for n in notes:
+                print(f"  - {n}")
+            return HELD_EXIT
 
     results = []
     shape_changed = []
@@ -489,7 +499,7 @@ def main() -> int:
         print()
         print(f"INTAKE QA: {verdict}  (runs_out/qa/<cycle Monday>/intake.md)")
 
-    # 0, so the Saturday job never loses a research window to an intake problem (the sheet load already waited up to 2 hours for the sheets).
+    # 0 unless the sheets did not load at all (HELD, above): an intake DEGRADED by age or shape still lets the research run.
     return 0
 
 
