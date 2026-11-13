@@ -292,10 +292,14 @@ def proceed_command(context: str | None) -> str:
     return (f"$env:{ON_FAIL_VAR} = 'proceed'; & {ps(MARKETS / 'run_monthly.ps1')} -Markets {research_markets(context)}")
 
 
-def held_steps(context: str | None) -> list[str]:
-    """THEN START THE RESEARCH: what Matt does after the fix. Plain, exact commands."""
+def held_steps(context: str | None, waiting: bool = False) -> list[str]:
+    """THEN START THE RESEARCH: what Matt does after the fix. Plain, exact commands. `waiting` = the first email, sent while the run still waits:
+    the research is NOT held yet and will start by itself if the sheets load (Codex review 2026-11-13: it used to say 'it is held' during the wait)."""
     what = CONTEXTS.get(context or "", ("the research", None, None))[0]
-    return ["THEN START THE RESEARCH (it is held; it will not start by itself again)",
+    head = ("IF THE SHEETS STILL DO NOT LOAD AT THE END OF THE WAIT, THE RESEARCH IS HELD. Only then, after the 'HELD' email, start it by hand "
+            "(it is NOT held yet: while the run waits it starts by itself the moment the sheets load)" if waiting else
+            "THEN START THE RESEARCH (it is held; it will not start by itself again)")
+    return [head,
             "1. Confirm the sheets load now. This tries each failed sheet once, saves a fresh copy and prints SHEET LOAD: HEALTHY, or the reason it still fails.",
             "   The re-run command is in the numbered steps above.",
             f"2. When it says SHEET LOAD: HEALTHY, start {what}: it is the normal full job, from its own start (its time limit starts again, and its own sheet load runs first):",
@@ -560,7 +564,7 @@ def compose(result: dict, context: str | None, info: dict, snapshots: Path, hold
     L.append("")
     L += cause_sections(result, info, snapshots, context)
     if What and mode == "hold" and meaning is None:
-        L += held_steps(context)
+        L += held_steps(context, waiting=bool(hold is not None and hold[0] > 0))
     L.append("EVIDENCE")
     L.append(f"- Every try and its output: {evidence}" if evidence else "- (no evidence file was written)")
     L.append(f"- This text is also on your Desktop: {fcs.alert_paths()[-1]}")

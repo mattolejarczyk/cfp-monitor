@@ -1,29 +1,52 @@
 diff --git a/Markets/run_monthly.ps1 b/Markets/run_monthly.ps1
 --- a/Markets/run_monthly.ps1
 +++ b/Markets/run_monthly.ps1
-@@ -227,6 +227,13 @@
+@@ -227,12 +227,26 @@
      try {
          if ((Test-Path $py) -and (Test-Path $intake)) {
              & $py $intake
 +            # ACT-75 (2026-11-13, Matt, D66 = B: "If the customer sheets don't load I do NOT want to proceed - this is the first and most critical step").
-+            # The intake loads the four customer sheets through cfp-monitor scripts/customer_sheet_load.py: 3 tries, ONE CRITICAL email, then a wait of
-+            # up to 2 hours with a try every 10 minutes. Exit 6 = the sheets STILL did not load: the research must NOT start. This ends the run here,
-+            # before the archive, the canary and any spend. The email says how to fix it and how to start the research again. A person who decides to
-+            # research on old copies starts this script by hand with $env:CFP_SHEETS_ON_FAIL = 'proceed' (then the load returns 1 and the run goes on).
-+            if ($LASTEXITCODE -eq 6) { Write-Host "RESEARCH HELD (ACT-75): the customer sheets did not load, even after waiting. Nothing researched, nothing spent. The CRITICAL email says how to fix it and how to start the research again." -ForegroundColor Red; exit 6 }
++            # The intake loads the four customer sheets through cfp-monitor scripts/customer_sheet_load.py: 3 tries, ONE CRITICAL email, then a wait of up to
++            # 2 hours with a try every 10 minutes. Exit 6 = the sheets STILL did not load. ANY exit code but 0 means the sheets cannot be shown to be loaded
++            # (6, or a crash of the intake itself): the research must NOT start. This ends the run here, before the archive, the canary and any spend.
++            # The email (if one could be sent) and the recap say how to fix it and how to start the research again. A person who decides to research anyway
++            # starts this script by hand with $env:CFP_SHEETS_ON_FAIL = 'proceed' (Codex review 2026-11-13: only exit 6 used to stop it).
++            if ($LASTEXITCODE -ne 0 -and $env:CFP_SHEETS_ON_FAIL -ne 'proceed') { Write-Host "RESEARCH HELD (ACT-75): the customer sheets were not shown to be loaded (the intake ended with exit code $LASTEXITCODE; 6 means they did not load after the wait, anything else means the intake itself broke). Nothing researched, nothing spent. The recap says how to fix it and how to start the research again." -ForegroundColor Red; exit 6 }
          } else {
              Write-Host "INTAKE SKIPPED: interpreter or script not found ($py / $intake)." -ForegroundColor Yellow
++            # ACT-75: no intake means no sheet load, so the sheets are not loaded: HELD (a person's CFP_SHEETS_ON_FAIL = 'proceed' skips this).
++            if ($env:CFP_SHEETS_ON_FAIL -ne 'proceed') { Write-Host "RESEARCH HELD (ACT-75): the customer sheet intake could not run (interpreter or script not found), so the sheets are not loaded. Nothing researched, nothing spent. The recap says how to start the research again once the files are back." -ForegroundColor Red; exit 6 }
              Write-Host "  Research continues. The client layer is whatever it already was." -ForegroundColor Yellow
-@@ -305,7 +312,13 @@
+         }
+     } catch {
+         # Deliberately swallowed. An intake fault is a finding for the weekend review, never a
+         # reason to lose the research window.
+         Write-Host "INTAKE FAILED: $($_.Exception.Message)" -ForegroundColor Red
++        # ACT-75 (2026-11-13): an intake that threw means the sheets are not loaded: HELD (a person's CFP_SHEETS_ON_FAIL = 'proceed' skips this).
++        if ($env:CFP_SHEETS_ON_FAIL -ne 'proceed') { Write-Host "RESEARCH HELD (ACT-75): the customer sheet intake failed, so the sheets are not loaded. Nothing researched, nothing spent. The recap says how to start the research again once it is fixed." -ForegroundColor Red; exit 6 }
+         Write-Host "  Research continues. Treat customer STATUS as possibly out of date." -ForegroundColor Yellow
+     }
+     Write-Host ""
+@@ -299,7 +313,10 @@
+     if ($env:CFP_AWARDS_AUTOADD_APPLY -eq '1') { $awArgs = @('--apply', '--live') }
+     try {
++        # ACT-75 (2026-11-13, Matt, D66 = B; Codex review: a missing loader used to let Friday's research start without loading). The awards sheets must be
++        # loaded before the research: if the interpreter, the fetch script or the loader (customer_sheet_load.py) is missing, they cannot be: HELD.
++        if ($Markets -contains 'Awards' -and $env:CFP_SHEETS_ON_FAIL -ne 'proceed' -and -not ((Test-Path $awPy) -and (Test-Path $awFetch) -and (Test-Path "C:\Users\matts\cfp-monitor\scripts\customer_sheet_load.py"))) { Write-Host "RESEARCH HELD (ACT-75): the awards sheet loader could not run (interpreter, fetch script or customer_sheet_load.py not found), so the sheets are not loaded. Nothing researched, nothing spent. Start the research again once the files are back." -ForegroundColor Red; exit 6 }
+         if ($Markets -contains 'Awards' -and (Test-Path $awPy) -and (Test-Path $awFetch)) {
+             # ACT-73 (2026-11-09, Matt: a failed customer sheet load is a CRITICAL error; 2026-11-10: "Wait up to 2 hours"). ONE guarded load of
+             # both awards sheets (cfp-monitor scripts/customer_sheet_load.py): 3 tries over about 15 minutes, then ONE CRITICAL email to Matt with
+@@ -305,7 +322,13 @@
              # the fix, then a try every 10 minutes for up to 2 hours and a second email either way. The research then always goes ahead: on fresh
              # copies, or on the last good ones (DEGRADED in the recap and the Sunday gate). Until now a failed fetch here printed one line.
              $awLoad = "C:\Users\matts\cfp-monitor\scripts\customer_sheet_load.py"
-+            $LASTEXITCODE = 0
++            $LASTEXITCODE = 99
              try { & $awPy $awLoad --clients 'arnica-awards,utility-awards' --context friday --snapshots "$PSScriptRoot\customer_snapshots" } catch { Write-Host "SHEET LOAD: DEGRADED - $($_.Exception.Message) - the newest snapshot on disk is used." }
-+            # ACT-75 (2026-11-13, Matt, D66 = B): exit 6 = the awards sheets STILL did not load after the wait: the research must NOT start. Nothing is
-+            # researched, nothing is spent; the CRITICAL email says how to fix it and how to start the task again (CFP_SHEETS_ON_FAIL = 'proceed' by hand
-+            # makes the load return 1 instead, and the run goes on). This replaces the 11-10 rule above, "the research then always goes ahead".
-+            if ($LASTEXITCODE -eq 6) { Write-Host "RESEARCH HELD (ACT-75): the customer awards sheets did not load, even after waiting. Nothing researched, nothing spent. The CRITICAL email says how to fix it and how to start the research again." -ForegroundColor Red; exit 6 }
++            # ACT-75 (2026-11-13, Matt, D66 = B): ANY exit code but 0 means the awards sheets cannot be shown to be loaded (6 = they did not load after the
++            # wait; 2 = the loader itself broke; 99 = it never ran): the research must NOT start. Nothing is researched, nothing is spent; the CRITICAL email
++            # and the recap say how to fix it and how to start the task again (a person's CFP_SHEETS_ON_FAIL = 'proceed' skips this). This replaces the
++            # 11-10 rule above, "the research then always goes ahead".
++            if ($LASTEXITCODE -ne 0 -and $env:CFP_SHEETS_ON_FAIL -ne 'proceed') { Write-Host "RESEARCH HELD (ACT-75): the customer awards sheets were not shown to be loaded (the loader ended with exit code $LASTEXITCODE; 6 means they did not load after the wait, anything else means the loader itself broke). Nothing researched, nothing spent. The recap says how to fix it and how to start the research again." -ForegroundColor Red; exit 6 }
          }
          if ((Test-Path $awPy) -and (Test-Path $awPy_)) {
              & $awPy $awPy_ @awArgs

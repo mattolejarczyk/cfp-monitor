@@ -69,6 +69,39 @@ def test_the_intake_returns_6_when_the_sheets_did_not_load_and_stops_before_touc
     assert "INTAKE HEALTH: HELD" in out and "Nothing was loaded into the database" in out and "still not loaded" in out
 
 
+def test_a_guard_that_crashed_holds_in_hold_mode_and_goes_on_with_the_override(monkeypatch, tmp_path):
+    """Codex review 2026-11-13: fetch_all turned a crash of the guarded load into a quiet 1, and the intake then returned 0 and the research started."""
+    import customer_sheet_load as csl
+    import weekly_intake as wi
+    cfg = tmp_path / "cfg.json"
+    cfg.write_text('{"service_account_key": "k", "clients": {"utility": {}}}', encoding="utf-8")
+
+    def boom(*a, **k):
+        raise RuntimeError("the guard fell over")
+    monkeypatch.setattr(csl, "guarded_load", boom)
+    monkeypatch.delenv("CFP_SHEETS_ON_FAIL", raising=False)
+    ok, notes, code = wi.fetch_all(cfg, tmp_path)
+    assert not ok and code == 6 and "could not run (RuntimeError" in notes[0]
+    monkeypatch.setenv("CFP_SHEETS_ON_FAIL", "proceed")
+    assert wi.fetch_all(cfg, tmp_path)[2] == 1
+
+
+def test_the_first_email_does_not_say_the_research_is_held_while_it_is_still_waiting(monkeypatch, tmp_path):
+    """Codex review 2026-11-13: the first alert (sent when the wait starts) said 'it is held; it will not start by itself again'."""
+    import customer_sheet_load as csl
+    from datetime import datetime, timedelta
+    res = {"clients": ["utility"], "failed": ["utility"], "attempts": [],
+           "outcomes": {"utility": {"ok": False, "cause": "sharing", "tries": 1, "at": "2026-11-14T02:00:05", "reason": "403 from the export endpoint."}}}
+    now = datetime(2026, 11, 14, 2, 0, 5)
+    cfg = tmp_path / "customer_sheets.json"
+    waiting = csl.compose(res, "saturday", csl.config_info(cfg), tmp_path, (2.0, "", now + timedelta(hours=2)), None, now.date(), mode="hold")[1]
+    assert "it will not start by itself again" not in waiting and "it is held" not in waiting.split("EVIDENCE")[0].lower().replace("research is held", "")
+    assert "IF THE SHEETS STILL DO NOT LOAD AT THE END OF THE WAIT, THE RESEARCH IS HELD" in waiting and "starts by itself the moment the sheets load" in waiting
+    assert "Start-ScheduledTask -TaskName 'CFP Weekly Re-Research (live markets)'" in waiting
+    nowait = csl.compose(res, "saturday", csl.config_info(cfg), tmp_path, (0.0, "no wait", now), None, now.date(), mode="hold")[1]
+    assert "THEN START THE RESEARCH (it is held; it will not start by itself again)" in nowait
+
+
 # ------------------------------------------------------------------ what a held run looks like downstream
 def test_exit_6_is_never_usable_research_and_says_held(tmp_path):
     c = research_usable.check("Cybersecurity", tmp_path, research_exit=6)
@@ -88,6 +121,10 @@ def test_the_recap_subject_says_held_for_both_reasons():
     context = "=== run_monthly exit code: 6 ===\nRESEARCH HELD (ACT-76): the customer context did not build (CUSTOMER CONTEXT: FAILED - x). Nothing researched.\n"
     subject, _t, _ = saturday_recap(context, None, Path("."), "saturday", None)
     assert "HELD - research did NOT start: customer context did not build" in subject
+    broke = "=== run_monthly exit code: 6 ===\nINTAKE SKIPPED: interpreter or script not found\nRESEARCH HELD (ACT-75): the customer sheet intake could not run. Nothing researched.\n"
+    assert "HELD - research did NOT start: customer sheets did not load" in saturday_recap(broke, None, Path("."), "saturday", None)[0]
+    unknown = "=== run_monthly exit code: 6 ===\nsomething else printed 6\n"
+    assert "HELD - research did NOT start (exit 6): see the run log" in saturday_recap(unknown, None, Path("."), "saturday", None)[0]
     ok = "=== run_monthly exit code: 0 ===\nSHEET LOAD: HEALTHY - all 4 sheet(s) loaded at 02:03\n"
     assert "HELD" not in saturday_recap(ok, None, Path("."), "saturday", None)[0]
 
@@ -148,11 +185,12 @@ def test_the_three_patches_chain_onto_the_live_script_and_it_parses(patched, tmp
            "if($e.Count){$e|ForEach-Object{$_.Message};exit 1}")
     r = subprocess.run([PS, "-NoProfile", "-NonInteractive", "-Command", cmd], capture_output=True, text=True, timeout=120)
     assert r.returncode == 0, r.stdout + r.stderr
-    for needle in ("ACT-74", "ACT-75", "ACT-76", "-eq 6) { Write-Host \"RESEARCH HELD (ACT-75)", "RESEARCH HELD (ACT-76)"):
+    for needle in ("ACT-74", "ACT-75", "ACT-76", "-ne 0 -and $env:CFP_SHEETS_ON_FAIL -ne 'proceed') { Write-Host \"RESEARCH HELD (ACT-75)", "RESEARCH HELD (ACT-76)"):
         assert needle in patched
     assert patched.index("STEP 0a4") < patched.index("RESEARCH HELD (ACT-76)") < patched.index("STEP 0b: CANARY")
-    assert patched.index("RESEARCH HELD (ACT-75): the customer sheets did not load") < patched.index("STEP 0a0: CUSTOMER COVERAGE"), \
+    assert patched.index("RESEARCH HELD (ACT-75): the customer sheets were not shown to be loaded") < patched.index("STEP 0a0: CUSTOMER COVERAGE"), \
         "the Saturday hold must come right after the intake, before coverage, the refresh plan, the archive and the canary"
+    assert patched.count("RESEARCH HELD (ACT-75)") == 5, "Saturday: after the intake, intake missing, intake threw; Friday: loader missing, load ended not clean"
 
 
 STUB = ("@echo off\r\n"
@@ -168,7 +206,7 @@ def _run_region(tmp_path: Path, region: str, prelude: str, env: dict) -> subproc
     dummy.write_text("x\n", encoding="ascii")
     script = tmp_path / "harness.ps1"
     body = prelude + "\r\n" + region + "\r\nWrite-Host 'CONTINUED-AFTER-THE-STEP'\r\n"
-    script.write_text(body.replace("@STUB@", str(stub)).replace("@DUMMY@", str(dummy)), encoding="utf-8")
+    script.write_text(body.replace("@STUB@", str(stub)).replace("@DUMMY@", str(dummy)).replace("@MISSING@", str(tmp_path / "no-such-file.py")), encoding="utf-8")
     e = {**os.environ, **{k: v for k, v in env.items() if v is not None}}
     for k, v in env.items():
         if v is None:
@@ -176,15 +214,17 @@ def _run_region(tmp_path: Path, region: str, prelude: str, env: dict) -> subproc
     return subprocess.run([PS, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(script)], capture_output=True, text=True, timeout=120, env=e)
 
 
-def _saturday_region(text: str) -> str:
+def _saturday_region(text: str, intake_missing: bool = False) -> str:
     a, b = text.index("if ($SkipIntake) {"), text.index("# ------------------------------------------------- STEP 0a0")
-    return (text[a:b].replace(r'C:\Users\matts\cfp-monitor\scripts\weekly_intake.py', "@DUMMY@")
+    return (text[a:b].replace(r'C:\Users\matts\cfp-monitor\scripts\weekly_intake.py', "@MISSING@" if intake_missing else "@DUMMY@")
             .replace(r'C:\Users\matts\cfp-monitor\.venv\Scripts\python.exe', "@STUB@"))
 
 
 def _friday_region(text: str) -> str:
-    a = text.index("if ($Markets -contains 'Awards' -and (Test-Path $awPy) -and (Test-Path $awFetch)) {")
-    return text[a:text.index("        if ((Test-Path $awPy) -and (Test-Path $awPy_)) {", a)]
+    """From ACT-75's pre-check (the loader must exist) through the end of the awards load block."""
+    a = text.index("if ($Markets -contains 'Awards' -and $env:CFP_SHEETS_ON_FAIL -ne 'proceed'")
+    return (text[a:text.index("        if ((Test-Path $awPy) -and (Test-Path $awPy_)) {", a)]
+            .replace(r'C:\Users\matts\cfp-monitor\scripts\customer_sheet_load.py', "@DUMMY@"))
 
 
 def _context_region(text: str) -> str:
@@ -200,20 +240,48 @@ CTX_SAT = "$WhatIf = $false; $Markets = @('Cybersecurity','Utility'); $liveMarke
 CTX_FRI = "$WhatIf = $false; $Markets = @('Awards'); $liveMarkets = @()"
 
 
+# Codex review 2026-11-13: the stop used to fire on exit 6 ONLY. The rule now is Matt's own: if the sheets cannot be SHOWN to be loaded, the research does not
+# start. Anything but a clean exit 0 holds (6 = did not load after the wait; 1 or 2 = the intake or loader itself broke), and so does a missing script or
+# interpreter; only a person's CFP_SHEETS_ON_FAIL = 'proceed' lets it go on.
+EXIT_CASES = [("6", None, True), ("1", None, True), ("2", None, True), ("0", None, False),
+              ("1", "proceed", False), ("2", "proceed", False), ("0", "hold", False)]
+
+
 @pytest.mark.skipif(PS is None, reason="PowerShell not available")
-@pytest.mark.parametrize("stub_exit,held", [("6", True), ("0", False), ("1", False)])
-def test_saturday_the_run_stops_on_exit_6_and_continues_otherwise(patched, tmp_path, stub_exit, held):
-    r = _run_region(tmp_path, _saturday_region(patched), SAT, {"STUB_EXIT": stub_exit, "STUB_LINE": None})
+@pytest.mark.parametrize("stub_exit,on_fail,held", EXIT_CASES, ids=[f"exit{c[0]}-{c[1] or 'default'}" for c in EXIT_CASES])
+def test_saturday_the_run_stops_unless_the_intake_ended_clean(patched, tmp_path, stub_exit, on_fail, held):
+    r = _run_region(tmp_path, _saturday_region(patched), SAT, {"STUB_EXIT": stub_exit, "STUB_LINE": None, "CFP_SHEETS_ON_FAIL": on_fail})
+    assert (r.returncode == 6) is held, r.stdout + r.stderr
+    assert ("RESEARCH HELD (ACT-75)" in r.stdout) is held and ("CONTINUED-AFTER-THE-STEP" in r.stdout) is (not held)
+    if held:
+        assert f"exit code {stub_exit}" in r.stdout
+
+
+@pytest.mark.skipif(PS is None, reason="PowerShell not available")
+@pytest.mark.parametrize("on_fail,held", [(None, True), ("proceed", False)])
+def test_saturday_a_missing_intake_holds_instead_of_researching_with_no_load(patched, tmp_path, on_fail, held):
+    r = _run_region(tmp_path, _saturday_region(patched, intake_missing=True), SAT, {"STUB_EXIT": "0", "STUB_LINE": None, "CFP_SHEETS_ON_FAIL": on_fail})
+    assert (r.returncode == 6) is held, r.stdout + r.stderr
+    assert "INTAKE SKIPPED" in r.stdout and ("RESEARCH HELD (ACT-75)" in r.stdout) is held and ("CONTINUED-AFTER-THE-STEP" in r.stdout) is (not held)
+
+
+@pytest.mark.skipif(PS is None, reason="PowerShell not available")
+@pytest.mark.parametrize("stub_exit,on_fail,held", EXIT_CASES, ids=[f"exit{c[0]}-{c[1] or 'default'}" for c in EXIT_CASES])
+def test_friday_the_run_stops_unless_the_awards_load_ended_clean(patched, tmp_path, stub_exit, on_fail, held):
+    r = _run_region(tmp_path, _friday_region(patched), FRI, {"STUB_EXIT": stub_exit, "STUB_LINE": None, "CFP_SHEETS_ON_FAIL": on_fail})
     assert (r.returncode == 6) is held, r.stdout + r.stderr
     assert ("RESEARCH HELD (ACT-75)" in r.stdout) is held and ("CONTINUED-AFTER-THE-STEP" in r.stdout) is (not held)
 
 
 @pytest.mark.skipif(PS is None, reason="PowerShell not available")
-@pytest.mark.parametrize("stub_exit,held", [("6", True), ("0", False), ("1", False)])
-def test_friday_the_run_stops_on_exit_6_and_continues_otherwise(patched, tmp_path, stub_exit, held):
-    r = _run_region(tmp_path, _friday_region(patched), FRI, {"STUB_EXIT": stub_exit, "STUB_LINE": None})
+@pytest.mark.parametrize("on_fail,held", [(None, True), ("proceed", False)])
+def test_friday_a_missing_fetch_script_or_loader_holds(patched, tmp_path, on_fail, held):
+    missing_fetch = "$Markets = @('Awards'); $awPy = '@STUB@'; $awFetch = '@MISSING@'"
+    r = _run_region(tmp_path, _friday_region(patched), missing_fetch, {"STUB_EXIT": "0", "STUB_LINE": None, "CFP_SHEETS_ON_FAIL": on_fail})
     assert (r.returncode == 6) is held, r.stdout + r.stderr
     assert ("RESEARCH HELD (ACT-75)" in r.stdout) is held and ("CONTINUED-AFTER-THE-STEP" in r.stdout) is (not held)
+    r = _run_region(tmp_path, _friday_region(patched).replace("@DUMMY@", "@MISSING@"), FRI, {"STUB_EXIT": "0", "STUB_LINE": None, "CFP_SHEETS_ON_FAIL": on_fail})
+    assert (r.returncode == 6) is held, "the loader itself (customer_sheet_load.py) missing must hold too: " + r.stdout + r.stderr
 
 
 CTX_CASES = [

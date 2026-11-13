@@ -179,6 +179,8 @@ def parse_saturday(log: str) -> dict:
     out["intake"] = first(r"INTAKE HEALTH: (.+)", log)
     loads = re.findall(r"^SHEET LOAD: (.+)$", log, flags=re.M)                          # 2026-11-10: the LAST one is the verdict (after any wait)
     out["sheet_load"] = loads[-1].strip() if loads else None
+    held = re.findall(r"RESEARCH HELD \((ACT-7[56])\)", log)                                    # 2026-11-13: which hold ended the run (ACT-75 sheets, ACT-76 context)
+    out["held_by"] = held[-1] if held else None
     out["coverage"] = coverage_facts(log)
     out["refresh_plan"] = re.findall(r"^REFRESH-PLAN (.+)$", log, flags=re.M)        # ACT-33: one line per market (a summary, or UNKNOWN - why)
     out["autoadd"] = autoadd_facts(log)
@@ -448,8 +450,10 @@ def saturday_recap(log: str, imp: dict | None, markets_dir: Path,
         status += " - DEGRADED: customer sheets did not load, research used old copies"
     if (s.get("exit") == "6") or (s.get("sheet_load") or "").startswith("HELD"):
         # Matt, 2026-11-13 (D66 = B): the sheets (or the customer context) were not ready, so the research did NOT start. Exit 6 is the hold.
-        status = ("HELD - research did NOT start: customer sheets did not load" if (s.get("sheet_load") or "").startswith("HELD")
-                  else "HELD - research did NOT start: customer context did not build")
+        by = s.get("held_by")
+        status = ("HELD - research did NOT start: customer sheets did not load" if (s.get("sheet_load") or "").startswith("HELD") or by == "ACT-75"
+                  else "HELD - research did NOT start: customer context did not build" if by == "ACT-76"
+                  else "HELD - research did NOT start (exit 6): see the run log")
     cov_n = (s["coverage"] or {}).get("not_in")
     if kind != "friday" and cov_n:
         status += f" - FLAG: {cov_n} customer row(s) not in the research queue"

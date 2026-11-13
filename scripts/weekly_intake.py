@@ -322,7 +322,8 @@ def fetch_all(config: Path, snapshots: Path, context: str = "saturday") -> tuple
         code, res, lines = csl.guarded_load(csl.expand("all", config), context, config, snapshots,
                                             sleep=lambda s: time.sleep(s), runner=lambda cmd, timeout=600: run(cmd, timeout))
     except Exception as exc:                                         # noqa: BLE001
-        return False, [f"the guarded sheet load could not run ({type(exc).__name__}: {exc})"], 1
+        # Codex review 2026-11-13: a guard that crashed cannot show the sheets loaded, so in hold mode this is a HOLD, not a quiet 1 that lets the research start.
+        return False, [f"the guarded sheet load could not run ({type(exc).__name__}: {exc})"], (HELD_EXIT if csl.on_fail_mode() == "hold" else 1)
     for att in res["attempts"]:
         bad = [f"{c}: FAILED - {r['reason']}" for c, r in att["result"].items() if not r["ok"]]
         if bad:
