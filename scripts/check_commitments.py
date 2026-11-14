@@ -167,26 +167,82 @@ def run(ledger: Path, files: dict[str, Path], db: Path, today: str, strict_ids: 
         if bad and state != "BAD LEDGER LINE":                              # a malformed promise is never reported as kept, not kept or not yet
             state, detail = "BAD LEDGER LINE", "; ".join(bad)
         out.append({"id": c["id"], "event_id": c["event_id"], "what": c["what"], "note": c["note"], "due": c["due"], "state": state, "detail": detail,
-                    "promised_on": c.get("promised_on", ""), "column": c.get("column", ""), "op": c.get("op", ""), "expected": c.get("expected", "")})
+                    "promised_on": c.get("promised_on", ""), "column": c.get("column", ""), "op": c.get("op", ""), "expected": c.get("expected", ""),
+                    "waits_on": c.get("waits_on", ""), "impact": c.get("impact", "")})
     return out
 
 
+# A promise whose re-check depended on a switch WE turned off is not upstream's miss. Ledger column `waits_on` names the switch; the note says so.
+WAITS_ON = {"sponsor_pass": {"switch": "CFP_SPONSOR_PASS", "off_since": "2026-10-19", "what": "the dedicated sponsorship pass (the Contract v1.8 amendment on what SPONSOR_REQUIRED means)"}}
+
+
+def _is_waiting(r: dict) -> bool:
+    """True when the promise waits on a switch that is OFF now (CFP_SPONSOR_PASS is not 1). With the pass ON the promise is upstream's again."""
+    w = (r.get("waits_on") or "").strip()
+    return bool(w) and w in WAITS_ON and os.environ.get(WAITS_ON[w]["switch"], "") != "1"
+
+
+def _next_saturday(today: str) -> str:
+    d = date.fromisoformat(today)
+    return date.fromordinal(d.toordinal() + ((5 - d.weekday()) % 7 or 7)).isoformat()
+
+
+def _impacts(items: list[dict]) -> list[str]:
+    """One plain-English line per distinct impact among the items, with a count when several items share it."""
+    seen: dict[str, int] = {}
+    for r in items:
+        t = (r.get("impact") or "").strip()
+        if t:
+            seen[t] = seen.get(t, 0) + 1
+    return [f"   - {t}" + (f" ({n} rows)" if n > 1 else "") for t, n in seen.items()]
+
+
 def draft_note(res: list[dict], today: str) -> str:
-    """A plain-ASCII draft note to upstream naming every NOT KEPT promise: event, field, what was found, what was promised. '' when none."""
+    """A plain-ASCII draft note to upstream naming every NOT KEPT promise: event, field, what was found, what was promised. '' when none.
+    Promises that wait on a switch we turned off (ledger `waits_on`) are listed apart, as ours, not as upstream's miss."""
     broken = [r for r in res if r["state"] == "NOT KEPT"]
     if not broken:
         return ""
+    theirs = [r for r in broken if not _is_waiting(r)]
+    ours = [r for r in broken if _is_waiting(r)]
     lines = ["DRAFT - written by scripts/check_commitments.py for the operator to read, number and send. Nothing has been sent.", "",
-             f"Note NN - promises not yet kept. Checked on our side on {today} (our promise checker against the published files).", "",
-             f"{len(broken)} of the corrections you agreed to are not in the data. For each: the event (our id), the field, what we found, and what you said you would do.", ""]
-    for i, r in enumerate(broken, start=1):
-        want = OP_WORDS.get(r["op"], r["op"]).format(exp=r["expected"])
+             f"Note NN - promises not yet kept. Checked on our side on {today} (our promise checker against the published files).", ""]
+    n = 0
+
+    def item(r: dict, full: bool) -> None:
+        nonlocal n
+        n += 1
         ev = "every row" if r["event_id"] == "*" else r["event_id"]
-        on = f" on {r['promised_on']}" if r["promised_on"] else ""
-        lines += [f"{i}. {ev}, field {r['column']}.", f"   Promised{on} (your answer to note {r['note']}, due {r['due']}): {r['what']}.",
-                  f"   Expected: {want}.", f"   Found: {r['detail']}.", ""]
-    lines += ["Please send each corrected row in full (all 45 fields, under our id) so we can check it the same day.", "",
-              "What would help most: the rows above, before Saturday."]
+        if full:
+            want = OP_WORDS.get(r["op"], r["op"]).format(exp=r["expected"])
+            on = f" on {r['promised_on']}" if r["promised_on"] else ""
+            lines.extend([f"{n}. {ev}, field {r['column']}.", f"   Promised{on} (your answer to note {r['note']}, due {r['due']}): {r['what']}.",
+                          f"   Expected: {want}.", f"   Found: {r['detail']}.", ""])
+        else:
+            lines.extend([f"{n}. {ev}, field {r['column']}. Found: {r['detail']}.", ""])
+
+    if theirs:
+        lines += [f"A. {len(theirs)} of the corrections you agreed to are not in the data. For each: the event (our id), the field, what we found, and what you said you would do.", ""]
+        if _impacts(theirs):
+            lines += ["   What this affects:"] + _impacts(theirs) + [""]
+        for r in theirs:
+            item(r, True)
+    if ours:
+        sw = WAITS_ON[(ours[0].get("waits_on") or "").strip()]
+        dates = sorted({r["promised_on"] for r in ours if r["promised_on"]})
+        when = f" on {', '.join(dates)}" if dates else ""
+        lines += [f"{'B' if theirs else 'A'}. {len(ours)} more promise(s) are open because of a change WE made, not a miss on your side.",
+                  f"   You agreed{when} to re-check these in the next Saturday research. On {sw['off_since']} we agreed with you to switch off {sw['what']}; it is a switch on our side ({sw['switch']}) and it is still off, so this week's research did not re-check them. "
+                  "Nothing is needed from you on these now; they stay open until the pass runs again or we agree to drop them.", ""]
+        if _impacts(ours):
+            lines += ["   What this affects:"] + _impacts(ours) + [""]
+        for r in ours:
+            item(r, False)
+    if theirs:
+        k = len(theirs)
+        lines += ["What we need:", f"   Items 1 to {k}: please send each corrected row in full (all 45 fields, under our id) so we can check it the same day, ready for the research that runs on Saturday {_next_saturday(today)}."]
+    else:
+        lines += ["What we need:", "   Nothing from you on these now."]
     return "\n".join(lines).encode("ascii", "replace").decode("ascii") + "\n"
 
 

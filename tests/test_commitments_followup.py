@@ -96,6 +96,46 @@ def test_the_draft_note_names_event_field_found_and_promised_and_is_ascii():
     assert cc.draft_note([_broken(state="KEPT")], "2026-10-11") == ""          # nothing unmet: no note
 
 
+def _sponsor(i, **kw):
+    return _broken(id=f"C{i}", event_id=f"ev-s{i}", column="SPONSOR_URL", op="not_contains", expected="http://dead", detail="SPONSOR_URL is 'http://dead'", promised_on="2026-10-18",
+                   waits_on="sponsor_pass", impact="The published sponsor link on these rows is a dead address.", **kw)
+
+
+def test_promises_waiting_on_the_sponsor_pass_are_listed_as_ours_not_upstreams_miss(monkeypatch):
+    monkeypatch.delenv("CFP_SPONSOR_PASS", raising=False)
+    note = cc.draft_note([_broken(impact="STATUS reads Closed where we agreed Open."), _sponsor(1), _sponsor(2)], "2026-11-14")
+    assert "A. 1 of the corrections you agreed to are not in the data." in note and "1. ev-b, field STATUS." in note
+    assert "B. 2 more promise(s) are open because of a change WE made, not a miss on your side." in note and "CFP_SPONSOR_PASS" in note and "Nothing is needed from you on these now" in note
+    assert "2. ev-s1, field SPONSOR_URL. Found:" in note and "3. ev-s2" in note and "Promised on 2026-10-18" not in note     # the waiting items are short and do not blame
+    assert "STATUS reads Closed where we agreed Open." in note and "dead address. (2 rows)" in note                              # one impact line per group, a count when shared
+    assert "Items 1 to 1:" in note and "Saturday 2026-11-21" in note                                                              # only the upstream items are asked for, with a real date
+    assert "before Saturday." not in note
+    note.encode("ascii")
+
+
+def test_with_the_sponsor_pass_on_those_promises_are_upstreams_again(monkeypatch):
+    monkeypatch.setenv("CFP_SPONSOR_PASS", "1")
+    note = cc.draft_note([_sponsor(1)], "2026-11-14")
+    assert "A. 1 of the corrections you agreed to are not in the data." in note and "Promised on 2026-10-18" in note and "WE made" not in note
+
+
+def test_only_waiting_promises_means_nothing_is_asked_of_upstream(monkeypatch):
+    monkeypatch.delenv("CFP_SPONSOR_PASS", raising=False)
+    note = cc.draft_note([_sponsor(1)], "2026-11-14")
+    assert note.count("A. 1 more promise(s)") == 1 and "Nothing from you on these now." in note and "send each corrected row" not in note
+
+
+def test_next_saturday_is_always_after_today():
+    assert cc._next_saturday("2026-11-14") == "2026-11-21" and cc._next_saturday("2026-11-15") == "2026-11-21" and cc._next_saturday("2026-11-20") == "2026-11-21"
+
+
+def test_the_real_ledger_marks_the_nine_sponsor_promises_and_still_lints_clean():
+    rows = cc.read_rows(cc.LEDGER)
+    waiting = [r["id"] for r in rows if r.get("waits_on") == "sponsor_pass"]
+    assert waiting == [f"C{i}" for i in range(37, 46)]
+    assert all(r.get("impact") for r in rows if r["id"] in waiting)
+
+
 def test_main_files_the_draft_only_when_something_is_not_kept(tmp_path, monkeypatch, capsys):
     db = tmp_path / "t.db"
     sqlite3.connect(db).close()
