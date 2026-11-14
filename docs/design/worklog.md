@@ -5,6 +5,12 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-11-13 (20:00) - ACT-74, ACT-75 and ACT-76 applied by Matt; read back; the hold and D67 are active
+- Matt ran the three apply commands (backups 20261113-175306, -175451, -175805) and answered D16 on Daily Review: yes, hold on a failed context step.
+- READ BACK on the machine: live run_monthly.ps1 hash 7D6781C9, 0 parse errors, ACT-75 and ACT-76 ALREADY APPLIED, $ccArgs fixed (line 435), lint clean, release_gate.patches_status sees all 17 patches applied, hold_wired True. The REAL step 0a4 block of the patched live script, run on scratch copies: GREEN both nights (HEALTHY 82 of 86 awards rows, 138 of 187 conference rows).
+- QUIRK: the apply tool judges each patch against the current file; ACT-72 (script), ACT-73 and ACT-74 now overlap lines changed by ACT-75 and ACT-76, so a dry run of those three alone says CANNOT APPLY (part of the patch). Not an error; do not re-run them; the pre-flight's marker test is unaffected.
+- Plan: 1.19, 1.21, 1.22 done (actual 1, 5, 3). Open: register the daytime task (1.23) before Thu 11-19; 1.20 goes live with it; first live read of the hold is Sat 11-14 02:00.
+
 ## 2026-11-13 (night) - D67: proceed on a fresh enough copy; the daytime load; step 0a4 run before every night (plan step 1.20)
 - WHY: Matt (D67 = A, chat 11-13): proceed when the newest copies are 24 hours old or less; load Thursday and Friday at 07:30 and about 18:00; D15: no re-run of Friday's awards, "next week I expect this will not happen again". The 11-13 evening hold (D66) stays, with this one exception.
 - BUILT (reuse scout 11-13: HAVE SOMETHING CLOSE customer_sheet_load.py and release_gate t6): D67 in customer_sheet_load.guarded_load (CFP_SHEETS_MAX_AGE_HOURS, YELLOW, status COPIES, no wait, early exit from the wait, recap/gate/dead-man wording); sheet_daytime_check.py (real load, context rehearsal, verdict with the age each copy will have at 02:00); register_sheet_daytime.ps1 (operator-run, Thursday and Friday 07:30 and 18:15) and its agentos manifest entry (5d1f41c); step_0a4_rehearsal.py (runs the real block on scratch copies, allowlist classification, lint); Thursday pre-flight t7; the 03:00 context watch. ACT-75 PowerShell unchanged (it stops on any non-zero exit; Python returns 0 on YELLOW); ACT-76's check became an allowlist (anything but HEALTHY, DEGRADED, OFF holds).
