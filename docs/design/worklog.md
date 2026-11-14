@@ -5,6 +5,13 @@ Append-only log of what changed each work session. Newest first. Keep entries sh
 
 ---
 
+## 2026-11-13 (end of day) - summary, the daytime task, the repair ledger
+- THE DAY: Friday's awards research ran without customer context (step 0a4 crashed on a one-element array splatted as characters; the 03:00 check only looked for copies, so it said HEALTHY). D15: no re-run (Matt: "next week I expect this will not happen again"). D66 = B (do not proceed when the sheets do not load), D67 = A (but proceed on copies 24 h old or less, YELLOW), D16 = yes (a failed context step holds). ACT-74, ACT-75, ACT-76 written, reviewed by Codex (13 findings, 11 fixed, 2 rejected), applied by Matt, read back. Full suite 2569 passed, 0 failed.
+- 'CFP Sheet Daytime Load' registered by Matt, verified in Task Scheduler (Ready; Thursday and Friday 07:30 and 18:15; wake on; 45 min); first run Thu 11-19 07:30. Plan 1.23 and 1.20 go live with it.
+- Saturday 11-14 02:00 is the first live test of the hold and the YELLOW rule; the read order is in HANDOFF.
+- market_sheets/repair_ledger.txt +13 lines: the importer's repair ledger for Friday's awards load (10 STATUS DETAILS, 1 OVERVIEW, 1 DEADLINE_QUOTE, 1 submission URL; public event text only; scanned for emails, phones, sheet links, keys: none). Committed as written by the importer.
+- Friday's task result was 1 with RUN HEALTH HEALTHY: exit 1 is the routine "finished with stub rows" code (research_usable accepts 0 and 1), not a failure.
+
 ## 2026-11-13 (20:00) - ACT-74, ACT-75 and ACT-76 applied by Matt; read back; the hold and D67 are active
 - Matt ran the three apply commands (backups 20261113-175306, -175451, -175805) and answered D16 on Daily Review: yes, hold on a failed context step.
 - READ BACK on the machine: live run_monthly.ps1 hash 7D6781C9, 0 parse errors, ACT-75 and ACT-76 ALREADY APPLIED, $ccArgs fixed (line 435), lint clean, release_gate.patches_status sees all 17 patches applied, hold_wired True. The REAL step 0a4 block of the patched live script, run on scratch copies: GREEN both nights (HEALTHY 82 of 86 awards rows, 138 of 187 conference rows).
